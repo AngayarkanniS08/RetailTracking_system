@@ -329,6 +329,12 @@
                 <div class="text-center" style="color:var(--muted); margin-top: 50px;">Cart is empty. Select items to bill.</div>
               </div>
               <div class="cart-summary">
+                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px dotted var(--border); padding-bottom: 12px;">
+                  <label style="font-size: 0.85rem; font-weight: 500; color: var(--text-strong); display:flex; align-items:center; gap: 8px; cursor:pointer;" title="Toggle whether this is a Pakka Bill (Tax Invoice) or Kachha Bill (Estimate)">
+                    <input type="checkbox" id="enableGstToggle" checked onchange="calculateCart()">
+                    Generate Tax Invoice (Apply GST)
+                  </label>
+                </div>
                 <div class="summary-row">
                   <span>Subtotal</span>
                   <span id="cartSubtotal">₹0.00</span>
@@ -1114,13 +1120,15 @@
     function calculateCart() {
       let subtotal = 0;
       let totalGst = 0;
+      
+      const isGst = document.getElementById('enableGstToggle') ? document.getElementById('enableGstToggle').checked : true;
 
       cart.forEach(c => {
         const product = getProduct(c.product_id);
         const itemBaseTotal = c.price * c.qty;
         subtotal += itemBaseTotal;
         
-        if (product && product.gst) {
+        if (isGst && product && product.gst) {
           totalGst += itemBaseTotal * (parseFloat(product.gst) / 100);
         }
       });
@@ -1137,7 +1145,7 @@
         document.getElementById('amountPaidInput').value = total.toFixed(2);
       }
       
-      return { subtotal, gst, total, isGst };
+      return { subtotal, gst: totalGst, total, isGst };
     }
 
     function processCheckout() {
