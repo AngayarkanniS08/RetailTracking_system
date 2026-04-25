@@ -281,6 +281,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           Billing (POS)
         </div>
+        <div class="nav-item" onclick="switchTab('credit')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Credit (Kadan)
+        </div>
         <div class="nav-item" onclick="switchTab('productmaster')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
           Product Master
@@ -288,10 +292,6 @@
         <div class="nav-item" onclick="switchTab('inventory')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
           Inventory
-        </div>
-        <div class="nav-item" onclick="switchTab('credit')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          Credit (Kadan)
         </div>
         <div class="nav-item" onclick="switchTab('stocklist')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -324,19 +324,6 @@
                 <div class="text-center" style="color:var(--muted); margin-top: 50px;">Cart is empty. Select items to bill.</div>
               </div>
               <div class="cart-summary">
-                <div class="gst-toggle">
-                  <span style="font-weight: 500; color: var(--text-strong);">Enable GST</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="gstToggle" onchange="toggleGst()">
-                    <span class="toggle-slider"></span>
-                  </label>
-                  <div class="gst-input-row" id="gstInputRow">
-                    <div class="input-with-suffix">
-                      <input type="number" id="gstPercent" class="input-field" placeholder="Enter GST rate" value="18" min="0" max="100" oninput="calculateCart()">
-                      <span class="input-suffix">%</span>
-                    </div>
-                  </div>
-                </div>
                 <div class="summary-row">
                   <span>Subtotal</span>
                   <span id="cartSubtotal">₹0.00</span>
@@ -404,6 +391,8 @@
                     <th>Product Name</th>
                     <th>Category</th>
                     <th>Unit</th>
+                    <th>HSN Code</th>
+                    <th>GST (%)</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -419,8 +408,9 @@
         <section id="inventory" class="view-section">
           <div class="card-header">
             <span>Inventory & Batches</span>
-            <div class="d-flex">
-              <select id="invCatFilter" class="input-field" style="width: auto; min-width: 160px;" onchange="renderInventory()">
+            <div class="d-flex" style="gap: 10px;">
+              <input type="text" id="invSearch" class="input-field" placeholder="Search batches..." style="width: 200px;" onkeyup="renderInventory()">
+              <select id="invCatFilter" class="input-field" style="width: auto; min-width: 140px;" onchange="renderInventory()">
                 <option value="">All Categories</option>
               </select>
               <button class="btn btn-primary btn-sm" onclick="openModal('addStockModal')">+ Add New Stock</button>
@@ -436,7 +426,7 @@
                     <th>Product</th>
                     <th>Vendor</th>
                     <th>Cost P.</th>
-                    <th>Sell P.</th>
+                    <th>Sell P. (Base)</th>
                     <th>Stock Qty</th>
                     <th>Status</th>
                   </tr>
@@ -557,7 +547,10 @@
         <section id="stocklist" class="view-section">
           <div class="card-header">
             <span>Stock Purchase List</span>
-            <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal')">+ Add Stock Entry</button>
+            <div class="d-flex" style="gap: 10px;">
+              <input type="text" id="slSearch" class="input-field" placeholder="Search orders..." style="width: 200px;" onkeyup="renderStockList()">
+              <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal')">+ Add Stock Entry</button>
+            </div>
           </div>
           
           <!-- Summary Cards -->
@@ -585,11 +578,14 @@
                     <th>Stock Name</th>
                     <th>Vendor</th>
                     <th>Qty (kg)</th>
-                    <th>Amount (₹)</th>
+                    <th>Base Amt (₹)</th>
+                    <th>GST (%)</th>
+                    <th>Total Bill (₹)</th>
                     <th>Paid (₹)</th>
                     <th>Balance (₹)</th>
                     <th>Date</th>
                     <th>Status</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -615,7 +611,7 @@
       </div>
       <div class="input-group">
         <label class="input-label">Select Product</label>
-        <select id="stockProduct" class="input-field"></select>
+        <select id="stockProduct" class="input-field" onchange="calculateInventoryMath()"></select>
       </div>
       <div class="input-group">
         <label class="input-label">Vendor Name</label>
@@ -623,18 +619,29 @@
       </div>
       <div class="d-flex">
         <div class="input-group" style="flex:1;">
-          <label class="input-label">Purchase Price (₹)</label>
-          <input type="number" id="stockPP" class="input-field" placeholder="0.00">
+          <label class="input-label" id="stockPPLabel">Base Purchase Price</label>
+          <input type="number" id="stockPP" class="input-field" placeholder="0.00" oninput="calculateInventoryMath('profit')">
         </div>
         <div class="input-group" style="flex:1;">
-          <label class="input-label">Selling Price (₹)</label>
-          <input type="number" id="stockSP" class="input-field" placeholder="0.00">
+          <label class="input-label">Profit / Base Margin (₹)</label>
+          <input type="number" id="stockProfit" class="input-field" placeholder="0.00" oninput="calculateInventoryMath('sp')">
         </div>
       </div>
-      <div class="input-group">
-        <label class="input-label">Quantity</label>
-        <input type="number" id="stockQty" class="input-field" placeholder="0">
+      <div class="d-flex">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label" id="stockSPLabel">New Selling P. (Base)</label>
+          <input type="number" id="stockSP" class="input-field" placeholder="0.00" oninput="calculateInventoryMath('profit')">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Quantity</label>
+          <input type="number" id="stockQty" class="input-field" placeholder="0">
+        </div>
       </div>
+      <div id="invGstDisplay" style="margin-top:-10px; margin-bottom:15px; font-size: 0.85rem; color: var(--muted); display:flex; justify-content:space-between; padding: 0 5px; background: var(--bg-100); padding: 8px; border-radius: 4px;">
+        <span id="invGstRateText">Output GST (0%): ₹0.00</span>
+        <strong id="invTotalText" style="color:var(--ok)">Final Customer Bill: ₹0.00</strong>
+      </div>
+
       <div class="input-group">
         <label class="input-label">Date</label>
         <input type="date" id="stockDate" class="input-field">
@@ -708,9 +715,13 @@
           <input type="number" id="slQty" class="input-field" placeholder="0" min="0">
         </div>
         <div class="input-group" style="flex:1;">
-          <label class="input-label">Total Amount (₹)</label>
-          <input type="number" id="slAmount" class="input-field" placeholder="0.00" min="0">
+          <label class="input-label">Base Amount (₹)</label>
+          <input type="number" id="slAmount" class="input-field" placeholder="0.00" min="0" oninput="calculateSlGst()">
         </div>
+      </div>
+      <div id="slGstDisplay" style="margin-top:-10px; margin-bottom:15px; font-size: 0.8rem; color: var(--muted); display:flex; justify-content:space-between; padding: 0 5px;">
+        <span id="slGstRateText">GST (0%): ₹0.00</span>
+        <strong id="slTotalText" style="color:var(--text-strong)">Total Bill: ₹0.00</strong>
       </div>
       <div class="input-group">
         <label class="input-label">Amount Paid (₹)</label>
@@ -730,6 +741,16 @@
       <div class="input-group">
         <label class="input-label">Product Name</label>
         <input type="text" id="pmProductName" class="input-field" placeholder="e.g. Silk Fabric">
+      </div>
+      <div class="d-flex">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">HSN Code</label>
+          <input type="text" id="pmProductHsn" class="input-field" placeholder="e.g. 5208">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">GST (%)</label>
+          <input type="number" id="pmProductGst" class="input-field" placeholder="0" min="0" max="100">
+        </div>
       </div>
       <div class="d-flex">
         <div class="input-group" style="flex:1;">
@@ -781,11 +802,11 @@
 
     // Core Products (Master)
     let products = [
-      { id: 'P001', name: 'Cotton Fabric', category: 'Textiles', unit: 'mtr' },
-      { id: 'P002', name: 'Silk Fabric', category: 'Textiles', unit: 'mtr' },
-      { id: 'P003', name: 'Embroidery Thread', category: 'Thread Work', unit: 'bundle' },
-      { id: 'P004', name: 'Crystal Beads Pack', category: 'Beads & Buttons', unit: 'pkt' },
-      { id: 'P005', name: 'Invisible Zip', category: 'Zips & Accessories', unit: 'pcs' }
+      { id: 'P001', name: 'Cotton Fabric', category: 'Textiles', unit: 'mtr', hsn: '5208', gst: 5 },
+      { id: 'P002', name: 'Silk Fabric', category: 'Textiles', unit: 'mtr', hsn: '5007', gst: 5 },
+      { id: 'P003', name: 'Embroidery Thread', category: 'Thread Work', unit: 'bundle', hsn: '5204', gst: 12 },
+      { id: 'P004', name: 'Crystal Beads Pack', category: 'Beads & Buttons', unit: 'pkt', hsn: '7018', gst: 18 },
+      { id: 'P005', name: 'Invisible Zip', category: 'Zips & Accessories', unit: 'pcs', hsn: '9607', gst: 18 }
     ];
 
     // Batches (Vendor Specific)
@@ -839,11 +860,11 @@
 
     // Stock List (Vendor Purchase Tracking)
     let stock_list = [
-      { id: 'SL001', stock_name: 'Cotton Fabric Roll', vendor_name: 'Erode Textile Market', qty_kg: 200, amount: 17000, paid: 12000, balance: 5000, date: new Date(Date.now() - 86400000) },
-      { id: 'SL002', stock_name: 'Silk Fabric Lot', vendor_name: 'Kanchipuram Silk House', qty_kg: 50, amount: 17500, paid: 17500, balance: 0, date: new Date(Date.now() - 172800000) },
-      { id: 'SL003', stock_name: 'Embroidery Thread Bundle', vendor_name: 'Madurai Thread Works', qty_kg: 30, amount: 750, paid: 750, balance: 0, date: new Date(Date.now() - 259200000) },
-      { id: 'SL004', stock_name: 'Crystal Beads Bulk', vendor_name: 'Bead Craft Suppliers', qty_kg: 15, amount: 9000, paid: 5000, balance: 4000, date: new Date() },
-      { id: 'SL005', stock_name: 'Invisible Zip Pack', vendor_name: 'Zip & Button House', qty_kg: 500, amount: 4000, paid: 4000, balance: 0, date: new Date(Date.now() - 432000000) }
+      { id: 'SL001', stock_name: 'Cotton Fabric', vendor_name: 'Erode Textile Market', qty_kg: 200, amount: 17850, base_amount: 17000, gst_rate: 5, gst_amount: 850, paid: 12000, balance: 5850, date: new Date(Date.now() - 86400000) },
+      { id: 'SL002', stock_name: 'Silk Fabric', vendor_name: 'Kanchipuram Silk House', qty_kg: 50, amount: 18375, base_amount: 17500, gst_rate: 5, gst_amount: 875, paid: 18375, balance: 0, date: new Date(Date.now() - 172800000) },
+      { id: 'SL003', stock_name: 'Embroidery Thread', vendor_name: 'Madurai Thread Works', qty_kg: 30, amount: 840, base_amount: 750, gst_rate: 12, gst_amount: 90, paid: 840, balance: 0, date: new Date(Date.now() - 259200000) },
+      { id: 'SL004', stock_name: 'Crystal Beads Pack', vendor_name: 'Bead Craft Suppliers', qty_kg: 15, amount: 10620, base_amount: 9000, gst_rate: 18, gst_amount: 1620, paid: 5000, balance: 5620, date: new Date() },
+      { id: 'SL005', stock_name: 'Invisible Zip', vendor_name: 'Zip & Button House', qty_kg: 500, amount: 4720, base_amount: 4000, gst_rate: 18, gst_amount: 720, paid: 4720, balance: 0, date: new Date(Date.now() - 432000000) }
     ];
     
     // Credit Ledger (Tracking total purchased vs paid)
@@ -931,9 +952,9 @@
 
     function populateStockListProductSelect() {
       const sel = document.getElementById('slStockName');
-      sel.innerHTML = '<option value="" data-unit="">-- Select Product --</option>';
+      sel.innerHTML = '<option value="" data-unit="" data-gst="0">-- Select Product --</option>';
       products.forEach(p => {
-        sel.innerHTML += `<option value="${p.name}" data-unit="${p.unit}">${p.name} (${p.category})</option>`;
+        sel.innerHTML += `<option value="${p.name}" data-unit="${p.unit}" data-gst="${p.gst || 0}">${p.name} (${p.category})</option>`;
       });
       updateSlUnit();
     }
@@ -943,6 +964,21 @@
       const selected = sel.options[sel.selectedIndex];
       const unit = selected ? selected.getAttribute('data-unit') : '';
       document.getElementById('slQtyLabel').innerText = unit ? `Quantity (${unit})` : 'Quantity';
+      
+      calculateSlGst();
+    }
+
+    function calculateSlGst() {
+      const sel = document.getElementById('slStockName');
+      const selected = sel.options[sel.selectedIndex];
+      const gstRate = parseFloat(selected ? selected.getAttribute('data-gst') : 0) || 0;
+      
+      const baseAmount = parseFloat(document.getElementById('slAmount').value) || 0;
+      const gstAmount = baseAmount * (gstRate / 100);
+      const totalAmount = baseAmount + gstAmount;
+
+      document.getElementById('slGstRateText').innerText = `GST (${gstRate}%): ${formatCurrency(gstAmount)}`;
+      document.getElementById('slTotalText').innerText = `Total Bill: ${formatCurrency(totalAmount)}`;
     }
 
     function getProduct(pid) { return products.find(p => p.id === pid); }
@@ -1021,6 +1057,7 @@
       } else {
         cart.push({
           batch_id: batchId,
+          product_id: batch.product_id,
           qty: 1,
           price: batch.selling_price,
           max_qty: batch.quantity,
@@ -1048,45 +1085,45 @@
       if(cart.length === 0) {
         container.innerHTML = `<div class="text-center" style="color:var(--muted); margin-top: 50px;">Cart is empty. Select items to bill.</div>`;
       } else {
-        container.innerHTML = cart.map(c => `
-          <div class="cart-item">
-            <div class="ci-details">
-              <div class="ci-name">${c.product_name}</div>
-              <div class="ci-price">${formatCurrency(c.price)} x ${c.qty}</div>
+        container.innerHTML = cart.map(c => {
+          const product = getProduct(c.product_id);
+          const gstText = (product && product.gst) ? ` <span style="font-size:0.7rem; color:var(--muted)">+${product.gst}% GST</span>` : '';
+          return `
+            <div class="cart-item">
+              <div class="ci-details">
+                <div class="ci-name">${c.product_name}</div>
+                <div class="ci-price">${formatCurrency(c.price)} x ${c.qty}${gstText}</div>
+              </div>
+              <div class="ci-actions">
+                <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', -1)">-</button>
+                <span style="font-weight:600; width:20px; text-align:center;">${c.qty}</span>
+                <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', 1)">+</button>
+              </div>
             </div>
-            <div class="ci-actions">
-              <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', -1)">-</button>
-              <span style="font-weight:600; width:20px; text-align:center;">${c.qty}</span>
-              <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', 1)">+</button>
-            </div>
-          </div>
-        `).join('');
-      }
-      calculateCart();
-    }
-
-    function toggleGst() {
-      const isOn = document.getElementById('gstToggle').checked;
-      const row = document.getElementById('gstInputRow');
-      if (isOn) {
-        row.classList.add('visible');
-      } else {
-        row.classList.remove('visible');
+          `;
+        }).join('');
       }
       calculateCart();
     }
 
     function calculateCart() {
       let subtotal = 0;
-      cart.forEach(c => subtotal += (c.price * c.qty));
+      let totalGst = 0;
+
+      cart.forEach(c => {
+        const product = getProduct(c.product_id);
+        const itemBaseTotal = c.price * c.qty;
+        subtotal += itemBaseTotal;
+        
+        if (product && product.gst) {
+          totalGst += itemBaseTotal * (parseFloat(product.gst) / 100);
+        }
+      });
       
-      const isGst = document.getElementById('gstToggle').checked;
-      const gstRate = parseFloat(document.getElementById('gstPercent').value) || 0;
-      const gst = isGst ? subtotal * (gstRate / 100) : 0;
-      const total = subtotal + gst;
+      const total = subtotal + totalGst;
 
       document.getElementById('cartSubtotal').innerText = formatCurrency(subtotal);
-      document.getElementById('cartGst').innerText = isGst ? `GST (${gstRate}%): ${formatCurrency(gst)}` : formatCurrency(gst);
+      document.getElementById('cartGst').innerText = totalGst > 0 ? formatCurrency(totalGst) : "₹0.00";
       document.getElementById('cartTotal').innerText = formatCurrency(total);
       
       // Auto-fill amount paid if no customer is selected
@@ -1229,6 +1266,7 @@ Item                 Qty  Price   Total
       const tbody = document.querySelector('#inventoryTable tbody');
       tbody.innerHTML = '';
       const catFilter = document.getElementById('invCatFilter').value;
+      const srch = document.getElementById('invSearch') ? document.getElementById('invSearch').value.toLowerCase() : '';
       
       batches.forEach(b => {
         const p = getProduct(b.product_id);
@@ -1237,8 +1275,14 @@ Item                 Qty  Price   Total
         // Category filter
         if (catFilter && p.category !== catFilter) return;
 
+        // Search filter
+        const searchStr = `${b.id} ${p.name} ${b.vendor_name} ${b.purchase_price} ${b.selling_price} ${b.quantity}`.toLowerCase();
+        if (srch && !searchStr.includes(srch)) return;
+
         const stockBadge = b.quantity > 20 ? `<span class="badge badge-ok">In Stock</span>` : 
                           (b.quantity > 0 ? `<span class="badge badge-warn">Low Stock</span>` : `<span class="badge badge-danger">Out of Stock</span>`);
+        
+        const gstText = p.gst ? ` <span style="font-size:0.75rem; color:var(--muted)">+${p.gst}% GST</span>` : '';
         
         tbody.innerHTML += `
           <tr>
@@ -1247,7 +1291,7 @@ Item                 Qty  Price   Total
             <td style="font-weight: 500; color: var(--text-strong);">${p.name}</td>
             <td>${b.vendor_name}</td>
             <td>${formatCurrency(b.purchase_price)}</td>
-            <td>${formatCurrency(b.selling_price)}</td>
+            <td>${formatCurrency(b.selling_price)}${gstText}</td>
             <td style="font-weight: 600;">${b.quantity} ${p.unit}</td>
             <td>${stockBadge}</td>
           </tr>
@@ -1261,6 +1305,39 @@ Item                 Qty  Price   Total
       products.forEach(p => {
         sel.innerHTML += `<option value="${p.id}">${p.name}</option>`;
       });
+      calculateInventoryMath();
+    }
+
+    function calculateInventoryMath(calcMode = 'profit') {
+      const spInput = document.getElementById('stockSP');
+      const ppInput = document.getElementById('stockPP');
+      const profitInput = document.getElementById('stockProfit');
+      
+      const pp = parseFloat(ppInput.value) || 0;
+      let sp = parseFloat(spInput.value) || 0;
+      let profit = parseFloat(profitInput.value) || 0;
+
+      // Bidirectional calculation
+      if (calcMode === 'profit') {
+        // User changed SP or PP, recalculate Profit
+        profit = sp > 0 ? (sp - pp) : 0;
+        profitInput.value = profit > 0 ? profit.toFixed(2) : '';
+      } else if (calcMode === 'sp') {
+        // User changed Profit, recalculate SP
+        sp = pp + profit;
+        spInput.value = sp > 0 ? sp.toFixed(2) : '';
+      }
+
+      // GST Calculation
+      const pid = document.getElementById('stockProduct').value;
+      const product = getProduct(pid);
+      const gstRate = product ? (parseFloat(product.gst) || 0) : 0;
+      
+      const outputGst = sp * (gstRate / 100);
+      const finalCustomerBill = sp + outputGst;
+
+      document.getElementById('invGstRateText').innerHTML = `Output GST (${gstRate}%): <strong>${formatCurrency(outputGst)}</strong>`;
+      document.getElementById('invTotalText').innerText = `Final Customer Bill: ${formatCurrency(finalCustomerBill)}`;
     }
 
     function saveStock() {
@@ -1282,9 +1359,12 @@ Item                 Qty  Price   Total
       closeModal('addStockModal');
       document.getElementById('stockVendor').value = '';
       document.getElementById('stockPP').value = '';
+      document.getElementById('stockProfit').value = '';
       document.getElementById('stockSP').value = '';
       document.getElementById('stockQty').value = '';
       document.getElementById('stockDate').value = new Date().toISOString().split('T')[0];
+      calculateInventoryMath();
+      
       renderInventory();
       renderPOSItems();
       renderPOSCatFilters();
@@ -1322,6 +1402,8 @@ Item                 Qty  Price   Total
             <td style="font-weight: 500; color: var(--text-strong);">${p.name}</td>
             <td><span class="badge" style="background: var(--accent-subtle); color: var(--accent);">${p.category}</span></td>
             <td>${p.unit}</td>
+            <td style="font-family: var(--mono); color: var(--muted-strong);">${p.hsn || '-'}</td>
+            <td>${p.gst ? p.gst + '%' : '-'}</td>
             <td>
               <button class="btn-icon-danger" onclick="deleteProduct('${p.id}')" title="Delete Product">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -1341,6 +1423,8 @@ Item                 Qty  Price   Total
       const name = document.getElementById('pmProductName').value.trim();
       const category = document.getElementById('pmProductCategory').value;
       const unit = document.getElementById('pmProductUnit').value;
+      const hsn = document.getElementById('pmProductHsn').value.trim();
+      const gst = parseFloat(document.getElementById('pmProductGst').value) || 0;
 
       if (!name) return alert('Please enter a product name.');
 
@@ -1353,10 +1437,15 @@ Item                 Qty  Price   Total
         id: generateId('P'),
         name: name,
         category: category,
-        unit: unit
+        unit: unit,
+        hsn: hsn,
+        gst: gst
       });
 
       document.getElementById('pmProductName').value = '';
+      document.getElementById('pmProductHsn').value = '';
+      document.getElementById('pmProductGst').value = '';
+      
       closeModal('addProductModal');
 
       // Refresh all dependent dropdowns and views
@@ -1470,13 +1559,53 @@ Item                 Qty  Price   Total
       if(amt > totals.balance) return alert('Amount exceeds outstanding balance');
 
       // Add a payment-only record (amount_billed = 0)
+      const payId = generateId('PAY');
       credit_ledger.push({
-        id: generateId('PAY'), customer_id: custId, sale_id: null,
+        id: payId, customer_id: custId, sale_id: null,
         amount_billed: 0, amount_paid: amt, balance: -amt, created_at: new Date()
       });
 
+      const newBalance = totals.balance - amt;
+      printPaymentReceipt(payId, custId, amt, newBalance);
+
       closeModal('paymentModal');
       renderCredit();
+    }
+
+    function printPaymentReceipt(receiptId, custId, amountPaid, newBalance) {
+      const shopName = "RETAIL PRO SUPERMART";
+      const address = "123, Market Street, India";
+      const dateStr = new Date().toLocaleString();
+      const customer = getCustomer(custId).name;
+
+      let receipt = `========================================
+         ${shopName}
+         ${address}
+========================================
+Receipt No: ${receiptId}
+Date: ${dateStr}
+Customer Name: ${customer}
+Description: CREDIT BALANCE PAYMENT
+----------------------------------------
+
+AMOUNT PAID:             Rs. ${amountPaid.toFixed(2)}
+----------------------------------------
+Remaining Debt Balance:  Rs. ${newBalance.toFixed(2)}
+
+========================================
+     Thank You For Your Payment!
+========================================`;
+
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      printWindow.document.write(`
+        <html><head><title>Payment Receipt</title></head>
+        <body style="font-family: monospace; white-space: pre-wrap; padding: 20px;">
+${receipt}
+        </body>
+        <script>window.print(); window.onafterprint = function(){ window.close(); }<\\/script>
+        </html>
+      `);
+      printWindow.document.close();
     }
 
 
@@ -1488,9 +1617,15 @@ Item                 Qty  Price   Total
       const tbody = document.querySelector('#stockListTable tbody');
       tbody.innerHTML = '';
 
+      const srch = document.getElementById('slSearch') ? document.getElementById('slSearch').value.toLowerCase() : '';
+
       let totalAmt = 0, totalPaid = 0, totalBal = 0;
 
       stock_list.forEach(entry => {
+        // Search filter spanning all attributes
+        const searchStr = `${entry.id} ${entry.stock_name} ${entry.vendor_name} ${entry.qty_kg} ${entry.amount} ${entry.paid} ${entry.balance}`.toLowerCase();
+        if (srch && !searchStr.includes(srch)) return;
+
         totalAmt += entry.amount;
         totalPaid += entry.paid;
         totalBal += entry.balance;
@@ -1502,17 +1637,29 @@ Item                 Qty  Price   Total
         const balColor = entry.balance > 0 ? 'var(--danger)' : 'var(--ok)';
         const dateStr = entry.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 
+        let displayGst = entry.gst_rate;
+        if (displayGst === undefined) {
+          const matchedProduct = products.find(p => p.name.toLowerCase() === entry.stock_name.toLowerCase());
+          displayGst = matchedProduct ? matchedProduct.gst : null;
+        }
+
         tbody.innerHTML += `
           <tr>
             <td style="font-family: var(--mono); color: var(--muted-strong);">${entry.id}</td>
             <td style="font-weight: 500; color: var(--text-strong);">${entry.stock_name}</td>
             <td>${entry.vendor_name}</td>
             <td style="font-weight: 600;">${entry.qty_kg} kg</td>
-            <td>${formatCurrency(entry.amount)}</td>
+            <td>${formatCurrency(entry.base_amount || entry.amount)}</td>
+            <td style="color: var(--muted);">${displayGst ? displayGst + '%' : '-'}</td>
+            <td style="font-weight: 500">${formatCurrency(entry.amount)}</td>
             <td style="color: var(--ok);">${formatCurrency(entry.paid)}</td>
             <td style="font-weight: 700; color: ${balColor}">${formatCurrency(entry.balance)}</td>
             <td style="color: var(--muted);">${dateStr}</td>
             <td>${statusBadge}</td>
+            <td style="display:flex; gap: 4px;">
+              <button class="btn btn-outline btn-sm" style="padding: 2px 8px; font-size: 0.75rem;" onclick="restockEntry('${entry.id}')" title="Buy more of this stock from this vendor">+ Restock</button>
+              ${entry.balance > 0 ? `<button class="btn btn-primary btn-sm" style="padding: 2px 8px; font-size: 0.75rem; background: var(--ok); border-color: var(--ok);" onclick="clearStockBalance('${entry.id}')" title="Mark pending balance as paid">Clear Balance</button>` : ''}
+            </td>
           </tr>
         `;
       });
@@ -1523,18 +1670,47 @@ Item                 Qty  Price   Total
       document.getElementById('slTotalBalance').innerText = formatCurrency(totalBal);
     }
 
+    function clearStockBalance(id) {
+      if(confirm('Are you sure you want to mark this vendor balance as fully paid?')) {
+        const entry = stock_list.find(e => e.id === id);
+        if(entry) {
+          entry.paid = entry.amount;
+          entry.balance = 0;
+          renderStockList();
+        }
+      }
+    }
+
+    function restockEntry(id) {
+      const entry = stock_list.find(e => e.id === id);
+      if (!entry) return;
+      
+      openModal('addStockEntryModal');
+      document.getElementById('slStockName').value = entry.stock_name;
+      document.getElementById('slVendorName').value = entry.vendor_name;
+      
+      updateSlUnit(); // Re-calculates UI labels and GST specific to this auto-filled item
+    }
+
     function saveStockEntry() {
-      const stockName = document.getElementById('slStockName').value.trim();
+      const sel = document.getElementById('slStockName');
+      const selected = sel.options[sel.selectedIndex];
+      const stockName = sel.value.trim();
       const vendorName = document.getElementById('slVendorName').value.trim();
       const qty = parseFloat(document.getElementById('slQty').value) || 0;
-      const amount = parseFloat(document.getElementById('slAmount').value) || 0;
+      const baseAmount = parseFloat(document.getElementById('slAmount').value) || 0;
       const paid = parseFloat(document.getElementById('slPaid').value) || 0;
 
-      if (!stockName || !vendorName || qty <= 0 || amount <= 0) {
-        return alert('Please fill all required fields (Stock Name, Vendor, Qty, Amount).');
+      if (!stockName || !vendorName || qty <= 0 || baseAmount <= 0) {
+        return alert('Please fill all required fields (Stock Name, Vendor, Qty, Base Amount).');
       }
-      if (paid > amount) {
-        return alert('Amount Paid cannot exceed Total Amount.');
+
+      const gstRate = parseFloat(selected ? selected.getAttribute('data-gst') : 0) || 0;
+      const gstAmount = baseAmount * (gstRate / 100);
+      const totalAmount = baseAmount + gstAmount;
+
+      if (paid > totalAmount) {
+        return alert('Amount Paid cannot exceed Total Bill Amount.');
       }
 
       stock_list.push({
@@ -1542,9 +1718,12 @@ Item                 Qty  Price   Total
         stock_name: stockName,
         vendor_name: vendorName,
         qty_kg: qty,
-        amount: amount,
+        amount: totalAmount, // For backward compatibility with rendering, we treat 'amount' as the total bill paid to vendor
+        base_amount: baseAmount,
+        gst_rate: gstRate,
+        gst_amount: gstAmount,
         paid: paid,
-        balance: amount - paid,
+        balance: totalAmount - paid,
         date: new Date()
       });
 
@@ -1554,6 +1733,8 @@ Item                 Qty  Price   Total
       document.getElementById('slQty').value = '';
       document.getElementById('slAmount').value = '';
       document.getElementById('slPaid').value = '';
+      document.getElementById('slGstRateText').innerText = 'GST (0%): ₹0.00';
+      document.getElementById('slTotalText').innerText = 'Total Bill: ₹0.00';
 
       closeModal('addStockEntryModal');
       renderStockList();
