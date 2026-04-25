@@ -156,7 +156,12 @@
     .cart-summary { padding: 1.5rem; background: var(--bg-elevated); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
     .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; color: var(--muted-strong); font-size: 0.95rem; }
     .summary-total { display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--border); font-size: 1.4rem; font-weight: 700; color: var(--text-strong); }
-    .gst-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 10px; background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    .gst-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 10px; background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+    .gst-input-row { width: 100%; display: none; animation: rise 0.2s var(--ease-out); }
+    .gst-input-row.visible { display: block; }
+    .input-with-suffix { position: relative; }
+    .input-with-suffix input { width: 100%; padding-right: 2.5rem; }
+    .input-suffix { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; font-size: 0.95rem; pointer-events: none; }
     
     /* MODAL */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
@@ -173,6 +178,14 @@
     .theme-btn:hover { background: var(--bg-hover); color: var(--accent); }
     .theme-btn.active { background: var(--accent-subtle); color: var(--accent); }
 
+    /* TOGGLE SWITCH */
+    .toggle-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--border-strong); border-radius: var(--radius-full); cursor: pointer; transition: all var(--duration-normal) var(--ease-out); }
+    .toggle-slider::before { content: ''; position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: all var(--duration-normal) var(--ease-spring); }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); background: #fff; }
+
     /* UTILS */
     .d-flex { display: flex; gap: 10px; }
     .mt-1 { margin-top: 1rem; }
@@ -181,6 +194,31 @@
 
     @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes dashboard-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* CATEGORY FILTER TABS */
+    .cat-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .cat-btn { padding: 0.4rem 1rem; border-radius: var(--radius-full); border: 1px solid var(--border); background: transparent; color: var(--muted-strong); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all var(--duration-fast); white-space: nowrap; }
+    .cat-btn:hover { border-color: var(--accent); color: var(--text-strong); }
+    .cat-btn.active { background: var(--accent); color: var(--accent-foreground); border-color: var(--accent); }
+    .product-count { font-size: 0.75rem; background: var(--bg-hover); padding: 0.1rem 0.5rem; border-radius: var(--radius-full); margin-left: 6px; }
+    .cat-btn.active .product-count { background: rgba(255,255,255,0.2); }
+
+    /* DELETE BUTTON */
+    .btn-icon-danger { background: transparent; border: 1px solid var(--border); color: var(--muted); width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--duration-fast); }
+    .btn-icon-danger:hover { background: var(--danger-subtle); border-color: var(--danger); color: var(--danger); }
+
+    /* TIME PERIOD CARDS */
+    .time-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .time-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.2rem 1.5rem; position: relative; overflow: hidden; }
+    .time-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .time-card.today::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .time-card.week::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .time-card.month::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .time-card-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+    .time-card-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .time-card-revenue { font-size: 1.6rem; font-weight: 700; color: var(--text-strong); margin: 0.3rem 0; }
+    .time-card-meta { display: flex; gap: 1rem; font-size: 0.82rem; color: var(--muted-strong); }
+    .time-card-meta span { display: flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -235,9 +273,17 @@
 
     <div class="main-container">
       <aside class="sidebar">
-        <div class="nav-item active" onclick="switchTab('billing')">
+        <div class="nav-item active" onclick="switchTab('reports')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Dashboard
+        </div>
+        <div class="nav-item" onclick="switchTab('billing')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           Billing (POS)
+        </div>
+        <div class="nav-item" onclick="switchTab('productmaster')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+          Product Master
         </div>
         <div class="nav-item" onclick="switchTab('inventory')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
@@ -247,21 +293,24 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
           Credit (Kadan)
         </div>
-        <div class="nav-item" onclick="switchTab('reports')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-          Reports
+        <div class="nav-item" onclick="switchTab('stocklist')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Stock List
         </div>
       </aside>
 
       <main class="content-area">
         
         <!-- BILLING SECTION -->
-        <section id="billing" class="view-section active">
+        <section id="billing" class="view-section">
           <div class="pos-grid">
             <!-- Left: Products -->
             <div>
               <div class="pos-search-area">
                 <input type="text" id="posSearch" class="input-field" placeholder="Search by Product Name, ID, or Batch..." onkeyup="renderPOSItems()">
+              </div>
+              <div class="cat-filters" id="posCatFilters">
+                <!-- Category filter buttons rendered by JS -->
               </div>
               <div class="item-grid" id="posItemsGrid">
                 <!-- Items rendered via JS -->
@@ -276,8 +325,17 @@
               </div>
               <div class="cart-summary">
                 <div class="gst-toggle">
-                  <span style="font-weight: 500; color: var(--text-strong);">Enable GST (18%)</span>
-                  <input type="checkbox" id="gstToggle" onchange="calculateCart()" style="transform: scale(1.2);">
+                  <span style="font-weight: 500; color: var(--text-strong);">Enable GST</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="gstToggle" onchange="toggleGst()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <div class="gst-input-row" id="gstInputRow">
+                    <div class="input-with-suffix">
+                      <input type="number" id="gstPercent" class="input-field" placeholder="Enter GST rate" value="18" min="0" max="100" oninput="calculateCart()">
+                      <span class="input-suffix">%</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="summary-row">
                   <span>Subtotal</span>
@@ -306,11 +364,67 @@
           </div>
         </section>
 
+        <!-- PRODUCT MASTER SECTION -->
+        <section id="productmaster" class="view-section">
+          <div class="card-header">
+            <span>Product Master</span>
+            <div class="d-flex">
+              <button class="btn btn-outline btn-sm" onclick="openModal('addCategoryModal')">+ Add Category</button>
+              <button class="btn btn-primary btn-sm" onclick="openModal('addProductModal')">+ Add Product</button>
+            </div>
+          </div>
+
+          <!-- Category Tabs -->
+          <div class="cat-filters" id="pmCatFilters">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-grid" style="margin-bottom: 1.5rem;">
+            <div class="stat-card">
+              <div class="stat-label">Total Products</div>
+              <div class="stat-value" id="pmTotalProducts">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Categories</div>
+              <div class="stat-value" id="pmTotalCategories">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Active Batches</div>
+              <div class="stat-value" style="color:var(--info)" id="pmTotalBatches">0</div>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="table-container">
+              <table id="productMasterTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Unit</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <!-- INVENTORY SECTION -->
         <section id="inventory" class="view-section">
           <div class="card-header">
             <span>Inventory & Batches</span>
-            <button class="btn btn-primary btn-sm" onclick="openModal('addStockModal')">+ Add New Stock</button>
+            <div class="d-flex">
+              <select id="invCatFilter" class="input-field" style="width: auto; min-width: 160px;" onchange="renderInventory()">
+                <option value="">All Categories</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openModal('addStockModal')">+ Add New Stock</button>
+            </div>
           </div>
           <div class="card-panel">
             <div class="table-container">
@@ -318,6 +432,7 @@
                 <thead>
                   <tr>
                     <th>Batch ID</th>
+                    <th>Date</th>
                     <th>Product</th>
                     <th>Vendor</th>
                     <th>Cost P.</th>
@@ -362,26 +477,124 @@
           </div>
         </section>
 
-        <!-- REPORTS SECTION -->
-        <section id="reports" class="view-section">
-          <div class="page-title" style="margin-bottom: 1.5rem;">Analytics Overview</div>
+        <!-- DASHBOARD SECTION -->
+        <section id="reports" class="view-section active">
+          <div class="page-title" style="margin-bottom: 1.5rem;">Dashboard</div>
+
+          <!-- Time Period Summary Cards -->
+          <div class="time-cards">
+            <div class="time-card today">
+              <div class="time-card-icon">📅</div>
+              <div class="time-card-label">Today</div>
+              <div class="time-card-revenue" id="tcTodayRev">₹0.00</div>
+              <div class="time-card-meta">
+                <span>🧾 <strong id="tcTodayBills">0</strong> bills</span>
+                <span>📊 Avg: <strong id="tcTodayAvg">₹0</strong></span>
+              </div>
+            </div>
+            <div class="time-card week">
+              <div class="time-card-icon">📊</div>
+              <div class="time-card-label">This Week</div>
+              <div class="time-card-revenue" id="tcWeekRev">₹0.00</div>
+              <div class="time-card-meta">
+                <span>🧾 <strong id="tcWeekBills">0</strong> bills</span>
+                <span>📊 Avg: <strong id="tcWeekAvg">₹0</strong></span>
+              </div>
+            </div>
+            <div class="time-card month">
+              <div class="time-card-icon">📆</div>
+              <div class="time-card-label">This Month</div>
+              <div class="time-card-revenue" id="tcMonthRev">₹0.00</div>
+              <div class="time-card-meta">
+                <span>🧾 <strong id="tcMonthBills">0</strong> bills</span>
+                <span>📊 Avg: <strong id="tcMonthAvg">₹0</strong></span>
+              </div>
+            </div>
+          </div>
+
           <div class="stats-grid" id="reportsStats">
             <!-- Rendered via JS -->
           </div>
-          
-          <div class="pos-grid" style="grid-template-columns: 1fr 1fr;">
+
+          <!-- Row 2: High Selling, Low Selling, Old Stock -->
+          <div class="pos-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 1.5rem;">
             <div class="card-panel">
-              <div class="card-header">Low Stock / Aging Inventory</div>
-              <table class="data-table" style="font-size: 0.9rem;" id="lowStockTable">
-                <thead><tr><th>Product</th><th>Batch</th><th>Qty Left</th></tr></thead>
+              <div class="card-header" style="color: var(--ok);">🔥 High Selling</div>
+              <table class="data-table" style="font-size: 0.9rem;" id="highSellingTable">
+                <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
             <div class="card-panel">
-              <div class="card-header">Recent Sales</div>
-              <table class="data-table" style="font-size: 0.9rem;" id="recentSalesTable">
-                <thead><tr><th>Bill ID</th><th>Amount</th><th>Type</th><th>Time</th></tr></thead>
+              <div class="card-header" style="color: var(--warn);">📉 Low Selling</div>
+              <table class="data-table" style="font-size: 0.9rem;" id="lowSellingTable">
+                <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
                 <tbody></tbody>
+              </table>
+            </div>
+            <div class="card-panel">
+              <div class="card-header" style="color: var(--danger);">📦 Old Stock</div>
+              <table class="data-table" style="font-size: 0.9rem;" id="oldStockTable">
+                <thead><tr><th>Product</th><th>Batch</th><th>Age (days)</th><th>Qty</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sales Timeline -->
+          <div class="card-panel" style="margin-top: 1.5rem;">
+            <div class="card-header">📋 Sales Timeline</div>
+            <div class="table-container">
+              <table class="data-table" style="font-size: 0.9rem;" id="salesTimelineTable">
+                <thead><tr><th>Date</th><th>Bills</th><th>Revenue</th><th>Avg Bill</th><th>Products Sold</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- STOCK LIST SECTION -->
+        <section id="stocklist" class="view-section">
+          <div class="card-header">
+            <span>Stock Purchase List</span>
+            <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal')">+ Add Stock Entry</button>
+          </div>
+          
+          <!-- Summary Cards -->
+          <div class="stats-grid" style="margin-bottom: 1.5rem;">
+            <div class="stat-card">
+              <div class="stat-label">Total Purchases</div>
+              <div class="stat-value" id="slTotalAmount">₹0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Paid</div>
+              <div class="stat-value" style="color:var(--ok)" id="slTotalPaid">₹0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Balance Due</div>
+              <div class="stat-value" style="color:var(--danger)" id="slTotalBalance">₹0.00</div>
+            </div>
+          </div>
+
+          <div class="card-panel">
+            <div class="table-container">
+              <table id="stockListTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Stock Name</th>
+                    <th>Vendor</th>
+                    <th>Qty (kg)</th>
+                    <th>Amount (₹)</th>
+                    <th>Paid (₹)</th>
+                    <th>Balance (₹)</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Rendered via JS -->
+                </tbody>
               </table>
             </div>
           </div>
@@ -421,6 +634,10 @@
       <div class="input-group">
         <label class="input-label">Quantity</label>
         <input type="number" id="stockQty" class="input-field" placeholder="0">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Date</label>
+        <input type="date" id="stockDate" class="input-field">
       </div>
       <button class="btn btn-primary btn-block" onclick="saveStock()">Save Batch Entry</button>
     </div>
@@ -468,26 +685,117 @@
     </div>
   </div>
 
+  <!-- Add Stock Entry Modal -->
+  <div class="modal-overlay" id="addStockEntryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Add Stock Purchase Entry</div>
+        <button class="close-btn" onclick="closeModal('addStockEntryModal')">&times;</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Stock Name</label>
+        <select id="slStockName" class="input-field" onchange="updateSlUnit()">
+          <!-- Populated from products -->
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Vendor Name</label>
+        <input type="text" id="slVendorName" class="input-field" placeholder="e.g. Erode Textile Market">
+      </div>
+      <div class="d-flex">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label" id="slQtyLabel">Quantity</label>
+          <input type="number" id="slQty" class="input-field" placeholder="0" min="0">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Total Amount (₹)</label>
+          <input type="number" id="slAmount" class="input-field" placeholder="0.00" min="0">
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Amount Paid (₹)</label>
+        <input type="number" id="slPaid" class="input-field" placeholder="0.00" min="0">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveStockEntry()">Save Entry</button>
+    </div>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div class="modal-overlay" id="addProductModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Add New Product</div>
+        <button class="close-btn" onclick="closeModal('addProductModal')">&times;</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Product Name</label>
+        <input type="text" id="pmProductName" class="input-field" placeholder="e.g. Silk Fabric">
+      </div>
+      <div class="d-flex">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Category</label>
+          <select id="pmProductCategory" class="input-field"></select>
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Unit</label>
+          <select id="pmProductUnit" class="input-field">
+            <option value="mtr">Meter (mtr)</option>
+            <option value="pcs">Pieces (pcs)</option>
+            <option value="kg">Kilogram (kg)</option>
+            <option value="bundle">Bundle</option>
+            <option value="pkt">Packet (pkt)</option>
+            <option value="roll">Roll</option>
+            <option value="box">Box</option>
+            <option value="set">Set</option>
+            <option value="pair">Pair</option>
+            <option value="spool">Spool</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+
+  <!-- Add Category Modal -->
+  <div class="modal-overlay" id="addCategoryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Add New Category</div>
+        <button class="close-btn" onclick="closeModal('addCategoryModal')">&times;</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Category Name</label>
+        <input type="text" id="pmCategoryName" class="input-field" placeholder="e.g. Lace Work">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveCategory()">Save Category</button>
+    </div>
+  </div>
+
   <script>
     /* =======================================================================
        1. MOCK DATABASE (In-Memory State)
        ======================================================================= */
     
+    // Categories
+    let categories = ['Textiles', 'Thread Work', 'Beads & Buttons', 'Zips & Accessories', 'Tools & Supplies', 'Machine Parts'];
+
     // Core Products (Master)
     let products = [
-      { id: 'P001', name: 'Premium Sona Masuri Rice', category: 'Grocery', unit: 'kg' },
-      { id: 'P002', name: 'Aashirvaad Atta', category: 'Grocery', unit: 'kg' },
-      { id: 'P003', name: 'Tata Salt', category: 'Grocery', unit: 'kg' },
-      { id: 'P004', name: 'Fortune Sunlite Oil', category: 'Grocery', unit: 'ltr' }
+      { id: 'P001', name: 'Cotton Fabric', category: 'Textiles', unit: 'mtr' },
+      { id: 'P002', name: 'Silk Fabric', category: 'Textiles', unit: 'mtr' },
+      { id: 'P003', name: 'Embroidery Thread', category: 'Thread Work', unit: 'bundle' },
+      { id: 'P004', name: 'Crystal Beads Pack', category: 'Beads & Buttons', unit: 'pkt' },
+      { id: 'P005', name: 'Invisible Zip', category: 'Zips & Accessories', unit: 'pcs' }
     ];
 
     // Batches (Vendor Specific)
     let batches = [
-      { id: 'B1001', product_id: 'P001', vendor_name: 'Metro Wholesale', purchase_price: 45, selling_price: 55, quantity: 50 },
-      { id: 'B1002', product_id: 'P001', vendor_name: 'Local Farmer Org', purchase_price: 42, selling_price: 52, quantity: 15 },
-      { id: 'B1003', product_id: 'P002', vendor_name: 'Metro Wholesale', purchase_price: 38, selling_price: 45, quantity: 100 },
-      { id: 'B1004', product_id: 'P003', vendor_name: 'Distributor A', purchase_price: 18, selling_price: 24, quantity: 200 },
-      { id: 'B1005', product_id: 'P004', vendor_name: 'Distributor B', purchase_price: 130, selling_price: 155, quantity: 5 }
+      { id: 'B1001', product_id: 'P001', vendor_name: 'Erode Textile Market', purchase_price: 85, selling_price: 120, quantity: 200, created_at: new Date(Date.now() - 86400000 * 5) },
+      { id: 'B1002', product_id: 'P001', vendor_name: 'Chennai Fabrics Co.', purchase_price: 90, selling_price: 130, quantity: 80, created_at: new Date(Date.now() - 86400000 * 3) },
+      { id: 'B1003', product_id: 'P002', vendor_name: 'Kanchipuram Silk House', purchase_price: 350, selling_price: 500, quantity: 50, created_at: new Date(Date.now() - 86400000 * 7) },
+      { id: 'B1004', product_id: 'P003', vendor_name: 'Madurai Thread Works', purchase_price: 25, selling_price: 40, quantity: 300, created_at: new Date(Date.now() - 86400000 * 2) },
+      { id: 'B1005', product_id: 'P004', vendor_name: 'Bead Craft Suppliers', purchase_price: 60, selling_price: 95, quantity: 150, created_at: new Date(Date.now() - 86400000) },
+      { id: 'B1006', product_id: 'P005', vendor_name: 'Zip & Button House', purchase_price: 8, selling_price: 15, quantity: 500, created_at: new Date() }
     ];
 
     // Customers
@@ -496,9 +804,47 @@
       { id: 'C002', name: 'Suresh Traders', phone: '9988776655' }
     ];
 
-    // Transactions
-    let sales = [];
-    let sale_items = [];
+    // Transactions (Mock data for demo)
+    let sales = [
+      { id: 'INV001', customer_id: null, total_amount: 1200, amount_paid: 1200, created_at: new Date() },
+      { id: 'INV002', customer_id: 'C001', total_amount: 2500, amount_paid: 1500, created_at: new Date() },
+      { id: 'INV003', customer_id: null, total_amount: 750, amount_paid: 750, created_at: new Date(Date.now() - 86400000) },
+      { id: 'INV004', customer_id: 'C002', total_amount: 4800, amount_paid: 3000, created_at: new Date(Date.now() - 86400000) },
+      { id: 'INV005', customer_id: null, total_amount: 360, amount_paid: 360, created_at: new Date(Date.now() - 86400000) },
+      { id: 'INV006', customer_id: null, total_amount: 1950, amount_paid: 1950, created_at: new Date(Date.now() - 86400000 * 2) },
+      { id: 'INV007', customer_id: 'C001', total_amount: 3200, amount_paid: 2000, created_at: new Date(Date.now() - 86400000 * 3) },
+      { id: 'INV008', customer_id: null, total_amount: 600, amount_paid: 600, created_at: new Date(Date.now() - 86400000 * 3) },
+      { id: 'INV009', customer_id: null, total_amount: 1100, amount_paid: 1100, created_at: new Date(Date.now() - 86400000 * 5) },
+      { id: 'INV010', customer_id: 'C002', total_amount: 5500, amount_paid: 4000, created_at: new Date(Date.now() - 86400000 * 6) }
+    ];
+    let sale_items = [
+      { sale_id: 'INV001', product_name: 'Cotton Fabric', qty: 10, price: 120 },
+      { sale_id: 'INV002', product_name: 'Silk Fabric', qty: 5, price: 500 },
+      { sale_id: 'INV003', product_name: 'Embroidery Thread', qty: 15, price: 40 },
+      { sale_id: 'INV003', product_name: 'Invisible Zip', qty: 10, price: 15 },
+      { sale_id: 'INV004', product_name: 'Cotton Fabric', qty: 20, price: 120 },
+      { sale_id: 'INV004', product_name: 'Crystal Beads Pack', qty: 20, price: 95 },
+      { sale_id: 'INV005', product_name: 'Invisible Zip', qty: 24, price: 15 },
+      { sale_id: 'INV006', product_name: 'Silk Fabric', qty: 3, price: 500 },
+      { sale_id: 'INV006', product_name: 'Embroidery Thread', qty: 5, price: 40 },
+      { sale_id: 'INV006', product_name: 'Invisible Zip', qty: 10, price: 15 },
+      { sale_id: 'INV007', product_name: 'Cotton Fabric', qty: 25, price: 120 },
+      { sale_id: 'INV007', product_name: 'Crystal Beads Pack', qty: 2, price: 95 },
+      { sale_id: 'INV008', product_name: 'Embroidery Thread', qty: 15, price: 40 },
+      { sale_id: 'INV009', product_name: 'Silk Fabric', qty: 2, price: 500 },
+      { sale_id: 'INV009', product_name: 'Invisible Zip', qty: 5, price: 15 },
+      { sale_id: 'INV010', product_name: 'Cotton Fabric', qty: 30, price: 130 },
+      { sale_id: 'INV010', product_name: 'Silk Fabric', qty: 3, price: 500 }
+    ];
+
+    // Stock List (Vendor Purchase Tracking)
+    let stock_list = [
+      { id: 'SL001', stock_name: 'Cotton Fabric Roll', vendor_name: 'Erode Textile Market', qty_kg: 200, amount: 17000, paid: 12000, balance: 5000, date: new Date(Date.now() - 86400000) },
+      { id: 'SL002', stock_name: 'Silk Fabric Lot', vendor_name: 'Kanchipuram Silk House', qty_kg: 50, amount: 17500, paid: 17500, balance: 0, date: new Date(Date.now() - 172800000) },
+      { id: 'SL003', stock_name: 'Embroidery Thread Bundle', vendor_name: 'Madurai Thread Works', qty_kg: 30, amount: 750, paid: 750, balance: 0, date: new Date(Date.now() - 259200000) },
+      { id: 'SL004', stock_name: 'Crystal Beads Bulk', vendor_name: 'Bead Craft Suppliers', qty_kg: 15, amount: 9000, paid: 5000, balance: 4000, date: new Date() },
+      { id: 'SL005', stock_name: 'Invisible Zip Pack', vendor_name: 'Zip & Button House', qty_kg: 500, amount: 4000, paid: 4000, balance: 0, date: new Date(Date.now() - 432000000) }
+    ];
     
     // Credit Ledger (Tracking total purchased vs paid)
     let credit_ledger = [
@@ -539,6 +885,8 @@
 
       if(tabId === 'inventory') renderInventory();
       if(tabId === 'credit') renderCredit();
+      if(tabId === 'stocklist') renderStockList();
+      if(tabId === 'productmaster') renderProductMaster();
       if(tabId === 'reports') renderReports();
     }
 
@@ -549,10 +897,52 @@
        3. INITIALIZATION & HELPERS
        ======================================================================= */
     
+    // Track active category filter for POS
+    let activePosCategory = '';
+    let activePmCategory = '';
+
     function initApp() {
       populateCustomerSelect();
       populateProductSelect();
+      populateCategorySelects();
+      populateStockListProductSelect();
+      renderPOSCatFilters();
       renderPOSItems();
+      renderReports(); // Dashboard is the default landing page
+      // Auto-fill today's date in the Add Stock modal
+      document.getElementById('stockDate').value = new Date().toISOString().split('T')[0];
+    }
+
+    function populateCategorySelects() {
+      // Add Product modal category dropdown
+      const pmCatSel = document.getElementById('pmProductCategory');
+      pmCatSel.innerHTML = '';
+      categories.forEach(c => {
+        pmCatSel.innerHTML += `<option value="${c}">${c}</option>`;
+      });
+
+      // Inventory category filter dropdown
+      const invCatSel = document.getElementById('invCatFilter');
+      invCatSel.innerHTML = '<option value="">All Categories</option>';
+      categories.forEach(c => {
+        invCatSel.innerHTML += `<option value="${c}">${c}</option>`;
+      });
+    }
+
+    function populateStockListProductSelect() {
+      const sel = document.getElementById('slStockName');
+      sel.innerHTML = '<option value="" data-unit="">-- Select Product --</option>';
+      products.forEach(p => {
+        sel.innerHTML += `<option value="${p.name}" data-unit="${p.unit}">${p.name} (${p.category})</option>`;
+      });
+      updateSlUnit();
+    }
+
+    function updateSlUnit() {
+      const sel = document.getElementById('slStockName');
+      const selected = sel.options[sel.selectedIndex];
+      const unit = selected ? selected.getAttribute('data-unit') : '';
+      document.getElementById('slQtyLabel').innerText = unit ? `Quantity (${unit})` : 'Quantity';
     }
 
     function getProduct(pid) { return products.find(p => p.id === pid); }
@@ -563,6 +953,27 @@
     /* =======================================================================
        4. BILLING / POS MODULE
        ======================================================================= */
+
+    function renderPOSCatFilters() {
+      const container = document.getElementById('posCatFilters');
+      const allCount = batches.filter(b => b.quantity > 0).length;
+      let html = `<button class="cat-btn ${activePosCategory === '' ? 'active' : ''}" onclick="setPosCategory('')">All<span class="product-count">${allCount}</span></button>`;
+      
+      categories.forEach(cat => {
+        const catProducts = products.filter(p => p.category === cat).map(p => p.id);
+        const count = batches.filter(b => catProducts.includes(b.product_id) && b.quantity > 0).length;
+        if (count > 0) {
+          html += `<button class="cat-btn ${activePosCategory === cat ? 'active' : ''}" onclick="setPosCategory('${cat}')">${cat}<span class="product-count">${count}</span></button>`;
+        }
+      });
+      container.innerHTML = html;
+    }
+
+    function setPosCategory(cat) {
+      activePosCategory = cat;
+      renderPOSCatFilters();
+      renderPOSItems();
+    }
     
     function renderPOSItems() {
       const term = document.getElementById('posSearch').value.toLowerCase();
@@ -572,8 +983,11 @@
       batches.forEach(b => {
         const p = getProduct(b.product_id);
         if(!p) return;
+
+        // Category filter
+        if(activePosCategory && p.category !== activePosCategory) return;
         
-        const searchStr = `${p.name} ${b.id} ${b.vendor_name}`.toLowerCase();
+        const searchStr = `${p.name} ${b.id} ${b.vendor_name} ${p.category}`.toLowerCase();
         if(term && !searchStr.includes(term)) return;
 
         // Skip zero stock in POS unless specifically searching
@@ -651,16 +1065,28 @@
       calculateCart();
     }
 
+    function toggleGst() {
+      const isOn = document.getElementById('gstToggle').checked;
+      const row = document.getElementById('gstInputRow');
+      if (isOn) {
+        row.classList.add('visible');
+      } else {
+        row.classList.remove('visible');
+      }
+      calculateCart();
+    }
+
     function calculateCart() {
       let subtotal = 0;
       cart.forEach(c => subtotal += (c.price * c.qty));
       
       const isGst = document.getElementById('gstToggle').checked;
-      const gst = isGst ? subtotal * 0.18 : 0;
+      const gstRate = parseFloat(document.getElementById('gstPercent').value) || 0;
+      const gst = isGst ? subtotal * (gstRate / 100) : 0;
       const total = subtotal + gst;
 
       document.getElementById('cartSubtotal').innerText = formatCurrency(subtotal);
-      document.getElementById('cartGst').innerText = formatCurrency(gst);
+      document.getElementById('cartGst').innerText = isGst ? `GST (${gstRate}%): ${formatCurrency(gst)}` : formatCurrency(gst);
       document.getElementById('cartTotal').innerText = formatCurrency(total);
       
       // Auto-fill amount paid if no customer is selected
@@ -802,15 +1228,22 @@ Item                 Qty  Price   Total
     function renderInventory() {
       const tbody = document.querySelector('#inventoryTable tbody');
       tbody.innerHTML = '';
+      const catFilter = document.getElementById('invCatFilter').value;
       
       batches.forEach(b => {
         const p = getProduct(b.product_id);
+        if (!p) return;
+
+        // Category filter
+        if (catFilter && p.category !== catFilter) return;
+
         const stockBadge = b.quantity > 20 ? `<span class="badge badge-ok">In Stock</span>` : 
                           (b.quantity > 0 ? `<span class="badge badge-warn">Low Stock</span>` : `<span class="badge badge-danger">Out of Stock</span>`);
         
         tbody.innerHTML += `
           <tr>
             <td style="font-family: var(--mono); color: var(--muted-strong);">${b.id}</td>
+            <td style="color: var(--muted);">${b.created_at.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
             <td style="font-weight: 500; color: var(--text-strong);">${p.name}</td>
             <td>${b.vendor_name}</td>
             <td>${formatCurrency(b.purchase_price)}</td>
@@ -836,12 +1269,14 @@ Item                 Qty  Price   Total
       const pp = parseFloat(document.getElementById('stockPP').value);
       const sp = parseFloat(document.getElementById('stockSP').value);
       const qty = parseInt(document.getElementById('stockQty').value);
+      const dateVal = document.getElementById('stockDate').value;
 
       if(!vname || !pp || !sp || !qty) return alert('Please fill all fields');
 
       batches.push({
         id: generateId('B'), product_id: pid, vendor_name: vname, 
-        purchase_price: pp, selling_price: sp, quantity: qty
+        purchase_price: pp, selling_price: sp, quantity: qty,
+        created_at: dateVal ? new Date(dateVal) : new Date()
       });
 
       closeModal('addStockModal');
@@ -849,14 +1284,126 @@ Item                 Qty  Price   Total
       document.getElementById('stockPP').value = '';
       document.getElementById('stockSP').value = '';
       document.getElementById('stockQty').value = '';
+      document.getElementById('stockDate').value = new Date().toISOString().split('T')[0];
       renderInventory();
       renderPOSItems();
+      renderPOSCatFilters();
     }
 
 
     /* =======================================================================
-       6. CREDIT (KADAN) MODULE
+       5b. PRODUCT MASTER MODULE
        ======================================================================= */
+
+    function renderProductMaster() {
+      // Category filter tabs
+      const catContainer = document.getElementById('pmCatFilters');
+      let catHtml = `<button class="cat-btn ${activePmCategory === '' ? 'active' : ''}" onclick="setPmCategory('')">All<span class="product-count">${products.length}</span></button>`;
+      categories.forEach(cat => {
+        const count = products.filter(p => p.category === cat).length;
+        catHtml += `<button class="cat-btn ${activePmCategory === cat ? 'active' : ''}" onclick="setPmCategory('${cat}')">${cat}<span class="product-count">${count}</span></button>`;
+      });
+      catContainer.innerHTML = catHtml;
+
+      // Stats
+      const filteredProducts = activePmCategory ? products.filter(p => p.category === activePmCategory) : products;
+      document.getElementById('pmTotalProducts').innerText = products.length;
+      document.getElementById('pmTotalCategories').innerText = categories.length;
+      document.getElementById('pmTotalBatches').innerText = batches.length;
+
+      // Table
+      const tbody = document.querySelector('#productMasterTable tbody');
+      tbody.innerHTML = '';
+
+      filteredProducts.forEach(p => {
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-family: var(--mono); color: var(--muted-strong);">${p.id}</td>
+            <td style="font-weight: 500; color: var(--text-strong);">${p.name}</td>
+            <td><span class="badge" style="background: var(--accent-subtle); color: var(--accent);">${p.category}</span></td>
+            <td>${p.unit}</td>
+            <td>
+              <button class="btn-icon-danger" onclick="deleteProduct('${p.id}')" title="Delete Product">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function setPmCategory(cat) {
+      activePmCategory = cat;
+      renderProductMaster();
+    }
+
+    function saveProduct() {
+      const name = document.getElementById('pmProductName').value.trim();
+      const category = document.getElementById('pmProductCategory').value;
+      const unit = document.getElementById('pmProductUnit').value;
+
+      if (!name) return alert('Please enter a product name.');
+
+      // Check duplicate
+      if (products.find(p => p.name.toLowerCase() === name.toLowerCase())) {
+        return alert('A product with this name already exists.');
+      }
+
+      products.push({
+        id: generateId('P'),
+        name: name,
+        category: category,
+        unit: unit
+      });
+
+      document.getElementById('pmProductName').value = '';
+      closeModal('addProductModal');
+
+      // Refresh all dependent dropdowns and views
+      populateProductSelect();
+      populateCategorySelects();
+      populateStockListProductSelect();
+      renderProductMaster();
+      renderPOSCatFilters();
+      renderPOSItems();
+    }
+
+    function deleteProduct(productId) {
+      const product = getProduct(productId);
+      const hasBatches = batches.some(b => b.product_id === productId);
+
+      if (hasBatches) {
+        return alert(`Cannot delete "${product.name}" — it has active batches in inventory. Remove all batches first.`);
+      }
+
+      if (!confirm(`Delete product "${product.name}"? This cannot be undone.`)) return;
+
+      products = products.filter(p => p.id !== productId);
+
+      populateProductSelect();
+      populateCategorySelects();
+      populateStockListProductSelect();
+      renderProductMaster();
+      renderPOSCatFilters();
+      renderPOSItems();
+    }
+
+    function saveCategory() {
+      const name = document.getElementById('pmCategoryName').value.trim();
+      if (!name) return alert('Please enter a category name.');
+
+      if (categories.find(c => c.toLowerCase() === name.toLowerCase())) {
+        return alert('This category already exists.');
+      }
+
+      categories.push(name);
+      document.getElementById('pmCategoryName').value = '';
+      closeModal('addCategoryModal');
+
+      populateCategorySelects();
+      renderProductMaster();
+      renderPOSCatFilters();
+    }
 
     function getCustomerLedgerTotals(custId) {
       let totalBilled = 0, totalPaid = 0;
@@ -934,6 +1481,86 @@ Item                 Qty  Price   Total
 
 
     /* =======================================================================
+       7. STOCK LIST MODULE
+       ======================================================================= */
+
+    function renderStockList() {
+      const tbody = document.querySelector('#stockListTable tbody');
+      tbody.innerHTML = '';
+
+      let totalAmt = 0, totalPaid = 0, totalBal = 0;
+
+      stock_list.forEach(entry => {
+        totalAmt += entry.amount;
+        totalPaid += entry.paid;
+        totalBal += entry.balance;
+
+        const statusBadge = entry.balance <= 0
+          ? '<span class="badge badge-ok">Paid</span>'
+          : '<span class="badge badge-danger">Pending</span>';
+
+        const balColor = entry.balance > 0 ? 'var(--danger)' : 'var(--ok)';
+        const dateStr = entry.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-family: var(--mono); color: var(--muted-strong);">${entry.id}</td>
+            <td style="font-weight: 500; color: var(--text-strong);">${entry.stock_name}</td>
+            <td>${entry.vendor_name}</td>
+            <td style="font-weight: 600;">${entry.qty_kg} kg</td>
+            <td>${formatCurrency(entry.amount)}</td>
+            <td style="color: var(--ok);">${formatCurrency(entry.paid)}</td>
+            <td style="font-weight: 700; color: ${balColor}">${formatCurrency(entry.balance)}</td>
+            <td style="color: var(--muted);">${dateStr}</td>
+            <td>${statusBadge}</td>
+          </tr>
+        `;
+      });
+
+      // Update summary cards
+      document.getElementById('slTotalAmount').innerText = formatCurrency(totalAmt);
+      document.getElementById('slTotalPaid').innerText = formatCurrency(totalPaid);
+      document.getElementById('slTotalBalance').innerText = formatCurrency(totalBal);
+    }
+
+    function saveStockEntry() {
+      const stockName = document.getElementById('slStockName').value.trim();
+      const vendorName = document.getElementById('slVendorName').value.trim();
+      const qty = parseFloat(document.getElementById('slQty').value) || 0;
+      const amount = parseFloat(document.getElementById('slAmount').value) || 0;
+      const paid = parseFloat(document.getElementById('slPaid').value) || 0;
+
+      if (!stockName || !vendorName || qty <= 0 || amount <= 0) {
+        return alert('Please fill all required fields (Stock Name, Vendor, Qty, Amount).');
+      }
+      if (paid > amount) {
+        return alert('Amount Paid cannot exceed Total Amount.');
+      }
+
+      stock_list.push({
+        id: generateId('SL'),
+        stock_name: stockName,
+        vendor_name: vendorName,
+        qty_kg: qty,
+        amount: amount,
+        paid: paid,
+        balance: amount - paid,
+        date: new Date()
+      });
+
+      // Clear form
+      document.getElementById('slStockName').value = '';
+      document.getElementById('slVendorName').value = '';
+      document.getElementById('slQty').value = '';
+      document.getElementById('slAmount').value = '';
+      document.getElementById('slPaid').value = '';
+
+      closeModal('addStockEntryModal');
+      renderStockList();
+    }
+
+
+    /* =======================================================================
        7. REPORTS MODULE
        ======================================================================= */
 
@@ -948,33 +1575,156 @@ Item                 Qty  Price   Total
       batches.forEach(b => stockValue += (b.quantity * b.purchase_price));
 
       document.getElementById('reportsStats').innerHTML = `
-        <div class="stat-card"><div class="stat-label">Total Revenue (All Time)</div><div class="stat-value">${formatCurrency(totalRev)}</div></div>
         <div class="stat-card"><div class="stat-label">Invoices Generated</div><div class="stat-value">${totalBills}</div></div>
         <div class="stat-card"><div class="stat-label">Market Outstanding</div><div class="stat-value" style="color:var(--danger)">${formatCurrency(outstanding)}</div></div>
         <div class="stat-card"><div class="stat-label">Current Stock Value</div><div class="stat-value" style="color:var(--info)">${formatCurrency(stockValue)}</div></div>
       `;
 
-      // 2. Low Stock
-      const lsBody = document.querySelector('#lowStockTable tbody');
-      lsBody.innerHTML = '';
-      const lowStockBatches = batches.filter(b => b.quantity <= 15).sort((a,b) => a.quantity - b.quantity);
-      lowStockBatches.forEach(b => {
-        const p = getProduct(b.product_id);
-        const color = b.quantity === 0 ? 'var(--danger)' : 'var(--warn)';
-        lsBody.innerHTML += `<tr><td>${p.name}</td><td style="color:var(--muted)">${b.id}</td><td style="color:${color}; font-weight:700">${b.quantity}</td></tr>`;
+      // 2. High Selling & Low Selling (by product)
+      const productSales = {};
+      sale_items.forEach(item => {
+        const key = item.product_name;
+        if (!productSales[key]) productSales[key] = { qty: 0, revenue: 0 };
+        productSales[key].qty += item.qty;
+        productSales[key].revenue += (item.qty * item.price);
       });
 
-      // 3. Recent Sales
-      const rsBody = document.querySelector('#recentSalesTable tbody');
-      rsBody.innerHTML = '';
-      const recent = [...sales].reverse().slice(0, 5);
-      if(recent.length === 0) rsBody.innerHTML = '<tr><td colspan="4" class="text-center">No sales yet</td></tr>';
-      
-      recent.forEach(s => {
-        const time = s.created_at.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const type = s.customer_id ? '<span class="badge badge-warn">Credit/Mapped</span>' : '<span class="badge badge-ok">Walk-in</span>';
-        rsBody.innerHTML += `<tr><td style="font-family:var(--mono)">${s.id}</td><td style="font-weight:600">${formatCurrency(s.total_amount)}</td><td>${type}</td><td style="color:var(--muted)">${time}</td></tr>`;
+      const sortedProducts = Object.entries(productSales)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.qty - a.qty);
+
+      // High Selling (top 5)
+      const hsBody = document.querySelector('#highSellingTable tbody');
+      hsBody.innerHTML = '';
+      const topSelling = sortedProducts.slice(0, 5);
+      if (topSelling.length === 0) {
+        hsBody.innerHTML = '<tr><td colspan="3" class="text-center">No sales data yet</td></tr>';
+      } else {
+        topSelling.forEach(p => {
+          hsBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--ok)">${p.qty}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
+        });
+      }
+
+      // Low Selling (bottom 5, only products that have sold at least 1)
+      const lsellBody = document.querySelector('#lowSellingTable tbody');
+      lsellBody.innerHTML = '';
+      const bottomSelling = [...sortedProducts].reverse().slice(0, 5);
+      if (bottomSelling.length === 0) {
+        // Show products with 0 sales from inventory
+        const noSaleProducts = products.slice(0, 5);
+        noSaleProducts.forEach(p => {
+          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--danger)">0</td><td>${formatCurrency(0)}</td></tr>`;
+        });
+      } else {
+        bottomSelling.forEach(p => {
+          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--warn)">${p.qty}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
+        });
+      }
+
+      // 5. Old Stock (batches older than 5 days with remaining qty)
+      const osBody = document.querySelector('#oldStockTable tbody');
+      osBody.innerHTML = '';
+      const now = Date.now();
+      const oldBatches = batches
+        .filter(b => b.quantity > 0 && b.created_at)
+        .map(b => ({ ...b, ageDays: Math.floor((now - b.created_at.getTime()) / 86400000) }))
+        .filter(b => b.ageDays >= 5)
+        .sort((a, b) => b.ageDays - a.ageDays);
+
+      if (oldBatches.length === 0) {
+        osBody.innerHTML = '<tr><td colspan="4" class="text-center">No old stock</td></tr>';
+      } else {
+        oldBatches.forEach(b => {
+          const p = getProduct(b.product_id);
+          const ageColor = b.ageDays > 15 ? 'var(--danger)' : 'var(--warn)';
+          osBody.innerHTML += `<tr><td style="font-weight:500">${p.name}</td><td style="color:var(--muted)">${b.id}</td><td style="font-weight:700;color:${ageColor}">${b.ageDays}d</td><td>${b.quantity} ${p.unit}</td></tr>`;
+        });
+      }
+
+      // 6. Time Period Summary Cards (Today / This Week / This Month)
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const dayOfWeek = today.getDay() || 7; // Sunday = 7
+      const startOfWeek = new Date(startOfDay);
+      startOfWeek.setDate(startOfWeek.getDate() - (dayOfWeek - 1));
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      function calcPeriod(startDate) {
+        const filtered = sales.filter(s => s.created_at >= startDate);
+        const rev = filtered.reduce((sum, s) => sum + s.total_amount, 0);
+        const count = filtered.length;
+        const avg = count > 0 ? rev / count : 0;
+        return { rev, count, avg };
+      }
+
+      const todayData = calcPeriod(startOfDay);
+      const weekData = calcPeriod(startOfWeek);
+      const monthData = calcPeriod(startOfMonth);
+
+      document.getElementById('tcTodayRev').innerText = formatCurrency(todayData.rev);
+      document.getElementById('tcTodayBills').innerText = todayData.count;
+      document.getElementById('tcTodayAvg').innerText = formatCurrency(todayData.avg);
+
+      document.getElementById('tcWeekRev').innerText = formatCurrency(weekData.rev);
+      document.getElementById('tcWeekBills').innerText = weekData.count;
+      document.getElementById('tcWeekAvg').innerText = formatCurrency(weekData.avg);
+
+      document.getElementById('tcMonthRev').innerText = formatCurrency(monthData.rev);
+      document.getElementById('tcMonthBills').innerText = monthData.count;
+      document.getElementById('tcMonthAvg').innerText = formatCurrency(monthData.avg);
+
+      // 7. Sales Timeline (day-by-day breakdown)
+      const tlBody = document.querySelector('#salesTimelineTable tbody');
+      tlBody.innerHTML = '';
+
+      // Group sales by date
+      const salesByDate = {};
+      sales.forEach(s => {
+        const dateKey = s.created_at.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        if (!salesByDate[dateKey]) salesByDate[dateKey] = { sales: [], items: [] };
+        salesByDate[dateKey].sales.push(s);
       });
+
+      // Match sale items to their sale date
+      sale_items.forEach(item => {
+        const sale = sales.find(s => s.id === item.sale_id);
+        if (sale) {
+          const dateKey = sale.created_at.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+          if (salesByDate[dateKey]) salesByDate[dateKey].items.push(item);
+        }
+      });
+
+      const dateEntries = Object.entries(salesByDate).reverse(); // newest first
+
+      if (dateEntries.length === 0) {
+        tlBody.innerHTML = '<tr><td colspan="5" class="text-center">No sales recorded yet. Start billing to see timeline.</td></tr>';
+      } else {
+        dateEntries.forEach(([date, data]) => {
+          const rev = data.sales.reduce((sum, s) => sum + s.total_amount, 0);
+          const avg = rev / data.sales.length;
+
+          // Build product tags for this day
+          const itemCounts = {};
+          data.items.forEach(item => {
+            if (!itemCounts[item.product_name]) itemCounts[item.product_name] = 0;
+            itemCounts[item.product_name] += item.qty;
+          });
+          const productTags = Object.entries(itemCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, qty]) => `<span class="badge" style="background:var(--accent-subtle);color:var(--accent);margin:2px 4px 2px 0;display:inline-block">${name} <strong>${qty}</strong></span>`)
+            .join('');
+
+          tlBody.innerHTML += `
+            <tr>
+              <td style="font-weight:500; color:var(--text-strong)">${date}</td>
+              <td style="font-weight:600">${data.sales.length}</td>
+              <td style="font-weight:600; color:var(--ok)">${formatCurrency(rev)}</td>
+              <td style="color:var(--muted-strong)">${formatCurrency(avg)}</td>
+              <td style="max-width:300px">${productTags || '-'}</td>
+            </tr>
+          `;
+        });
+      }
     }
 
   </script>
