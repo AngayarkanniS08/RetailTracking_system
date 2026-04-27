@@ -557,9 +557,9 @@
         <!-- STOCK LIST SECTION -->
         <section id="stocklist" class="view-section">
           <div class="card-header">
-            <span>Stock Purchase List</span>
+            <span>Vendor Ledger</span>
             <div class="d-flex" style="gap: 10px;">
-              <input type="text" id="slSearch" class="input-field" placeholder="Search orders..." style="width: 200px;" onkeyup="renderStockList()">
+              <input type="text" id="slSearch" class="input-field" placeholder="Search vendors..." style="width: 200px;" onkeyup="renderStockList()">
               <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal')">+ Add Stock Entry</button>
             </div>
           </div>
@@ -567,7 +567,11 @@
           <!-- Summary Cards -->
           <div class="stats-grid" style="margin-bottom: 1.5rem;">
             <div class="stat-card">
-              <div class="stat-label">Total Purchases</div>
+              <div class="stat-label">Total Vendors</div>
+              <div class="stat-value" id="slTotalVendors">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Purchased</div>
               <div class="stat-value" id="slTotalAmount">₹0.00</div>
             </div>
             <div class="stat-card">
@@ -575,26 +579,21 @@
               <div class="stat-value" style="color:var(--ok)" id="slTotalPaid">₹0.00</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Total Balance Due</div>
+              <div class="stat-label">Balance Due</div>
               <div class="stat-value" style="color:var(--danger)" id="slTotalBalance">₹0.00</div>
             </div>
           </div>
 
           <div class="card-panel">
             <div class="table-container">
-              <table id="stockListTable">
+              <table id="vendorSummaryTable">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Stock Name</th>
-                    <th>Vendor</th>
-                    <th>Qty (kg)</th>
-                    <th>Base Amt (₹)</th>
-                    <th>GST (%)</th>
-                    <th>Total Bill (₹)</th>
-                    <th>Paid (₹)</th>
-                    <th>Balance (₹)</th>
-                    <th>Date</th>
+                    <th>Vendor Name</th>
+                    <th>Total Orders</th>
+                    <th>Total Purchased (₹)</th>
+                    <th>Total Paid (₹)</th>
+                    <th>Balance Due (₹)</th>
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -606,6 +605,56 @@
             </div>
           </div>
         </section>
+
+        <!-- Vendor History Modal -->
+        <div class="modal-overlay" id="vendorHistoryModal">
+          <div class="modal-content" style="max-width: 880px; width: 95%;">
+            <div class="modal-header">
+              <div>
+                <div class="modal-title" id="vendorHistoryTitle">Purchase History</div>
+                <div style="font-size:0.8rem; color:var(--muted); margin-top:2px;" id="vendorHistorySubtitle"></div>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-outline btn-sm" id="vendorRestockBtn">+ Restock This Vendor</button>
+                <button class="close-btn" onclick="closeModal('vendorHistoryModal')">&times;</button>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+              <div style="flex:1; background:var(--bg-100); border-radius:var(--radius-md); padding:12px; min-width:120px;">
+                <div style="font-size:0.75rem; color:var(--muted); margin-bottom:4px;">Total Billed</div>
+                <div style="font-size:1.15rem; font-weight:700; color:var(--text-strong);" id="vhTotalBilled">₹0.00</div>
+              </div>
+              <div style="flex:1; background:var(--bg-100); border-radius:var(--radius-md); padding:12px; min-width:120px;">
+                <div style="font-size:0.75rem; color:var(--muted); margin-bottom:4px;">Total Paid</div>
+                <div style="font-size:1.15rem; font-weight:700; color:var(--ok);" id="vhTotalPaid">₹0.00</div>
+              </div>
+              <div style="flex:1; background:var(--bg-100); border-radius:var(--radius-md); padding:12px; min-width:120px;">
+                <div style="font-size:0.75rem; color:var(--muted); margin-bottom:4px;">Balance Due</div>
+                <div style="font-size:1.15rem; font-weight:700;" id="vhBalance">₹0.00</div>
+              </div>
+            </div>
+            <div class="table-container">
+              <table style="font-size:0.85rem;">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Stock Name</th>
+                    <th>Qty</th>
+                    <th>Base Amt</th>
+                    <th>GST</th>
+                    <th>Total Bill</th>
+                    <th>Paid</th>
+                    <th>Balance</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="vendorHistoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
       </main>
     </div>
@@ -1627,60 +1676,131 @@ ${receipt}
        ======================================================================= */
 
     function renderStockList() {
-      const tbody = document.querySelector('#stockListTable tbody');
+      const tbody = document.querySelector('#vendorSummaryTable tbody');
       tbody.innerHTML = '';
 
       const srch = document.getElementById('slSearch') ? document.getElementById('slSearch').value.toLowerCase() : '';
 
-      let totalAmt = 0, totalPaid = 0, totalBal = 0;
-
+      // Group stock_list entries by vendor_name
+      const vendorMap = {};
       stock_list.forEach(entry => {
-        // Search filter spanning all attributes
-        const searchStr = `${entry.id} ${entry.stock_name} ${entry.vendor_name} ${entry.qty_kg} ${entry.amount} ${entry.paid} ${entry.balance}`.toLowerCase();
-        if (srch && !searchStr.includes(srch)) return;
+        const key = entry.vendor_name;
+        if (!vendorMap[key]) vendorMap[key] = [];
+        vendorMap[key].push(entry);
+      });
 
-        totalAmt += entry.amount;
-        totalPaid += entry.paid;
-        totalBal += entry.balance;
+      let totalAmt = 0, totalPaid = 0, totalBal = 0;
+      const vendorNames = Object.keys(vendorMap);
 
-        const statusBadge = entry.balance <= 0
-          ? '<span class="badge badge-ok">Paid</span>'
+      vendorNames.forEach(vendorName => {
+        if (srch && !vendorName.toLowerCase().includes(srch)) return;
+
+        const entries = vendorMap[vendorName];
+        const vTotal = entries.reduce((s, e) => s + e.amount, 0);
+        const vPaid  = entries.reduce((s, e) => s + e.paid, 0);
+        const vBal   = entries.reduce((s, e) => s + e.balance, 0);
+
+        totalAmt  += vTotal;
+        totalPaid += vPaid;
+        totalBal  += vBal;
+
+        const statusBadge = vBal <= 0
+          ? '<span class="badge badge-ok">Cleared</span>'
           : '<span class="badge badge-danger">Pending</span>';
 
-        const balColor = entry.balance > 0 ? 'var(--danger)' : 'var(--ok)';
-        const dateStr = entry.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-
-        let displayGst = entry.gst_rate;
-        if (displayGst === undefined) {
-          const matchedProduct = products.find(p => p.name.toLowerCase() === entry.stock_name.toLowerCase());
-          displayGst = matchedProduct ? matchedProduct.gst : null;
-        }
+        const balColor = vBal > 0 ? 'var(--danger)' : 'var(--ok)';
 
         tbody.innerHTML += `
           <tr>
-            <td style="font-family: var(--mono); color: var(--muted-strong);">${entry.id}</td>
-            <td style="font-weight: 500; color: var(--text-strong);">${entry.stock_name}</td>
-            <td>${entry.vendor_name}</td>
-            <td style="font-weight: 600;">${entry.qty_kg} kg</td>
-            <td>${formatCurrency(entry.base_amount || entry.amount)}</td>
-            <td style="color: var(--muted);">${displayGst ? displayGst + '%' : '-'}</td>
-            <td style="font-weight: 500">${formatCurrency(entry.amount)}</td>
-            <td style="color: var(--ok);">${formatCurrency(entry.paid)}</td>
-            <td style="font-weight: 700; color: ${balColor}">${formatCurrency(entry.balance)}</td>
-            <td style="color: var(--muted);">${dateStr}</td>
+            <td style="font-weight: 600; color: var(--text-strong);">${vendorName}</td>
+            <td style="text-align:center;">${entries.length}</td>
+            <td>${formatCurrency(vTotal)}</td>
+            <td style="color:var(--ok);">${formatCurrency(vPaid)}</td>
+            <td style="font-weight:700; color:${balColor};">${formatCurrency(vBal)}</td>
             <td>${statusBadge}</td>
-            <td style="display:flex; gap: 4px;">
-              <button class="btn btn-outline btn-sm" style="padding: 2px 8px; font-size: 0.75rem;" onclick="restockEntry('${entry.id}')" title="Buy more of this stock from this vendor">+ Restock</button>
-              ${entry.balance > 0 ? `<button class="btn btn-primary btn-sm" style="padding: 2px 8px; font-size: 0.75rem; background: var(--ok); border-color: var(--ok);" onclick="clearStockBalance('${entry.id}')" title="Mark pending balance as paid">Clear Balance</button>` : ''}
+            <td style="display:flex; gap:4px; flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" style="padding:3px 10px; font-size:0.78rem;" onclick="openVendorHistory('${vendorName.replace(/'/g, "\'")}')">View History</button>
+              ${vBal > 0 ? `<button class="btn btn-sm" style="padding:3px 10px; font-size:0.78rem; background:var(--ok); color:#fff; border:none; border-radius:var(--radius-sm); cursor:pointer;" onclick="clearVendorBalance('${vendorName.replace(/'/g, "\'")}')">Clear Balance</button>` : ''}
             </td>
           </tr>
         `;
       });
 
-      // Update summary cards
+      document.getElementById('slTotalVendors').innerText = vendorNames.length;
       document.getElementById('slTotalAmount').innerText = formatCurrency(totalAmt);
       document.getElementById('slTotalPaid').innerText = formatCurrency(totalPaid);
       document.getElementById('slTotalBalance').innerText = formatCurrency(totalBal);
+    }
+
+    function openVendorHistory(vendorName) {
+      const entries = stock_list.filter(e => e.vendor_name === vendorName);
+      const vTotal  = entries.reduce((s, e) => s + e.amount, 0);
+      const vPaid   = entries.reduce((s, e) => s + e.paid, 0);
+      const vBal    = entries.reduce((s, e) => s + e.balance, 0);
+
+      document.getElementById('vendorHistoryTitle').innerText = vendorName;
+      document.getElementById('vendorHistorySubtitle').innerText = `${entries.length} purchase order(s) on record`;
+      document.getElementById('vhTotalBilled').innerText = formatCurrency(vTotal);
+      document.getElementById('vhTotalPaid').innerText   = formatCurrency(vPaid);
+      const balEl = document.getElementById('vhBalance');
+      balEl.innerText = formatCurrency(vBal);
+      balEl.style.color = vBal > 0 ? 'var(--danger)' : 'var(--ok)';
+
+      // Restock button
+      const restockBtn = document.getElementById('vendorRestockBtn');
+      restockBtn.onclick = () => {
+        closeModal('vendorHistoryModal');
+        openModal('addStockEntryModal');
+        document.getElementById('slVendorName').value = vendorName;
+        updateSlUnit && updateSlUnit();
+      };
+
+      // Build history rows
+      const tbody = document.getElementById('vendorHistoryBody');
+      tbody.innerHTML = '';
+      entries.sort((a, b) => b.date - a.date).forEach(entry => {
+        let displayGst = entry.gst_rate;
+        if (displayGst === undefined) {
+          const mp = products.find(p => p.name.toLowerCase() === entry.stock_name.toLowerCase());
+          displayGst = mp ? mp.gst : null;
+        }
+        const balColor   = entry.balance > 0 ? 'var(--danger)' : 'var(--ok)';
+        const statusBadge = entry.balance <= 0
+          ? '<span class="badge badge-ok">Paid</span>'
+          : '<span class="badge badge-danger">Pending</span>';
+        const dateStr = entry.date.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-family:var(--mono); color:var(--muted-strong); font-size:0.78rem;">${entry.id}</td>
+            <td style="font-weight:500;">${entry.stock_name}</td>
+            <td>${entry.qty_kg} kg</td>
+            <td>${formatCurrency(entry.base_amount || entry.amount)}</td>
+            <td style="color:var(--muted);">${displayGst ? displayGst + '%' : '-'}</td>
+            <td style="font-weight:600;">${formatCurrency(entry.amount)}</td>
+            <td style="color:var(--ok);">${formatCurrency(entry.paid)}</td>
+            <td style="font-weight:700; color:${balColor};">${formatCurrency(entry.balance)}</td>
+            <td style="color:var(--muted); font-size:0.8rem;">${dateStr}</td>
+            <td>${statusBadge}</td>
+            <td>
+              ${entry.balance > 0 ? `<button class="btn btn-sm" style="padding:2px 8px; font-size:0.75rem; background:var(--ok); color:#fff; border:none; border-radius:var(--radius-sm); cursor:pointer;" onclick="clearStockBalance('${entry.id}')">Clear</button>` : ''}
+            </td>
+          </tr>
+        `;
+      });
+
+      openModal('vendorHistoryModal');
+    }
+
+    function clearVendorBalance(vendorName) {
+      if (confirm(`Mark ALL pending balances for ${vendorName} as fully paid?`)) {
+        stock_list.filter(e => e.vendor_name === vendorName && e.balance > 0).forEach(e => {
+          e.paid = e.amount;
+          e.balance = 0;
+        });
+        renderStockList();
+        openVendorHistory(vendorName); // Refresh modal if open
+      }
     }
 
     function clearStockBalance(id) {
