@@ -113,6 +113,21 @@
     .view-section { display: none; }
     .view-section.active { display: block; animation: rise 0.2s var(--ease-out); }
 
+    .date-group-header {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-100); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 10px 16px;
+      cursor: pointer; margin-bottom: 4px; transition: background var(--duration-fast);
+      user-select: none;
+    }
+    .date-group-header:hover { background: var(--panel-hover); }
+    .date-group-header .dg-date { font-weight: 600; color: var(--text-strong); font-size: 0.95rem; }
+    .date-group-header .dg-meta { font-size: 0.8rem; color: var(--muted); display:flex; gap:16px; }
+    .date-group-header .dg-arrow { color: var(--muted); transition: transform 0.2s; font-size:1.1rem; }
+    .date-group-header.open .dg-arrow { transform: rotate(90deg); }
+    .date-group-body { display: none; margin-bottom: 12px; }
+    .date-group-body.open { display: block; animation: rise 0.15s ease-out; }
+
     /* DASHBOARD CARDS & GRIDS */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 2rem; }
     .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); }
@@ -637,25 +652,8 @@
           </div>
 
           <div class="card-panel">
-            <div class="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Stock Name</th>
-                    <th>Qty</th>
-                    <th>Base Amt</th>
-                    <th>GST</th>
-                    <th>Total Bill</th>
-                    <th>Paid</th>
-                    <th>Balance</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="vendorHistoryBody"></tbody>
-              </table>
+            <div id="vendorHistoryBody">
+              <!-- Date-grouped accordions rendered by JS -->
             </div>
           </div>
         </section>
@@ -787,9 +785,15 @@
         <span id="slGstRateText">GST (0%): ₹0.00</span>
         <strong id="slTotalText" style="color:var(--text-strong)">Total Bill: ₹0.00</strong>
       </div>
-      <div class="input-group">
-        <label class="input-label">Amount Paid (₹)</label>
-        <input type="number" id="slPaid" class="input-field" placeholder="0.00" min="0">
+      <div class="d-flex">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Amount Paid (₹)</label>
+          <input type="number" id="slPaid" class="input-field" placeholder="0.00" min="0">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Purchase Date</label>
+          <input type="date" id="slPurchaseDate" class="input-field">
+        </div>
       </div>
       <button class="btn btn-primary btn-block" onclick="saveStockEntry()">Save Entry</button>
     </div>
@@ -1778,42 +1782,86 @@ ${receipt}
         if (typeof updateSlUnit === 'function') updateSlUnit();
       };
 
-      // Build history rows
-      const tbody = document.getElementById('vendorHistoryBody');
-      tbody.innerHTML = '';
-      entries.sort((a, b) => b.date - a.date).forEach(entry => {
-        let displayGst = entry.gst_rate;
-        if (displayGst === undefined) {
-          const mp = products.find(p => p.name.toLowerCase() === entry.stock_name.toLowerCase());
-          displayGst = mp ? mp.gst : null;
-        }
-        const balColor   = entry.balance > 0 ? 'var(--danger)' : 'var(--ok)';
-        const statusBadge = entry.balance <= 0
-          ? '<span class="badge badge-ok">Paid</span>'
-          : '<span class="badge badge-danger">Pending</span>';
-        const dateStr = entry.date.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+      // Build date-grouped accordion
+      const container = document.getElementById('vendorHistoryBody');
+      container.innerHTML = '';
 
-        tbody.innerHTML += `
-          <tr>
+      // Group entries by date string
+      const grouped = {};
+      entries.sort((a, b) => b.date - a.date).forEach(entry => {
+        const key = entry.date.toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' });
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(entry);
+      });
+
+      let firstGroup = true;
+      Object.entries(grouped).forEach(([dateStr, dayEntries]) => {
+        const groupId = 'dg_' + dateStr.replace(/\s+/g, '_').replace(/,/g,'');
+        const dayTotal = dayEntries.reduce((s, e) => s + e.amount, 0);
+        const dayPaid  = dayEntries.reduce((s, e) => s + e.paid, 0);
+        const dayBal   = dayEntries.reduce((s, e) => s + e.balance, 0);
+        const isOpen   = firstGroup; firstGroup = false;
+
+        // Build purchase rows for this date
+        let rows = '';
+        dayEntries.forEach(entry => {
+          let displayGst = entry.gst_rate;
+          if (displayGst === undefined) {
+            const mp = products.find(p => p.name.toLowerCase() === entry.stock_name.toLowerCase());
+            displayGst = mp ? mp.gst : null;
+          }
+          const balColor = entry.balance > 0 ? 'var(--danger)' : 'var(--ok)';
+          const statusBadge = entry.balance <= 0
+            ? '<span class="badge badge-ok">Paid</span>'
+            : '<span class="badge badge-danger">Pending</span>';
+
+          rows += `<tr>
             <td style="font-family:var(--mono); color:var(--muted-strong); font-size:0.78rem;">${entry.id}</td>
-            <td style="font-weight:500;">${entry.stock_name}</td>
+            <td style="font-weight:600;">${entry.stock_name}</td>
             <td>${entry.qty_kg} kg</td>
             <td>${formatCurrency(entry.base_amount || entry.amount)}</td>
             <td style="color:var(--muted);">${displayGst ? displayGst + '%' : '-'}</td>
-            <td style="font-weight:600;">${formatCurrency(entry.amount)}</td>
+            <td style="font-weight:700;">${formatCurrency(entry.amount)}</td>
             <td style="color:var(--ok);">${formatCurrency(entry.paid)}</td>
             <td style="font-weight:700; color:${balColor};">${formatCurrency(entry.balance)}</td>
-            <td style="color:var(--muted); font-size:0.8rem;">${dateStr}</td>
             <td>${statusBadge}</td>
-            <td>
-              ${entry.balance > 0 ? `<button class="btn btn-sm" style="padding:2px 8px; font-size:0.75rem; background:var(--ok); color:#fff; border:none; border-radius:var(--radius-sm); cursor:pointer;" onclick="clearStockBalance('${entry.id}')">Clear</button>` : ''}
-            </td>
-          </tr>
-        `;
+            <td>${entry.balance > 0 ? `<button class="btn btn-sm" style="padding:2px 8px; font-size:0.75rem; background:var(--ok); color:#fff; border:none; border-radius:var(--radius-sm); cursor:pointer;" onclick="clearStockBalance('${entry.id}')">Clear</button>` : ''}</td>
+          </tr>`;
+        });
+
+        container.innerHTML += `
+          <div class="date-group-header ${isOpen ? 'open' : ''}" onclick="toggleDateGroup('${groupId}')">
+            <div class="dg-date">📅 ${dateStr}</div>
+            <div class="dg-meta">
+              <span>${dayEntries.length} order(s)</span>
+              <span>Total: <strong>${formatCurrency(dayTotal)}</strong></span>
+              <span style="color:var(--ok)">Paid: ${formatCurrency(dayPaid)}</span>
+              ${dayBal > 0 ? `<span style="color:var(--danger)">Due: ${formatCurrency(dayBal)}</span>` : '<span style="color:var(--ok)">✓ Cleared</span>'}
+            </div>
+            <span class="dg-arrow">▶</span>
+          </div>
+          <div class="date-group-body ${isOpen ? 'open' : ''}" id="${groupId}">
+            <div class="table-container" style="margin-bottom:0;">
+              <table style="font-size:0.85rem;">
+                <thead><tr>
+                  <th>ID</th><th>Stock Name</th><th>Qty</th><th>Base Amt</th><th>GST</th>
+                  <th>Total Bill</th><th>Paid</th><th>Balance</th><th>Status</th><th>Action</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>`;
       });
 
       // Navigate to vendor history sub-page
       switchTab('vendorhistory');
+    }
+
+    function toggleDateGroup(id) {
+      const body = document.getElementById(id);
+      const header = body.previousElementSibling;
+      body.classList.toggle('open');
+      header.classList.toggle('open');
     }
 
     function clearVendorBalance(vendorName) {
@@ -1881,7 +1929,7 @@ ${receipt}
         gst_amount: gstAmount,
         paid: paid,
         balance: totalAmount - paid,
-        date: new Date()
+        date: (() => { const d = document.getElementById('slPurchaseDate').value; return d ? new Date(d) : new Date(); })()
       });
 
       // Clear form
@@ -1890,6 +1938,7 @@ ${receipt}
       document.getElementById('slQty').value = '';
       document.getElementById('slAmount').value = '';
       document.getElementById('slPaid').value = '';
+      document.getElementById('slPurchaseDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('slGstRateText').innerText = 'GST (0%): ₹0.00';
       document.getElementById('slTotalText').innerText = 'Total Bill: ₹0.00';
 
