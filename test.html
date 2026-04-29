@@ -1821,6 +1821,14 @@ Item                 Qty  Price   Total
             ? '<span class="badge badge-ok" style="font-size:0.7rem;">Cleared</span>' 
             : `<span class="badge badge-danger" style="font-size:0.7rem;">₹${Math.abs(entryBal).toFixed(0)} due</span>`;
 
+          // View button — for invoices OR payments
+          let viewBtn = '';
+          if (isPay) {
+            viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewPaymentReceipt('${entry.id}')">View</button>`;
+          } else if (entry.sale_id) {
+            viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewBillReceipt('${entry.sale_id}')">View</button>`;
+          }
+
           tbody.innerHTML += `
             <tr class="${billsClass}" style="display:none; background: var(--bg-100);">
               <td colspan="2" style="font-size:0.8rem; color:var(--muted); padding-left:24px;">${dateStr} ${timeStr}</td>
@@ -1830,9 +1838,7 @@ Item                 Qty  Price   Total
               <td style="font-size:0.85rem; color:var(--ok);">${formatCurrency(entry.amount_paid)}</td>
               <td style="font-size:0.85rem;">${balBadge}</td>
               <td></td>
-              <td>
-                ${entry.sale_id ? `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewBillReceipt('${entry.sale_id}')">View</button>` : ''}
-              </td>
+              <td>${viewBtn}</td>
             </tr>
           `;
         });
@@ -1914,10 +1920,53 @@ Remaining Debt Balance:  Rs. ${newBalance.toFixed(2)}
         <body style="font-family: monospace; white-space: pre-wrap; padding: 20px;">
 ${receipt}
         </body>
-        <script>window.print(); window.onafterprint = function(){ window.close(); }<\\/script>
+        <script>window.print(); window.onafterprint = function(){ window.close(); }<\/script>
         </html>
       `);
       printWindow.document.close();
+    }
+
+    function viewPaymentReceipt(ledgerId) {
+      const entry = credit_ledger.find(l => l.id === ledgerId);
+      if (!entry) return;
+
+      const cust = getCustomer(entry.customer_id);
+      const custName = cust ? cust.name : 'Unknown';
+      const dateTime = entry.created_at.toLocaleString('en-IN');
+
+      // Calculate balance at the time of this payment
+      const allEntries = credit_ledger.filter(l => l.customer_id === entry.customer_id);
+      let runningBilled = 0, runningPaid = 0;
+      allEntries.sort((a, b) => a.created_at - b.created_at).forEach(l => {
+        runningBilled += l.amount_billed;
+        runningPaid += l.amount_paid;
+        if (l.id === ledgerId) return;
+      });
+      const balAfter = runningBilled - runningPaid;
+
+      const receipt = `========================================
+        PUDEERA FASHION
+        Shop no 9, 1st floor, Vallioor
+        busstand
+========================================
+Receipt No: ${entry.id}
+Date: ${dateTime}
+Customer: ${custName}
+Type: CREDIT BALANCE SETTLEMENT
+========================================
+
+Amount Cleared:              ${formatCurrency(entry.amount_paid)}
+
+----------------------------------------
+Remaining Balance:           ${formatCurrency(balAfter > 0 ? balAfter : 0)}
+----------------------------------------
+${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
+========================================
+     Thank You For Your Payment!
+========================================`;
+
+      document.getElementById('billReceiptContent').innerText = receipt;
+      openModal('billReceiptModal');
     }
 
 
