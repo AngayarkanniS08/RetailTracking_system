@@ -354,6 +354,10 @@
                   <span>Subtotal</span>
                   <span id="cartSubtotal">₹0.00</span>
                 </div>
+                <div class="summary-row" style="align-items:center;">
+                  <span>Discount (₹)</span>
+                  <input type="number" id="cartDiscountInput" class="input-field" placeholder="0" min="0" style="width:100px; padding:4px 8px; text-align:right; font-size:0.85rem;" oninput="calculateCart()">
+                </div>
                 <div class="summary-row">
                   <span>GST Amount</span>
                   <span id="cartGst">₹0.00</span>
@@ -477,11 +481,13 @@
                 <thead>
                   <tr>
                     <th>ID</th>
+                    <th>Date</th>
                     <th>Customer Name</th>
                     <th>Phone</th>
                     <th>Total Purchases</th>
                     <th>Total Paid</th>
                     <th>Outstanding Balance</th>
+                    <th>Bills Cleared</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -993,8 +999,10 @@
     
     // Credit Ledger (Tracking total purchased vs paid)
     let credit_ledger = [
-      { id: 'L001', customer_id: 'C001', sale_id: null, amount_billed: 1500, amount_paid: 1000, balance: 500, created_at: new Date(Date.now() - 86400000) },
-      { id: 'L002', customer_id: 'C002', sale_id: null, amount_billed: 5000, amount_paid: 5000, balance: 0, created_at: new Date(Date.now() - 172800000) }
+      { id: 'L001', customer_id: 'C001', sale_id: 'INV002', amount_billed: 2500, amount_paid: 1500, balance: 1000, created_at: new Date() },
+      { id: 'L002', customer_id: 'C001', sale_id: 'INV007', amount_billed: 3200, amount_paid: 2000, balance: 1200, created_at: new Date(Date.now() - 86400000 * 3) },
+      { id: 'L003', customer_id: 'C002', sale_id: 'INV004', amount_billed: 4800, amount_paid: 3000, balance: 1800, created_at: new Date(Date.now() - 86400000) },
+      { id: 'L004', customer_id: 'C002', sale_id: 'INV010', amount_billed: 5500, amount_paid: 4000, balance: 1500, created_at: new Date(Date.now() - 86400000 * 6) }
     ];
 
     // POS State
@@ -1138,7 +1146,12 @@
       const gstAmount = subtotal * (gstRate / 100);
       const grandTotal = subtotal + gstAmount;
 
-      const receipt = `========================================
+      // Check credit balance for this bill
+      const creditEntry = credit_ledger.find(l => l.sale_id === billId);
+      const amtPaid = creditEntry ? creditEntry.amount_paid : (sale.amount_paid || grandTotal);
+      const billBalance = grandTotal - amtPaid;
+
+      let receipt = `========================================
         PUDHEERA FASHIONS
         Shop no 9, 1st floor, Vallioor
         busstand
@@ -1155,9 +1168,13 @@ Subtotal:                           ${formatCurrency(subtotal)}
 GST (${gstRate}%):                        ${formatCurrency(gstAmount)}
 GRAND TOTAL:                        ${formatCurrency(grandTotal)}
 ========================================
-Amount Paid:                        ${formatCurrency(sale.amount_paid)}
+Amount Paid:                        ${formatCurrency(amtPaid)}`;
 
-         Thank you for shopping!
+      if (billBalance > 0) {
+        receipt += `\nBalance Due:                        ${formatCurrency(billBalance)}`;
+      }
+
+      receipt += `\n\n         Thank you for shopping!
 ========================================`;
 
       document.getElementById('billReceiptContent').innerText = receipt;
@@ -1276,20 +1293,28 @@ Amount Paid:                        ${formatCurrency(sale.amount_paid)}
       if(cart.length === 0) {
         container.innerHTML = `<div class="text-center" style="color:var(--muted); margin-top: 50px;">Cart is empty. Select items to bill.</div>`;
       } else {
-        container.innerHTML = cart.map(c => {
+        container.innerHTML = cart.map((c, idx) => {
           const product = getProduct(c.product_id);
           const gstText = (product && product.gst) ? ` <span style="font-size:0.7rem; color:var(--muted)">+${product.gst}% GST</span>` : '';
           const unit = product ? product.unit : '';
+          const itemDisc = c.discount || 0;
+          const lineTotal = (c.price * c.qty) - itemDisc;
           return `
             <div class="cart-item">
-              <div class="ci-details">
+              <div class="ci-details" style="flex:1;">
                 <div class="ci-name">${c.product_name}</div>
-                <div class="ci-price">${formatCurrency(c.price)} x ${c.qty} ${unit}${gstText}</div>
+                <div class="ci-price">${formatCurrency(c.price)} x ${c.qty} ${unit} = ${formatCurrency(c.price * c.qty)}${gstText}</div>
+                ${itemDisc > 0 ? `<div style="font-size:0.75rem; color:var(--ok);">Item Disc: -${formatCurrency(itemDisc)} → ${formatCurrency(lineTotal)}</div>` : ''}
               </div>
-              <div class="ci-actions">
-                <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', -1)">-</button>
-                <span style="font-weight:600; width:20px; text-align:center;">${c.qty}</span>
-                <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', 1)">+</button>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                <div class="ci-actions">
+                  <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', -1)">-</button>
+                  <span style="font-weight:600; width:20px; text-align:center;">${c.qty}</span>
+                  <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', 1)">+</button>
+                </div>
+                <input type="number" placeholder="Disc ₹" min="0" value="${itemDisc || ''}" 
+                  style="width:70px; padding:2px 6px; font-size:0.75rem; border:1px solid var(--border); border-radius:var(--radius-sm); text-align:right; background:var(--bg-100); color:var(--text-strong);"
+                  oninput="setItemDiscount(${idx}, this.value)">
               </div>
             </div>
           `;
@@ -1298,23 +1323,37 @@ Amount Paid:                        ${formatCurrency(sale.amount_paid)}
       calculateCart();
     }
 
+    function setItemDiscount(idx, val) {
+      const disc = parseFloat(val) || 0;
+      const item = cart[idx];
+      if (!item) return;
+      const maxLine = item.price * item.qty;
+      item.discount = Math.min(disc, maxLine); // Can't discount more than line total
+      calculateCart();
+    }
+
     function calculateCart() {
       let subtotal = 0;
       let totalGst = 0;
+      let totalItemDiscount = 0;
       
       const isGst = document.getElementById('enableGstToggle') ? document.getElementById('enableGstToggle').checked : true;
+      const billDiscount = parseFloat(document.getElementById('cartDiscountInput') ? document.getElementById('cartDiscountInput').value : 0) || 0;
 
       cart.forEach(c => {
         const product = getProduct(c.product_id);
         const itemBaseTotal = c.price * c.qty;
-        subtotal += itemBaseTotal;
+        const itemDisc = c.discount || 0;
+        totalItemDiscount += itemDisc;
+        const afterItemDisc = itemBaseTotal - itemDisc;
+        subtotal += afterItemDisc;
         
         if (isGst && product && product.gst) {
-          totalGst += itemBaseTotal * (parseFloat(product.gst) / 100);
+          totalGst += afterItemDisc * (parseFloat(product.gst) / 100);
         }
       });
       
-      const total = subtotal + totalGst;
+      const total = subtotal - billDiscount + totalGst;
 
       document.getElementById('cartSubtotal').innerText = formatCurrency(subtotal);
       document.getElementById('cartGst').innerText = totalGst > 0 ? formatCurrency(totalGst) : "₹0.00";
@@ -1326,7 +1365,7 @@ Amount Paid:                        ${formatCurrency(sale.amount_paid)}
         document.getElementById('amountPaidInput').value = total.toFixed(2);
       }
       
-      return { subtotal, gst: totalGst, total, isGst };
+      return { subtotal, gst: totalGst, itemDiscount: totalItemDiscount, discount: billDiscount, total, isGst };
     }
 
     function processCheckout() {
@@ -1354,7 +1393,7 @@ Amount Paid:                        ${formatCurrency(sale.amount_paid)}
 
       // 2. Deduct Stock & Create Sale Items
       cart.forEach(item => {
-        sale_items.push({ id: generateId('SI'), sale_id: saleId, batch_id: item.batch_id, quantity: item.qty, price: item.price });
+        sale_items.push({ id: generateId('SI'), sale_id: saleId, batch_id: item.batch_id, product_id: item.product_id, product_name: item.product_name, quantity: item.qty, qty: item.qty, price: item.price });
         const batch = batches.find(b => b.id === item.batch_id);
         if(batch) batch.quantity -= item.qty;
       });
@@ -1379,6 +1418,7 @@ Amount Paid:                        ${formatCurrency(sale.amount_paid)}
       // 5. Reset POS
       cart = [];
       document.getElementById('amountPaidInput').value = '';
+      document.getElementById('cartDiscountInput').value = '';
       document.getElementById('billCustomerSelect').value = '';
       renderCart();
       renderPOSItems();
@@ -1408,17 +1448,27 @@ Item                 Qty  Price   Total
         const product = getProduct(item.product_id);
         const unit = product ? product.unit : '';
         const qtyDisplay = unit ? `${item.qty} ${unit}` : item.qty.toString();
+        const itemDisc = item.discount || 0;
+        const lineGross = item.qty * item.price;
+        const lineNet = lineGross - itemDisc;
         let name = item.product_name.substring(0, 18).padEnd(20, ' ');
         let q = qtyDisplay.padEnd(8, ' ');
         let p = item.price.toFixed(2).padStart(6, ' ');
-        let t = (item.qty * item.price).toFixed(2).padStart(7, ' ');
+        let t = lineGross.toFixed(2).padStart(7, ' ');
         receipt += `${name}${q}${p}${t}\n`;
+        if (itemDisc > 0) {
+          receipt += `  Item Discount:          -${formatCurrency(itemDisc).padStart(10, ' ')}\n`;
+          receipt += `  After Disc:              ${formatCurrency(lineNet).padStart(10, ' ')}\n`;
+        }
       });
 
       receipt += `----------------------------------------\n`;
       receipt += `Subtotal:                  ${formatCurrency(calc.subtotal).padStart(12, ' ')}\n`;
+      if(calc.discount > 0) {
+        receipt += `Bill Discount:            -${formatCurrency(calc.discount).padStart(12, ' ')}\n`;
+      }
       if(calc.isGst) {
-        receipt += `GST (18%):                 ${formatCurrency(calc.gst).padStart(12, ' ')}\n`;
+        receipt += `GST:                       ${formatCurrency(calc.gst).padStart(12, ' ')}\n`;
       }
       receipt += `GRAND TOTAL:               ${formatCurrency(calc.total).padStart(12, ' ')}\n`;
       receipt += `========================================\n`;
@@ -1712,12 +1762,16 @@ Item                 Qty  Price   Total
     }
 
     function getCustomerLedgerTotals(custId) {
-      let totalBilled = 0, totalPaid = 0;
+      let totalBilled = 0, totalPaid = 0, billsCleared = 0, totalBills = 0;
       credit_ledger.filter(l => l.customer_id === custId).forEach(l => {
         totalBilled += l.amount_billed;
         totalPaid += l.amount_paid;
+        if (l.amount_billed > 0) {
+          totalBills++;
+          if (l.balance <= 0) billsCleared++;
+        }
       });
-      return { totalBilled, totalPaid, balance: totalBilled - totalPaid };
+      return { totalBilled, totalPaid, balance: totalBilled - totalPaid, billsCleared, totalBills };
     }
 
     function renderCredit() {
@@ -1727,20 +1781,61 @@ Item                 Qty  Price   Total
       customers.forEach(c => {
         const totals = getCustomerLedgerTotals(c.id);
         const balColor = totals.balance > 0 ? 'var(--danger)' : 'var(--ok)';
+        const entries = credit_ledger.filter(l => l.customer_id === c.id);
+        const firstDate = entries.length > 0 ? 
+          entries.reduce((min, l) => l.created_at < min ? l.created_at : min, entries[0].created_at)
+            .toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+        const billsClass = `credit-bills-${c.id}`;
 
         tbody.innerHTML += `
           <tr>
             <td style="font-family: var(--mono);">${c.id}</td>
+            <td style="color: var(--muted); font-size:0.85rem;">${firstDate}</td>
             <td style="font-weight: 500; color: var(--text-strong);">${c.name}</td>
             <td>${c.phone}</td>
             <td>${formatCurrency(totals.totalBilled)}</td>
             <td>${formatCurrency(totals.totalPaid)}</td>
             <td style="font-weight: 700; color: ${balColor}">${formatCurrency(totals.balance)}</td>
             <td>
+              <span class="badge ${totals.billsCleared === totals.totalBills && totals.totalBills > 0 ? 'badge-ok' : 'badge-warn'}">
+                ${totals.billsCleared} / ${totals.totalBills}
+              </span>
+            </td>
+            <td style="display:flex; gap:4px; flex-wrap:wrap;">
               ${totals.balance > 0 ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${c.id}')">Settle</button>` : `<span class="badge badge-ok">Cleared</span>`}
+              ${entries.length > 0 ? `<button class="btn btn-outline btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="toggleBills('${billsClass}')">Show Bills</button>` : ''}
             </td>
           </tr>
         `;
+
+        // Add expandable bill detail rows (hidden by default)
+        entries.sort((a, b) => b.created_at - a.created_at).forEach(entry => {
+          const dateStr = entry.created_at.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+          const timeStr = entry.created_at.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+          const isPay = entry.amount_billed === 0;
+          const typeLabel = isPay 
+            ? '<span style="color:var(--ok); font-weight:600;">💰 Payment</span>' 
+            : `<span style="color:var(--accent);">🧾 ${entry.sale_id || 'Invoice'}</span>`;
+          const entryBal = entry.balance;
+          const balBadge = entryBal <= 0 
+            ? '<span class="badge badge-ok" style="font-size:0.7rem;">Cleared</span>' 
+            : `<span class="badge badge-danger" style="font-size:0.7rem;">₹${Math.abs(entryBal).toFixed(0)} due</span>`;
+
+          tbody.innerHTML += `
+            <tr class="${billsClass}" style="display:none; background: var(--bg-100);">
+              <td colspan="2" style="font-size:0.8rem; color:var(--muted); padding-left:24px;">${dateStr} ${timeStr}</td>
+              <td style="font-size:0.85rem;">${typeLabel}</td>
+              <td></td>
+              <td style="font-size:0.85rem;">${isPay ? '-' : formatCurrency(entry.amount_billed)}</td>
+              <td style="font-size:0.85rem; color:var(--ok);">${formatCurrency(entry.amount_paid)}</td>
+              <td style="font-size:0.85rem;">${balBadge}</td>
+              <td></td>
+              <td>
+                ${entry.sale_id ? `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewBillReceipt('${entry.sale_id}')">View</button>` : ''}
+              </td>
+            </tr>
+          `;
+        });
       });
     }
 
