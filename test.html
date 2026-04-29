@@ -528,6 +528,37 @@
             </div>
           </div>
 
+          <!-- Purchase Time Period Summary Cards -->
+          <div class="time-cards" style="margin-top: 1.5rem;">
+            <div class="time-card today">
+              <div class="time-card-icon">📦</div>
+              <div class="time-card-label">Purchases Today</div>
+              <div class="time-card-revenue" id="pcTodayAmount">₹0.00</div>
+              <div class="time-card-meta">
+                <span>🧾 <strong id="pcTodayPurchases">0</strong> purchases</span>
+                <span>💰 Paid: <strong id="pcTodayPaid">₹0</strong></span>
+              </div>
+            </div>
+            <div class="time-card week">
+              <div class="time-card-icon">📊</div>
+              <div class="time-card-label">This Week</div>
+              <div class="time-card-revenue" id="pcWeekAmount">₹0.00</div>
+              <div class="time-card-meta">
+                <span>🧾 <strong id="pcWeekPurchases">0</strong> purchases</span>
+                <span>💰 Paid: <strong id="pcWeekPaid">₹0</strong></span>
+              </div>
+            </div>
+            <div class="time-card month">
+              <div class="time-card-icon">📆</div>
+              <div class="time-card-label">This Month</div>
+              <div class="time-card-revenue" id="pcMonthAmount">₹0.00</div>
+              <div class="time-card-meta">
+                <span>🧾 <strong id="pcMonthPurchases">0</strong> purchases</span>
+                <span>💰 Paid: <strong id="pcMonthPaid">₹0</strong></span>
+              </div>
+            </div>
+          </div>
+
           <div class="stats-grid" id="reportsStats">
             <!-- Rendered via JS -->
           </div>
@@ -563,6 +594,17 @@
             <div class="table-container">
               <table class="data-table" style="font-size: 0.9rem;" id="salesTimelineTable">
                 <thead><tr><th>Date</th><th>Bills</th><th>Revenue</th><th>Avg Bill</th><th>Products Sold</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Purchase Timeline -->
+          <div class="card-panel" style="margin-top: 1.5rem;">
+            <div class="card-header">📦 Purchase Timeline</div>
+            <div class="table-container">
+              <table class="data-table" style="font-size: 0.9rem;" id="purchaseTimelineTable">
+                <thead><tr><th>Date</th><th>Purchases</th><th>Amount Purchased</th><th>Amount Paid</th><th>Balance Due</th><th>Vendors</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
@@ -860,6 +902,20 @@
     </div>
   </div>
 
+  <!-- Bill Receipt Modal -->
+  <div class="modal-overlay" id="billReceiptModal">
+    <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div class="modal-title">Bill Receipt</div>
+        <button class="close-btn" onclick="closeModal('billReceiptModal')">&times;</button>
+      </div>
+      <div id="billReceiptContent" style="font-family: monospace; background: #fff; color: #000; padding: 1.5rem; border-radius: 8px; font-size: 13px; line-height: 1.6; white-space: pre-wrap;">
+        <!-- Bill content rendered here -->
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top: 1rem;" onclick="printBillReceipt()">Print</button>
+    </div>
+  </div>
+
   <script>
     /* =======================================================================
        1. MOCK DATABASE (In-Memory State)
@@ -1049,8 +1105,75 @@
       document.getElementById('slTotalText').innerText = `Total Bill: ${formatCurrency(totalAmount)}`;
     }
 
+    function toggleBills(billsClass) {
+      const rows = document.querySelectorAll(`.${billsClass}`);
+      rows.forEach(row => {
+        row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+      });
+    }
+
+    function viewBillReceipt(billId) {
+      const sale = sales.find(s => s.id === billId);
+      if (!sale) return;
+
+      const items = sale_items.filter(item => item.sale_id === billId);
+      const customerName = sale.customer_id ? getCustomer(sale.customer_id).name : 'Walk-in';
+      const dateTime = sale.created_at.toLocaleString('en-IN');
+      
+      // Calculate totals
+      let subtotal = 0;
+      let itemRows = '';
+      
+      items.forEach(item => {
+        const total = item.qty * item.price;
+        subtotal += total;
+        const product = products.find(p => p.name === item.product_name);
+        const unit = product ? product.unit : 'pcs';
+        const qtyDisplay = `${item.qty} ${unit}`.padEnd(10);
+        itemRows += `${item.product_name.padEnd(18)} ${qtyDisplay} ${formatCurrency(item.price).padStart(10)} ${formatCurrency(total).padStart(12)}\n`;
+      });
+
+      // Assume 18% GST for now (can vary by product)
+      const gstRate = 18;
+      const gstAmount = subtotal * (gstRate / 100);
+      const grandTotal = subtotal + gstAmount;
+
+      const receipt = `========================================
+        PUDHEERA FASHIONS
+        Shop no 9, 1st floor, Vallioor
+        busstand
+========================================
+Invoice: ${billId}
+Date: ${dateTime}
+Customer: ${customerName}
+Type: Tax Invoice (GST ${gstRate}%)
+----------------------------------------
+Item              Qty        Price      Total
+----------------------------------------
+${itemRows}----------------------------------------
+Subtotal:                           ${formatCurrency(subtotal)}
+GST (${gstRate}%):                        ${formatCurrency(gstAmount)}
+GRAND TOTAL:                        ${formatCurrency(grandTotal)}
+========================================
+Amount Paid:                        ${formatCurrency(sale.amount_paid)}
+
+         Thank you for shopping!
+========================================`;
+
+      document.getElementById('billReceiptContent').innerText = receipt;
+      openModal('billReceiptModal');
+    }
+
+    function printBillReceipt() {
+      const content = document.getElementById('billReceiptContent').innerText;
+      const printWindow = window.open('about:blank', '', 'height=600,width=800');
+      printWindow.document.write(`<pre style="font-family:monospace; font-size:12px; line-height:1.6; margin:20px; white-space:pre-wrap;">${content}</pre>`);
+      printWindow.document.close();
+      setTimeout(() => printWindow.print(), 250);
+    }
+
     function getProduct(pid) { return products.find(p => p.id === pid); }
-    function getCustomer(cid) { return customers.find(c => c.id === cid); }
+    function getCustomer(cid) { return customers.find(c => c.id === cid) || { name: 'Walk-in', id: null }; }
     function generateId(prefix) { return prefix + Math.floor(Math.random() * 100000); }
     function formatCurrency(val) { return '₹' + parseFloat(val).toFixed(2); }
 
@@ -1107,7 +1230,7 @@
             </div>
             <div>
               <div class="p-price">${formatCurrency(b.selling_price)} / ${p.unit}</div>
-              <div class="p-stock" style="color: ${stockColor}">Stock: ${b.quantity}</div>
+              <div class="p-stock" style="color: ${stockColor}">Stock: ${b.quantity} ${p.unit}</div>
             </div>
           </div>
         `;
@@ -1156,11 +1279,12 @@
         container.innerHTML = cart.map(c => {
           const product = getProduct(c.product_id);
           const gstText = (product && product.gst) ? ` <span style="font-size:0.7rem; color:var(--muted)">+${product.gst}% GST</span>` : '';
+          const unit = product ? product.unit : '';
           return `
             <div class="cart-item">
               <div class="ci-details">
                 <div class="ci-name">${c.product_name}</div>
-                <div class="ci-price">${formatCurrency(c.price)} x ${c.qty}${gstText}</div>
+                <div class="ci-price">${formatCurrency(c.price)} x ${c.qty} ${unit}${gstText}</div>
               </div>
               <div class="ci-actions">
                 <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', -1)">-</button>
@@ -1281,8 +1405,11 @@ Item                 Qty  Price   Total
 ----------------------------------------\n`;
 
       items.forEach(item => {
+        const product = getProduct(item.product_id);
+        const unit = product ? product.unit : '';
+        const qtyDisplay = unit ? `${item.qty} ${unit}` : item.qty.toString();
         let name = item.product_name.substring(0, 18).padEnd(20, ' ');
-        let q = item.qty.toString().padEnd(4, ' ');
+        let q = qtyDisplay.padEnd(8, ' ');
         let p = item.price.toFixed(2).padStart(6, ' ');
         let t = (item.qty * item.price).toFixed(2).padStart(7, ' ');
         receipt += `${name}${q}${p}${t}\n`;
@@ -1988,7 +2115,9 @@ ${receipt}
         hsBody.innerHTML = '<tr><td colspan="3" class="text-center">No sales data yet</td></tr>';
       } else {
         topSelling.forEach(p => {
-          hsBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--ok)">${p.qty}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
+          const product = products.find(prod => prod.name === p.name);
+          const unit = product ? product.unit : 'pcs';
+          hsBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--ok)">${p.qty} ${unit}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
         });
       }
 
@@ -2000,11 +2129,13 @@ ${receipt}
         // Show products with 0 sales from inventory
         const noSaleProducts = products.slice(0, 5);
         noSaleProducts.forEach(p => {
-          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--danger)">0</td><td>${formatCurrency(0)}</td></tr>`;
+          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--danger)">0 ${p.unit}</td><td>${formatCurrency(0)}</td></tr>`;
         });
       } else {
         bottomSelling.forEach(p => {
-          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--warn)">${p.qty}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
+          const product = products.find(prod => prod.name === p.name);
+          const unit = product ? product.unit : 'pcs';
+          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--warn)">${p.qty} ${unit}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
         });
       }
 
@@ -2060,6 +2191,31 @@ ${receipt}
       document.getElementById('tcMonthBills').innerText = monthData.count;
       document.getElementById('tcMonthAvg').innerText = formatCurrency(monthData.avg);
 
+      // Purchase Period Calculations
+      function calcPurchasePeriod(startDate) {
+        const filtered = stock_list.filter(p => p.date >= startDate);
+        const amount = filtered.reduce((sum, p) => sum + p.amount, 0);
+        const paid = filtered.reduce((sum, p) => sum + p.paid, 0);
+        const count = filtered.length;
+        return { amount, paid, count };
+      }
+
+      const todayPurchase = calcPurchasePeriod(startOfDay);
+      const weekPurchase = calcPurchasePeriod(startOfWeek);
+      const monthPurchase = calcPurchasePeriod(startOfMonth);
+
+      document.getElementById('pcTodayAmount').innerText = formatCurrency(todayPurchase.amount);
+      document.getElementById('pcTodayPurchases').innerText = todayPurchase.count;
+      document.getElementById('pcTodayPaid').innerText = formatCurrency(todayPurchase.paid);
+
+      document.getElementById('pcWeekAmount').innerText = formatCurrency(weekPurchase.amount);
+      document.getElementById('pcWeekPurchases').innerText = weekPurchase.count;
+      document.getElementById('pcWeekPaid').innerText = formatCurrency(weekPurchase.paid);
+
+      document.getElementById('pcMonthAmount').innerText = formatCurrency(monthPurchase.amount);
+      document.getElementById('pcMonthPurchases').innerText = monthPurchase.count;
+      document.getElementById('pcMonthPaid').innerText = formatCurrency(monthPurchase.paid);
+
       // 7. Sales Timeline (day-by-day breakdown)
       const tlBody = document.querySelector('#salesTimelineTable tbody');
       tlBody.innerHTML = '';
@@ -2086,7 +2242,7 @@ ${receipt}
       if (dateEntries.length === 0) {
         tlBody.innerHTML = '<tr><td colspan="5" class="text-center">No sales recorded yet. Start billing to see timeline.</td></tr>';
       } else {
-        dateEntries.forEach(([date, data]) => {
+        dateEntries.forEach(([date, data], index) => {
           const rev = data.sales.reduce((sum, s) => sum + s.total_amount, 0);
           const avg = rev / data.sales.length;
 
@@ -2101,8 +2257,11 @@ ${receipt}
             .map(([name, qty]) => `<span class="badge" style="background:var(--accent-subtle);color:var(--accent);margin:2px 4px 2px 0;display:inline-block">${name} <strong>${qty}</strong></span>`)
             .join('');
 
+          const rowId = `date-row-${index}`;
+          const billsClass = `bills-group-${index}`;
+
           tlBody.innerHTML += `
-            <tr>
+            <tr id="${rowId}" onclick="toggleBills('${billsClass}')" style="cursor:pointer;">
               <td style="font-weight:500; color:var(--text-strong)">${date}</td>
               <td style="font-weight:600">${data.sales.length}</td>
               <td style="font-weight:600; color:var(--ok)">${formatCurrency(rev)}</td>
@@ -2110,6 +2269,77 @@ ${receipt}
               <td style="max-width:300px">${productTags || '-'}</td>
             </tr>
           `;
+
+          // Add hidden bill rows
+          data.sales.forEach(s => {
+            const customerName = s.customer_id ? getCustomer(s.customer_id).name : 'Walk-in';
+            const items = sale_items.filter(item => item.sale_id === s.id);
+
+            tlBody.innerHTML += `
+              <tr class="bill-row ${billsClass}" style="display:none; background:var(--bg-hover); cursor:pointer;" onclick="viewBillReceipt('${s.id}'); event.stopPropagation();">
+                <td style="padding-left:20px; font-weight:600; color:var(--accent);">📄 ${s.id}</td>
+                <td>${customerName}</td>
+                <td style="color:var(--ok)">${formatCurrency(s.total_amount)}</td>
+                <td>-</td>
+                <td style="color:var(--muted);">Click to view receipt</td>
+              </tr>
+            `;
+          });
+        });
+      }
+
+      // 8. Purchase Timeline
+      const ptBody = document.querySelector('#purchaseTimelineTable tbody');
+      ptBody.innerHTML = '';
+
+      // Group purchases by date
+      const purchasesByDate = {};
+      stock_list.forEach(p => {
+        const dateKey = p.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        if (!purchasesByDate[dateKey]) purchasesByDate[dateKey] = { purchases: [], vendors: new Set() };
+        purchasesByDate[dateKey].purchases.push(p);
+        purchasesByDate[dateKey].vendors.add(p.vendor_name);
+      });
+
+      const purchaseDateEntries = Object.entries(purchasesByDate).reverse();
+
+      if (purchaseDateEntries.length === 0) {
+        ptBody.innerHTML = '<tr><td colspan="6" class="text-center">No purchases recorded yet.</td></tr>';
+      } else {
+        purchaseDateEntries.forEach(([date, data], index) => {
+          const count = data.purchases.length;
+          const amountPurchased = data.purchases.reduce((sum, p) => sum + p.amount, 0);
+          const amountPaid = data.purchases.reduce((sum, p) => sum + p.paid, 0);
+          const balanceDue = data.purchases.reduce((sum, p) => sum + p.balance, 0);
+          const vendors = Array.from(data.vendors).join(', ');
+
+          const rowId = `p-date-row-${index}`;
+          const billsClass = `p-bills-group-${index}`;
+
+          ptBody.innerHTML += `
+            <tr id="${rowId}" onclick="toggleBills('${billsClass}')" style="cursor:pointer;">
+              <td style="font-weight:500; color:var(--text-strong)">${date}</td>
+              <td style="font-weight:600">${count}</td>
+              <td style="font-weight:600; color:var(--ok)">${formatCurrency(amountPurchased)}</td>
+              <td style="color:var(--muted-strong)">${formatCurrency(amountPaid)}</td>
+              <td style="color:var(--danger)">${formatCurrency(balanceDue)}</td>
+              <td style="max-width:200px">${vendors}</td>
+            </tr>
+          `;
+
+          // Add hidden purchase rows
+          data.purchases.forEach(p => {
+            ptBody.innerHTML += `
+              <tr class="bill-row ${billsClass}" style="display:none; background:var(--bg-hover);">
+                <td style="padding-left:20px;">${p.stock_name}</td>
+                <td>${p.vendor_name}</td>
+                <td style="color:var(--ok)">${formatCurrency(p.amount)}</td>
+                <td>${formatCurrency(p.paid)}</td>
+                <td style="color:var(--danger)">${formatCurrency(p.balance)}</td>
+                <td>-</td>
+              </tr>
+            `;
+          });
         });
       }
     }
