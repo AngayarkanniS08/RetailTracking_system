@@ -109,9 +109,42 @@
     .nav-item:hover { background: var(--panel-hover); color: var(--text-strong); }
     .nav-item.active { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
     
-    .content-area { flex: 1; padding: 2rem; overflow-y: auto; }
+    .content-area { flex: 1; padding: 2rem; overflow-y: auto; transition: padding 0.3s ease; }
     .view-section { display: none; }
     .view-section.active { display: block; animation: rise 0.2s var(--ease-out); }
+
+    /* FULLSCREEN BILLING MODE — Two-section split */
+    .dashboard.billing-maximized .top-bar { display: none; }
+    .dashboard.billing-maximized .sidebar { display: none; }
+    .dashboard.billing-maximized .content-area { padding: 0; width: 100vw; height: 100vh; overflow: hidden; }
+    .dashboard.billing-maximized #billing { height: 100vh; display: flex !important; flex-direction: column; }
+    .dashboard.billing-maximized #billing > div:first-child { padding: 12px 24px; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .dashboard.billing-maximized .pos-grid { flex: 1; display: grid; grid-template-columns: 1fr; gap: 0; height: 100%; overflow: hidden; }
+    .dashboard.billing-maximized .products-panel { display: none !important; }
+    .dashboard.billing-maximized .cart-panel { height: 100%; border-radius: 0; border: none; display: grid; grid-template-columns: 3fr 1fr; grid-template-rows: 1fr; overflow: hidden; }
+    .dashboard.billing-maximized .cart-items { overflow-y: auto; padding: 1.5rem 2rem; border-right: 1px solid var(--border); border-bottom: none; }
+    .dashboard.billing-maximized .cart-summary { overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; justify-content: flex-start; border-top: none; }
+    .dashboard.billing-maximized .cart-table { font-size: 0.92rem; }
+    .dashboard.billing-maximized .cart-table th { padding: 10px 14px; font-size: 0.8rem; }
+    .dashboard.billing-maximized .cart-table td { padding: 10px 14px; }
+    .dashboard.billing-maximized .cart-name { max-width: none; font-size: 0.95rem; }
+    .dashboard.billing-maximized .cart-details { font-size: 0.8rem; }
+    .dashboard.billing-maximized .cart-table .qty-btn { width: 28px; height: 28px; font-size: 0.9rem; }
+    .dashboard.billing-maximized .cart-table .qty-input { width: 60px; padding: 3px 6px; font-size: 0.8rem; }
+    .dashboard.billing-maximized .summary-row { font-size: 1.1rem; margin-bottom: 1rem; }
+    .dashboard.billing-maximized .summary-total { font-size: 1.8rem; margin-top: 1.5rem; padding-top: 1.5rem; }
+    .dashboard.billing-maximized .btn-primary { padding: 1rem 2rem; font-size: 1.1rem; }
+    .dashboard.billing-maximized .input-field { font-size: 1rem; padding: 0.8rem 1rem; }
+    
+    .dashboard.sidebar-hidden .sidebar { display: none; }
+    .dashboard.sidebar-hidden .content-area { padding: 1rem; }
+    
+    .pos-grid.cart-collapsed { grid-template-columns: 1fr 0px; gap: 0; }
+    .pos-grid.cart-collapsed .cart-panel { display: none; }
+    
+    .layout-toggle-btn { background: var(--bg-elevated); border: 1.5px solid var(--border); border-radius: var(--radius-md); width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted-strong); transition: all 0.2s; }
+    .layout-toggle-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-subtle); }
+    .layout-toggle-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
     .date-group-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -151,27 +184,36 @@
     /* POS / BILLING GRID */
     .pos-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; height: 100%; }
     .pos-search-area { display: flex; gap: 10px; margin-bottom: 1.5rem; }
-    .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 10px; }
-    .product-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
-    .product-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .p-name { font-weight: 600; color: var(--text-strong); margin-bottom: 4px; }
-    .p-vendor { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
-    .p-price { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-    .p-stock { font-size: 0.8rem; margin-top: 8px; color: var(--ok); }
+    .item-grid { max-height: calc(100vh - 250px); overflow-y: auto; padding-right: 10px; }
     
-    .cart-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; height: calc(100vh - 120px); }
-    .cart-items { flex: 1; overflow-y: auto; padding: 1.5rem; border-bottom: 1px solid var(--border); }
-    .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed var(--border); }
-    .ci-details { flex: 1; }
-    .ci-name { font-weight: 600; color: var(--text-strong); }
-    .ci-price { font-size: 0.85rem; color: var(--muted); }
-    .ci-actions { display: flex; align-items: center; gap: 10px; }
-    .qty-btn { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .qty-btn:hover { background: var(--bg-hover); color: var(--accent); }
+    /* POS TABLE VIEW */
+    .pos-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+    .pos-table th { text-align: left; padding: 12px 16px; background: var(--bg-elevated); color: var(--muted-strong); font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+    .pos-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text); vertical-align: middle; }
+    .pos-table tr:last-child td { border-bottom: none; }
+    .pos-table tr:hover { background: var(--bg-hover); cursor: pointer; }
+    .pos-table .t-name { font-weight: 600; color: var(--text-strong); }
+    .pos-table .t-price { font-weight: 700; color: var(--accent); }
+    .pos-table .t-stock { font-weight: 600; font-family: var(--font-mono); }
     
-    .cart-summary { padding: 1.5rem; background: var(--bg-elevated); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
-    .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; color: var(--muted-strong); font-size: 0.95rem; }
-    .summary-total { display: flex; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--border); font-size: 1.4rem; font-weight: 700; color: var(--text-strong); }
+    .product-card { display: none; } /* Replaced by table */
+    
+    .cart-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); display: flex; flex-direction: column; height: calc(100vh - 120px); position: relative; overflow: hidden; }
+    .cart-items { flex: 1; overflow-y: auto; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    
+    /* COMPACT CART TABLE */
+    .cart-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .cart-table th { text-align: left; padding: 8px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+    .cart-table td { padding: 8px; border-bottom: 1px dashed var(--border); vertical-align: middle; }
+    .cart-table tr:last-child td { border-bottom: none; }
+    .cart-name { font-weight: 600; color: var(--text-strong); display: block; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cart-details { font-size: 0.75rem; color: var(--muted); }
+    .cart-table .qty-btn { width: 22px; height: 22px; font-size: 0.8rem; }
+    .cart-table .qty-input { width: 50px; padding: 2px 4px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; text-align: right; }
+    
+    .cart-summary { padding: 1rem 1.5rem; background: var(--bg-elevated); border-top: 1px solid var(--border); flex-shrink: 0; }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--muted-strong); font-size: 0.9rem; }
+    .summary-total { display: flex; justify-content: space-between; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 2px solid var(--border); font-size: 1.25rem; font-weight: 700; color: var(--text-strong); }
     .gst-toggle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 10px; background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
     .gst-input-row { width: 100%; display: none; animation: rise 0.2s var(--ease-out); }
     .gst-input-row.visible { display: block; }
@@ -216,6 +258,36 @@
     .cat-btn { padding: 0.4rem 1rem; border-radius: var(--radius-full); border: 1px solid var(--border); background: transparent; color: var(--muted-strong); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all var(--duration-fast); white-space: nowrap; }
     .cat-btn:hover { border-color: var(--accent); color: var(--text-strong); }
     .cat-btn.active { background: var(--accent); color: var(--accent-foreground); border-color: var(--accent); }
+
+    /* STOCK INTELLIGENCE CARDS */
+    .si-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
+    .si-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .si-product { display: flex; align-items: center; gap: 12px; }
+    .si-icon { width: 42px; height: 42px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .si-name { font-size: 1.1rem; font-weight: 700; color: var(--text-strong); }
+    .si-meta { font-size: 0.8rem; color: var(--muted); }
+    .si-badge { padding: 4px 12px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; }
+    .si-badge.high { background: var(--ok-subtle); color: var(--ok); border: 1px solid var(--ok); }
+    .si-badge.low { background: var(--warn-subtle); color: var(--warn); border: 1px solid var(--warn); }
+    .si-badge.old { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger); }
+    .si-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1rem; }
+    .si-metric { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; }
+    .si-metric-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 4px; }
+    .si-metric-value { font-size: 1.15rem; font-weight: 700; color: var(--text-strong); }
+    .si-stock-bar { margin-top: 0.5rem; }
+    .si-stock-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .si-bar-track { height: 8px; background: var(--bg-hover); border-radius: 4px; overflow: hidden; }
+    .si-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    .si-alert { margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-md); font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+    .si-alert.critical { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.3); color: var(--danger); }
+    .si-alert.warning { background: rgba(180,83,9,0.1); border: 1px solid rgba(180,83,9,0.3); color: var(--warn); }
+    .si-alert.good { background: rgba(21,128,61,0.1); border: 1px solid rgba(21,128,61,0.3); color: var(--ok); }
+
+    /* LOW STOCK ALERT BANNER */
+    .low-stock-banner { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.25); border-radius: var(--radius-md); padding: 10px 16px; margin-bottom: 1rem; display: none; }
+    .low-stock-banner.visible { display: block; animation: rise 0.3s ease; }
+    .low-stock-banner-title { font-size: 0.85rem; font-weight: 700; color: var(--danger); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .low-stock-item { display: inline-flex; align-items: center; gap: 6px; background: rgba(220,38,38,0.12); border: 1px solid rgba(220,38,38,0.2); border-radius: var(--radius-full); padding: 3px 10px; font-size: 0.78rem; color: var(--danger); font-weight: 500; margin: 2px 4px 2px 0; }
     .product-count { font-size: 0.75rem; background: var(--bg-hover); padding: 0.1rem 0.5rem; border-radius: var(--radius-full); margin-left: 6px; }
     .cat-btn.active .product-count { background: rgba(255,255,255,0.2); }
 
@@ -323,11 +395,29 @@
         
         <!-- BILLING SECTION -->
         <section id="billing" class="view-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+            <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--text-strong);">Billing (POS)</h2>
+            <div style="display: flex; gap: 10px;">
+               <button class="layout-toggle-btn" id="billingMaximizeBtn" onclick="toggleBillingMaximize()" title="Maximize Billing Area (Hide Top Bar)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div id="lowStockBanner" class="low-stock-banner">
+            <div class="low-stock-banner-title">🚨 Low Stock Alert</div>
+            <div id="lowStockBannerItems"></div>
+          </div>
           <div class="pos-grid">
             <!-- Left: Products -->
-            <div>
-              <div class="pos-search-area">
-                <input type="text" id="posSearch" class="input-field" placeholder="Search by Product Name, ID, or Batch..." onkeyup="renderPOSItems()">
+            <div class="products-panel">
+              <div class="pos-search-area" style="align-items: center;">
+                <button class="layout-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="Toggle Sidebar (Full Width View)">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                </button>
+                <input type="text" id="posSearch" class="input-field" style="flex:1" placeholder="Search by Product Name, ID, or Batch..." onkeyup="renderPOSItems()">
+                <button class="layout-toggle-btn" id="cartToggle" onclick="toggleCart()" title="Collapse/Expand Cart">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="cartToggleIcon"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+                </button>
               </div>
               <div class="cat-filters" id="posCatFilters">
                 <!-- Category filter buttons rendered by JS -->
@@ -444,7 +534,12 @@
                 <option value="">All Categories</option>
               </select>
               <button class="btn btn-primary btn-sm" onclick="openModal('addStockModal')">+ Add New Stock</button>
+              <button class="btn btn-outline btn-sm" onclick="openModal('lowStockAlertModal')" style="color:var(--warn); border-color:var(--warn);">🔔 Set Low Stock Alert</button>
             </div>
+          </div>
+          <!-- Inventory Stats -->
+          <div class="stats-grid" id="inventoryStats" style="margin-bottom: 1rem;">
+            <!-- Rendered via JS -->
           </div>
           <div class="card-panel">
             <div class="table-container">
@@ -504,6 +599,7 @@
           <div class="page-title" style="margin-bottom: 1.5rem;">Dashboard</div>
 
           <!-- Time Period Summary Cards -->
+          <div style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.75rem;">📊 Sales History Summary</div>
           <div class="time-cards">
             <div class="time-card today">
               <div class="time-card-icon">📅</div>
@@ -535,16 +631,8 @@
           </div>
 
           <!-- Purchase Time Period Summary Cards -->
-          <div class="time-cards" style="margin-top: 1.5rem;">
-            <div class="time-card today">
-              <div class="time-card-icon">📦</div>
-              <div class="time-card-label">Purchases Today</div>
-              <div class="time-card-revenue" id="pcTodayAmount">₹0.00</div>
-              <div class="time-card-meta">
-                <span>🧾 <strong id="pcTodayPurchases">0</strong> purchases</span>
-                <span>💰 Paid: <strong id="pcTodayPaid">₹0</strong></span>
-              </div>
-            </div>
+          <div style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.75rem; margin-top:1.5rem;">📊 Purchase History Summary</div>
+          <div class="time-cards" style="grid-template-columns: repeat(2, 1fr);">
             <div class="time-card week">
               <div class="time-card-icon">📊</div>
               <div class="time-card-label">This Week</div>
@@ -572,21 +660,21 @@
           <!-- Row 2: High Selling, Low Selling, Old Stock -->
           <div class="pos-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 1.5rem;">
             <div class="card-panel">
-              <div class="card-header" style="color: var(--ok);">🔥 High Selling</div>
+              <div class="card-header" style="color: var(--ok); cursor:pointer;" onclick="openStockIntel('high')">🔥 High Selling <span style="font-size:0.7rem; color:var(--muted); float:right; margin-top:4px; display:flex; gap:8px; align-items:center;"><span onclick="event.stopPropagation(); openModal('lowStockAlertModal')" style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span> View all →</span></div>
               <table class="data-table" style="font-size: 0.9rem;" id="highSellingTable">
                 <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
             <div class="card-panel">
-              <div class="card-header" style="color: var(--warn);">📉 Low Selling</div>
+              <div class="card-header" style="color: var(--warn); cursor:pointer;" onclick="openStockIntel('low')">📉 Low Selling <span style="font-size:0.7rem; color:var(--muted); float:right; margin-top:4px; display:flex; gap:8px; align-items:center;"><span onclick="event.stopPropagation(); openModal('lowStockAlertModal')" style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span> View all →</span></div>
               <table class="data-table" style="font-size: 0.9rem;" id="lowSellingTable">
                 <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
             <div class="card-panel">
-              <div class="card-header" style="color: var(--danger);">📦 Old Stock</div>
+              <div class="card-header" style="color: var(--danger); cursor:pointer;" onclick="openStockIntel('old')">📦 Old Stock <span style="font-size:0.7rem; color:var(--muted); float:right; margin-top:4px;">View all →</span></div>
               <table class="data-table" style="font-size: 0.9rem;" id="oldStockTable">
                 <thead><tr><th>Product</th><th>Batch</th><th>Age (days)</th><th>Qty</th></tr></thead>
                 <tbody></tbody>
@@ -623,6 +711,7 @@
             <span>Vendor List</span>
             <div class="d-flex" style="gap: 10px;">
               <input type="text" id="slSearch" class="input-field" placeholder="Search vendors..." style="width: 200px;" onkeyup="renderStockList()">
+              <button class="btn btn-outline btn-sm" onclick="openModal('lowStockAlertModal')" style="color:var(--warn); border-color:var(--warn)">🔔 Set Low Stock Alert</button>
               <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal')">+ New Purchase</button>
             </div>
           </div>
@@ -680,7 +769,15 @@
               <span id="vendorHistoryTitle" style="font-size:1.1rem; font-weight:600; color:var(--text-strong);">Purchase History</span>
               <span id="vendorHistorySubtitle" style="font-size:0.8rem; color:var(--muted);"></span>
             </div>
-            <button class="btn btn-primary btn-sm" id="vendorRestockBtn">+ New Purchase</button>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <button class="btn btn-outline btn-sm" onclick="openModal('lowStockAlertModal')" style="color:var(--warn); border-color:var(--warn);">🔔 Set Low Stock Alert</button>
+              <button class="btn btn-primary btn-sm" id="vendorRestockBtn">+ New Purchase</button>
+            </div>
+          </div>
+
+          <!-- Product Analytics Cards for this vendor -->
+          <div id="vendorProductAnalytics" style="margin-bottom: 1.5rem;">
+            <!-- Rendered by JS -->
           </div>
 
           <!-- Financial Summary mini-cards -->
@@ -706,12 +803,55 @@
           </div>
         </section>
 
+        <!-- STOCK INTELLIGENCE PAGE -->
+        <section id="stockintel" class="view-section">
+          <div class="card-header" style="margin-bottom: 1.5rem;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <button class="btn btn-outline btn-sm" onclick="switchTab('reports')" style="display:flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Back to Dashboard
+              </button>
+              <span id="siTitle" style="font-size:1.2rem; font-weight:700; color:var(--text-strong);">Stock Intelligence</span>
+            </div>
+          </div>
+          <div class="cat-filters" id="siFilters">
+            <button class="cat-btn active" onclick="setStockIntelFilter('all')">All</button>
+            <button class="cat-btn" onclick="setStockIntelFilter('high')">🔥 High Selling</button>
+            <button class="cat-btn" onclick="setStockIntelFilter('low')">📉 Low Selling</button>
+            <button class="cat-btn" onclick="setStockIntelFilter('old')">📦 Old Stock</button>
+            <button class="cat-btn" onclick="setStockIntelFilter('critical')">🚨 Critical</button>
+          </div>
+          <div id="siCardsContainer">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
       </main>
     </div>
   </div>
 
   <!-- MODALS -->
   
+  <!-- Low Stock Alert Modal -->
+  <div class="modal-overlay" id="lowStockAlertModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">🔔 Set Low Stock Alert</div>
+        <button class="close-btn" onclick="closeModal('lowStockAlertModal')">&times;</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Select Product</label>
+        <select id="alertProductSelect" class="input-field"></select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Alert when stock falls below</label>
+        <input type="number" id="alertThreshold" class="input-field" placeholder="e.g. 10" min="1">
+      </div>
+      <div id="existingAlertsList" style="margin-bottom: 1rem;"></div>
+      <button class="btn btn-primary btn-block" onclick="saveLowStockAlert()">Set Alert</button>
+    </div>
+  </div>
+
   <!-- Add Stock Modal -->
   <div class="modal-overlay" id="addStockModal">
     <div class="modal-content">
@@ -936,8 +1076,12 @@
       { id: 'P002', name: 'Silk Fabric', category: 'Textiles', unit: 'mtr', hsn: '5007', gst: 5 },
       { id: 'P003', name: 'Embroidery Thread', category: 'Thread Work', unit: 'bundle', hsn: '5204', gst: 12 },
       { id: 'P004', name: 'Crystal Beads Pack', category: 'Beads & Buttons', unit: 'pkt', hsn: '7018', gst: 18 },
-      { id: 'P005', name: 'Invisible Zip', category: 'Zips & Accessories', unit: 'pcs', hsn: '9607', gst: 18 }
+      { id: 'P005', name: 'Invisible Zip', category: 'Zips & Accessories', unit: 'pcs', hsn: '9607', gst: 18 },
+      { id: 'P006', name: 'Lace Border Trim', category: 'Textiles', unit: 'mtr', hsn: '5810', gst: 5 }
     ];
+
+    // Low stock alert thresholds { product_id: threshold_qty }
+    let low_stock_alerts = {};
 
     // Batches (Vendor Specific)
     let batches = [
@@ -946,7 +1090,8 @@
       { id: 'B1003', product_id: 'P002', vendor_name: 'Kanchipuram Silk House', purchase_price: 350, selling_price: 500, quantity: 50, created_at: new Date(Date.now() - 86400000 * 7) },
       { id: 'B1004', product_id: 'P003', vendor_name: 'Madurai Thread Works', purchase_price: 25, selling_price: 40, quantity: 300, created_at: new Date(Date.now() - 86400000 * 2) },
       { id: 'B1005', product_id: 'P004', vendor_name: 'Bead Craft Suppliers', purchase_price: 60, selling_price: 95, quantity: 150, created_at: new Date(Date.now() - 86400000) },
-      { id: 'B1006', product_id: 'P005', vendor_name: 'Zip & Button House', purchase_price: 8, selling_price: 15, quantity: 500, created_at: new Date() }
+      { id: 'B1006', product_id: 'P005', vendor_name: 'Zip & Button House', purchase_price: 8, selling_price: 15, quantity: 500, created_at: new Date() },
+      { id: 'B1007', product_id: 'P006', vendor_name: 'Coimbatore Lace Works', purchase_price: 18, selling_price: 35, quantity: 120, created_at: new Date(Date.now() - 86400000 * 12) }
     ];
 
     // Customers
@@ -969,23 +1114,22 @@
       { id: 'INV010', customer_id: 'C002', total_amount: 5500, amount_paid: 4000, created_at: new Date(Date.now() - 86400000 * 6) }
     ];
     let sale_items = [
+      // HIGH SELLERS: Cotton Fabric (85 total), Embroidery Thread (35 total), Silk Fabric (13 total)
       { sale_id: 'INV001', product_name: 'Cotton Fabric', qty: 10, price: 120 },
       { sale_id: 'INV002', product_name: 'Silk Fabric', qty: 5, price: 500 },
       { sale_id: 'INV003', product_name: 'Embroidery Thread', qty: 15, price: 40 },
-      { sale_id: 'INV003', product_name: 'Invisible Zip', qty: 10, price: 15 },
       { sale_id: 'INV004', product_name: 'Cotton Fabric', qty: 20, price: 120 },
-      { sale_id: 'INV004', product_name: 'Crystal Beads Pack', qty: 20, price: 95 },
-      { sale_id: 'INV005', product_name: 'Invisible Zip', qty: 24, price: 15 },
-      { sale_id: 'INV006', product_name: 'Silk Fabric', qty: 3, price: 500 },
-      { sale_id: 'INV006', product_name: 'Embroidery Thread', qty: 5, price: 40 },
-      { sale_id: 'INV006', product_name: 'Invisible Zip', qty: 10, price: 15 },
+      { sale_id: 'INV005', product_name: 'Embroidery Thread', qty: 10, price: 40 },
+      { sale_id: 'INV006', product_name: 'Silk Fabric', qty: 5, price: 500 },
+      { sale_id: 'INV006', product_name: 'Embroidery Thread', qty: 10, price: 40 },
       { sale_id: 'INV007', product_name: 'Cotton Fabric', qty: 25, price: 120 },
-      { sale_id: 'INV007', product_name: 'Crystal Beads Pack', qty: 2, price: 95 },
-      { sale_id: 'INV008', product_name: 'Embroidery Thread', qty: 15, price: 40 },
-      { sale_id: 'INV009', product_name: 'Silk Fabric', qty: 2, price: 500 },
-      { sale_id: 'INV009', product_name: 'Invisible Zip', qty: 5, price: 15 },
+      { sale_id: 'INV008', product_name: 'Embroidery Thread', qty: 0, price: 40 },
+      { sale_id: 'INV009', product_name: 'Silk Fabric', qty: 3, price: 500 },
       { sale_id: 'INV010', product_name: 'Cotton Fabric', qty: 30, price: 130 },
-      { sale_id: 'INV010', product_name: 'Silk Fabric', qty: 3, price: 500 }
+      // LOW SELLERS: Invisible Zip (3 total), Crystal Beads Pack (2 total)
+      { sale_id: 'INV003', product_name: 'Invisible Zip', qty: 2, price: 15 },
+      { sale_id: 'INV007', product_name: 'Crystal Beads Pack', qty: 2, price: 95 },
+      { sale_id: 'INV009', product_name: 'Invisible Zip', qty: 1, price: 15 }
     ];
 
     // Stock List (Vendor Purchase Tracking)
@@ -994,7 +1138,8 @@
       { id: 'SL002', stock_name: 'Silk Fabric', vendor_name: 'Kanchipuram Silk House', qty_kg: 50, amount: 18375, base_amount: 17500, gst_rate: 5, gst_amount: 875, paid: 18375, balance: 0, date: new Date(Date.now() - 172800000) },
       { id: 'SL003', stock_name: 'Embroidery Thread', vendor_name: 'Madurai Thread Works', qty_kg: 30, amount: 840, base_amount: 750, gst_rate: 12, gst_amount: 90, paid: 840, balance: 0, date: new Date(Date.now() - 259200000) },
       { id: 'SL004', stock_name: 'Crystal Beads Pack', vendor_name: 'Bead Craft Suppliers', qty_kg: 15, amount: 10620, base_amount: 9000, gst_rate: 18, gst_amount: 1620, paid: 5000, balance: 5620, date: new Date() },
-      { id: 'SL005', stock_name: 'Invisible Zip', vendor_name: 'Zip & Button House', qty_kg: 500, amount: 4720, base_amount: 4000, gst_rate: 18, gst_amount: 720, paid: 4720, balance: 0, date: new Date(Date.now() - 432000000) }
+      { id: 'SL005', stock_name: 'Invisible Zip', vendor_name: 'Zip & Button House', qty_kg: 500, amount: 4720, base_amount: 4000, gst_rate: 18, gst_amount: 720, paid: 4720, balance: 0, date: new Date(Date.now() - 432000000) },
+      { id: 'SL006', stock_name: 'Lace Border Trim', vendor_name: 'Coimbatore Lace Works', qty_kg: 120, amount: 2478, base_amount: 2160, gst_rate: 5, gst_amount: 118, paid: 1000, balance: 1478, date: new Date(Date.now() - 86400000 * 12) }
     ];
     
     // Credit Ledger (Tracking total purchased vs paid)
@@ -1029,18 +1174,60 @@
       document.getElementById('loginView').style.display = 'flex';
     }
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      event.currentTarget.classList.add('active');
+    function toggleSidebar() {
+      const db = document.getElementById('dashboardView');
+      const btn = document.getElementById('sidebarToggle');
+      db.classList.toggle('sidebar-hidden');
+      btn.classList.toggle('active');
+    }
+
+    function toggleBillingMaximize() {
+      const db = document.getElementById('dashboardView');
+      const btn = document.getElementById('billingMaximizeBtn');
+      db.classList.toggle('billing-maximized');
+      btn.classList.toggle('active');
       
+      if (db.classList.contains('billing-maximized')) {
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6"></path><path d="M20 10h-6V4"></path><path d="M14 10l7-7"></path><path d="M10 14l-7 7"></path></svg>';
+        btn.title = "Exit Fullscreen";
+      } else {
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>';
+        btn.title = "Fullscreen Billing";
+      }
+    }
+
+    function toggleCart() {
+      const grid = document.querySelector('#billing .pos-grid');
+      const btn = document.getElementById('cartToggle');
+      const icon = document.getElementById('cartToggleIcon');
+      grid.classList.toggle('cart-collapsed');
+      
+      if (grid.classList.contains('cart-collapsed')) {
+        icon.innerHTML = '<polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline>';
+        btn.title = "Show Cart";
+      } else {
+        icon.innerHTML = '<polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline>';
+        btn.title = "Collapse Cart";
+      }
+    }
+
+    function navigateTo(tabId) {
       document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
-
       if(tabId === 'inventory') renderInventory();
       if(tabId === 'credit') renderCredit();
       if(tabId === 'stocklist') renderStockList();
       if(tabId === 'productmaster') renderProductMaster();
       if(tabId === 'reports') renderReports();
+      if(tabId === 'stockintel') renderStockIntel();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if (typeof event !== 'undefined' && event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+      }
+      navigateTo(tabId);
     }
 
     function openModal(id) { document.getElementById(id).classList.add('active'); }
@@ -1062,6 +1249,7 @@
       renderPOSCatFilters();
       renderPOSItems();
       renderReports(); // Dashboard is the default landing page
+      renderLowStockBanner(); // Check low stock on load
       // Auto-fill today's date in the Add Stock modal
       document.getElementById('stockDate').value = new Date().toISOString().split('T')[0];
     }
@@ -1224,6 +1412,21 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
       const grid = document.getElementById('posItemsGrid');
       grid.innerHTML = '';
 
+      let tableHtml = `
+        <table class="pos-table">
+          <thead>
+            <tr>
+              <th>Product Details</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th style="text-align:right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      let hasItems = false;
       batches.forEach(b => {
         const p = getProduct(b.product_id);
         if(!p) return;
@@ -1237,21 +1440,38 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
         // Skip zero stock in POS unless specifically searching
         if(b.quantity <= 0 && !term) return;
 
+        hasItems = true;
         const stockColor = b.quantity > 10 ? 'var(--ok)' : (b.quantity > 0 ? 'var(--warn)' : 'var(--danger)');
         
-        grid.innerHTML += `
-          <div class="product-card" onclick="addToCart('${b.id}')">
-            <div>
-              <div class="p-name">${p.name}</div>
-              <div class="p-vendor">${b.vendor_name} (Batch: ${b.id})</div>
-            </div>
-            <div>
-              <div class="p-price">${formatCurrency(b.selling_price)} / ${p.unit}</div>
-              <div class="p-stock" style="color: ${stockColor}">Stock: ${b.quantity} ${p.unit}</div>
-            </div>
-          </div>
+        tableHtml += `
+          <tr onclick="addToCart('${b.id}')">
+            <td>
+              <div class="t-name">${p.name}</div>
+              <div style="font-size: 0.75rem; color: var(--muted);">Batch: ${b.id} | ${b.vendor_name}</div>
+            </td>
+            <td><span class="badge" style="font-size: 0.7rem; padding: 2px 8px; background: var(--bg-hover);">${p.category}</span></td>
+            <td class="t-price">${formatCurrency(b.selling_price)}</td>
+            <td class="t-stock" style="color: ${stockColor}">${b.quantity} ${p.unit}</td>
+            <td style="text-align:right">
+              <button class="btn btn-primary btn-sm" style="padding: 4px 12px; font-size: 0.75rem;">+ Add</button>
+            </td>
+          </tr>
         `;
       });
+
+      tableHtml += '</tbody></table>';
+
+      if(!hasItems) {
+        grid.innerHTML = `
+          <div style="text-align:center; padding: 60px 20px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border);">
+            <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+            <div style="color: var(--text-strong); font-weight: 600;">No products found</div>
+            <div style="color: var(--muted); font-size: 0.85rem; margin-top: 4px;">Try adjusting your search or category filters</div>
+          </div>
+        `;
+      } else {
+        grid.innerHTML = tableHtml;
+      }
     }
 
     function addToCart(batchId) {
@@ -1293,32 +1513,50 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
       if(cart.length === 0) {
         container.innerHTML = `<div class="text-center" style="color:var(--muted); margin-top: 50px;">Cart is empty. Select items to bill.</div>`;
       } else {
-        container.innerHTML = cart.map((c, idx) => {
+        let html = `
+          <table class="cart-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th style="text-align:right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        cart.forEach((c, idx) => {
           const product = getProduct(c.product_id);
-          const gstText = (product && product.gst) ? ` <span style="font-size:0.7rem; color:var(--muted)">+${product.gst}% GST</span>` : '';
           const unit = product ? product.unit : '';
           const itemDisc = c.discount || 0;
           const lineTotal = (c.price * c.qty) - itemDisc;
-          return `
-            <div class="cart-item">
-              <div class="ci-details" style="flex:1;">
-                <div class="ci-name">${c.product_name}</div>
-                <div class="ci-price">${formatCurrency(c.price)} x ${c.qty} ${unit} = ${formatCurrency(c.price * c.qty)}${gstText}</div>
-                ${itemDisc > 0 ? `<div style="font-size:0.75rem; color:var(--ok);">Item Disc: -${formatCurrency(itemDisc)} → ${formatCurrency(lineTotal)}</div>` : ''}
-              </div>
-              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+          
+          html += `
+            <tr>
+              <td>
+                <span class="cart-name" title="${c.product_name}">${c.product_name}</span>
+                <span class="cart-details">${formatCurrency(c.price)}/${unit}</span>
+                ${itemDisc > 0 ? `<div style="font-size:0.7rem; color:var(--ok);">Disc: -${formatCurrency(itemDisc)}</div>` : ''}
+              </td>
+              <td>
                 <div class="ci-actions">
                   <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', -1)">-</button>
-                  <span style="font-weight:600; width:20px; text-align:center;">${c.qty}</span>
+                  <span style="font-weight:600; width:15px; text-align:center; font-size:0.8rem;">${c.qty}</span>
                   <button class="qty-btn" onclick="updateCartQty('${c.batch_id}', 1)">+</button>
                 </div>
                 <input type="number" placeholder="Disc ₹" min="0" value="${itemDisc || ''}" 
-                  style="width:70px; padding:2px 6px; font-size:0.75rem; border:1px solid var(--border); border-radius:var(--radius-sm); text-align:right; background:var(--bg-100); color:var(--text-strong);"
+                  class="qty-input" style="margin-top:4px;"
                   oninput="setItemDiscount(${idx}, this.value)">
-              </div>
-            </div>
+              </td>
+              <td style="text-align:right; font-weight:600; color:var(--text-strong);">
+                ${formatCurrency(lineTotal)}
+              </td>
+            </tr>
           `;
-        }).join('');
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
       }
       calculateCart();
     }
@@ -1422,6 +1660,7 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
       document.getElementById('billCustomerSelect').value = '';
       renderCart();
       renderPOSItems();
+      renderLowStockBanner();
     }
 
     function printThermalBill(invoiceId, items, calc, paid, custId) {
@@ -1510,6 +1749,48 @@ Item                 Qty  Price   Total
        ======================================================================= */
 
     function renderInventory() {
+      // Compute stats
+      let currentStockValue = 0;
+      let stockSoldValue = 0;
+      let totalBatches = 0;
+      let lowStockCount = 0;
+
+      // Current stock value = qty remaining × purchase price (cost basis)
+      batches.forEach(b => {
+        currentStockValue += b.quantity * b.purchase_price;
+        totalBatches++;
+        if (b.quantity === 0) lowStockCount++;
+        else if (b.quantity <= 20) lowStockCount++;
+      });
+
+      // Stock sold value = qty sold × selling price (revenue from inventory)
+      sale_items.forEach(item => {
+        stockSoldValue += item.qty * item.price;
+      });
+
+      document.getElementById('inventoryStats').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Current Stock Value</div>
+          <div class="stat-value" style="color:var(--info)">${formatCurrency(currentStockValue)}</div>
+          <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Based on purchase cost</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Stock Sold Value</div>
+          <div class="stat-value" style="color:var(--ok)">${formatCurrency(stockSoldValue)}</div>
+          <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Total revenue from sales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Batches</div>
+          <div class="stat-value">${totalBatches}</div>
+          <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Across all products</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Low / Out of Stock</div>
+          <div class="stat-value" style="color:${lowStockCount > 0 ? 'var(--warn)' : 'var(--ok)'}">${lowStockCount}</div>
+          <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Batches needing attention</div>
+        </div>
+      `;
+
       const tbody = document.querySelector('#inventoryTable tbody');
       tbody.innerHTML = '';
       const catFilter = document.getElementById('invCatFilter').value;
@@ -1635,6 +1916,7 @@ Item                 Qty  Price   Total
       renderInventory();
       renderPOSItems();
       renderPOSCatFilters();
+      renderLowStockBanner();
     }
 
 
@@ -2045,6 +2327,9 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
       balEl.innerText = formatCurrency(vBal);
       balEl.style.color = vBal > 0 ? 'var(--danger)' : 'var(--ok)';
 
+      // Render product analytics cards
+      renderVendorProductAnalytics(vendorName);
+
       // New Purchase button
       const restockBtn = document.getElementById('vendorRestockBtn');
       restockBtn.onclick = () => {
@@ -2125,7 +2410,7 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
       });
 
       // Navigate to vendor history sub-page
-      switchTab('vendorhistory');
+      navigateTo('vendorhistory');
     }
 
     function toggleDateGroup(id) {
@@ -2251,35 +2536,39 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
         .map(([name, data]) => ({ name, ...data }))
         .sort((a, b) => b.qty - a.qty);
 
-      // High Selling (top 5)
+      // High Selling (top 3 by qty)
       const hsBody = document.querySelector('#highSellingTable tbody');
       hsBody.innerHTML = '';
-      const topSelling = sortedProducts.slice(0, 5);
+      const topSelling = sortedProducts.slice(0, 3);
       if (topSelling.length === 0) {
         hsBody.innerHTML = '<tr><td colspan="3" class="text-center">No sales data yet</td></tr>';
       } else {
         topSelling.forEach(p => {
           const product = products.find(prod => prod.name === p.name);
           const unit = product ? product.unit : 'pcs';
-          hsBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--ok)">${p.qty} ${unit}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
+          hsBody.innerHTML += `<tr style="cursor:pointer" onclick="event.stopPropagation(); goToVendorForProduct('${p.name.replace(/'/g, "\\'")}')"><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--ok)">${p.qty} ${unit}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
         });
       }
 
-      // Low Selling (bottom 5, only products that have sold at least 1)
+      // Low Selling — products with qty <= 10 that are NOT in the top 3 high sellers
+      const highSellingNames = new Set(topSelling.map(p => p.name));
       const lsellBody = document.querySelector('#lowSellingTable tbody');
       lsellBody.innerHTML = '';
-      const bottomSelling = [...sortedProducts].reverse().slice(0, 5);
-      if (bottomSelling.length === 0) {
-        // Show products with 0 sales from inventory
-        const noSaleProducts = products.slice(0, 5);
-        noSaleProducts.forEach(p => {
-          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--danger)">0 ${p.unit}</td><td>${formatCurrency(0)}</td></tr>`;
-        });
+      // Low sellers = sold items with low qty, filtered out from high list
+      const lowSelling = sortedProducts.filter(p => p.qty <= 10 && !highSellingNames.has(p.name));
+      // Also include products in inventory with zero sales
+      const zeroSaleProducts = products.filter(p => !productSales[p.name] && !highSellingNames.has(p.name));
+
+      if (lowSelling.length === 0 && zeroSaleProducts.length === 0) {
+        lsellBody.innerHTML = '<tr><td colspan="3" class="text-center">No low selling data</td></tr>';
       } else {
-        bottomSelling.forEach(p => {
+        lowSelling.forEach(p => {
           const product = products.find(prod => prod.name === p.name);
           const unit = product ? product.unit : 'pcs';
-          lsellBody.innerHTML += `<tr><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--warn)">${p.qty} ${unit}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
+          lsellBody.innerHTML += `<tr style="cursor:pointer" onclick="event.stopPropagation(); goToVendorForProduct('${p.name.replace(/'/g, "\\'")}')"><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--warn)">${p.qty} ${unit}</td><td>${formatCurrency(p.revenue)}</td></tr>`;
+        });
+        zeroSaleProducts.forEach(p => {
+          lsellBody.innerHTML += `<tr style="cursor:pointer" onclick="event.stopPropagation(); goToVendorForProduct('${p.name.replace(/'/g, "\\'")}')"><td style="font-weight:500;color:var(--text-strong)">${p.name}</td><td style="font-weight:600;color:var(--danger)">0 ${p.unit}</td><td>${formatCurrency(0)}</td></tr>`;
         });
       }
 
@@ -2299,7 +2588,7 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
         oldBatches.forEach(b => {
           const p = getProduct(b.product_id);
           const ageColor = b.ageDays > 15 ? 'var(--danger)' : 'var(--warn)';
-          osBody.innerHTML += `<tr><td style="font-weight:500">${p.name}</td><td style="color:var(--muted)">${b.id}</td><td style="font-weight:700;color:${ageColor}">${b.ageDays}d</td><td>${b.quantity} ${p.unit}</td></tr>`;
+          osBody.innerHTML += `<tr style="cursor:pointer" onclick="event.stopPropagation(); goToVendorForProduct('${p.name.replace(/'/g, "\\'")}')"><td style="font-weight:500">${p.name}</td><td style="color:var(--muted)">${b.id}</td><td style="font-weight:700;color:${ageColor}">${b.ageDays}d</td><td>${b.quantity} ${p.unit}</td></tr>`;
         });
       }
 
@@ -2347,10 +2636,6 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
       const todayPurchase = calcPurchasePeriod(startOfDay);
       const weekPurchase = calcPurchasePeriod(startOfWeek);
       const monthPurchase = calcPurchasePeriod(startOfMonth);
-
-      document.getElementById('pcTodayAmount').innerText = formatCurrency(todayPurchase.amount);
-      document.getElementById('pcTodayPurchases').innerText = todayPurchase.count;
-      document.getElementById('pcTodayPaid').innerText = formatCurrency(todayPurchase.paid);
 
       document.getElementById('pcWeekAmount').innerText = formatCurrency(weekPurchase.amount);
       document.getElementById('pcWeekPurchases').innerText = weekPurchase.count;
@@ -2486,6 +2771,383 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
           });
         });
       }
+    }
+
+    /* =======================================================================
+       8. STOCK INTELLIGENCE MODULE
+       ======================================================================= */
+
+    let activeStockIntelFilter = 'all';
+
+    function openStockIntel(filter) {
+      activeStockIntelFilter = filter || 'all';
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+      document.getElementById('stockintel').classList.add('active');
+      updateSiFilterBtns();
+      renderStockIntel();
+    }
+
+    function setStockIntelFilter(filter) {
+      activeStockIntelFilter = filter;
+      updateSiFilterBtns();
+      renderStockIntel();
+    }
+
+    function updateSiFilterBtns() {
+      document.querySelectorAll('#siFilters .cat-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes(activeStockIntelFilter) || 
+            (activeStockIntelFilter === 'all' && btn.textContent === 'All')) {
+          btn.classList.add('active');
+        }
+      });
+    }
+
+    function renderStockIntel() {
+      const container = document.getElementById('siCardsContainer');
+      const titles = { all: 'Stock Intelligence', high: '🔥 High Selling Products', low: '📉 Low Selling Products', old: '📦 Old Stock Items', critical: '🚨 Critically Low Stock' };
+      document.getElementById('siTitle').textContent = titles[activeStockIntelFilter] || 'Stock Intelligence';
+
+      // Build product analytics data
+      const productSales = {};
+      sale_items.forEach(item => {
+        const key = item.product_id || item.product_name;
+        if (!productSales[key]) productSales[key] = { qty: 0, revenue: 0, name: item.product_name };
+        productSales[key].qty += item.qty;
+        productSales[key].revenue += (item.qty * item.price);
+      });
+
+      // Build product analytics with batch data
+      const analytics = [];
+      const now = Date.now();
+      const thirtyDays = 30 * 86400000;
+
+      products.forEach(p => {
+        const pBatches = batches.filter(b => b.product_id === p.id);
+        const totalUnits = pBatches.reduce((s, b) => s + b.quantity + (productSales[p.id] ? productSales[p.id].qty : 0), 0) || pBatches.reduce((s, b) => s + b.quantity, 0);
+        const stockLeft = pBatches.reduce((s, b) => s + b.quantity, 0);
+        const salesData = productSales[p.id] || productSales[p.name] || { qty: 0, revenue: 0 };
+        const soldUnits = salesData.qty;
+        const revenue = salesData.revenue;
+        const velocity = soldUnits / 30; // units per day (30-day avg)
+        const daysLeft = velocity > 0 ? Math.round(stockLeft / velocity) : (stockLeft > 0 ? 999 : 0);
+        const purchaseValue = pBatches.reduce((s, b) => s + (b.quantity * b.purchase_price), 0);
+        const sellingValue = pBatches.reduce((s, b) => s + (b.quantity * b.selling_price), 0);
+        const margin = purchaseValue > 0 ? Math.round(((sellingValue - purchaseValue) / purchaseValue) * 100) : 0;
+        const maxBatchAge = pBatches.length > 0 ? Math.max(...pBatches.filter(b => b.created_at).map(b => Math.floor((now - b.created_at.getTime()) / 86400000))) : 0;
+        const stockPercent = totalUnits > 0 ? Math.round((stockLeft / totalUnits) * 100) : 0;
+
+        // Classification
+        let tags = [];
+        if (soldUnits > 10) tags.push('high');
+        if (soldUnits <= 2 && soldUnits >= 0) tags.push('low');
+        if (maxBatchAge >= 5) tags.push('old');
+        if (stockLeft <= 5 && stockLeft > 0) tags.push('critical');
+        if (stockLeft === 0) tags.push('critical');
+
+        analytics.push({ product: p, totalUnits, stockLeft, soldUnits, revenue, velocity, daysLeft, margin, maxBatchAge, stockPercent, tags });
+      });
+
+      // Filter
+      let filtered = analytics;
+      if (activeStockIntelFilter === 'high') filtered = analytics.filter(a => a.tags.includes('high')).sort((a, b) => b.soldUnits - a.soldUnits);
+      else if (activeStockIntelFilter === 'low') filtered = analytics.filter(a => a.tags.includes('low')).sort((a, b) => a.soldUnits - b.soldUnits);
+      else if (activeStockIntelFilter === 'old') filtered = analytics.filter(a => a.tags.includes('old')).sort((a, b) => b.maxBatchAge - a.maxBatchAge);
+      else if (activeStockIntelFilter === 'critical') filtered = analytics.filter(a => a.tags.includes('critical')).sort((a, b) => a.stockLeft - b.stockLeft);
+      else filtered = analytics.sort((a, b) => b.revenue - a.revenue);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:60px; color:var(--muted);"><div style="font-size:2rem; margin-bottom:10px;">📦</div>No products match this filter</div>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(a => {
+        const p = a.product;
+        const icons = ['🧵', '🧶', '👚', '👗', '✂️', '🪡'];
+        const icon = icons[Math.abs(p.id.charCodeAt(p.id.length - 1)) % icons.length];
+
+        // Badge
+        let badgeHtml = '';
+        if (a.tags.includes('high')) badgeHtml += '<span class="si-badge high">High selling</span> ';
+        if (a.tags.includes('low')) badgeHtml += '<span class="si-badge low">Low selling</span> ';
+        if (a.tags.includes('old')) badgeHtml += '<span class="si-badge old">Old stock</span> ';
+
+        // Stock bar color
+        let barColor = 'var(--ok)';
+        if (a.stockPercent <= 10) barColor = 'var(--danger)';
+        else if (a.stockPercent <= 30) barColor = 'var(--warn)';
+
+        // Alert
+        let alertHtml = '';
+        if (a.stockLeft === 0) {
+          alertHtml = '<div class="si-alert critical">⚙️ OUT OF STOCK — Reorder immediately.</div>';
+        } else if (a.stockLeft <= 5 && a.velocity > 0) {
+          alertHtml = `<div class="si-alert critical">⚙️ Stock critically low — only ${a.stockLeft} ${p.unit}. At ${a.velocity.toFixed(1)}/${p.unit} per day you will run out in ${a.daysLeft} days. Reorder immediately.</div>`;
+        } else if (a.stockPercent <= 30 && a.velocity > 0) {
+          alertHtml = `<div class="si-alert warning">⚠️ Stock running low — ${a.stockLeft} ${p.unit} remaining. Consider reordering soon.</div>`;
+        } else if (a.tags.includes('high') && a.stockLeft > 5) {
+          alertHtml = `<div class="si-alert good">✅ Strong seller with healthy stock levels.</div>`;
+        }
+
+        html += `
+          <div class="si-card">
+            <div class="si-header">
+              <div class="si-product">
+                <div class="si-icon" style="background: var(--accent-subtle);">${icon}</div>
+                <div>
+                  <div class="si-name">${p.name}</div>
+                  <div class="si-meta">${p.id} · ${p.category}</div>
+                </div>
+              </div>
+              <div>${badgeHtml}</div>
+            </div>
+            <div class="si-metrics">
+              <div class="si-metric"><div class="si-metric-label">Sold (30d)</div><div class="si-metric-value" style="color:var(--ok)">${a.soldUnits}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Revenue</div><div class="si-metric-value">${formatCurrency(a.revenue)}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Velocity</div><div class="si-metric-value" style="color:var(--info)">${a.velocity.toFixed(1)}/${p.unit} per day</div></div>
+            </div>
+            <div class="si-metrics">
+              <div class="si-metric"><div class="si-metric-label">Stock left</div><div class="si-metric-value">${a.stockLeft} ${p.unit}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Days left</div><div class="si-metric-value" style="color:${a.daysLeft <= 3 ? 'var(--danger)' : a.daysLeft <= 7 ? 'var(--warn)' : 'var(--text-strong)'}">${a.daysLeft === 999 ? '∞' : a.daysLeft + ' days'}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Margin</div><div class="si-metric-value" style="color:${a.margin >= 15 ? 'var(--ok)' : 'var(--warn)'}">${a.margin}%</div></div>
+            </div>
+            <div class="si-stock-bar">
+              <div class="si-stock-label"><span>Stock level</span><span style="color:${barColor}">${a.stockPercent}%</span></div>
+              <div class="si-bar-track"><div class="si-bar-fill" style="width:${a.stockPercent}%; background:${barColor}"></div></div>
+            </div>
+            ${alertHtml}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* =======================================================================
+       8b. VENDOR PRODUCT ANALYTICS (from Dashboard click)
+       ======================================================================= */
+
+    function goToVendorForProduct(productName) {
+      // Find the product
+      const product = products.find(p => p.name === productName);
+      if (!product) return;
+
+      // Find the primary vendor (most recent batch)
+      const productBatches = batches.filter(b => b.product_id === product.id).sort((a, b) => b.created_at - a.created_at);
+      if (productBatches.length === 0) return alert('No vendor found for this product');
+
+      const vendorName = productBatches[0].vendor_name;
+      openVendorHistory(vendorName);
+      navigateTo('vendorhistory');
+    }
+
+    function renderVendorProductAnalytics(vendorName) {
+      const container = document.getElementById('vendorProductAnalytics');
+      
+      // Find unique products supplied by this vendor
+      const vendorBatches = batches.filter(b => b.vendor_name === vendorName);
+      const productIds = [...new Set(vendorBatches.map(b => b.product_id))];
+
+      if (productIds.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      // Build analytics for each product
+      const productSales = {};
+      sale_items.forEach(item => {
+        const key = item.product_id || item.product_name;
+        if (!productSales[key]) productSales[key] = { qty: 0, revenue: 0 };
+        productSales[key].qty += item.qty;
+        productSales[key].revenue += (item.qty * item.price);
+      });
+
+      const now = Date.now();
+      let html = '<div style="font-size:0.95rem; font-weight:700; color:var(--text-strong); margin-bottom:12px;">📊 Product Analytics</div>';
+
+      productIds.forEach(pid => {
+        const p = products.find(x => x.id === pid);
+        if (!p) return;
+        const pBatches = batches.filter(b => b.product_id === pid);
+        const vendorPBatches = vendorBatches.filter(b => b.product_id === pid);
+        const stockLeft = pBatches.reduce((s, b) => s + b.quantity, 0);
+        const salesData = productSales[pid] || productSales[p.name] || { qty: 0, revenue: 0 };
+        const soldUnits = salesData.qty;
+        const revenue = salesData.revenue;
+        const velocity = soldUnits / 30;
+        const daysLeft = velocity > 0 ? Math.round(stockLeft / velocity) : (stockLeft > 0 ? 999 : 0);
+        const totalUnits = stockLeft + soldUnits;
+        const purchaseValue = pBatches.reduce((s, b) => s + (b.quantity * b.purchase_price), 0);
+        const sellingValue = pBatches.reduce((s, b) => s + (b.quantity * b.selling_price), 0);
+        const margin = purchaseValue > 0 ? Math.round(((sellingValue - purchaseValue) / purchaseValue) * 100) : 0;
+        const stockPercent = totalUnits > 0 ? Math.round((stockLeft / totalUnits) * 100) : 0;
+        const vendorQty = vendorPBatches.reduce((s, b) => s + b.quantity, 0);
+
+        // Bar color
+        let barColor = 'var(--ok)';
+        if (stockPercent <= 10) barColor = 'var(--danger)';
+        else if (stockPercent <= 30) barColor = 'var(--warn)';
+
+        // Badge
+        let badge = '';
+        if (soldUnits > 10) badge = '<span class="si-badge high">High selling</span>';
+        else if (soldUnits <= 2) badge = '<span class="si-badge low">Low selling</span>';
+
+        // Alert
+        let alertHtml = '';
+        if (stockLeft === 0) {
+          alertHtml = '<div class="si-alert critical">⚙️ OUT OF STOCK — Reorder immediately.</div>';
+        } else if (stockLeft <= 5 && velocity > 0) {
+          alertHtml = `<div class="si-alert critical">⚙️ Stock critically low — only ${stockLeft} ${p.unit}. At ${velocity.toFixed(1)}/${p.unit} per day you will run out in ${daysLeft} days. Reorder immediately.</div>`;
+        } else if (stockPercent <= 30 && velocity > 0) {
+          alertHtml = `<div class="si-alert warning">⚠️ Stock running low — ${stockLeft} ${p.unit} remaining. Consider reordering.</div>`;
+        }
+
+        html += `
+          <div class="si-card">
+            <div class="si-header">
+              <div class="si-product">
+                <div class="si-icon" style="background: var(--accent-subtle);">📦</div>
+                <div>
+                  <div class="si-name">${p.name}</div>
+                  <div class="si-meta">${p.id} · ${p.category} · Supplied ${vendorQty} ${p.unit} by this vendor</div>
+                </div>
+              </div>
+              <div>${badge}</div>
+            </div>
+            <div class="si-metrics">
+              <div class="si-metric"><div class="si-metric-label">Total Units</div><div class="si-metric-value">${totalUnits} ${p.unit}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Sold (30d)</div><div class="si-metric-value" style="color:var(--ok)">${soldUnits}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Revenue</div><div class="si-metric-value">${formatCurrency(revenue)}</div></div>
+            </div>
+            <div class="si-metrics">
+              <div class="si-metric"><div class="si-metric-label">Stock left</div><div class="si-metric-value">${stockLeft} ${p.unit}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Days left</div><div class="si-metric-value" style="color:${daysLeft <= 3 ? 'var(--danger)' : daysLeft <= 7 ? 'var(--warn)' : 'var(--text-strong)'}">${daysLeft === 999 ? '∞' : daysLeft + ' days'}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Velocity</div><div class="si-metric-value" style="color:var(--info)">${velocity.toFixed(1)}/${p.unit} per day</div></div>
+            </div>
+            <div class="si-metrics">
+              <div class="si-metric"><div class="si-metric-label">Margin</div><div class="si-metric-value" style="color:${margin >= 15 ? 'var(--ok)' : 'var(--warn)'}">${margin}%</div></div>
+              <div class="si-metric"><div class="si-metric-label">Purchase Price</div><div class="si-metric-value">${formatCurrency(vendorPBatches.length > 0 ? vendorPBatches[0].purchase_price : 0)}</div></div>
+              <div class="si-metric"><div class="si-metric-label">Selling Price</div><div class="si-metric-value">${formatCurrency(vendorPBatches.length > 0 ? vendorPBatches[0].selling_price : 0)}</div></div>
+            </div>
+            <div class="si-stock-bar">
+              <div class="si-stock-label"><span>Stock level</span><span style="color:${barColor}">${stockPercent}%</span></div>
+              <div class="si-bar-track"><div class="si-bar-fill" style="width:${stockPercent}%; background:${barColor}"></div></div>
+            </div>
+            ${alertHtml}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    /* =======================================================================
+       9. LOW STOCK ALERT SYSTEM
+       ======================================================================= */
+
+    function populateAlertProductSelect() {
+      const sel = document.getElementById('alertProductSelect');
+      sel.innerHTML = '<option value="">-- Select Product --</option>';
+      products.forEach(p => {
+        const totalStock = batches.filter(b => b.product_id === p.id).reduce((s, b) => s + b.quantity, 0);
+        const existing = low_stock_alerts[p.id];
+        sel.innerHTML += `<option value="${p.id}">${p.name} (Stock: ${totalStock} ${p.unit})${existing ? ' ✓ Alert at ' + existing : ''}</option>`;
+      });
+      renderExistingAlerts();
+    }
+
+    function renderExistingAlerts() {
+      const container = document.getElementById('existingAlertsList');
+      const entries = Object.entries(low_stock_alerts);
+      if (entries.length === 0) {
+        container.innerHTML = '<div style="font-size:0.8rem; color:var(--muted); padding:8px 0;">No alerts set yet.</div>';
+        return;
+      }
+      let html = '<div style="font-size:0.8rem; font-weight:600; color:var(--text-strong); margin-bottom:6px;">Active Alerts:</div>';
+      entries.forEach(([pid, threshold]) => {
+        const p = products.find(x => x.id === pid);
+        if (!p) return;
+        const stock = batches.filter(b => b.product_id === pid).reduce((s, b) => s + b.quantity, 0);
+        const isBelowStr = stock <= threshold ? ' — ⚠️ BELOW!' : '';
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--bg-elevated); border-radius:var(--radius-sm); margin-bottom:4px; font-size:0.82rem;">
+          <span><strong>${p.name}</strong> — Alert below <strong>${threshold} ${p.unit}</strong> (Current: ${stock})${isBelowStr}</span>
+          <button class="btn btn-sm" style="padding:2px 8px; font-size:0.7rem; color:var(--danger); border-color:var(--danger);" onclick="removeLowStockAlert('${pid}')">Remove</button>
+        </div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function saveLowStockAlert() {
+      const pid = document.getElementById('alertProductSelect').value;
+      const threshold = parseInt(document.getElementById('alertThreshold').value);
+      if (!pid) return alert('Please select a product');
+      if (!threshold || threshold < 1) return alert('Please enter a valid threshold');
+      
+      low_stock_alerts[pid] = threshold;
+      document.getElementById('alertThreshold').value = '';
+      renderExistingAlerts();
+      populateAlertProductSelect();
+      renderLowStockBanner();
+    }
+
+    function removeLowStockAlert(pid) {
+      delete low_stock_alerts[pid];
+      renderExistingAlerts();
+      populateAlertProductSelect();
+      renderLowStockBanner();
+    }
+
+    function renderLowStockBanner() {
+      const banner = document.getElementById('lowStockBanner');
+      const itemsDiv = document.getElementById('lowStockBannerItems');
+      
+      const alerts = [];
+      Object.entries(low_stock_alerts).forEach(([pid, threshold]) => {
+        const p = products.find(x => x.id === pid);
+        if (!p) return;
+        const stock = batches.filter(b => b.product_id === pid).reduce((s, b) => s + b.quantity, 0);
+        // Always show the alert — it was set intentionally by the user
+        // Show as critical (red) if below threshold, warning (yellow) if above
+        alerts.push({ product: p, stock, threshold, isCritical: stock <= threshold });
+      });
+
+      if (alerts.length === 0) {
+        banner.classList.remove('visible');
+        return;
+      }
+
+      banner.classList.add('visible');
+      itemsDiv.innerHTML = alerts.map(a => {
+        const color = a.isCritical ? 'var(--danger)' : 'var(--warn)';
+        const icon = a.isCritical ? '🚨' : '⚠️';
+        const label = a.isCritical
+          ? `${a.product.name}: <strong>${a.stock} ${a.product.unit}</strong> left — BELOW min (${a.threshold})`
+          : `${a.product.name}: ${a.stock} ${a.product.unit} (alert set at ${a.threshold})`;
+        return `<span class="low-stock-item" style="background:${a.isCritical ? 'rgba(220,38,38,0.15)' : 'rgba(180,83,9,0.12)'}; border-color:${color}; color:${color};">${icon} ${label}</span>`;
+      }).join('');
+    }
+
+    // Override openModal to populate alert select
+    const _origOpenModal = openModal;
+    openModal = function(id) {
+      if (id === 'lowStockAlertModal') populateAlertProductSelect();
+      _origOpenModal(id);
+    };
+
+    // Open alert modal pre-selected for a specific product name
+    function openAlertForProduct(productName) {
+      openModal('lowStockAlertModal');
+      setTimeout(() => {
+        const sel = document.getElementById('alertProductSelect');
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].text.startsWith(productName)) {
+            sel.selectedIndex = i;
+            break;
+          }
+        }
+      }, 50);
     }
 
   </script>
