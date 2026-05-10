@@ -376,6 +376,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
           Credit (Kadan)
         </div>
+        <div class="nav-item" onclick="switchTab('analytics')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          Timelines & Analytics
+        </div>
 
         <div class="sidebar-section">Goods & Supply</div>
         <div class="nav-item" onclick="switchTab('productmaster')">
@@ -675,6 +679,46 @@
                 <thead><tr><th>Product</th><th>Batch</th><th>Age (days)</th><th>Qty</th></tr></thead>
                 <tbody></tbody>
               </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ANALYTICS SECTION -->
+        <section id="analytics" class="view-section">
+          <h2 style="margin: 0 0 1.2rem; font-size: 1.4rem; font-weight: 700; color: var(--text-strong);">Timelines & Analytics</h2>
+          
+          <!-- Stock Performance Comparison -->
+          <div class="stats-grid" id="analyticsComparisonCards">
+            <!-- Rendered via JS -->
+          </div>
+
+          <div class="pos-grid" style="grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+            <!-- Stock Recommendation Table -->
+            <div class="card-panel">
+              <div class="card-header" style="color: var(--info);">💡 Stock Buying Recommendations</div>
+              <div class="table-container">
+                <table class="data-table" id="recommendationTable">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Purchased Cost</th>
+                      <th>Sold (at Cost)</th>
+                      <th>Recovery %</th>
+                      <th>Recommendation</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Summary Insights -->
+            <div class="card-panel">
+              <div class="card-header">📊 Investment Insights</div>
+              <div id="analyticsInsights" style="padding: 1rem; line-height: 1.6;">
+                <!-- Rendered via JS -->
+              </div>
             </div>
           </div>
 
@@ -1082,21 +1126,43 @@
       </div>
     </div>
   </div>
-  <!-- Checkout Confirmation Modal -->
-  <div class="modal-overlay" id="checkoutConfirmModal">
-    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
-      <div class="modal-header">
-        <div class="modal-title">Confirm Checkout</div>
-        <button class="close-btn" onclick="closeModal('checkoutConfirmModal')">&times;</button>
-      </div>
-      
-      <div id="checkoutConfirmSummary">
-         <!-- Populated via JS -->
+  <!-- Checkout Confirmation Modal - Two Panel Full Page -->
+  <div class="modal-overlay" id="checkoutConfirmModal" style="left:250px; width:calc(100vw - 250px); align-items:stretch; padding:0;">
+    <div style="width:100%; height:100vh; display:flex; flex-direction:column; background:#0e1015; overflow:hidden;">
+      <!-- Top bar -->
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem; background:#13151d; border-bottom:2px solid #2a2d3a; flex-shrink:0;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:1.8rem;">🧾</span>
+          <div>
+            <div style="font-size:1.2rem; font-weight:800; color:#f4f4f5; letter-spacing:-0.5px;">Confirm Order</div>
+            <div style="font-size:0.78rem; color:#a0a0a8;">Review items &amp; billing details before printing</div>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeModal('checkoutConfirmModal')" style="font-size:1.4rem; width:38px; height:38px;">&times;</button>
       </div>
 
-      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-        <button class="btn btn-outline btn-block" onclick="closeModal('checkoutConfirmModal')">Back to Cart</button>
-        <button class="btn btn-primary btn-block" onclick="confirmCheckout()">Confirm & Print Bill</button>
+      <!-- Two panel body -->
+      <div style="flex:1; display:flex; overflow:hidden;">
+
+        <!-- LEFT: Product List -->
+        <div style="flex:1.4; overflow-y:auto; padding:1.5rem 2rem; border-right:2px solid #2a2d3a; background:#13151d;">
+          <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#a0a0a8; margin-bottom:1rem;">Items in Cart</div>
+          <div id="checkoutItemsPanel">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- RIGHT: Billing Summary -->
+        <div style="width:380px; min-width:340px; display:flex; flex-direction:column; background:#0e1015; overflow-y:auto;">
+          <div id="checkoutSummaryPanel" style="flex:1; padding:1.5rem;">
+            <!-- Populated by JS -->
+          </div>
+          <!-- Confirm button pinned at bottom -->
+          <div style="padding:1.2rem 1.5rem; border-top:2px solid #2a2d3a; background:#13151d; flex-shrink:0;">
+            <button class="btn btn-primary btn-block" style="font-size:1.1rem; font-weight:800; padding:1rem; border-radius:12px;" onclick="confirmCheckout()">✅ Confirm &amp; Print Bill</button>
+            <button class="btn btn-outline btn-block" style="margin-top:0.6rem; font-size:0.9rem; color:#a0a0a8;" onclick="closeModal('checkoutConfirmModal')">← Back to Cart</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1167,21 +1233,21 @@
     ];
     let sale_items = [
       // HIGH SELLERS: Cotton Fabric (85 total), Embroidery Thread (35 total), Silk Fabric (13 total)
-      { sale_id: 'INV001', product_name: 'Cotton Fabric', qty: 10, price: 120 },
-      { sale_id: 'INV002', product_name: 'Silk Fabric', qty: 5, price: 500 },
-      { sale_id: 'INV003', product_name: 'Embroidery Thread', qty: 15, price: 40 },
-      { sale_id: 'INV004', product_name: 'Cotton Fabric', qty: 20, price: 120 },
-      { sale_id: 'INV005', product_name: 'Embroidery Thread', qty: 10, price: 40 },
-      { sale_id: 'INV006', product_name: 'Silk Fabric', qty: 5, price: 500 },
-      { sale_id: 'INV006', product_name: 'Embroidery Thread', qty: 10, price: 40 },
-      { sale_id: 'INV007', product_name: 'Cotton Fabric', qty: 25, price: 120 },
-      { sale_id: 'INV008', product_name: 'Embroidery Thread', qty: 0, price: 40 },
-      { sale_id: 'INV009', product_name: 'Silk Fabric', qty: 3, price: 500 },
-      { sale_id: 'INV010', product_name: 'Cotton Fabric', qty: 30, price: 130 },
+      { sale_id: 'INV001', product_name: 'Cotton Fabric', batch_id: 'B1001', qty: 10, price: 120 },
+      { sale_id: 'INV002', product_name: 'Silk Fabric', batch_id: 'B1003', qty: 5, price: 500 },
+      { sale_id: 'INV003', product_name: 'Embroidery Thread', batch_id: 'B1004', qty: 15, price: 40 },
+      { sale_id: 'INV004', product_name: 'Cotton Fabric', batch_id: 'B1001', qty: 20, price: 120 },
+      { sale_id: 'INV005', product_name: 'Embroidery Thread', batch_id: 'B1004', qty: 10, price: 40 },
+      { sale_id: 'INV006', product_name: 'Silk Fabric', batch_id: 'B1003', qty: 5, price: 500 },
+      { sale_id: 'INV006', product_name: 'Embroidery Thread', batch_id: 'B1004', qty: 10, price: 40 },
+      { sale_id: 'INV007', product_name: 'Cotton Fabric', batch_id: 'B1001', qty: 25, price: 120 },
+      { sale_id: 'INV008', product_name: 'Embroidery Thread', batch_id: 'B1004', qty: 5, price: 40 },
+      { sale_id: 'INV009', product_name: 'Silk Fabric', batch_id: 'B1003', qty: 3, price: 500 },
+      { sale_id: 'INV010', product_name: 'Cotton Fabric', batch_id: 'B1001', qty: 30, price: 130 },
       // LOW SELLERS: Invisible Zip (3 total), Crystal Beads Pack (2 total)
-      { sale_id: 'INV003', product_name: 'Invisible Zip', qty: 2, price: 15 },
-      { sale_id: 'INV007', product_name: 'Crystal Beads Pack', qty: 2, price: 95 },
-      { sale_id: 'INV009', product_name: 'Invisible Zip', qty: 1, price: 15 }
+      { sale_id: 'INV003', product_name: 'Invisible Zip', batch_id: 'B1006', qty: 2, price: 15 },
+      { sale_id: 'INV007', product_name: 'Crystal Beads Pack', batch_id: 'B1005', qty: 2, price: 95 },
+      { sale_id: 'INV009', product_name: 'Invisible Zip', batch_id: 'B1006', qty: 1, price: 15 }
     ];
 
     // Stock List (Vendor Purchase Tracking)
@@ -1271,6 +1337,7 @@
       if(tabId === 'stocklist') renderStockList();
       if(tabId === 'productmaster') renderProductMaster();
       if(tabId === 'reports') renderReports();
+      if(tabId === 'analytics') renderAnalytics();
       if(tabId === 'stockintel') renderStockIntel();
     }
 
@@ -1733,90 +1800,116 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
           return alert('Walk-in customers must pay in full. For credit, please select a registered customer.');
         }
 
-        const summaryDiv = document.getElementById('checkoutConfirmSummary');
-        if (!summaryDiv) {
-          console.error("Summary div #checkoutConfirmSummary not found!");
-          throw new Error("System error: Confirmation popup container not found.");
-        }
+        // ---- Populate LEFT panel: product list ----
+        const itemsPanel = document.getElementById('checkoutItemsPanel');
+        const summaryPanel = document.getElementById('checkoutSummaryPanel');
+        if (!itemsPanel || !summaryPanel) throw new Error('Checkout panels not found in DOM.');
 
-        console.log("Rendering summary items...");
-        let itemsHtml = "";
-        cart.forEach(item => {
+        let itemsHtml = '';
+        let itemCount = 0;
+        cart.forEach((item, idx) => {
           const product = getProduct(item.product_id);
           const unit = product ? product.unit : '';
-          const itemDisc = item.discount || 0;
-          const lineGross = item.qty * (item.price || 0);
+          const productName = product ? product.name : item.product_id;
+          const itemDisc = item.itemDiscount || item.discount || 0;
+          const unitPrice = item.price || 0;
+          const lineGross = item.qty * unitPrice;
           const lineTotal = lineGross - itemDisc;
-          
+          itemCount++;
+
           itemsHtml += `
-            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
-              <div style="flex:1;">
-                <div style="font-weight:600; color:var(--text-strong);">${item.product_name || 'Unknown Item'}</div>
-                <div style="font-size:0.8rem; color:var(--muted);">${item.batch_id || ''}</div>
+            <div style="display:grid; grid-template-columns:48px 1fr auto; gap:14px; align-items:center; padding:14px 16px; background:#1a1d27; border:1px solid #2a2d3a; border-radius:12px; margin-bottom:10px;">
+              <!-- Icon -->
+              <div style="width:48px; height:48px; border-radius:10px; background:#252836; display:flex; align-items:center; justify-content:center; font-size:1.4rem; flex-shrink:0;">🏷️</div>
+              <!-- Details -->
+              <div>
+                <div style="font-weight:700; font-size:1rem; color:#f4f4f5;">${productName}</div>
+                <div style="font-size:0.78rem; color:#8888a0; margin-top:3px;">Batch: ${item.batch_id} &nbsp;|&nbsp; ₹${unitPrice.toFixed(2)} / ${unit}</div>
+                ${itemDisc > 0 ? `<div style="font-size:0.78rem; color:#10b981; margin-top:3px; font-weight:600;">Item Discount: -${formatCurrency(itemDisc)}</div>` : ''}
               </div>
-              <div style="width:100px; text-align:right; font-size:0.9rem;">
-                ${item.qty} ${unit}
-                ${itemDisc > 0 ? `<div style="font-size:0.75rem; color:var(--ok);">Disc: -${formatCurrency(itemDisc)}</div>` : ''}
-              </div>
-              <div style="width:100px; text-align:right; font-weight:600;">
-                <div style="${itemDisc > 0 ? 'text-decoration:line-through; font-size:0.8rem; color:var(--muted);' : ''}">${formatCurrency(lineGross)}</div>
-                ${itemDisc > 0 ? `<div>${formatCurrency(lineTotal)}</div>` : ''}
+              <!-- Price + Qty -->
+              <div style="text-align:right; flex-shrink:0;">
+                <div style="font-size:1.05rem; font-weight:800; color:${itemDisc > 0 ? '#10b981' : '#f4f4f5'}">${formatCurrency(lineTotal)}</div>
+                ${itemDisc > 0 ? `<div style="font-size:0.75rem; color:#666; text-decoration:line-through;">${formatCurrency(lineGross)}</div>` : ''}
+                <div style="font-size:0.8rem; color:#8888a0; margin-top:6px; background:#252836; border-radius:6px; padding:2px 8px; display:inline-block;">× ${item.qty} ${unit}</div>
               </div>
             </div>
           `;
         });
+        itemsPanel.innerHTML = itemsHtml || '<div style="color:#8888a0; text-align:center; padding:2rem;">No items in cart.</div>';
 
-        console.log("Setting innerHTML...");
+        // ---- Populate RIGHT panel: billing summary ----
         const customerName = customerId ? getCustomer(customerId).name : 'Walk-in Customer';
-        const dateStr = new Date().toLocaleDateString();
+        const customerPhone = customerId ? getCustomer(customerId).phone : '—';
+        const dateStr = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+        const timeStr = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
 
-        summaryDiv.innerHTML = `
-          <div style="background:var(--bg-100); padding:1rem; border-radius:8px; margin-bottom:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-            <div>
-              <div style="color:var(--muted); font-size:0.8rem; text-transform:uppercase; margin-bottom:4px;">Customer</div>
-              <div style="font-weight:600; font-size:1rem;">${customerName}</div>
+        summaryPanel.innerHTML = `
+          <!-- Customer Card -->
+          <div style="background:#1e2233; border:1.5px solid #ef4444; border-radius:12px; padding:1rem 1.2rem; margin-bottom:1.2rem;">
+            <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#ef4444; margin-bottom:6px;">Customer</div>
+            <div style="font-weight:800; font-size:1.1rem; color:#f4f4f5;">${customerName}</div>
+            <div style="font-size:0.82rem; color:#8888a0; margin-top:2px;">${customerPhone !== '\u2014' ? '\ud83d\udcde ' + customerPhone : 'Walk-in (No account)'}</div>
+          </div>
+
+          <!-- Date & Items count -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1.2rem;">
+            <div style="background:#1a1d27; border:1px solid #2a2d3a; border-radius:10px; padding:0.9rem; text-align:center;">
+              <div style="font-size:0.7rem; color:#8888a0; text-transform:uppercase; margin-bottom:4px;">Date</div>
+              <div style="font-weight:700; font-size:0.92rem; color:#f4f4f5;">${dateStr}</div>
+              <div style="font-size:0.72rem; color:#8888a0;">${timeStr}</div>
             </div>
-            <div style="text-align:right;">
-              <div style="color:var(--muted); font-size:0.8rem; text-transform:uppercase; margin-bottom:4px;">Date</div>
-              <div style="font-weight:600; font-size:1rem;">${dateStr}</div>
+            <div style="background:#1a1d27; border:1px solid #2a2d3a; border-radius:10px; padding:0.9rem; text-align:center;">
+              <div style="font-size:0.7rem; color:#8888a0; text-transform:uppercase; margin-bottom:4px;">Items</div>
+              <div style="font-weight:700; font-size:1.4rem; color:#ef4444;">${itemCount}</div>
+              <div style="font-size:0.72rem; color:#8888a0;">products</div>
             </div>
           </div>
 
-          <div style="font-weight:700; margin-bottom:10px; font-size:1.1rem; color:var(--text-strong); border-left:4px solid var(--accent); padding-left:12px;">Items to Purchase</div>
-          <div style="max-height:250px; overflow-y:auto; margin-bottom:1.5rem; padding-right:10px; border:1px solid var(--border); border-radius:8px; padding:0 15px;">
-            ${itemsHtml}
-          </div>
+          <!-- Bill Breakdown -->
+          <div style="background:#1a1d27; border-radius:12px; border:1px solid #2a2d3a; padding:1rem; margin-bottom:1rem;">
+            <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#8888a0; margin-bottom:10px; border-bottom:1px solid #2a2d3a; padding-bottom:8px;">Bill Breakdown</div>
 
-          <div style="background:var(--bg-elevated); padding:1.5rem; border-radius:12px; border:1px solid var(--border); box-shadow:inset 0 0 10px rgba(0,0,0,0.1);">
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--muted);">
-              <span>Subtotal:</span>
-              <span>${formatCurrency(calc.subtotal)}</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;">
+              <span style="color:#a0a0b0;">Subtotal</span>
+              <span style="font-weight:600; color:#f4f4f5;">${formatCurrency(calc.subtotal)}</span>
             </div>
+            ${calc.itemDiscount > 0 ? `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;">
+              <span style="color:#10b981;">Item Discounts</span>
+              <span style="color:#10b981; font-weight:600;">-${formatCurrency(calc.itemDiscount)}</span>
+            </div>` : ''}
             ${calc.discount > 0 ? `
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--danger);">
-              <span>Bill Discount:</span>
-              <span>-${formatCurrency(calc.discount)}</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;">
+              <span style="color:#ef4444;">Bill Discount</span>
+              <span style="color:#ef4444; font-weight:600;">-${formatCurrency(calc.discount)}</span>
+            </div>` : ''}
+            ${calc.gst > 0 ? `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.9rem;">
+              <span style="color:#a0a0b0;">GST (Tax 5%)</span>
+              <span style="font-weight:600; color:#f4f4f5;">${formatCurrency(calc.gst)}</span>
+            </div>` : ''}
+
+            <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:2px solid #2a2d3a;">
+              <span style="font-size:1.1rem; font-weight:800; color:#f4f4f5;">Grand Total</span>
+              <span style="font-size:1.4rem; font-weight:900; color:#ef4444;">${formatCurrency(total)}</span>
             </div>
-            ` : ''}
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--muted);">
-              <span>GST (Tax):</span>
-              <span>${formatCurrency(calc.gst)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:2px solid var(--border); font-size:1.6rem; font-weight:800; color:var(--text-strong);">
-              <span>Grand Total:</span>
-              <span style="color:var(--accent);">${formatCurrency(total)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; margin-top:12px; padding:10px; background:rgba(16,185,129,0.1); border-radius:6px; color:var(--ok); font-weight:600;">
-              <span>Amount Received:</span>
-              <span>${formatCurrency(amountPaid)}</span>
-            </div>
-            ${(total - amountPaid) > 0 ? `
-            <div style="display:flex; justify-content:space-between; margin-top:8px; padding:10px; background:rgba(239,68,68,0.1); border-radius:6px; color:var(--danger); font-weight:700;">
-              <span>Balance Due (Credit):</span>
-              <span>${formatCurrency(total - amountPaid)}</span>
-            </div>
-            ` : ''}
           </div>
+
+          <!-- Payment Status -->
+          <div style="display:flex; justify-content:space-between; padding:12px 14px; background:rgba(16,185,129,0.15); border-radius:10px; margin-bottom:${(total - amountPaid) > 0 ? '8px' : '0'}; border:1px solid rgba(16,185,129,0.3);">
+            <span style="color:#10b981; font-weight:600;">💵 Amount Received</span>
+            <span style="color:#10b981; font-weight:800; font-size:1rem;">${formatCurrency(amountPaid)}</span>
+          </div>
+          ${(total - amountPaid) > 0 ? `
+          <div style="display:flex; justify-content:space-between; padding:12px 14px; background:rgba(239,68,68,0.15); border-radius:10px; border:1px solid rgba(239,68,68,0.3);">
+            <span style="color:#ef4444; font-weight:600;">📋 Balance Due (Credit)</span>
+            <span style="color:#ef4444; font-weight:800; font-size:1rem;">${formatCurrency(total - amountPaid)}</span>
+          </div>` : `
+          <div style="display:flex; justify-content:space-between; padding:12px 14px; background:rgba(16,185,129,0.1); border-radius:10px; border:1px solid rgba(16,185,129,0.25);">
+            <span style="color:#10b981; font-weight:600;">✅ Fully Paid</span>
+            <span style="color:#10b981; font-weight:700;">No balance</span>
+          </div>`}
         `;
 
         console.log("Opening modal...");
@@ -2876,18 +2969,140 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
       document.getElementById('pcMonthPaid').innerText = formatCurrency(monthPurchase.paid);
 
       // 7. Sales Timeline (day-by-day breakdown)
-      const tlBody = document.querySelector('#salesTimelineTable tbody');
-      tlBody.innerHTML = '';
+      // MOVED TO renderAnalytics()
+    }
 
-      // Group sales by date
+    function renderAnalytics() {
+      // 1. Overall Metrics
+      let totalRev = sales.reduce((sum, s) => sum + s.total_amount, 0);
+      let totalPurchasedCost = batches.reduce((sum, b) => sum + (b.quantity_total || b.quantity) * b.purchase_price, 0);
+      
+      // Calculate Stock Sold (at cost)
+      let totalSoldCost = 0;
+      const productMetrics = {};
+
+      sale_items.forEach(item => {
+        let pCost = 0;
+        if (item.batch_id) {
+          const batch = batches.find(b => b.id === item.batch_id);
+          pCost = batch ? batch.purchase_price : 0;
+        }
+        
+        // Fallback: If no batch_id or batch not found, look up the product's base price from the latest batch
+        if (pCost === 0) {
+          const product = products.find(p => p.name === item.product_name);
+          if (product) {
+            const productBatch = batches.find(b => b.product_id === product.id);
+            pCost = productBatch ? productBatch.purchase_price : 0;
+          }
+        }
+
+        const lineSoldCost = item.qty * pCost;
+        totalSoldCost += lineSoldCost;
+
+        if (!productMetrics[item.product_name]) {
+          productMetrics[item.product_name] = { purchased: 0, sold: 0 };
+        }
+        productMetrics[item.product_name].sold += lineSoldCost;
+      });
+
+      // Calculate purchased cost per product
+      batches.forEach(b => {
+        const p = getProduct(b.product_id);
+        if (p) {
+          if (!productMetrics[p.name]) productMetrics[p.name] = { purchased: 0, sold: 0 };
+          productMetrics[p.name].purchased += (b.quantity_total || b.quantity) * b.purchase_price;
+        }
+      });
+
+      let currentStockValue = batches.reduce((sum, b) => sum + (b.quantity * b.purchase_price), 0);
+
+      document.getElementById('analyticsComparisonCards').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-label">Stock Value Purchased</div>
+          <div class="stat-value" style="color:var(--info)">${formatCurrency(totalPurchasedCost)}</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:4px;">Total investment in stock</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Stock Value Sold (at Cost)</div>
+          <div class="stat-value" style="color:var(--ok)">${formatCurrency(totalSoldCost)}</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:4px;">Investment recovered from sales</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Current Asset Value</div>
+          <div class="stat-value" style="color:var(--accent)">${formatCurrency(currentStockValue)}</div>
+          <div style="font-size:0.7rem; color:var(--muted); margin-top:4px;">Value of stock in hand</div>
+        </div>
+      `;
+
+      // 2. Recommendations Table
+      const recBody = document.querySelector('#recommendationTable tbody');
+      if (recBody) {
+        recBody.innerHTML = '';
+        const metricsArray = Object.entries(productMetrics).map(([name, data]) => ({
+          name,
+          ...data,
+          ratio: data.purchased > 0 ? (data.sold / data.purchased) : 0
+        })).sort((a, b) => b.ratio - a.ratio);
+
+        if (metricsArray.length === 0) {
+          recBody.innerHTML = '<tr><td colspan="5" class="text-center">No data available yet</td></tr>';
+        } else {
+          metricsArray.forEach(m => {
+            let rec = '';
+            let recColor = '';
+            if (m.ratio > 0.7) { rec = '🚀 Fast Moving! Buy More'; recColor = 'var(--ok)'; }
+            else if (m.ratio > 0.3) { rec = '✅ Steady. Maintain Stock'; recColor = 'var(--info)'; }
+            else if (m.ratio > 0.1) { rec = '⚠️ Slow. Reduce Order'; recColor = 'var(--warn)'; }
+            else { rec = '🛑 Dead Stock. Liquidate'; recColor = 'var(--danger)'; }
+
+            recBody.innerHTML += `
+              <tr>
+                <td style="font-weight:600">${m.name}</td>
+                <td style="color:var(--muted-strong)">${formatCurrency(m.purchased)}</td>
+                <td style="color:var(--ok)">${formatCurrency(m.sold)}</td>
+                <td style="font-weight:700">${(m.ratio * 100).toFixed(1)}%</td>
+                <td style="font-weight:700; color:${recColor}">${rec}</td>
+              </tr>
+            `;
+          });
+        }
+      }
+
+      // 3. Investment Insights
+      const margin = totalSoldCost > 0 ? ((totalRev - totalSoldCost) / totalRev * 100).toFixed(1) : 0;
+      const insightsContainer = document.getElementById('analyticsInsights');
+      if (insightsContainer) {
+        insightsContainer.innerHTML = `
+          <div style="margin-bottom:12px;">
+            <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase;">Overall Recovery</div>
+            <div style="font-size:1.2rem; font-weight:800; color:var(--text-strong);">${((totalSoldCost / totalPurchasedCost) * 100).toFixed(1) || 0}%</div>
+            <div style="width:100%; height:6px; background:var(--bg-elevated); border-radius:10px; margin-top:6px; overflow:hidden;">
+              <div style="width:${(totalSoldCost / totalPurchasedCost) * 100}%; height:100%; background:var(--ok);"></div>
+            </div>
+          </div>
+          <p style="font-size:0.9rem; color:var(--muted-strong);">
+            Based on current data, your average profit margin is <strong>${margin}%</strong>. 
+            ${margin > 20 ? 'Your business has healthy margins.' : 'Margins are thin; consider reviewing purchase costs.'}
+          </p>
+        `;
+      }
+
+      // 4. Timelines
+      renderSalesTimeline();
+      renderPurchaseTimeline();
+    }
+
+    function renderSalesTimeline() {
+      const tlBody = document.querySelector('#salesTimelineTable tbody');
+      if (!tlBody) return;
+      tlBody.innerHTML = '';
       const salesByDate = {};
       sales.forEach(s => {
         const dateKey = s.created_at.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
         if (!salesByDate[dateKey]) salesByDate[dateKey] = { sales: [], items: [] };
         salesByDate[dateKey].sales.push(s);
       });
-
-      // Match sale items to their sale date
       sale_items.forEach(item => {
         const sale = sales.find(s => s.id === item.sale_id);
         if (sale) {
@@ -2895,32 +3110,24 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
           if (salesByDate[dateKey]) salesByDate[dateKey].items.push(item);
         }
       });
-
-      const dateEntries = Object.entries(salesByDate).reverse(); // newest first
-
+      const dateEntries = Object.entries(salesByDate).reverse();
       if (dateEntries.length === 0) {
-        tlBody.innerHTML = '<tr><td colspan="5" class="text-center">No sales recorded yet. Start billing to see timeline.</td></tr>';
+        tlBody.innerHTML = '<tr><td colspan="6" class="text-center">No sales recorded yet.</td></tr>';
       } else {
         dateEntries.forEach(([date, data], index) => {
           const rev = data.sales.reduce((sum, s) => sum + s.total_amount, 0);
           const avg = rev / data.sales.length;
-
-          // Build product tags for this day
           const itemCounts = {};
           data.items.forEach(item => {
             if (!itemCounts[item.product_name]) itemCounts[item.product_name] = 0;
             itemCounts[item.product_name] += item.qty;
           });
-          const productTags = Object.entries(itemCounts)
-            .sort((a, b) => b[1] - a[1])
+          const productTags = Object.entries(itemCounts).sort((a, b) => b[1] - a[1])
             .map(([name, qty]) => `<span class="badge" style="background:var(--accent-subtle);color:var(--accent);margin:2px 4px 2px 0;display:inline-block">${name} <strong>${qty}</strong></span>`)
             .join('');
-
-          const rowId = `date-row-${index}`;
           const billsClass = `bills-group-${index}`;
-
           tlBody.innerHTML += `
-            <tr id="${rowId}" onclick="toggleBills('${billsClass}')" style="cursor:pointer;">
+            <tr onclick="toggleBills('${billsClass}')" style="cursor:pointer;">
               <td style="font-weight:500; color:var(--text-strong)">${date}</td>
               <td style="font-weight:600">${data.sales.length}</td>
               <td style="font-weight:600; color:var(--ok)">${formatCurrency(rev)}</td>
@@ -2929,12 +3136,8 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
               <td>-</td>
             </tr>
           `;
-
-          // Add hidden bill rows
           data.sales.forEach(s => {
             const customerName = s.customer_id ? getCustomer(s.customer_id).name : 'Walk-in';
-            const items = sale_items.filter(item => item.sale_id === s.id);
-
             tlBody.innerHTML += `
               <tr class="bill-row ${billsClass}" style="display:none; background:var(--bg-hover); cursor:pointer;" onclick="viewBillReceipt('${s.id}')">
                 <td style="padding-left:20px; font-weight:600; color:var(--accent);">📄 ${s.id}</td>
@@ -2950,12 +3153,12 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
           });
         });
       }
+    }
 
-      // 8. Purchase Timeline
+    function renderPurchaseTimeline() {
       const ptBody = document.querySelector('#purchaseTimelineTable tbody');
+      if (!ptBody) return;
       ptBody.innerHTML = '';
-
-      // Group purchases by date
       const purchasesByDate = {};
       stock_list.forEach(p => {
         const dateKey = p.date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -2963,9 +3166,7 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
         purchasesByDate[dateKey].purchases.push(p);
         purchasesByDate[dateKey].vendors.add(p.vendor_name);
       });
-
       const purchaseDateEntries = Object.entries(purchasesByDate).reverse();
-
       if (purchaseDateEntries.length === 0) {
         ptBody.innerHTML = '<tr><td colspan="6" class="text-center">No purchases recorded yet.</td></tr>';
       } else {
@@ -2975,12 +3176,9 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
           const amountPaid = data.purchases.reduce((sum, p) => sum + p.paid, 0);
           const balanceDue = data.purchases.reduce((sum, p) => sum + p.balance, 0);
           const vendors = Array.from(data.vendors).join(', ');
-
-          const rowId = `p-date-row-${index}`;
           const billsClass = `p-bills-group-${index}`;
-
           ptBody.innerHTML += `
-            <tr id="${rowId}" onclick="toggleBills('${billsClass}')" style="cursor:pointer;">
+            <tr onclick="toggleBills('${billsClass}')" style="cursor:pointer;">
               <td style="font-weight:500; color:var(--text-strong)">${date}</td>
               <td style="font-weight:600">${count}</td>
               <td style="font-weight:600; color:var(--ok)">${formatCurrency(amountPurchased)}</td>
@@ -2989,8 +3187,6 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
               <td style="max-width:200px">${vendors}</td>
             </tr>
           `;
-
-          // Add hidden purchase rows
           data.purchases.forEach(p => {
             ptBody.innerHTML += `
               <tr class="bill-row ${billsClass}" style="display:none; background:var(--bg-hover);">
