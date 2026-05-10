@@ -297,7 +297,8 @@
 
     /* TIME PERIOD CARDS */
     .time-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    .time-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.2rem 1.5rem; position: relative; overflow: hidden; }
+    .time-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.2rem 1.5rem; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.2s, background 0.2s, border-color 0.2s; }
+    .time-card:hover { transform: translateY(-3px); background: var(--bg-hover); border-color: var(--accent); }
     .time-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
     .time-card.today::before { background: linear-gradient(90deg, #10b981, #34d399); }
     .time-card.week::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
@@ -397,11 +398,6 @@
         <section id="billing" class="view-section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
             <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--text-strong);">Billing (POS)</h2>
-            <div style="display: flex; gap: 10px;">
-               <button class="layout-toggle-btn" id="billingMaximizeBtn" onclick="toggleBillingMaximize()" title="Maximize Billing Area (Hide Top Bar)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
-              </button>
-            </div>
           </div>
           <div id="lowStockBanner" class="low-stock-banner">
             <div class="low-stock-banner-title">🚨 Low Stock Alert</div>
@@ -601,7 +597,7 @@
           <!-- Time Period Summary Cards -->
           <div style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.75rem;">📊 Sales History Summary</div>
           <div class="time-cards">
-            <div class="time-card today">
+            <div class="time-card today" onclick="openSalesSummaryDetail('today')">
               <div class="time-card-icon">📅</div>
               <div class="time-card-label">Today</div>
               <div class="time-card-revenue" id="tcTodayRev">₹0.00</div>
@@ -610,7 +606,7 @@
                 <span>📊 Avg: <strong id="tcTodayAvg">₹0</strong></span>
               </div>
             </div>
-            <div class="time-card week">
+            <div class="time-card week" onclick="openSalesSummaryDetail('week')">
               <div class="time-card-icon">📊</div>
               <div class="time-card-label">This Week</div>
               <div class="time-card-revenue" id="tcWeekRev">₹0.00</div>
@@ -619,7 +615,7 @@
                 <span>📊 Avg: <strong id="tcWeekAvg">₹0</strong></span>
               </div>
             </div>
-            <div class="time-card month">
+            <div class="time-card month" onclick="openSalesSummaryDetail('month')">
               <div class="time-card-icon">📆</div>
               <div class="time-card-label">This Month</div>
               <div class="time-card-revenue" id="tcMonthRev">₹0.00</div>
@@ -687,7 +683,7 @@
             <div class="card-header">📋 Sales Timeline</div>
             <div class="table-container">
               <table class="data-table" style="font-size: 0.9rem;" id="salesTimelineTable">
-                <thead><tr><th>Date</th><th>Bills</th><th>Revenue</th><th>Avg Bill</th><th>Products Sold</th></tr></thead>
+                <thead><tr><th>Date</th><th>Bills</th><th>Revenue</th><th>Avg Bill</th><th>Products Sold</th><th style="text-align:right">Action</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
@@ -1062,6 +1058,62 @@
     </div>
   </div>
 
+  <!-- Sales Summary Detail Modal -->
+  <div class="modal-overlay" id="salesSummaryDetailModal">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div class="modal-title" id="salesSummaryDetailTitle">Sales Summary Details</div>
+        <button class="close-btn" onclick="closeModal('salesSummaryDetailModal')">&times;</button>
+      </div>
+      <div class="table-container">
+        <table id="salesSummaryDetailTable">
+          <thead>
+            <tr>
+              <th>Bill ID</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Summary details rendered here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- Checkout Confirmation Modal -->
+  <div class="modal-overlay" id="checkoutConfirmModal">
+    <div class="modal-content" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div class="modal-title">Confirm Checkout</div>
+        <button class="close-btn" onclick="closeModal('checkoutConfirmModal')">&times;</button>
+      </div>
+      
+      <div id="checkoutConfirmSummary">
+         <!-- Populated via JS -->
+      </div>
+
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button class="btn btn-outline btn-block" onclick="closeModal('checkoutConfirmModal')">Back to Cart</button>
+        <button class="btn btn-primary btn-block" onclick="confirmCheckout()">Confirm & Print Bill</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Bill Confirmation Modal -->
+  <div class="modal-overlay" id="deleteBillModal">
+    <div class="modal-content" style="max-width:420px; text-align:center;">
+      <div style="font-size:2.5rem; margin-bottom:0.5rem;">🗑️</div>
+      <h3 style="color:var(--text-strong); margin-bottom:0.5rem;">Delete This Bill?</h3>
+      <p id="deleteBillMessage" style="color:var(--muted); font-size:0.9rem; margin-bottom:1.5rem;">The purchased items will be restored to stock.</p>
+      <div style="display:flex; gap:1rem;">
+        <button class="btn btn-outline btn-block" onclick="closeModal('deleteBillModal')">Cancel</button>
+        <button class="btn btn-block" id="deleteBillConfirmBtn" style="background:var(--danger); color:white; border:none;" onclick="executeBillDelete()">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /* =======================================================================
        1. MOCK DATABASE (In-Memory State)
@@ -1369,6 +1421,53 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
       openModal('billReceiptModal');
     }
 
+    let _pendingDeleteSaleId = null;
+
+    function deleteBill(saleId) {
+      console.log("Delete Bill Request:", saleId);
+      _pendingDeleteSaleId = saleId;
+      const msg = document.getElementById('deleteBillMessage');
+      if (msg) msg.innerText = `Delete bill ${saleId}? Purchased items will be restored to stock.`;
+      openModal('deleteBillModal');
+    }
+
+    function executeBillDelete() {
+      const saleId = _pendingDeleteSaleId;
+      closeModal('deleteBillModal');
+      if (!saleId) return;
+      _pendingDeleteSaleId = null;
+
+      try {
+        const sale = sales.find(s => s.id === saleId);
+        if (!sale) {
+          return alert('Bill not found: ' + saleId);
+        }
+
+        // 1. Restore Stock
+        const items = sale_items.filter(item => item.sale_id === saleId);
+        items.forEach(item => {
+          const batch = batches.find(b => b.id === item.batch_id);
+          if (batch) batch.quantity += item.qty;
+        });
+
+        // 2. Remove from collections
+        sales = sales.filter(s => s.id !== saleId);
+        sale_items = sale_items.filter(item => item.sale_id !== saleId);
+        credit_ledger = credit_ledger.filter(l => l.sale_id !== saleId);
+
+        // 3. Re-render
+        renderReports();
+        renderPOSItems();
+        renderLowStockBanner();
+        renderCredit();
+
+        alert(`Bill ${saleId} deleted. Stock restored.`);
+      } catch (err) {
+        console.error("FATAL deleteBill error:", err);
+        alert('Error: ' + err.message);
+      }
+    }
+
     function printBillReceipt() {
       const content = document.getElementById('billReceiptContent').innerText;
       const printWindow = window.open('about:blank', '', 'height=600,width=800');
@@ -1591,7 +1690,7 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
         }
       });
       
-      const total = subtotal - billDiscount + totalGst;
+      const total = Math.max(0, subtotal - billDiscount + totalGst);
 
       document.getElementById('cartSubtotal').innerText = formatCurrency(subtotal);
       document.getElementById('cartGst').innerText = totalGst > 0 ? formatCurrency(totalGst) : "₹0.00";
@@ -1607,16 +1706,132 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
     }
 
     function processCheckout() {
-      if(cart.length === 0) return alert('Cart is empty!');
-      
+      console.log("Process Checkout Button Clicked");
+      try {
+        if(!cart || cart.length === 0) {
+          console.warn("Cart is empty");
+          return alert('Cart is empty!');
+        }
+        
+        console.log("Calculating cart...");
+        const calc = calculateCart();
+        const total = calc.total;
+        
+        const amountPaidEl = document.getElementById('amountPaidInput');
+        const customerSelectEl = document.getElementById('billCustomerSelect');
+        
+        if(!amountPaidEl || !customerSelectEl) {
+          console.error("Missing DOM elements:", {amountPaidEl, customerSelectEl});
+          throw new Error("Billing system internal error: Missing input fields.");
+        }
+
+        let amountPaid = parseFloat(amountPaidEl.value) || 0;
+        const customerId = customerSelectEl.value;
+
+        console.log("Validation check:", {customerId, amountPaid, total});
+        if(!customerId && amountPaid < total) {
+          return alert('Walk-in customers must pay in full. For credit, please select a registered customer.');
+        }
+
+        const summaryDiv = document.getElementById('checkoutConfirmSummary');
+        if (!summaryDiv) {
+          console.error("Summary div #checkoutConfirmSummary not found!");
+          throw new Error("System error: Confirmation popup container not found.");
+        }
+
+        console.log("Rendering summary items...");
+        let itemsHtml = "";
+        cart.forEach(item => {
+          const product = getProduct(item.product_id);
+          const unit = product ? product.unit : '';
+          const itemDisc = item.discount || 0;
+          const lineGross = item.qty * (item.price || 0);
+          const lineTotal = lineGross - itemDisc;
+          
+          itemsHtml += `
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+              <div style="flex:1;">
+                <div style="font-weight:600; color:var(--text-strong);">${item.product_name || 'Unknown Item'}</div>
+                <div style="font-size:0.8rem; color:var(--muted);">${item.batch_id || ''}</div>
+              </div>
+              <div style="width:100px; text-align:right; font-size:0.9rem;">
+                ${item.qty} ${unit}
+                ${itemDisc > 0 ? `<div style="font-size:0.75rem; color:var(--ok);">Disc: -${formatCurrency(itemDisc)}</div>` : ''}
+              </div>
+              <div style="width:100px; text-align:right; font-weight:600;">
+                <div style="${itemDisc > 0 ? 'text-decoration:line-through; font-size:0.8rem; color:var(--muted);' : ''}">${formatCurrency(lineGross)}</div>
+                ${itemDisc > 0 ? `<div>${formatCurrency(lineTotal)}</div>` : ''}
+              </div>
+            </div>
+          `;
+        });
+
+        console.log("Setting innerHTML...");
+        const customerName = customerId ? getCustomer(customerId).name : 'Walk-in Customer';
+        const dateStr = new Date().toLocaleDateString();
+
+        summaryDiv.innerHTML = `
+          <div style="background:var(--bg-100); padding:1rem; border-radius:8px; margin-bottom:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div>
+              <div style="color:var(--muted); font-size:0.8rem; text-transform:uppercase; margin-bottom:4px;">Customer</div>
+              <div style="font-weight:600; font-size:1rem;">${customerName}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:var(--muted); font-size:0.8rem; text-transform:uppercase; margin-bottom:4px;">Date</div>
+              <div style="font-weight:600; font-size:1rem;">${dateStr}</div>
+            </div>
+          </div>
+
+          <div style="font-weight:700; margin-bottom:10px; font-size:1.1rem; color:var(--text-strong); border-left:4px solid var(--accent); padding-left:12px;">Items to Purchase</div>
+          <div style="max-height:250px; overflow-y:auto; margin-bottom:1.5rem; padding-right:10px; border:1px solid var(--border); border-radius:8px; padding:0 15px;">
+            ${itemsHtml}
+          </div>
+
+          <div style="background:var(--bg-elevated); padding:1.5rem; border-radius:12px; border:1px solid var(--border); box-shadow:inset 0 0 10px rgba(0,0,0,0.1);">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--muted);">
+              <span>Subtotal:</span>
+              <span>${formatCurrency(calc.subtotal)}</span>
+            </div>
+            ${calc.discount > 0 ? `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--danger);">
+              <span>Bill Discount:</span>
+              <span>-${formatCurrency(calc.discount)}</span>
+            </div>
+            ` : ''}
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--muted);">
+              <span>GST (Tax):</span>
+              <span>${formatCurrency(calc.gst)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:2px solid var(--border); font-size:1.6rem; font-weight:800; color:var(--text-strong);">
+              <span>Grand Total:</span>
+              <span style="color:var(--accent);">${formatCurrency(total)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:12px; padding:10px; background:rgba(16,185,129,0.1); border-radius:6px; color:var(--ok); font-weight:600;">
+              <span>Amount Received:</span>
+              <span>${formatCurrency(amountPaid)}</span>
+            </div>
+            ${(total - amountPaid) > 0 ? `
+            <div style="display:flex; justify-content:space-between; margin-top:8px; padding:10px; background:rgba(239,68,68,0.1); border-radius:6px; color:var(--danger); font-weight:700;">
+              <span>Balance Due (Credit):</span>
+              <span>${formatCurrency(total - amountPaid)}</span>
+            </div>
+            ` : ''}
+          </div>
+        `;
+
+        console.log("Opening modal...");
+        openModal('checkoutConfirmModal');
+      } catch (err) {
+        console.error("FATAL processCheckout Error:", err);
+        alert('Critical Error: ' + err.message);
+      }
+    }
+
+    function confirmCheckout() {
       const calc = calculateCart();
       const total = calc.total;
       let amountPaid = parseFloat(document.getElementById('amountPaidInput').value) || 0;
       const customerId = document.getElementById('billCustomerSelect').value;
-
-      if(!customerId && amountPaid < total) {
-        return alert('Walk-in customers must pay in full. For credit, please select a registered customer.');
-      }
 
       // 1. Create Sale Record
       const saleId = generateId('INV');
@@ -1658,9 +1873,15 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
       document.getElementById('amountPaidInput').value = '';
       document.getElementById('cartDiscountInput').value = '';
       document.getElementById('billCustomerSelect').value = '';
+      
+      closeModal('checkoutConfirmModal');
       renderCart();
       renderPOSItems();
       renderLowStockBanner();
+      renderReports();
+      
+      // Flash success message
+      alert('Bill Generated Successfully!');
     }
 
     function printThermalBill(invoiceId, items, calc, paid, custId) {
@@ -1720,16 +1941,25 @@ Item                 Qty  Price   Total
       receipt += `========================================\n`;
 
       // Open in new window for printing
-      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      const printWindow = window.open('', '_blank', 'width=450,height=600');
+      if (!printWindow) {
+        alert('Pop-up blocked! Please allow pop-ups for this site to print the bill.');
+        return;
+      }
       printWindow.document.write(`
-        <html><head><title>Print Receipt</title>
+        <html><head><title>Print Receipt - ${invoiceId}</title>
         <style>
-          body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 10px; width: 300px; font-size: 12px;}
-          pre { white-space: pre-wrap; margin:0;}
+          body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; width: 350px; font-size: 13px; line-height: 1.4; }
+          pre { white-space: pre-wrap; margin:0; }
         </style>
         </head><body>
         <pre>${receipt}</pre>
-        <script>window.print(); window.onafterprint = function(){ window.close(); }<\/script>
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function(){ window.close(); };
+          };
+        <\/script>
         </body></html>
       `);
       printWindow.document.close();
@@ -2083,9 +2313,9 @@ Item                 Qty  Price   Total
                 ${totals.billsCleared} / ${totals.totalBills}
               </span>
             </td>
-            <td style="display:flex; gap:4px; flex-wrap:wrap;">
-              ${totals.balance > 0 ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${c.id}')">Settle</button>` : `<span class="badge badge-ok">Cleared</span>`}
-              ${entries.length > 0 ? `<button class="btn btn-outline btn-sm" style="padding:2px 8px; font-size:0.75rem;" onclick="toggleBills('${billsClass}')">Show Bills</button>` : ''}
+            <td style="display:flex; gap:8px; align-items:center;">
+              ${entries.length > 0 ? `<button class="btn btn-outline btn-sm" onclick="toggleBills('${billsClass}')" style="font-weight:600; min-width:90px;">🔍 Bills</button>` : ''}
+              ${totals.balance > 0 ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${c.id}')" style="min-width:70px;">Settle</button>` : `<span class="badge badge-ok">Cleared</span>`}
             </td>
           </tr>
         `;
@@ -2696,6 +2926,7 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
               <td style="font-weight:600; color:var(--ok)">${formatCurrency(rev)}</td>
               <td style="color:var(--muted-strong)">${formatCurrency(avg)}</td>
               <td style="max-width:300px">${productTags || '-'}</td>
+              <td>-</td>
             </tr>
           `;
 
@@ -2705,12 +2936,15 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
             const items = sale_items.filter(item => item.sale_id === s.id);
 
             tlBody.innerHTML += `
-              <tr class="bill-row ${billsClass}" style="display:none; background:var(--bg-hover); cursor:pointer;" onclick="viewBillReceipt('${s.id}'); event.stopPropagation();">
+              <tr class="bill-row ${billsClass}" style="display:none; background:var(--bg-hover); cursor:pointer;" onclick="viewBillReceipt('${s.id}')">
                 <td style="padding-left:20px; font-weight:600; color:var(--accent);">📄 ${s.id}</td>
                 <td>${customerName}</td>
                 <td style="color:var(--ok)">${formatCurrency(s.total_amount)}</td>
                 <td>-</td>
-                <td style="color:var(--muted);">Click to view receipt</td>
+                <td>-</td>
+                <td style="text-align:right;">
+                  <button class="btn btn-sm btn-outline" style="color:var(--danger); border-color:rgba(239,68,68,0.3); font-size:0.7rem; padding:2px 8px;" onclick="event.stopPropagation(); deleteBill('${s.id}')">Delete</button>
+                </td>
               </tr>
             `;
           });
@@ -3148,6 +3382,53 @@ ${balAfter <= 0 ? '\n    *** ALL DUES CLEARED ***\n' : ''}
           }
         }
       }, 50);
+    }
+
+    function openSalesSummaryDetail(period) {
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const dayOfWeek = today.getDay() || 7;
+      const startOfWeek = new Date(startOfDay);
+      startOfWeek.setDate(startOfWeek.getDate() - (dayOfWeek - 1));
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      let startDate;
+      let title;
+      if (period === 'today') {
+        startDate = startOfDay;
+        title = "Today's Sales Bills";
+      } else if (period === 'week') {
+        startDate = startOfWeek;
+        title = "This Week's Sales Bills";
+      } else {
+        startDate = startOfMonth;
+        title = "This Month's Sales Bills";
+      }
+
+      document.getElementById('salesSummaryDetailTitle').innerText = title;
+      const tbody = document.querySelector('#salesSummaryDetailTable tbody');
+      tbody.innerHTML = '';
+
+      const filteredSales = sales.filter(s => s.created_at >= startDate).sort((a, b) => b.created_at - a.created_at);
+      
+      if (filteredSales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No sales bills found for this period.</td></tr>';
+      } else {
+        filteredSales.forEach(s => {
+          const customerName = s.customer_id ? getCustomer(s.customer_id).name : 'Walk-in';
+          const dateStr = s.created_at.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+          tbody.innerHTML += `
+            <tr style="cursor:pointer;" onclick="viewBillReceipt('${s.id}')">
+              <td style="font-family:var(--mono); color:var(--accent); font-weight:600;">📄 ${s.id}</td>
+              <td style="color:var(--muted);">${dateStr}</td>
+              <td style="font-weight:500;">${customerName}</td>
+              <td style="font-weight:600; color:var(--ok);">${formatCurrency(s.total_amount)}</td>
+            </tr>
+          `;
+        });
+      }
+
+      openModal('salesSummaryDetailModal');
     }
 
   </script>
