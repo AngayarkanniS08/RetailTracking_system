@@ -3,30 +3,27 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+// Set custom session save path
+session_save_path(__DIR__ . '/tmp/sessions');
 session_start();
 
 require_once __DIR__ . '/config/Database.php';
 
 // Simple autoloader supporting root-level and Modules/ subdirectory modules
+// Simple autoloader – works anywhere
 spl_autoload_register(function ($class) {
     $prefix = 'Modules\\';
-    $base_dir = __DIR__ . '/';
-
-    // Check if the class namespace belongs to the moved modules
-    $parts = explode('\\', $class);
-    $firstWord = strtolower($parts[0] ?? '');
-
-    if (in_array($firstWord, ['auth', 'billing', 'customer', 'inventory', 'product', 'reports', 'settings', 'vendor'])) {
-        $file = $base_dir . 'Modules/' . ucfirst($parts[0]) . '/' . implode('/', array_slice($parts, 1)) . '.php';
-    } else {
-        $file = $base_dir . str_replace('\\', '/', $class) . '.php';
+    $base_dir = __DIR__ . '/Modules/';
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
     }
-
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
     if (file_exists($file)) {
-        require_once $file;
+        require $file;
     }
 });
-
 // Handle logout (always first)
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_destroy();
