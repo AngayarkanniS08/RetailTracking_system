@@ -6,12 +6,20 @@ session_start();
 
 require_once __DIR__ . '/config/Database.php';
 
-// Simple autoloader
+// Simple autoloader supporting root-level and models/ subdirectory modules
 spl_autoload_register(function ($class) {
-    // Convert namespace to file path
-    $prefix = '';
     $base_dir = __DIR__ . '/';
-    $file = $base_dir . str_replace('\\', '/', $class) . '.php';
+    
+    // Check if the class namespace belongs to the moved modules
+    $parts = explode('\\', $class);
+    $firstWord = strtolower($parts[0] ?? '');
+    
+    if (in_array($firstWord, ['auth', 'billing', 'customer', 'inventory', 'product', 'reports', 'settings'])) {
+        $file = $base_dir . 'models/' . str_replace('\\', '/', $class) . '.php';
+    } else {
+        $file = $base_dir . str_replace('\\', '/', $class) . '.php';
+    }
+    
     if (file_exists($file)) {
         require_once $file;
     }
@@ -26,7 +34,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
 
 // Handle POST registration
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'register') {
-    require_once __DIR__ . '/Auth/Controller/Api/RegistrationController.php';
+    require_once __DIR__ . '/models/Auth/Controller/Api/RegistrationController.php';
     $controller = new Auth\Controller\Api\RegistrationController();
     $controller->register();
     exit;
@@ -34,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
 
 // Handle POST login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
-    require_once __DIR__ . '/Auth/Controller/Api/LoginController.php';
+    require_once __DIR__ . '/models/Auth/Controller/Api/LoginController.php';
     $controller = new Auth\Controller\Api\LoginController();
     $controller->login();
     exit;
