@@ -14,7 +14,7 @@ spl_autoload_register(function ($class) {
     $parts = explode('\\', $class);
     $firstWord = strtolower($parts[0] ?? '');
     
-    if (in_array($firstWord, ['auth', 'billing', 'customer', 'inventory', 'product', 'reports', 'settings'])) {
+    if (in_array($firstWord, ['auth', 'billing', 'customer', 'inventory', 'product', 'reports', 'settings', 'vendor'])) {
         $file = $base_dir . 'models/' . str_replace('\\', '/', $class) . '.php';
     } else {
         $file = $base_dir . str_replace('\\', '/', $class) . '.php';
