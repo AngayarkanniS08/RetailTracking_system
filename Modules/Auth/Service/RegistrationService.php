@@ -1,9 +1,9 @@
 <?php
-namespace Auth\Service;
+namespace Modules\Auth\Service;
 
-use Auth\DTO\RegisterDTO;
-use Auth\Repository\Contract\UserRepositoryInterface;
-use Validation\ValidationException;
+use Modules\Auth\DTO\RegisterDTO;
+use Modules\Auth\Repository\Contract\UserRepositoryInterface;
+use Modules\Validation\ValidationException;
 
 class RegistrationService {
     private UserRepositoryInterface $userRepo;

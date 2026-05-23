@@ -1,9 +1,9 @@
 <?php
-namespace Auth\Controller\Api;
+namespace Modules\Auth\Controller\Api;
 
-use Auth\DTO\registerDTO;
-use Auth\Service\RegistrationService;
-use Auth\Repository\UserRepository;
+use Modules\Auth\DTO\registerDTO;
+use Modules\Auth\Service\RegistrationService;
+use Modules\Auth\Repository\UserRepository;
 use Validation\ValidationException;
 use Exception;
 

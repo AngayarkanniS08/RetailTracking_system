@@ -1,5 +1,5 @@
 <?php
-namespace Auth\Model;
+namespace Modules\Auth\Model;
 
 class User {
     public function __construct(

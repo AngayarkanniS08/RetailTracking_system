@@ -1,5 +1,5 @@
 <?php
-namespace Auth\DTO;
+namespace Modules\Auth\DTO;
 
 class RegisterDTO {
     public function __construct(
