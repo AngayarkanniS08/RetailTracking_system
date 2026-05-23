@@ -1,12 +1,12 @@
   <!-- Footer Scripts -->
-  <!-- <script src="assets/js/main.js"></script>
-  <script src="assets/js/auth.js"></script>
-  <script src="assets/js/inventory.js"></script>
-  <script src="assets/js/billing.js"></script>
-  <script src="assets/js/credit.js"></script>
-  <script src="assets/js/reports.js"></script> -->
-  <script src="assets/js/utils.js"></script>
-  <script src="assets/js/categories.js"></script>
-   <script src="assets/js/nav.js"></script>
+  <!-- <script src="Core/Asset/js/main.js"></script>
+  <script src="Auth/Asset/js/auth.js"></script>
+  <script src="Inventory/Asset/js/inventory.js"></script>
+  <script src="Billing/Asset/js/billing.js"></script>
+  <script src="Customer/Asset/js/credit.js"></script>
+  <script src="Reports/Asset/js/reports.js"></script> -->
+  <script src="Core/Asset/js/utils.js"></script>
+  <script src="Product/Asset/js/categories.js"></script>
+   <script src="Core/Asset/js/nav.js"></script>
 </body>
 </html>

@@ -6,28 +6,26 @@
           <img src="logo.png" alt="Pudheera Fashions Logo" style="width: 100%; height: auto; border-radius: 12px;">
         </div>
       </div>
-      <div>
+      <form action="/RetailTracking_system/index.php?action=register" method="POST">
         <div class="input-group">
-          <label class="input-label">Name</label>
-          <input type="text" class="input-field"  placeholder="Enter username">
+          <label class="input-label">Username</label>
+          <input type="text" name="username" class="input-field" placeholder="Enter username" required>
         </div>
-      <div>
         <div class="input-group">
-          <label class="input-label">Email Id </label>
-          <input type="text" class="input-field"  placeholder="Enter email id">
+          <label class="input-label">Email Id</label>
+          <input type="email" name="email" class="input-field" placeholder="Enter email id" required>
         </div>
         <div class="input-group">
           <label class="input-label">Password</label>
-          <input type="password" class="input-field" placeholder="Enter password">
+          <input type="password" name="password" class="input-field" placeholder="Enter password" required>
         </div>
-        <div>
         <div class="input-group">
-          <label class="input-label">Repeat Password </label>
-          <input type="text" class="input-field"  placeholder="Password">
+          <label class="input-label">Repeat Password</label>
+          <input type="password" name="password_repeat" class="input-field" placeholder="Password" required>
         </div>
-        <button class="btn btn-primary btn-block">SignUp</button>
-        <p>Already have an account? <a href="index.php?action=login">Login here</a></p>
-        <p class="text-center mt-1" style="color: var(--muted); font-size: 0.8rem;"></p>
-      </div>
+        <button type="submit" class="btn btn-primary btn-block">SignUp</button>
+      </form>
+      <p>Already have an account? <a href="index.php?action=login">Login here</a></p>
+      <p class="text-center mt-1" style="color: var(--muted); font-size: 0.8rem;"></p>
     </div>
   </div>

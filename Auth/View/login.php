@@ -15,7 +15,7 @@
           <label class="input-label">Password</label>
           <input type="password" class="input-field" placeholder="Enter password">
         </div>
-        <button class="btn btn-primary btn-block" onclick="doLogin()">Login to System</button>
+        <button class="btn btn-primary btn-block">Login to System</button>
         <p>Don't have an account? <a href="index.php?action=register">Register here</a></p>
       </div>
     </div>
