@@ -3,10 +3,10 @@
     <div class="login-card">
       <div class="logo-area" style="justify-content: center; margin-bottom: 2rem; flex-direction: column; gap: 15px;">
         <div style="width: 250px; display: flex; align-items: center; justify-content: center;">
-          <img src="logo.png" alt="Pudheera Fashions Logo" style="width: 100%; height: auto; border-radius: 12px;">
+          <img src="assets/images/logo.png" alt="Pudheera Fashions Logo" style="width: 100%; height: auto; border-radius: 12px;">
         </div>
       </div>
-      <form action="/RetailTracking_system/index.php?action=register" method="POST">
+      <form action="index.php?action=register" method="POST">
         <div class="input-group">
           <label class="input-label">Username</label>
           <input type="text" name="username" class="input-field" placeholder="Enter username" required>

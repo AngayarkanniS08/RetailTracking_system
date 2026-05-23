@@ -32,60 +32,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     exit;
 }
 
-// Handle POST login (will implement later)
+// Handle POST login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
-    // TODO: call LoginController
-    // For now, redirect to dashboard if credentials are correct (placeholder)
-    // After you implement login, replace this block.
-    header('Location: index.php');
+    require_once __DIR__ . '/Auth/Controller/Api/LoginController.php';
+    $controller = new Auth\Controller\Api\LoginController();
+    $controller->login();
     exit;
 }
 
-// Check if user is logged in (using the session key set by registration)
+// Check if user is logged in (using the session key set by registration or login)
 $isLoggedIn = isset($_SESSION['user_id']);
 
 // If not logged in, show only the auth forms (no layout)
 if (!$isLoggedIn) {
-    require_once 'Core/View/Layouts/header.php';
+    require_once 'views/layouts/header.php';
     
     $action = $_GET['action'] ?? 'register';
     if ($action === 'login') {
-        require_once 'Auth/View/login.php';
+        require_once 'views/auth/login.php';
     } else {
-        require_once 'Auth/View/register.php';
+        require_once 'views/auth/register.php';
     }
     
-    require_once 'Core/View/Layouts/footer.php';
+    require_once 'views/layouts/footer.php';
     exit; // Stop execution – no dashboard or layout
 }
 
 // If logged in, show full dashboard with layout
-require_once 'Core/View/Layouts/header.php';
+require_once 'views/layouts/header.php';
 
 echo '<div class="dashboard" id="dashboardView">';
 
-require_once 'Core/View/Layouts/topbar.php';
+require_once 'views/layouts/topbar.php';
 
 echo '<div class="main-container">';
 
-require_once 'Core/View/Layouts/sidebar.php';
+require_once 'views/layouts/sidebar.php';
 
 echo '<main class="content-area">';
 
-// All feature sections (used for SPA tab switching)
-require_once 'Reports/View/Dashboard/index.php';
-require_once 'Billing/View/index.php';
-require_once 'Customer/View/index.php';
-require_once 'Reports/View/DailySales/index.php';
-require_once 'Product/View/index.php';
-require_once 'Inventory/View/index.php';
-require_once 'Vendor/View/index.php';
-require_once 'Vendor/View/History/index.php';
-require_once 'Reports/View/Dashboard/stockintel/index.php';
+// All consolidated feature sections (used for SPA tab switching)
+require_once 'views/reports/dashboard.php';
+require_once 'views/billing/index.php';
+require_once 'views/customer/index.php';
+require_once 'views/reports/daily_sales.php';
+require_once 'views/product/index.php';
+require_once 'views/inventory/index.php';
+require_once 'views/vendor/index.php';
+require_once 'views/vendor/history.php';
+require_once 'views/reports/stockintel.php';
 
 echo '</main>'; // content-area
 echo '</div>'; // main-container
 echo '</div>'; // dashboardView
 
-require_once 'Core/View/Layouts/modals.php';
-require_once 'Core/View/Layouts/footer.php';
+require_once 'views/layouts/modals.php';
+require_once 'views/layouts/footer.php';
