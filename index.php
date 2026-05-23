@@ -7,7 +7,7 @@ session_start();
 
 require_once __DIR__ . '/config/Database.php';
 
-// Simple autoloader supporting root-level and models/ subdirectory modules
+// Simple autoloader supporting root-level and Modules/ subdirectory modules
 spl_autoload_register(function ($class) {
     $prefix = 'Modules\\';
     $base_dir = __DIR__ . '/';
@@ -17,7 +17,7 @@ spl_autoload_register(function ($class) {
     $firstWord = strtolower($parts[0] ?? '');
 
     if (in_array($firstWord, ['auth', 'billing', 'customer', 'inventory', 'product', 'reports', 'settings', 'vendor'])) {
-        $file = $base_dir . 'models/' . str_replace('\\', '/', $class) . '.php';
+        $file = $base_dir . 'Modules/' . ucfirst($parts[0]) . '/' . implode('/', array_slice($parts, 1)) . '.php';
     } else {
         $file = $base_dir . str_replace('\\', '/', $class) . '.php';
     }
@@ -44,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
 
 // Handle POST login
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
-    require_once __DIR__ . '/models/Auth/Controller/Api/LoginController.php';
-    $controller = new Auth\Controller\Api\LoginController();
+    require_once __DIR__ . '/Modules/Auth/Controller/Api/LoginController.php';
+    $controller = new Modules\Auth\Controller\Api\LoginController();
     $controller->login();
     exit;
 }

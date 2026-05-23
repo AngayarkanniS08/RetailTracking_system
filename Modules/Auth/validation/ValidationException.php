@@ -1,6 +1,6 @@
 <?php
 
-namespace Validation;
+namespace Modules\Auth\validation;
 
 use Exception;
 

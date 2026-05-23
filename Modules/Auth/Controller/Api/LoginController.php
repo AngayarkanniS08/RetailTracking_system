@@ -1,7 +1,7 @@
 <?php
-namespace Auth\Controller\Api;
+namespace Modules\Auth\Controller\Api;
 
-use Auth\Repository\UserRepository;
+use Modules\Auth\Repository\UserRepository;
 use Exception;
 
 class LoginController {
