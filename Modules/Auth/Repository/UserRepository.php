@@ -28,6 +28,14 @@ class UserRepository implements UserRepositoryInterface
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
     }
 
+    public function findByUsernameOrEmail(string $usernameOrEmail): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
+        $stmt->execute([$usernameOrEmail, $usernameOrEmail]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
     public function save(string $username, string $email, string $hashedPassword): array
     {
         $stmt = $this->db->prepare("
