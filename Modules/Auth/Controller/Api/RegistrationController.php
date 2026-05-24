@@ -31,13 +31,10 @@ class RegistrationController {
             $dto = new RegisterDTO($username, $email, $password);
             $user = $this->service->register($dto);
             
-            // Auto-login
-            session_start();
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            
-            header("Location: /index.php");
-            exit;
+           // Redirect to login page with success message
+        header("Location: /index.php?action=login&registered=1");
+        exit;
+        
         } catch (ValidationException $e) {
             // Known validation error – show to user
             $this->redirectWithError($e->getMessage());
