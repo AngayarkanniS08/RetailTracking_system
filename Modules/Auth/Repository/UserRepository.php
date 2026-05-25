@@ -4,6 +4,7 @@ namespace Modules\Auth\Repository;
 
 use Modules\Auth\Repository\Contract\UserRepositoryInterface;
 use Config\Database; // adjust namespace to your actual Database class
+use Override;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -19,6 +20,18 @@ class UserRepository implements UserRepositoryInterface
         $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ?");
         $stmt->execute([$username]);
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+    #[Override]
+    public function findbyId(string $id): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function updatePassword(string $userId, string $hashedPassword): void {
+    $stmt = $this->db->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+    $stmt->execute([$hashedPassword, $userId]);
     }
 
     public function findByEmail(string $email): ?array

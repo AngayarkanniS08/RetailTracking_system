@@ -8,4 +8,6 @@ interface UserRepositoryInterface
     public function findByEmail(string $email): ?array;
     public function findByUsernameOrEmail(string $usernameOrEmail): ?array;
     public function save(string $username, string $email, string $hashedPassword): array;
+    public function findbyId(string $id): ?array;
+    public function updatePassword(string $userId, string $hashedPassword): void;
 }

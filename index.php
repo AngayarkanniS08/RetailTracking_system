@@ -44,16 +44,38 @@ $request_uri = $_SERVER['REQUEST_URI'];
 $path = parse_url($request_uri, PHP_URL_PATH);
 
 if (strpos($path, '/api/') === 0) {
-    // API endpoint routing
+    // Forgot password (make sure the path matches your frontend fetch URL)
+    if ($path === '/api/forgot-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $controller = new Modules\Auth\Controller\Api\ForgotPasswordController();
+        $controller->forgot();
+        exit;
+    }
+    // Reset password
+    if ($path === '/api/reset-password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $controller = new Modules\Auth\Controller\Api\ResetPasswordController();
+        $controller->reset();   // <-- YOU MISSED THIS CALL
+        exit;
+    }
+    // Login
     if ($path === '/api/login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $controller = new Modules\Auth\Controller\Api\LoginController();
         $controller->login();
         exit;
     }
-    // Add other API routes here
-
+    // Any other API endpoint -> 404
     http_response_code(404);
     echo json_encode(['error' => 'API endpoint not found']);
+    exit;
+}
+// Web routes
+$action = $_GET['action'] ?? 'register';
+if ($action === 'ForgotPassword') {
+    require_once 'views/auth/ForgotPassword.php'; // your forgot password form
+    exit;
+}
+if ($action === 'reset_password') {
+    $controller = new Modules\Auth\Controller\Web\ResetPasswordController();
+    $controller->showResetForm();
     exit;
 }
 
@@ -95,7 +117,7 @@ if (!$isLoggedIn) {
     if ($action === 'login') {
         require_once 'views/auth/login.php';
     } elseif ($action === 'forgot_password') {
-        require_once 'views/auth/forgot_password.php';
+        require_once 'views/auth/ForgotPassword.php';
     } else {
         require_once 'views/auth/register.php';
     }

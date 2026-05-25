@@ -18,7 +18,7 @@
         <button type="submit" class="btn btn-primary btn-block">Login to System</button>
         <div class = "RegisterForgot">
         <p>New User?<a href="index.php?action=register">Register here</a></p>
-        <p><a href="index.php?action=forgot_password">Forgot Password?</a></p>
+        <p><a href="index.php?action=ForgotPassword">Forgot Password?</a></p>
         </div>
       </form>
     </div>
