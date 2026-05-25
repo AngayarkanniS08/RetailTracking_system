@@ -1,54 +1,62 @@
 <?php
+
 namespace Modules\Auth\Controller\Api;
 
 use Modules\Auth\DTO\LoginDTO;
 use Modules\Auth\Service\LoginService;
+use Modules\Auth\Service\JWTService;
 use Modules\Auth\Repository\UserRepository;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 use Exception;
 
-class LoginController {
+class LoginController
+{
     private LoginService $service;
+    private JWTService $jwtService;
 
-    public function __construct() {
+    public function __construct()
+    {
         $userRepo = new UserRepository();
         $this->service = new LoginService($userRepo);
+        $this->jwtService = new JWTService();
     }
 
-    public function login(): void {
+    public function login(): void
+    {
+        header('Content-Type: application/json');
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirectWithError("Invalid request method");
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
             return;
         }
 
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $input = json_decode(file_get_contents('php://input'), true);
+        $username = trim($input['username'] ?? '');
+        $password = $input['password'] ?? '';
 
         if (empty($username) || empty($password)) {
-            $this->redirectWithError("Username and password are required");
+            http_response_code(400);
+            echo json_encode(['error' => 'Username and password required']);
             return;
         }
 
         try {
             $dto = new LoginDTO($username, $password);
             $user = $this->service->login($dto);
+            $jwt = $this->jwtService->generateToken($user);
 
-            session_start();
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-
-            header("Location: /index.php");
-            exit;
+            echo json_encode([
+                'success' => true,
+                'token' => $jwt,
+                'user' => $user
+            ]);
         } catch (ValidationException $e) {
-            $this->redirectWithError($e->getMessage());
+            http_response_code(401);
+            echo json_encode(['error' => $e->getMessage()]);
         } catch (Exception $e) {
-            error_log("Login error: " . $e->getMessage());
-            $this->redirectWithError("An internal error occurred");
+            http_response_code(500);
+            echo json_encode(['error' => 'Internal server error']);
         }
-    }
-
-    private function redirectWithError(string $error): void {
-        header("Location: /index.php?action=login&error=" . urlencode($error));
-        exit;
     }
 }

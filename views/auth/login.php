@@ -8,7 +8,7 @@
       </div>
       <form action="index.php?action=login" method="POST">
         <div class="input-group">
-          <label class="input-label">Shop ID / Username</label>
+          <label class="input-label"> Username</label>
           <input type="text" name="username" class="input-field" placeholder="Enter username" required>
         </div>
         <div class="input-group">
@@ -16,7 +16,10 @@
           <input type="password" name="password" class="input-field" placeholder="Enter password" required>
         </div>
         <button type="submit" class="btn btn-primary btn-block">Login to System</button>
-        <p>Don't have an account? <a href="index.php?action=register">Register here</a></p>
+        <div class = "RegisterForgot">
+        <p>New User?<a href="index.php?action=register">Register here</a></p>
+        <p><a href="index.php?action=forgot_password">Forgot Password?</a></p>
+        </div>
       </form>
     </div>
   </div>

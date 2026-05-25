@@ -1551,6 +1551,143 @@ tr:hover td {
     transition: .4s;
     border-radius: 50%;
 }
+.RegisterForgot {
+    display: flex;
+    gap: 20px;   /* space between links */
+    align-items: center;
+}
+.RegisterForgot a{
+    color: #d8a7ff;
+    text-decoration: underline;
+}
+
+/* FULL PAGE */
+
+body{
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #050816;
+    color: white;
+}
+
+/* PAGE WRAPPER */
+
+.forgot-page{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* HEADER */
+
+.auth-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 10px;   /* reduced */
+    background: #0b1020;
+    border-bottom: 1px solid #1f2937;
+}
+
+.logo{
+    width: 35px;   /* reduced */
+    height: 35px;
+}
+
+.system-name{
+    font-size: 17px;   /* reduced */
+    font-weight: bold;
+}
+
+.back-link{
+    font-size: 14px;
+}
+
+/* FORM CONTAINER */
+
+.forgot-container{
+    width: 450px;
+    margin: auto;
+    background: #0b1020;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* TITLE */
+
+.forgot-container h2{
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+/* INPUT GROUP */
+
+.input-group{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 22px;
+}
+
+/* LABEL */
+
+.input-label{
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* INPUT FIELD */
+
+.input-field{
+    width: 100%;
+    padding: 18px;
+    font-size: 16px;
+    border: none;
+    border-radius: 12px;
+    background: #151b2e;
+    color: white;
+    box-sizing: border-box;
+}
+
+.input-field::placeholder{
+    color: #8a8a8a;
+}
+
+/* BUTTON */
+
+.btn-primary{
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 12px;
+    background: #ff5a5f;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary:hover{
+    background: #ff3f45;
+}
+
+/* FOOTER */
+
+.auth-footer{
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+.auth-footer a{
+    color: #ff5a5f;
+    text-decoration: none;
+}
 
 input:checked+.mode-slider {
     background-color: var(--accent);
