@@ -27,7 +27,5 @@ function formatCurrency(amount) {
     return '₹' + parseFloat(amount).toFixed(2);
 }
 
-// Temporary dummy functions to prevent errors
-function resetProductModal() { /* do nothing for now */ }
+// Temporary stubs to prevent errors from other modules (do NOT add resetProductModal here)
 function populateCustomerSelect() { /* will be implemented later */ }
-// Add any other missing functions here as empty stubs

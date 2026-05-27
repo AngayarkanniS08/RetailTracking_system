@@ -83,48 +83,75 @@ if (strpos($path, '/api/') === 0) {
         exit;
     }
     
-    // GET /api/categories
+    // ---- Categories ----
     if ($path === '/api/categories' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $controller = new Modules\Product\Controller\Api\CategoryController();
         $controller->index();
         exit;
     }
-
-    // POST /api/categories
     if ($path === '/api/categories' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $controller = new Modules\Product\Controller\Api\CategoryController();
         $controller->store();
         exit;
     }
+    if (preg_match('#^/api/categories/([^/]+)$#', $path, $m) && $_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $controller = new Modules\Product\Controller\Api\CategoryController();
+        $controller->update($m[1]);
+        exit;
+    }
+    if (preg_match('#^/api/categories/([^/]+)$#', $path, $m) && $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        $controller = new Modules\Product\Controller\Api\CategoryController();
+        $controller->destroy($m[1]);
+        exit;
+    }
 
-    // GET /api/products
+    // ---- Subcategories ----
+    if ($path === '/api/subcategories' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $controller = new Modules\Product\Controller\Api\SubcategoryController();
+        $controller->index();
+        exit;
+    }
+    if ($path === '/api/subcategories' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $controller = new Modules\Product\Controller\Api\SubcategoryController();
+        $controller->store();
+        exit;
+    }
+    if (preg_match('#^/api/subcategories/([^/]+)$#', $path, $m) && $_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $controller = new Modules\Product\Controller\Api\SubcategoryController();
+        $controller->update($m[1]);
+        exit;
+    }
+    if (preg_match('#^/api/subcategories/([^/]+)$#', $path, $m) && $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        $controller = new Modules\Product\Controller\Api\SubcategoryController();
+        $controller->destroy($m[1]);
+        exit;
+    }
+
+    // ---- Products ----
     if ($path === '/api/products' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $controller = new Modules\Product\Controller\Api\ProductController();
         $controller->index();
         exit;
     }
-
-    // POST /api/products
     if ($path === '/api/products' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $controller = new Modules\Product\Controller\Api\ProductController();
         $controller->store();
         exit;
     }
-
-    // DELETE /api/products/{id}
+    if (preg_match('#^/api/products/([^/]+)$#', $path, $m) && $_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $controller = new Modules\Product\Controller\Api\ProductController();
+        $controller->update($m[1]);
+        exit;
+    }
     if (preg_match('#^/api/products/([^/]+)$#', $path, $m) && $_SERVER['REQUEST_METHOD'] === 'DELETE') {
         $controller = new Modules\Product\Controller\Api\ProductController();
         $controller->destroy($m[1]);
         exit;
     }
 
-    if ($path === '/api/subcategories' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $controller = new Modules\Product\Controller\Api\SubcategoryController();
-        $controller->store();
-        exit;
-    }
-    if ($path === '/api/subcategories' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-        $controller = new Modules\Product\Controller\Api\SubcategoryController();
+    // ---- Units (read-only, static list) ----
+    if ($path === '/api/units' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $controller = new Modules\Product\Controller\Api\UnitController();
         $controller->index();
         exit;
     }

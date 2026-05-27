@@ -1,14 +1,18 @@
 <?php
 namespace Modules\Product\Controller\Api;
 
+use Modules\Product\DTO\ProductDTO;
+use Modules\Product\Service\ProductService;
 use Modules\Product\Repository\ProductRepository;
+use Modules\Auth\validation\ValidationException;
 use Core\Middlewares\AuthMiddleware;
+use Exception;
 
 class ProductController {
-    private ProductRepository $repo;
+    private ProductService $service;
 
     public function __construct() {
-        $this->repo = new ProductRepository();
+        $this->service = new ProductService(new ProductRepository());
     }
 
     // GET /api/products
@@ -16,7 +20,13 @@ class ProductController {
         header('Content-Type: application/json');
         AuthMiddleware::authenticate();
 
-        echo json_encode($this->repo->findAll());
+        try {
+            $products = $this->service->getAllProducts();
+            echo json_encode($products);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Internal server error']);
+        }
     }
 
     // POST /api/products
@@ -30,21 +40,58 @@ class ProductController {
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $name       = trim($input['name']        ?? '');
-        $categoryId = trim($input['category_id'] ?? '');
-        $unit       = trim($input['unit']        ?? '');
-        $hsnCode    = trim($input['hsn_code']    ?? '');
-        $gstRate    = (float)($input['gst_rate'] ?? 0);
+        $input         = json_decode(file_get_contents('php://input'), true);
+        $name          = trim($input['name']           ?? '');
+        $categoryId    = trim($input['category_id']    ?? '');
+        $subcategoryId = trim($input['subcategory_id'] ?? '') ?: null;
+        $unit          = trim($input['unit']           ?? '');
+        $hsnCode       = trim($input['hsn_code']       ?? '') ?: null;
+        $gstRate       = (float)($input['gst_rate']    ?? 0);
 
-        if (empty($name) || empty($categoryId) || empty($unit)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Name, category_id, and unit are required']);
+        try {
+            $dto     = new ProductDTO($name, $categoryId, $subcategoryId, $unit, $hsnCode, $gstRate);
+            $product = $this->service->createProduct($dto);
+            http_response_code(201);
+            echo json_encode(['success' => true, 'product' => $product]);
+        } catch (ValidationException $e) {
+            http_response_code(422);
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Internal server error']);
+        }
+    }
+
+    // PUT /api/products/{id}
+    public function update(string $id): void {
+        header('Content-Type: application/json');
+        AuthMiddleware::authenticate();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
             return;
         }
 
-        $product = $this->repo->create($name, $categoryId, $unit, $hsnCode ?: null, $gstRate);
-        echo json_encode(['success' => true, 'product' => $product]);
+        $input         = json_decode(file_get_contents('php://input'), true);
+        $name          = trim($input['name']           ?? '');
+        $categoryId    = trim($input['category_id']    ?? '');
+        $subcategoryId = trim($input['subcategory_id'] ?? '') ?: null;
+        $unit          = trim($input['unit']           ?? '');
+        $hsnCode       = trim($input['hsn_code']       ?? '') ?: null;
+        $gstRate       = (float)($input['gst_rate']    ?? 0);
+
+        try {
+            $dto     = new ProductDTO($name, $categoryId, $subcategoryId, $unit, $hsnCode, $gstRate);
+            $product = $this->service->updateProduct($id, $dto);
+            echo json_encode(['success' => true, 'product' => $product]);
+        } catch (ValidationException $e) {
+            http_response_code(422);
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Internal server error']);
+        }
     }
 
     // DELETE /api/products/{id}
@@ -58,13 +105,15 @@ class ProductController {
             return;
         }
 
-        $deleted = $this->repo->delete($id);
-        if (!$deleted) {
+        try {
+            $this->service->deleteProduct($id);
+            echo json_encode(['success' => true]);
+        } catch (ValidationException $e) {
             http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
-            return;
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Internal server error']);
         }
-
-        echo json_encode(['success' => true]);
     }
 }

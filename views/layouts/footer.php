@@ -11,5 +11,6 @@
    <script src="assets/js/Sidebar.js"></script>
    <script src="assets/js/utils.js"></script>
    <script src="assets/js/ProductMaster.js"></script>
+   <link rel="stylesheet" href="assets/css/theme.css">
 </body>
 </html>

@@ -1,35 +1,43 @@
 <?php
 namespace Modules\Product\Controller\Api;
 
-use Modules\Product\DTO\CategoryDTO;
-use Modules\Product\Service\CategoryService;
-use Modules\Product\Repository\CategoryRepository;
+use Modules\Product\DTO\SubcategoryDTO;
+use Modules\Product\Service\SubcategoryService;
+use Modules\Product\Repository\SubcategoryRepository;
 use Modules\Auth\validation\ValidationException;
 use Core\Middlewares\AuthMiddleware;
 use Exception;
 
-class CategoryController {
-    private CategoryService $service;
+class SubcategoryController {
+    private SubcategoryService $service;
 
     public function __construct() {
-        $this->service = new CategoryService(new CategoryRepository());
+        $this->service = new SubcategoryService(new SubcategoryRepository());
     }
 
-    // GET /api/categories
+    // GET /api/subcategories  (optionally filtered by ?category_id=...)
     public function index(): void {
         header('Content-Type: application/json');
         AuthMiddleware::authenticate();
 
+        $categoryId = $_GET['category_id'] ?? '';
+
         try {
-            $categories = $this->service->getAllCategories();
-            echo json_encode($categories);
+            $subs = $categoryId
+                ? $this->service->getSubcategoriesByCategory($categoryId)
+                : $this->service->getAllSubcategories();
+
+            echo json_encode($subs);
+        } catch (ValidationException $e) {
+            http_response_code(422);
+            echo json_encode(['error' => $e->getMessage()]);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Internal server error']);
         }
     }
 
-    // POST /api/categories
+    // POST /api/subcategories
     public function store(): void {
         header('Content-Type: application/json');
         AuthMiddleware::authenticate();
@@ -40,14 +48,15 @@ class CategoryController {
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $name  = trim($input['name'] ?? '');
+        $input      = json_decode(file_get_contents('php://input'), true);
+        $categoryId = trim($input['category_id'] ?? '');
+        $name       = trim($input['name']        ?? '');
 
         try {
-            $dto      = new CategoryDTO($name);
-            $category = $this->service->createCategory($dto);
+            $dto = new SubcategoryDTO($categoryId, $name);
+            $sub = $this->service->createSubcategory($dto);
             http_response_code(201);
-            echo json_encode(['success' => true, 'category' => $category]);
+            echo json_encode(['success' => true, 'subcategory' => $sub]);
         } catch (ValidationException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);
@@ -57,7 +66,7 @@ class CategoryController {
         }
     }
 
-    // PUT /api/categories/{id}
+    // PUT /api/subcategories/{id}
     public function update(string $id): void {
         header('Content-Type: application/json');
         AuthMiddleware::authenticate();
@@ -68,13 +77,14 @@ class CategoryController {
             return;
         }
 
-        $input = json_decode(file_get_contents('php://input'), true);
-        $name  = trim($input['name'] ?? '');
+        $input      = json_decode(file_get_contents('php://input'), true);
+        $categoryId = trim($input['category_id'] ?? '');
+        $name       = trim($input['name']        ?? '');
 
         try {
-            $dto      = new CategoryDTO($name);
-            $category = $this->service->updateCategory($id, $dto);
-            echo json_encode(['success' => true, 'category' => $category]);
+            $dto = new SubcategoryDTO($categoryId, $name);
+            $sub = $this->service->updateSubcategory($id, $dto);
+            echo json_encode(['success' => true, 'subcategory' => $sub]);
         } catch (ValidationException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);
@@ -84,7 +94,7 @@ class CategoryController {
         }
     }
 
-    // DELETE /api/categories/{id}
+    // DELETE /api/subcategories/{id}
     public function destroy(string $id): void {
         header('Content-Type: application/json');
         AuthMiddleware::authenticate();
@@ -96,7 +106,7 @@ class CategoryController {
         }
 
         try {
-            $this->service->deleteCategory($id);
+            $this->service->deleteSubcategory($id);
             echo json_encode(['success' => true]);
         } catch (ValidationException $e) {
             http_response_code(404);
