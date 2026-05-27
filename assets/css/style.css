@@ -1447,7 +1447,7 @@ tr:hover td {
 }
 
 .time-card.month::before {
-    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 
 .time-card-icon {

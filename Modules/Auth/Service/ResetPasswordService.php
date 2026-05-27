@@ -4,7 +4,7 @@ namespace Modules\Auth\Service;
 use Modules\Auth\DTO\ResetPasswordDTO;
 use Modules\Auth\Repository\Contract\UserRepositoryInterface;
 use Modules\Auth\Repository\Contract\PasswordResetRepositoryInterface;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 
 class ResetPasswordService {
     private UserRepositoryInterface $userRepo;

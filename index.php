@@ -219,6 +219,8 @@ if (!$isLoggedIn) {
         require_once 'views/auth/login.php';
     } elseif ($action === 'forgot_password') {
         require_once 'views/auth/ForgotPassword.php';
+    } elseif ($action === 'reset_password') {
+        require_once 'views/auth/ResetPassword.php';
     } else {
         require_once 'views/auth/register.php';
     }

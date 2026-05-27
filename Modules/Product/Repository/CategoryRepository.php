@@ -30,7 +30,7 @@ class CategoryRepository implements CategoryRepositoryInterface {
 
     public function create(string $name): array {
         $stmt = $this->db->prepare(
-            "INSERT INTO categories (name) VALUES (?) RETURNING id, name, created_at"
+            "INSERT INTO categories (name, user_id) VALUES (?, current_setting('app.current_user_id')::uuid) RETURNING id, name, created_at"
         );
         $stmt->execute([$name]);
         return $stmt->fetch(PDO::FETCH_ASSOC);

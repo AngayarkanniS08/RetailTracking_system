@@ -4,7 +4,7 @@ namespace Modules\Product\Controller\Api;
 use Modules\Product\DTO\CategoryDTO;
 use Modules\Product\Service\CategoryService;
 use Modules\Product\Repository\CategoryRepository;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 use Core\Middlewares\AuthMiddleware;
 use Exception;
 

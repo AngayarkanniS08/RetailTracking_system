@@ -20,6 +20,14 @@ class AuthMiddleware {
             echo json_encode(['error' => 'Invalid or expired token']);
             exit;
         }
-        return $decoded->data;
+
+        // Set RLS session variable so every DB query in this request
+        // is automatically scoped to this user's rows
+        $userData = $decoded->data;
+        if (!empty($userData->user_id)) {
+            \Config\Database::setCurrentUser($userData->user_id);
+        }
+
+        return $userData;
     }
 }

@@ -1,10 +1,10 @@
 <?php
 namespace Modules\Auth\Controller\Api;
 
-use Modules\Auth\DTO\registerDTO;
+use Modules\Auth\DTO\RegisterDTO;
 use Modules\Auth\Service\RegistrationService;
 use Modules\Auth\Repository\UserRepository;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 use Exception;
 
 class RegistrationController {

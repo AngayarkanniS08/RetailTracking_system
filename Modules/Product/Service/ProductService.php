@@ -3,7 +3,7 @@ namespace Modules\Product\Service;
 
 use Modules\Product\DTO\ProductDTO;
 use Modules\Product\Repository\Contract\ProductRepositoryInterface;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 
 class ProductService {
     private ProductRepositoryInterface $repo;

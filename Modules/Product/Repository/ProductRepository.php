@@ -43,8 +43,8 @@ class ProductRepository implements ProductRepositoryInterface {
     }
 
     public function create(string $name, string $categoryId, ?string $subcategoryId, string $unit, ?string $hsnCode, float $gstRate): array {
-        $sql = "INSERT INTO products (name, category_id, subcategory_id, unit, hsn_code, gst_rate)
-                VALUES (?, ?, ?, ?, ?, ?)
+        $sql = "INSERT INTO products (name, category_id, subcategory_id, unit, hsn_code, gst_rate, user_id)
+                VALUES (?, ?, ?, ?, ?, ?, current_setting('app.current_user_id')::uuid)
                 RETURNING id, name, category_id, subcategory_id, unit, hsn_code, gst_rate, created_at";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$name, $categoryId, $subcategoryId ?: null, $unit, $hsnCode ?: null, $gstRate]);

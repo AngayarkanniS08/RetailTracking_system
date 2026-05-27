@@ -202,7 +202,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <div class="modal-title" id="addProductModalTitle">Add New Product</div>
-        <button class="close-btn" onclick="closeModal('addProductModal')">&times;</button>
+        <button class="close-btn" onclick="resetProductModal(); closeModal('addProductModal')">&times;</button>
       </div>
       <div class="input-group">
         <label class="input-label">Product Name</label>
@@ -245,7 +245,7 @@
           <option value="spool">Spool</option>
         </select>
       </div>
-      <button class="btn btn-primary btn-block" id="addProductModalBtn" onclick="saveProduct()">Save Product</button>
+      <button class="btn btn-primary btn-block" id="addProductModalBtn">Save Product</button>
     </div>
   </div>
 

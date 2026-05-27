@@ -5,7 +5,7 @@ use Modules\Auth\DTO\ResetPasswordDTO;
 use Modules\Auth\Service\ResetPasswordService;
 use Modules\Auth\Repository\UserRepository;
 use Modules\Auth\Repository\PasswordResetRepository;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 use Exception;
 
 class ResetPasswordController {

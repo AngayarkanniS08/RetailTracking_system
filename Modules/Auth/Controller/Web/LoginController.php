@@ -4,7 +4,7 @@ namespace Modules\Auth\Controller\Web;
 use Modules\Auth\DTO\LoginDTO;
 use Modules\Auth\Service\LoginService;
 use Modules\Auth\Repository\UserRepository;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 
 class LoginController {
     private LoginService $service;

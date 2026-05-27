@@ -3,7 +3,7 @@ namespace Modules\Product\Service;
 
 use Modules\Product\DTO\SubcategoryDTO;
 use Modules\Product\Repository\Contract\SubcategoryRepositoryInterface;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 
 class SubcategoryService {
     private SubcategoryRepositoryInterface $repo;

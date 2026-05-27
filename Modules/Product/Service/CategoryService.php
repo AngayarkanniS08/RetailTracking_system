@@ -3,7 +3,7 @@ namespace Modules\Product\Service;
 
 use Modules\Product\DTO\CategoryDTO;
 use Modules\Product\Repository\Contract\CategoryRepositoryInterface;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 
 class CategoryService {
     private CategoryRepositoryInterface $repo;

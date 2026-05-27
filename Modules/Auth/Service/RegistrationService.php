@@ -3,7 +3,7 @@ namespace Modules\Auth\Service;
 
 use Modules\Auth\DTO\RegisterDTO;
 use Modules\Auth\Repository\Contract\UserRepositoryInterface;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 
 class RegistrationService {
     private UserRepositoryInterface $userRepo;

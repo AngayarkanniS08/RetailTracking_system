@@ -334,12 +334,20 @@ window.renderProductMaster = function() {
             <td>${p.hsn_code ? escapeHtml(p.hsn_code) : '-'}</td>
             <td>${p.gst_rate}%</td>
             <td>
-                <button class="btn-icon-danger" onclick="deleteProduct('${p.id}')" title="Delete product">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
+                <div class="action-buttons">
+                    <button class="btn-icon edit-btn" onclick="editProduct('${p.id}')" title="Edit product">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon delete-btn" onclick="deleteProduct('${p.id}')" title="Delete product">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
@@ -366,6 +374,15 @@ async function initProductMaster() {
 // DOMContentLoaded: ALWAYS pre-load data so categories survive page refresh.
 // Sidebar.js also calls initProductMaster() on every navigation to product_master.
 document.addEventListener('DOMContentLoaded', () => {
+    // Only run initialization if we are logged in (dashboardView is present)
+    if (!document.getElementById('dashboardView')) {
+        return;
+    }
+
+    // Wire the Save/Update button — onclick attribute removed from HTML to avoid double-fire
+    const btn = document.getElementById('addProductModalBtn');
+    if (btn) btn.onclick = saveProduct;
+
     initProductMaster();
 });
 // Global variable to track which product is being edited
@@ -445,24 +462,32 @@ window.updateProduct = async function() {
     }
 };
 
-// Reset modal to "Add" mode after closing
-function resetProductModal() {
+// Reset modal back to "Add" mode
+window.resetProductModal = function() {
     editingProductId = null;
+
     const title = document.getElementById('addProductModalTitle');
-    const btn = document.getElementById('addProductModalBtn');
+    const btn   = document.getElementById('addProductModalBtn');
+
     if (title) title.innerText = 'Add New Product';
     if (btn) {
         btn.innerText = 'Save Product';
-        btn.onclick = saveProduct; // your existing saveProduct function
+        btn.onclick   = saveProduct;   // ← always point back to Add
     }
+
     // Clear form fields
-    document.getElementById('pmProductName').value = '';
-    document.getElementById('pmProductHsn').value = '';
-    document.getElementById('pmProductGst').value = '';
-    // Reset category selection if needed
+    const nameEl = document.getElementById('pmProductName');
+    const hsnEl  = document.getElementById('pmProductHsn');
+    const gstEl  = document.getElementById('pmProductGst');
+    if (nameEl) nameEl.value = '';
+    if (hsnEl)  hsnEl.value  = '';
+    if (gstEl)  gstEl.value  = '';
+
+    // Reset category to first option
     const catSelect = document.getElementById('pmProductCategory');
     if (catSelect && catSelect.options.length) catSelect.selectedIndex = 0;
-    // Also clear subcategory dropdown
+
+    // Clear subcategory dropdown
     const subSelect = document.getElementById('pmProductSubcategory');
     if (subSelect) subSelect.innerHTML = '<option value="">No Subcategory</option>';
-}
+};

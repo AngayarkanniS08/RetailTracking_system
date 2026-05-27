@@ -5,7 +5,7 @@ use Modules\Auth\DTO\ForgotPasswordDTO;
 use Modules\Auth\Service\ForgotPasswordService;
 use Modules\Auth\Repository\UserRepository;
 use Modules\Auth\Repository\PasswordResetRepository;
-use Modules\Auth\validation\ValidationException;
+use Modules\Auth\Validation\ValidationException;
 
 class ForgotPasswordController {
     private ForgotPasswordService $service;

@@ -4,7 +4,7 @@ namespace Modules\Auth\Service;
 
 use Modules\Auth\DTO\LoginDTO;
 use Modules\Auth\Repository\Contract\UserRepositoryInterface;
-use Modules\Auth\validation\ValidationException; // or define a simple exception class
+use Modules\Auth\Validation\ValidationException; // or define a simple exception class
 
 class LoginService
 {

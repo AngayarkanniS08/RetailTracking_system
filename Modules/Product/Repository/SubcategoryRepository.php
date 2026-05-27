@@ -47,7 +47,7 @@ class SubcategoryRepository implements SubcategoryRepositoryInterface {
 
     public function create(string $categoryId, string $name): array {
         $stmt = $this->db->prepare(
-            "INSERT INTO subcategories (category_id, name) VALUES (?, ?) RETURNING id, name, category_id, created_at"
+            "INSERT INTO subcategories (category_id, name, user_id) VALUES (?, ?, current_setting('app.current_user_id')::uuid) RETURNING id, name, category_id, created_at"
         );
         $stmt->execute([$categoryId, $name]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
