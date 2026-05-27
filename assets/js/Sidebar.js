@@ -1,0 +1,83 @@
+// ============================================
+// Sidebar Navigation (works with your existing HTML)
+// ============================================
+
+// List of all main section IDs (must match the ids in your views)
+const sections = [
+    'dashboard',
+    'billing_pos',
+    'credit_kadan',
+    'day_to_day_selling',
+    'product_master',
+    'inventory',
+    'vendor_list',
+    'vendorhistory',
+    'stockintel'
+];
+
+// Switch to a specific section by ID
+function switchTab(sectionId) {
+    // Hide all sections
+    sections.forEach(id => {
+        const section = document.getElementById(id);
+        if (section) section.classList.remove('active');
+    });
+
+    // Show the selected section
+    const activeSection = document.getElementById(sectionId);
+    if (activeSection) activeSection.classList.add('active');
+
+    // Update active class on sidebar nav items
+    document.querySelectorAll('.nav-item').forEach(item => {
+        const itemSection = item.getAttribute('data-section');
+        if (itemSection === sectionId) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    // Call module‑specific initialisation when its section is shown
+    if (sectionId === 'product_master') {
+        if (typeof initProductMaster === 'function') initProductMaster();
+    }
+    if (sectionId === 'inventory') {
+        if (typeof initInventory === 'function') initInventory();
+    }
+    if (sectionId === 'credit') {
+        if (typeof initCredit === 'function') initCredit();
+    }
+    // Add others as you build them
+}
+
+// Initialise sidebar click handlers
+function initSidebar() {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        const sectionId = item.getAttribute('data-section');
+        if (sectionId) {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchTab(sectionId);
+            });
+        }
+    });
+
+    // Activate the default section (e.g., dashboard) if none is active
+    const activeExists = sections.some(id => {
+        const sec = document.getElementById(id);
+        return sec && sec.classList.contains('active');
+    });
+    if (!activeExists) {
+        switchTab('dashboard');
+    }
+}
+
+// Run when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidebar);
+} else {
+    initSidebar();
+}
+
+// Make switchTab globally available for onclick handlers (if you use inline onclick)
+window.switchTab = switchTab;

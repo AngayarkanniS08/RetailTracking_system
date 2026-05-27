@@ -1,5 +1,5 @@
 <?php
-namespace Core\Middleware;
+namespace Core\Middlewares;
 
 use Modules\Auth\Service\JWTService;
 

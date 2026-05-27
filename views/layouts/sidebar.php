@@ -1,6 +1,6 @@
       <aside class="sidebar">
         <div class="sidebar-section" style="margin-top: 0;">Operations & Finance</div>
-        <div class="nav-item active" onclick="switchTab('dashboard')">
+        <div class="nav-item active" data-section="dashboard">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="20" x2="18" y2="10"></line>
             <line x1="12" y1="20" x2="12" y2="4"></line>
@@ -8,7 +8,7 @@
           </svg>
           Dashboard
         </div>
-        <div class="nav-item" onclick="switchTab('billing_pos')">
+        <div class="nav-item" data-section="billing_pos">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="9" cy="21" r="1"></circle>
             <circle cx="20" cy="21" r="1"></circle>
@@ -16,7 +16,7 @@
           </svg>
           Billing (POS)
         </div>
-        <div class="nav-item" onclick="switchTab('credit_kadan')">
+        <div class="nav-item" data-section="credit_kadan">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
@@ -25,7 +25,7 @@
           </svg>
           Credit (Kadan)
         </div>
-        <div class="nav-item" onclick="switchTab('day_to_day_selling')">
+        <div class="nav-item" data-section="day_to_day_selling">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
@@ -33,14 +33,14 @@
         </div>
 
         <div class="sidebar-section">Goods & Supply</div>
-        <div class="nav-item" onclick="switchTab('product_master')">
+        <div class="nav-item" data-section = "product_master">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
             <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
           </svg>
           Product Master
         </div>
-        <div class="nav-item" onclick="switchTab('inventory')">
+        <div class="nav-item" data-section="inventory">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
             <path
@@ -51,7 +51,7 @@
           </svg>
           Inventory
         </div>
-        <div class="nav-item" onclick="switchTab('vendor_list')">
+        <div class="nav-item" data-section="vendor_list">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>

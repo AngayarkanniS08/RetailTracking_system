@@ -3,7 +3,7 @@
   - Catalog Registry: Central hub for defining products in the system.
   - Categorization: "Manage Categories & Subcategories" modal to build product hierarchies.
   - Product Creation: "+ Add Product" modal capturing custom units, categories, and taxation (HSN/GST).
--->
+--> <script> console.log('Token:', localStorage.getItem('auth_token'))</script>
         <section id="product_master" class="view-section">
           <div class="card-header">
             <span>Product Master</span>

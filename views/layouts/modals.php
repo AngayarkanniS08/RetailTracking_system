@@ -267,6 +267,7 @@
 
       <div>
         <div style="font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; color: var(--accent);">Add Subcategory</div>
+        
         <div class="input-group">
           <label class="input-label">Select Category</label>
           <select id="pmSubCatParent" class="input-field"></select>

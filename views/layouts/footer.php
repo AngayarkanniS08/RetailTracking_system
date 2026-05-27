@@ -8,5 +8,8 @@
   <script src="assets/js/credit.js"></script>
   <script src="assets/js/reports.js"></script> -->
   <!-- <script src="assets/js/nav.js"></script> -->
+   <script src="assets/js/Sidebar.js"></script>
+   <script src="assets/js/utils.js"></script>
+   <script src="assets/js/ProductMaster.js"></script>
 </body>
 </html>

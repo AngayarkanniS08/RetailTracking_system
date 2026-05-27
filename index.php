@@ -12,9 +12,25 @@ require_once __DIR__ . '/vendor/autoload.php';
 // ============================================
 // 2. Custom autoloader for Modules (must be before using any Module class)
 // ============================================
+// Autoloader for Modules\ namespace
 spl_autoload_register(function ($class) {
     $prefix = 'Modules\\';
     $base_dir = __DIR__ . '/Modules/';
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+// Autoloader for Core\ namespace
+spl_autoload_register(function ($class) {
+    $prefix = 'Core\\';
+    $base_dir = __DIR__ . '/Core/';
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {
         return;
@@ -30,7 +46,11 @@ spl_autoload_register(function ($class) {
 // 3. Session configuration (must be before session_start)
 // ============================================
 session_save_path(__DIR__ . '/tmp/sessions');
+ini_set('session.cookie_lifetime', 28800);
+ini_set('session.gc_maxlifetime', 28800);
 session_start();
+// Set session cookie lifetime to 8 hours (28800 seconds)
+
 
 // ============================================
 // 4. Load database config (defines getDB() function)
@@ -62,6 +82,53 @@ if (strpos($path, '/api/') === 0) {
         $controller->login();
         exit;
     }
+    
+    // GET /api/categories
+    if ($path === '/api/categories' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $controller = new Modules\Product\Controller\Api\CategoryController();
+        $controller->index();
+        exit;
+    }
+
+    // POST /api/categories
+    if ($path === '/api/categories' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $controller = new Modules\Product\Controller\Api\CategoryController();
+        $controller->store();
+        exit;
+    }
+
+    // GET /api/products
+    if ($path === '/api/products' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $controller = new Modules\Product\Controller\Api\ProductController();
+        $controller->index();
+        exit;
+    }
+
+    // POST /api/products
+    if ($path === '/api/products' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $controller = new Modules\Product\Controller\Api\ProductController();
+        $controller->store();
+        exit;
+    }
+
+    // DELETE /api/products/{id}
+    if (preg_match('#^/api/products/([^/]+)$#', $path, $m) && $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        $controller = new Modules\Product\Controller\Api\ProductController();
+        $controller->destroy($m[1]);
+        exit;
+    }
+
+    if ($path === '/api/subcategories' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $controller = new Modules\Product\Controller\Api\SubcategoryController();
+        $controller->store();
+        exit;
+    }
+    if ($path === '/api/subcategories' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+        $controller = new Modules\Product\Controller\Api\SubcategoryController();
+        $controller->index();
+        exit;
+    }
+
     // Any other API endpoint -> 404
     http_response_code(404);
     echo json_encode(['error' => 'API endpoint not found']);
