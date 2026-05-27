@@ -37,7 +37,6 @@
               <div class="stat-value" style="color:var(--info)" id="pmTotalBatches">0</div>
             </div>
           </div>
-
           <div class="card-panel">
             <div class="table-container">
               <table id="productMasterTable">

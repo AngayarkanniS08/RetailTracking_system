@@ -1759,6 +1759,52 @@ body{
 .btn-primary:hover{
     background: #ff4045;
 }
+.action-buttons{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* COMMON BUTTON STYLE */
+
+.btn-icon{
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+    background: #1a1f2e;
+
+    border: 1px solid;
+
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* EDIT BUTTON */
+
+.edit-btn{
+    color: #3b82f6;
+    border-color: #2563eb;
+}
+
+.edit-btn:hover{
+    background: rgba(37, 99, 235, 0.15);
+}
+
+/* DELETE BUTTON */
+
+.delete-btn{
+    color: #ff4d4f;
+    border-color: #ff4d4f;
+}
+
+.delete-btn:hover{
+    background: rgba(255, 77, 79, 0.15);
+}
 
 /* MESSAGE */
 

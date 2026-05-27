@@ -82,7 +82,7 @@ if (strpos($path, '/api/') === 0) {
         $controller->login();
         exit;
     }
-    
+
     // ---- Categories ----
     if ($path === '/api/categories' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $controller = new Modules\Product\Controller\Api\CategoryController();
@@ -153,6 +153,13 @@ if (strpos($path, '/api/') === 0) {
     if ($path === '/api/units' && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $controller = new Modules\Product\Controller\Api\UnitController();
         $controller->index();
+        exit;
+    }
+    // Update product (PUT)
+    if (preg_match('/^\/api\/products\/([a-f0-9\-]+)$/', $path, $matches) && $_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $productId = $matches[1];
+        $controller = new Modules\Product\Controller\Api\ProductController();
+        $controller->update($productId);
         exit;
     }
 

@@ -103,14 +103,42 @@ function renderProductTable() {
             <td>${escapeHtml(p.unit)}</td>
             <td>${p.hsn_code ? escapeHtml(p.hsn_code) : '-'}</td>
             <td>${p.gst_rate}%</td>
-            <td>
-                <button class="btn-icon-danger" onclick="deleteProduct('${p.id}')" title="Delete product">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-            </td>
+    <td>
+    <div class="action-buttons">
+
+        <!-- EDIT BUTTON -->
+        <button class="btn-icon edit-btn"
+            onclick="editProduct('${p.id}')"
+            title="Edit product">
+
+            <svg width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2">
+
+                <path d="M12 20h9"></path>
+
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+
+            </svg>
+        </button>
+
+        <!-- DELETE BUTTON -->
+        <button class="btn-icon delete-btn"
+            onclick="deleteProduct('${p.id}')"
+            title="Delete product">
+
+            <svg width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2">
+
+                <polyline points="3 6 5 6 21 6"></polyline>
+
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+
+            </svg>
+        </button>
+
+    </div>
+</td>
+            
         </tr>
     `).join('');
 }
@@ -340,3 +368,101 @@ async function initProductMaster() {
 document.addEventListener('DOMContentLoaded', () => {
     initProductMaster();
 });
+// Global variable to track which product is being edited
+let editingProductId = null;
+
+// Called when clicking the Edit button (pencil icon)
+window.editProduct = async function(productId) {
+    // Find product in the local `products` array (fetched from API)
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+        alert('Product not found');
+        return;
+    }
+    editingProductId = productId;
+    
+    // Populate the Add Product modal with existing data
+    document.getElementById('addProductModalTitle').innerText = 'Edit Product';
+    document.getElementById('addProductModalBtn').innerText = 'Update Product';
+    // Change the button's onclick to our update function
+    const saveBtn = document.getElementById('addProductModalBtn');
+    saveBtn.onclick = updateProduct;
+    
+    document.getElementById('pmProductName').value = product.name;
+    document.getElementById('pmProductCategory').value = product.category_id; // Assuming category_id exists
+    // Trigger subcategory dropdown population based on selected category
+    if (typeof onCategoryChange === 'function') {
+        onCategoryChange(product.category_id);
+        // Wait a bit for subcategories to load, then set value
+        setTimeout(() => {
+            if (product.subcategory_id) {
+                document.getElementById('pmProductSubcategory').value = product.subcategory_id;
+            }
+        }, 100);
+    }
+    document.getElementById('pmProductUnit').value = product.unit;
+    document.getElementById('pmProductHsn').value = product.hsn_code || '';
+    document.getElementById('pmProductGst').value = product.gst_rate;
+    
+    openModal('addProductModal');
+};
+
+// Called when the modal's save button is in "Update" mode
+window.updateProduct = async function() {
+    const name = document.getElementById('pmProductName').value.trim();
+    const categoryId = document.getElementById('pmProductCategory').value;
+    const subcategoryId = document.getElementById('pmProductSubcategory').value || null;
+    const unit = document.getElementById('pmProductUnit').value;
+    const hsn = document.getElementById('pmProductHsn').value.trim();
+    const gst = parseFloat(document.getElementById('pmProductGst').value) || 0;
+    
+    if (!name || !categoryId || !unit) {
+        alert('Product name, category, and unit are required');
+        return;
+    }
+    
+    const data = await apiRequest(`/api/products/${editingProductId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            name,
+            category_id: categoryId,
+            subcategory_id: subcategoryId,
+            unit,
+            hsn_code: hsn,
+            gst_rate: gst
+        })
+    });
+    
+    if (data && data.success) {
+        // Refresh products list
+        await loadProducts();
+        // Close modal and reset to "Add" mode
+        closeModal('addProductModal');
+        resetProductModal(); // this function should reset title/button/onclick
+        alert('Product updated successfully');
+    } else {
+        alert(data?.error || 'Failed to update product');
+    }
+};
+
+// Reset modal to "Add" mode after closing
+function resetProductModal() {
+    editingProductId = null;
+    const title = document.getElementById('addProductModalTitle');
+    const btn = document.getElementById('addProductModalBtn');
+    if (title) title.innerText = 'Add New Product';
+    if (btn) {
+        btn.innerText = 'Save Product';
+        btn.onclick = saveProduct; // your existing saveProduct function
+    }
+    // Clear form fields
+    document.getElementById('pmProductName').value = '';
+    document.getElementById('pmProductHsn').value = '';
+    document.getElementById('pmProductGst').value = '';
+    // Reset category selection if needed
+    const catSelect = document.getElementById('pmProductCategory');
+    if (catSelect && catSelect.options.length) catSelect.selectedIndex = 0;
+    // Also clear subcategory dropdown
+    const subSelect = document.getElementById('pmProductSubcategory');
+    if (subSelect) subSelect.innerHTML = '<option value="">No Subcategory</option>';
+}
