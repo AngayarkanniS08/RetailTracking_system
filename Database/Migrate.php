@@ -41,7 +41,7 @@ foreach ($files as $file) {
         echo "Skipping already executed migration\n";
 
         continue;
-    }
+    }action
 
     // Read SQL file
     $sql = file_get_contents($migrationPath . '/' . $file);

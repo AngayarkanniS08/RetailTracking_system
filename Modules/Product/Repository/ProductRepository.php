@@ -18,6 +18,9 @@ class ProductRepository implements ProductRepositoryInterface {
                 FROM   products p
                 JOIN   categories c   ON c.id = p.category_id
                 LEFT JOIN subcategories s ON s.id = p.subcategory_id
+                WHERE  p.user_id = current_setting('app.current_user_id')::uuid
+                  AND  c.user_id = current_setting('app.current_user_id')::uuid
+                  AND  (s.id IS NULL OR s.user_id = current_setting('app.current_user_id')::uuid)
                 ORDER  BY p.name";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -30,14 +33,17 @@ class ProductRepository implements ProductRepositoryInterface {
                 FROM   products p
                 JOIN   categories c   ON c.id = p.category_id
                 LEFT JOIN subcategories s ON s.id = p.subcategory_id
-                WHERE  p.id = ?";
+                WHERE  p.id = ?
+                  AND  p.user_id = current_setting('app.current_user_id')::uuid
+                  AND  c.user_id = current_setting('app.current_user_id')::uuid
+                  AND  (s.id IS NULL OR s.user_id = current_setting('app.current_user_id')::uuid)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     public function findByName(string $name): ?array {
-        $stmt = $this->db->prepare("SELECT id FROM products WHERE LOWER(name) = LOWER(?)");
+        $stmt = $this->db->prepare("SELECT id FROM products WHERE LOWER(name) = LOWER(?) AND user_id = current_setting('app.current_user_id')::uuid");
         $stmt->execute([$name]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
@@ -54,7 +60,7 @@ class ProductRepository implements ProductRepositoryInterface {
     public function update(string $id, string $name, string $categoryId, ?string $subcategoryId, string $unit, ?string $hsnCode, float $gstRate): array {
         $sql = "UPDATE products
                 SET name = ?, category_id = ?, subcategory_id = ?, unit = ?, hsn_code = ?, gst_rate = ?
-                WHERE id = ?
+                WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
                 RETURNING id, name, category_id, subcategory_id, unit, hsn_code, gst_rate, created_at";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$name, $categoryId, $subcategoryId ?: null, $unit, $hsnCode ?: null, $gstRate, $id]);
@@ -62,7 +68,7 @@ class ProductRepository implements ProductRepositoryInterface {
     }
 
     public function delete(string $id): bool {
-        $stmt = $this->db->prepare("DELETE FROM products WHERE id = ?");
+        $stmt = $this->db->prepare("DELETE FROM products WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid");
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0;
     }
