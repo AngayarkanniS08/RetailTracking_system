@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+# Run composer install if vendor directory doesn't exist
+if [ ! -d "vendor" ]; then
+    echo "Vendor directory not found. Running composer install..."
+    composer install --no-interaction --optimize-autoloader
+else
+    echo "Vendor directory found."
+fi
+
+# Run database migrations
+echo "Running database migrations..."
+php Database/Migrate.php
+
+# Start Apache in foreground
+echo "Starting web server..."
+exec apache2-foreground

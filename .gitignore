@@ -1,0 +1,7 @@
+# PHP Session Temp Files
+tmp/
+tmp/sessions/*
+
+# OS Files
+.DS_Store
+Thumbs.db

@@ -9,11 +9,11 @@ class Database {
     
     public static function getConnection(): PDO {
         if (self::$connection === null) {
-            $host = 'localhost';
-            $port = '5432';
-            $dbname = 'retail_pos';
-            $user = 'admin';
-            $pass = 'admin123';
+            $host = getenv('DB_HOST') ?: 'localhost';
+            $port = getenv('DB_PORT') ?: '5432';
+            $dbname = getenv('DB_NAME') ?: 'retail_pos';
+            $user = getenv('DB_USER') ?: 'admin';
+            $pass = getenv('DB_PASSWORD') ?: 'admin123';
             $dsn = "pgsql:host=$host;port=$port;dbname=$dbname";
             try {
                 self::$connection = new PDO($dsn, $user, $pass);

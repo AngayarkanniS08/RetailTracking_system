@@ -1,53 +1,62 @@
 <?php
 
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/Database.php';
 
-// Ensure $pdo is available (accept common alternative names from config)
-if (!isset($pdo)) {
-    if (isset($conn)) {
-        $pdo = $conn;
-    } elseif (isset($db)) {
-        $pdo = $db;
-    } else {
-        fwrite(STDERR, "Database connection (\$pdo) not found in config/database.php\n");
-        exit(1);
-    }
+try {
+    $pdo = \Config\Database::getConnection();
+} catch (Exception $e) {
+    fwrite(STDERR, "Database connection failed: " . $e->getMessage() . "\n");
+    exit(1);
 }
+
+// Create migrations tracking table if not exists
+$pdo->exec("CREATE TABLE IF NOT EXISTS migrations (
+    id SERIAL PRIMARY KEY,
+    filename VARCHAR(255) UNIQUE NOT NULL,
+    executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+)");
 
 $migrationPath = __DIR__ . '/Migrations';
 
-$files = scandir($migrationPath);
-
-foreach ($files as $file) {
-
-    // Skip non-sql files
-    if (pathinfo($file, PATHINFO_EXTENSION) !== 'sql') {
-        continue;
+// Recursive SQL file finder
+function getMigrationFiles($dir) {
+    $files = [];
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
+    foreach ($iterator as $file) {
+        if ($file->isFile() && $file->getExtension() === 'sql') {
+            // Get path relative to the Migrations folder
+            $relativePath = str_replace($dir . '/', '', $file->getPathname());
+            $files[$relativePath] = $file->getPathname();
+        }
     }
+    ksort($files); // Sort by relative path to execute in order (000_, 001_, etc.)
+    return $files;
+}
 
-    echo "\nChecking: $file\n";
+$migrations = getMigrationFiles($migrationPath);
+
+foreach ($migrations as $relativeFile => $absolutePath) {
+
+    echo "\nChecking: $relativeFile\n";
 
     // Check if already executed
     $checkQuery = $pdo->prepare(
         "SELECT COUNT(*) FROM migrations WHERE filename = ?"
     );
 
-    $checkQuery->execute([$file]);
+    $checkQuery->execute([$relativeFile]);
 
     $alreadyExecuted = $checkQuery->fetchColumn();
 
     if ($alreadyExecuted) {
-
         echo "Skipping already executed migration\n";
-
         continue;
-    }action
+    }
 
     // Read SQL file
-    $sql = file_get_contents($migrationPath . '/' . $file);
+    $sql = file_get_contents($absolutePath);
 
     try {
-
         // Execute SQL
         $pdo->exec($sql);
 
@@ -56,13 +65,13 @@ foreach ($files as $file) {
             "INSERT INTO migrations (filename) VALUES (?)"
         );
 
-        $insertQuery->execute([$file]);
+        $insertQuery->execute([$relativeFile]);
 
         echo "Migration executed successfully\n";
 
     } catch (PDOException $e) {
-
         echo "Migration failed: " . $e->getMessage() . "\n";
+        exit(1);
     }
 }
 
