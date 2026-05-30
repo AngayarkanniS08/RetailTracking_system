@@ -5,3 +5,6 @@ tmp/sessions/*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Environment Config
+.env
