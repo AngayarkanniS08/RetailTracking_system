@@ -19,7 +19,6 @@ class CategoryController {
     // GET /api/categories
     public function index(): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
 
         try {
             $categories = $this->service->getAllCategories();
@@ -33,7 +32,7 @@ class CategoryController {
     // POST /api/categories
     public function store(): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+       
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -61,7 +60,6 @@ class CategoryController {
     // PUT /api/categories/{id}
     public function update(string $id): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             http_response_code(405);
@@ -88,7 +86,6 @@ class CategoryController {
     // DELETE /api/categories/{id}
     public function destroy(string $id): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
             http_response_code(405);

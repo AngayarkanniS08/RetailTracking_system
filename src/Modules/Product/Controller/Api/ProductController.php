@@ -6,7 +6,6 @@ use Modules\Product\Service\ProductService;
 use Modules\Product\Repository\ProductRepository;
 use Modules\Product\Repository\CategoryRepository;
 use Modules\Auth\Validation\ValidationException;
-use Core\Middlewares\AuthMiddleware;
 use Exception;
 use PDOException;
 
@@ -20,8 +19,7 @@ class ProductController {
     // GET /api/products
     public function index(): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
-
+        
         try {
             $products = $this->service->getAllProducts();
             echo json_encode($products);
@@ -34,7 +32,7 @@ class ProductController {
     // POST /api/products
     public function store(): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+        
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -67,7 +65,7 @@ class ProductController {
     // PUT /api/products/{id}
     public function update(string $id): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+        
 
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             http_response_code(405);
@@ -99,7 +97,7 @@ class ProductController {
     // DELETE /api/products/{id}
     public function destroy(string $id): void {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+
 
         if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
             http_response_code(405);
