@@ -1,6 +1,37 @@
 version: '3.8'
 
+networks:
+  traefik_network:
+    external: true   # We'll create this network manually
+  internal:
+    driver: bridge
+
 services:
+  # -------------------- Traefik Reverse Proxy --------------------
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.insecure=false"               # disable dashboard (or keep for dev)
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"  # for production
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@example.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/letsencrypt:/letsencrypt"
+    networks:
+      - traefik_network
+    labels: {}
+
+  # -------------------- PostgreSQL Database --------------------
   db:
     image: postgres:15-alpine
     container_name: retail_pos_db
@@ -8,8 +39,6 @@ services:
       POSTGRES_DB: retail_pos
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -17,23 +46,50 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal
+    # No exposed ports – only internal access
+    restart: unless-stopped
 
-  web:
-    build: .
-    container_name: retail_pos_web
-    ports:
-      - "8080:80"
-    volumes:
-      - .:/var/www/html
+  # -------------------- API (PHP-FPM + Nginx) --------------------
+  api:
+    build: ./api
+    container_name: retail_pos_api
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=retail_pos
-      - DB_USER=admin
-      - DB_PASSWORD=admin123
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: retail_pos
+      DB_USER: admin
+      DB_PASSWORD: admin123
+    volumes:
+      - ./:/var/www/html          # Mount your PHP source code
+      - ./api/nginx.conf:/etc/nginx/conf.d/default.conf  # optional custom nginx config
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - internal
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.services.api.loadbalancer.server.port=80"
+    restart: unless-stopped
+
+  # -------------------- Frontend (Static Nginx) --------------------
+  frontend:
+    build: ./frontend
+    container_name: retail_pos_frontend
+    volumes:
+      - ./:/var/www/html          # Mount all frontend files (HTML, CSS, JS, images)
+      # You can also mount only the `views/` and `assets/` folders if you prefer
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    restart: unless-stopped
 
 volumes:
   pgdata:

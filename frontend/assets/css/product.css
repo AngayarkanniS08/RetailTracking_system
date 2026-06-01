@@ -1,0 +1,38 @@
+/* 
+  Product Master Specific Styles 
+  Note: Core layout features (.card-panel, .data-table, .input-group, etc.) 
+  are inherited from assets/css/style.css and Modules/dashboard/dashboard.css.
+*/
+
+#product_master {
+    /* Product master container specific styles can be added here */
+}
+
+/* Category Filters specific styling */
+.cat-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.cat-filters .cat-btn {
+    background: var(--bg-hover);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.cat-filters .cat-btn:hover {
+    background: var(--border);
+}
+
+.cat-filters .cat-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}

@@ -16,6 +16,11 @@ RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Create sessions directory and set permissions
+RUN mkdir -p /var/www/html/tmp/sessions && \
+    chown -R www-data:www-data /var/www/html/tmp && \
+    chmod 755 /var/www/html/tmp/sessions
+    
 # Set working directory
 WORKDIR /var/www/html
 
@@ -25,3 +30,4 @@ RUN chmod +x /entrypoint.sh
 
 # Set entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
+

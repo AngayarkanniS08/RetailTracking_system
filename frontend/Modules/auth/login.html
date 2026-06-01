@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" data-theme-mode="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Pudheera Retail Tracking System</title>
+    <meta name="description" content="Login to access the Pudheera Retail Tracking System.">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/auth.css">
+</head>
+<body>
+    <div class="auth-card">
+        <div class="auth-logo-area">
+            <img src="/assets/images/logo.png" alt="Pudheera Fashions Logo" onerror="this.style.display='none'">
+            <div class="auth-logo-text">Pudheera Retail Tracking</div>
+        </div>
+
+        <h2 class="auth-title">Login to System</h2>
+
+        <div id="messageBox" class="auth-message"></div>
+
+        <form id="loginForm" novalidate>
+            <div class="input-group">
+                <label class="input-label" for="username">Username</label>
+                <input type="text" id="username" class="input-field" placeholder="Enter username" required autocomplete="username">
+            </div>
+            <div class="input-group">
+                <label class="input-label" for="password">Password</label>
+                <input type="password" id="password" class="input-field" placeholder="Enter password" required autocomplete="current-password">
+            </div>
+            <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Login</button>
+        </form>
+
+        <div class="auth-links">
+            <span>New user? <a href="/Modules/auth/register.html">Register here</a></span>
+            <span><a href="/Modules/auth/forgot-password.html">Forgot Password?</a></span>
+        </div>
+    </div>
+
+    <script src="/assets/js/login.js"></script>
+</body>
+</html>
