@@ -1,6 +1,6 @@
 RewriteEngine On
 
-# Route all other non-existing files to the frontend entrypoint
+# Route all incoming requests to index.php if physical file or directory does not exist
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]

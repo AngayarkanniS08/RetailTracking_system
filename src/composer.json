@@ -1,0 +1,13 @@
+{
+    "require": {
+        "firebase/php-jwt": "^7.0",
+        "phpmailer/phpmailer": "^7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\": "Core/",
+            "Modules\\": "Modules/",
+            "Config\\": "../config/"
+        }
+    }
+}

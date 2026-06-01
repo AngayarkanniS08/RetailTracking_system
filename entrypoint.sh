@@ -7,11 +7,11 @@ chown -R www-data:www-data /var/www/html/tmp
 chmod 755 /var/www/html/tmp/sessions
 
 # Run composer install if vendor directory doesn't exist
-if [ ! -d "vendor" ]; then
-    echo "Vendor directory not found. Running composer install..."
-    composer install --no-interaction --optimize-autoloader
+if [ ! -d "src/vendor" ]; then
+    echo "Vendor directory not found in src. Running composer install..."
+    cd src && composer install --no-interaction --optimize-autoloader && cd ..
 else
-    echo "Vendor directory found."
+    echo "Vendor directory found in src."
 fi
 
 # Run database migrations

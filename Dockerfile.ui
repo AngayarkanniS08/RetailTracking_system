@@ -1,0 +1,16 @@
+FROM php:8.2-apache
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# Allow .htaccess overrides
+RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
+
+# Create sessions directory and set permissions
+RUN mkdir -p /var/www/html/tmp/sessions && \
+    chown -R www-data:www-data /var/www/html/tmp && \
+    chmod 755 /var/www/html/tmp/sessions
+
+WORKDIR /var/www/html
+
+EXPOSE 80

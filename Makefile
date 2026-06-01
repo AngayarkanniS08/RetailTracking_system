@@ -14,11 +14,11 @@ restart:
 
 # Run database migrations
 migrate:
-	docker compose exec web php Database/Migrate.php
+	docker compose exec app-api php Database/Migrate.php
 
 # Seed test database data
 seed:
-	docker compose exec web php Database/Seed.php
+	docker compose exec app-api php Database/Seed.php
 
 # View application logs
 logs:
@@ -37,8 +37,8 @@ test-all:
 	@echo "=== Testing status ==="
 	docker compose ps
 	@echo "=== Testing migrate ==="
-	docker compose exec web php Database/Migrate.php
+	docker compose exec app-api php Database/Migrate.php
 	@echo "=== Testing seed ==="
-	docker compose exec web php Database/Seed.php
+	docker compose exec app-api php Database/Seed.php
 	@echo "=== Testing restart ==="
 	docker compose restart
