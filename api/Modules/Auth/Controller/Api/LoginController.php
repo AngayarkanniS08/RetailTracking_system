@@ -46,13 +46,7 @@ class LoginController
             $user = $this->service->login($dto);
             $jwt = $this->jwtService->generateToken($user);
 
-            // Also set the PHP session so the web routing in index.php
-            // recognises the user as logged in after the JS redirect.
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
+
 
             echo json_encode([
                 'success' => true,

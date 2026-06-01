@@ -4,15 +4,17 @@ namespace Modules\Product\Controller\Api;
 use Modules\Product\DTO\ProductDTO;
 use Modules\Product\Service\ProductService;
 use Modules\Product\Repository\ProductRepository;
+use Modules\Product\Repository\CategoryRepository;
 use Modules\Auth\Validation\ValidationException;
 use Core\Middlewares\AuthMiddleware;
 use Exception;
+use PDOException;
 
 class ProductController {
     private ProductService $service;
 
     public function __construct() {
-        $this->service = new ProductService(new ProductRepository());
+        $this->service = new ProductService(new ProductRepository(), new CategoryRepository());
     }
 
     // GET /api/products
@@ -111,6 +113,14 @@ class ProductController {
         } catch (ValidationException $e) {
             http_response_code(404);
             echo json_encode(['error' => $e->getMessage()]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23503') {
+                http_response_code(422);
+                echo json_encode(['error' => 'Cannot delete because it is linked to other records.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Database error']);
+            }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Internal server error']);

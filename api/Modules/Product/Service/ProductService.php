@@ -5,11 +5,18 @@ use Modules\Product\DTO\ProductDTO;
 use Modules\Product\Repository\Contract\ProductRepositoryInterface;
 use Modules\Auth\Validation\ValidationException;
 
+use Modules\Product\Repository\Contract\CategoryRepositoryInterface;
+
 class ProductService {
     private ProductRepositoryInterface $repo;
+    private CategoryRepositoryInterface $categoryRepo;
 
-    public function __construct(ProductRepositoryInterface $repo) {
+    public function __construct(
+        ProductRepositoryInterface $repo,
+        CategoryRepositoryInterface $categoryRepo
+    ) {
         $this->repo = $repo;
+        $this->categoryRepo = $categoryRepo;
     }
 
     /**
@@ -33,6 +40,10 @@ class ProductService {
 
         if (empty($dto->unit)) {
             throw new ValidationException("Unit is required");
+        }
+
+        if (!$this->categoryRepo->findById($dto->categoryId)) {
+            throw new ValidationException("Category not found");
         }
 
         if ($this->repo->findByName($dto->name)) {
@@ -63,6 +74,10 @@ class ProductService {
 
         if (empty($dto->unit)) {
             throw new ValidationException("Unit is required");
+        }
+
+        if (!$this->categoryRepo->findById($dto->categoryId)) {
+            throw new ValidationException("Category not found");
         }
 
         if (!$this->repo->findById($id)) {

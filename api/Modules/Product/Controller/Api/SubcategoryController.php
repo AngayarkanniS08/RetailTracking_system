@@ -4,15 +4,17 @@ namespace Modules\Product\Controller\Api;
 use Modules\Product\DTO\SubcategoryDTO;
 use Modules\Product\Service\SubcategoryService;
 use Modules\Product\Repository\SubcategoryRepository;
+use Modules\Product\Repository\CategoryRepository;
 use Modules\Auth\Validation\ValidationException;
 use Core\Middlewares\AuthMiddleware;
 use Exception;
+use PDOException;
 
 class SubcategoryController {
     private SubcategoryService $service;
 
     public function __construct() {
-        $this->service = new SubcategoryService(new SubcategoryRepository());
+        $this->service = new SubcategoryService(new SubcategoryRepository(), new CategoryRepository());
     }
 
     // GET /api/subcategories  (optionally filtered by ?category_id=...)
@@ -111,6 +113,14 @@ class SubcategoryController {
         } catch (ValidationException $e) {
             http_response_code(404);
             echo json_encode(['error' => $e->getMessage()]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23503') {
+                http_response_code(422);
+                echo json_encode(['error' => 'Cannot delete because it is linked to other records.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Database error']);
+            }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Internal server error']);

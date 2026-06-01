@@ -5,11 +5,18 @@ use Modules\Product\DTO\SubcategoryDTO;
 use Modules\Product\Repository\Contract\SubcategoryRepositoryInterface;
 use Modules\Auth\Validation\ValidationException;
 
+use Modules\Product\Repository\Contract\CategoryRepositoryInterface;
+
 class SubcategoryService {
     private SubcategoryRepositoryInterface $repo;
+    private CategoryRepositoryInterface $categoryRepo;
 
-    public function __construct(SubcategoryRepositoryInterface $repo) {
+    public function __construct(
+        SubcategoryRepositoryInterface $repo,
+        CategoryRepositoryInterface $categoryRepo
+    ) {
         $this->repo = $repo;
+        $this->categoryRepo = $categoryRepo;
     }
 
     /**
@@ -54,6 +61,10 @@ class SubcategoryService {
 
         if (!$this->repo->findById($id)) {
             throw new ValidationException("Subcategory not found");
+        }
+
+        if ($dto->categoryId && !$this->categoryRepo->findById($dto->categoryId)) {
+            throw new ValidationException("Category not found");
         }
 
         $existing = $this->repo->findByNameInCategory($dto->categoryId, $dto->name);
