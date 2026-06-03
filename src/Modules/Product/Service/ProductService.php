@@ -6,8 +6,10 @@ use Modules\Product\Repository\Contract\ProductRepositoryInterface;
 use Modules\Auth\Validation\ValidationException;
 
 use Modules\Product\Repository\Contract\CategoryRepositoryInterface;
+use App\Common\Helpers\ArrayHelper;
 
-class ProductService {
+class ProductService
+{
     private ProductRepositoryInterface $repo;
     private CategoryRepositoryInterface $categoryRepo;
 
@@ -18,6 +20,17 @@ class ProductService {
         $this->repo = $repo;
         $this->categoryRepo = $categoryRepo;
     }
+
+    public function getProductsPaginated(int $page, int $limit, string $search = '', string $categoryId = ''): array
+    {
+        $result = $this->repo->findPaginated($page, $limit, $search, $categoryId);
+        $meta = ArrayHelper::getPaginationMeta($page, $limit, $result['total']);
+        return [
+            'data'       => $result['data'],
+            'pagination' => $meta
+        ];
+    }
+
 
     /**
      * @throws ValidationException

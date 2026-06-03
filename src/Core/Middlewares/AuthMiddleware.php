@@ -58,12 +58,14 @@ class AuthMiddleware
             self::sendError('invalid_payload', 'Token payload missing user data');
         }
         $userData = (array) $decoded->data;
+        $userId = $userData['user_id'] ?? null;
+        if (!$userId) {
+            self::sendError('invalid_payload', 'Token payload missing user_id');
+        }
 
         // Set RLS session variable so every DB query in this request
         // is automatically scoped to this user's rows
-        // Set the PostgreSQL session variable for RLS
-        $pdo = \Config\Database::getConnection();
-        $pdo->prepare("SET app.current_user_id = ?")->execute([$decoded->user_id]);
+        \Config\Database::setCurrentUser($userId);
 
         return $decoded;
     }

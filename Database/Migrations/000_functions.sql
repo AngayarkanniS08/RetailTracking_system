@@ -15,13 +15,13 @@ DECLARE
 BEGIN
     uuid_bytes := 
         set_byte(set_byte(set_byte(set_byte(set_byte(set_byte('\x000000000000'::bytea,
-            0, (timestamp_ms >> 40) & 255),
-            1, (timestamp_ms >> 32) & 255),
-            2, (timestamp_ms >> 24) & 255),
-            3, (timestamp_ms >> 16) & 255),
-            4, (timestamp_ms >> 8) & 255),
-            5, timestamp_ms & 255) ||
-        set_byte(set_byte('\x0000'::bytea, 0, (7 << 4) | ((timestamp_ms >> 8) & 15)), 1, get_byte(random_bytes, 0)) ||
+            0, ((timestamp_ms >> 40) & 255)::int),
+            1, ((timestamp_ms >> 32) & 255)::int),
+            2, ((timestamp_ms >> 24) & 255)::int),
+            3, ((timestamp_ms >> 16) & 255)::int),
+            4, ((timestamp_ms >> 8) & 255)::int),
+            5, (timestamp_ms & 255)::int) ||
+        set_byte(set_byte('\x0000'::bytea, 0, ((7 << 4) | ((timestamp_ms >> 8) & 15))::int), 1, get_byte(random_bytes, 0)) ||
         substring(random_bytes, 2, 8);
     RETURN encode(uuid_bytes, 'hex')::UUID;
 END;

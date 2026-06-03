@@ -12,7 +12,14 @@ class CategoryRepository implements CategoryRepositoryInterface {
     }
 
     public function findAll(): array {
-        $stmt = $this->db->query("SELECT id, name, created_at FROM categories WHERE user_id = current_setting('app.current_user_id')::uuid ORDER BY name");
+        $stmt = $this->db->query("
+            SELECT c.id, c.name, c.created_at, COUNT(p.id) AS product_count 
+            FROM categories c 
+            LEFT JOIN products p ON p.category_id = c.id 
+            WHERE c.user_id = current_setting('app.current_user_id')::uuid 
+            GROUP BY c.id, c.name, c.created_at 
+            ORDER BY c.name
+        ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

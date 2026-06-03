@@ -1,5 +1,7 @@
 <?php
 
+namespace Core;
+
 use Core\Router;
 use Core\Middlewares\AuthMiddleware;
 use Modules\Auth\Controller\Api\ForgotPasswordController;

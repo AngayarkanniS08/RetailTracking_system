@@ -48,6 +48,7 @@ let categories = [];
 let products   = [];
 let activeCategoryFilter = 'all';
 
+
 // ============================================
 // 3. Fetch data from API (always re-fetches)
 // ============================================
@@ -61,17 +62,66 @@ async function loadCategories() {
         updateStats();
     }
 }
+let currentPage = 1;
+let currentCategory = 'all';
+let currentSearch = '';
+let totalPages = 1;
 
-async function loadProducts() {
-    const data = await apiRequest('/api/products');
-    if (data && !data.error) {
-        products = data;
-        renderProductTable();
-        renderCategoryTabs();  // update per-category counts
-        updateStats();
+async function loadProducts(page = 1) {
+    currentPage = page;
+    let url = `/api/products?page=${page}&limit=4`;
+    if (currentCategory !== 'all') {
+        url += `&category_id=${currentCategory}`;
+    }
+    if (currentSearch) {
+        url += `&search=${encodeURIComponent(currentSearch)}`;
+    }
+        try {
+        const data = await window.apiRequest(url);
+        if (data && !data.error) {
+            products = data.data;               // replace global products array with current page's products
+            totalPages = data.pagination.total_pages;
+            renderProductTable();               // re-render table with new products
+            renderPaginationControls(data.pagination); // update buttons
+        }
+    } catch (err) {
+        console.error('Error loading products:', err);
     }
 }
 
+
+
+function renderPaginationControls(pagination) {
+    let container = document.getElementById('paginationControls');
+    if (!container) {
+        const accordion = document.querySelector('#productAccordionContainer');
+        if (accordion && accordion.parentNode) {
+            const div = document.createElement('div');
+            div.id = 'paginationControls';
+            div.className = 'pagination';
+            accordion.parentNode.insertBefore(div, accordion.nextSibling);
+            container = div;
+        } else return;
+    }
+
+    if (pagination.total_pages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    container.innerHTML = `
+        <button class="pagination-btn" id="prevPageBtn" ${!pagination.has_prev ? 'disabled' : ''}>← Previous</button>
+        <span class="pagination-info">Page ${pagination.current_page} of ${pagination.total_pages}</span>
+        <button class="pagination-btn" id="nextPageBtn" ${!pagination.has_next ? 'disabled' : ''}>Next →</button>
+    `;
+
+    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
+        if (pagination.has_prev) loadProducts(pagination.current_page - 1);
+    });
+    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
+        if (pagination.has_next) loadProducts(pagination.current_page + 1);
+    });
+}
 // ============================================
 // 4. Render UI
 // ============================================
@@ -81,6 +131,9 @@ function renderCategoryTabs() {
     
     // Clear existing filters securely
     container.innerHTML = '';
+
+    // Calculate total product count from all categories
+    const totalAllCount = categories.reduce((sum, cat) => sum + parseInt(cat.product_count || 0), 0);
 
     // Create "All" filter button
     const allBtn = document.createElement('button');
@@ -92,14 +145,14 @@ function renderCategoryTabs() {
     
     const allSpan = document.createElement('span');
     allSpan.className = 'product-count';
-    allSpan.textContent = products.length;
+    allSpan.textContent = totalAllCount;
     allBtn.appendChild(allSpan);
     
     container.appendChild(allBtn);
 
     // Create a filter button for each category
     categories.forEach(cat => {
-        const count = products.filter(p => p.category_id === cat.id).length;
+        const count = cat.product_count !== undefined ? parseInt(cat.product_count) : 0;
         
         const catBtn = document.createElement('button');
         catBtn.className = `cat-btn ${activeCategoryFilter === cat.id ? 'active' : ''}`;
@@ -117,108 +170,285 @@ function renderCategoryTabs() {
     });
 }
 
-function renderProductTable() {
-    const tbody = document.querySelector('#productMasterTable tbody');
-    if (!tbody) return;
-    
-    // Clear table body securely
-    tbody.innerHTML = '';
+let collapsedCategoriesState = {};
 
+function getSubcategoryColor(name) {
+    if (!name) return 'var(--muted)';
+    const lower = name.toLowerCase().trim();
+    if (lower === 'lining') {
+        return '#f97316'; // Vivid orange
+    }
+    if (lower === 'cotton' || lower === 'pure cotton') return '#10b981'; // emerald green
+    if (lower === 'silk' || lower === 'art silk') return '#ec4899'; // pink
+    if (lower === 'fancy' || lower === 'designer') return '#3b82f6'; // blue
+    if (lower === 'lace' || lower === 'lace work') return '#06b6d4'; // cyan
+    if (lower === 'border') return '#f59e0b'; // amber
+    
+    // Generate a hash-based color if not matched (avoiding violet/purple hues to respect Purple Ban)
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hues = [200, 140, 30, 45, 180, 340, 15]; // Selected nice hues: blue, emerald, orange, amber, cyan, rose, reddish-orange
+    const hue = hues[Math.abs(hash) % hues.length];
+    return `hsl(${hue}, 75%, 45%)`;
+}
+
+function renderProductTable() {
+    const container = document.getElementById('productAccordionContainer');
+    if (!container) return;
+    
+    // Clear accordion container securely
+    container.innerHTML = '';
+
+    const query = document.getElementById('pmSearch')?.value.toLowerCase().trim() || '';
+
+    // Step 1: Filter products by category tab and search query
     let filtered = products;
     if (activeCategoryFilter !== 'all') {
         filtered = products.filter(p => p.category_id === activeCategoryFilter);
     }
-    if (filtered.length === 0) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = 7;
-        td.style.textAlign = 'center';
-        td.style.color = 'var(--muted)';
-        td.style.padding = '2rem';
-        td.textContent = 'No products found';
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-        return;
+    if (query) {
+        filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(query) || 
+            (p.id && p.id.toLowerCase().includes(query)) ||
+            (p.category_name && p.category_name.toLowerCase().includes(query)) ||
+            (p.subcategory_name && p.subcategory_name.toLowerCase().includes(query))
+        );
     }
 
+    // Step 2: Group ALL filtered products by Category and Subcategory
+    const groupedAll = {};
     filtered.forEach(p => {
-        const tr = document.createElement('tr');
-
-        // Product ID (slice of first 8 characters)
-        const tdId = document.createElement('td');
-        tdId.textContent = p.id ? p.id.slice(0, 8) : '';
-        tr.appendChild(tdId);
-
-        // Product Name
-        const tdName = document.createElement('td');
-        tdName.textContent = p.name || '';
-        tr.appendChild(tdName);
-
-        // Category Name with badge styling
-        const tdCat = document.createElement('td');
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.textContent = p.category_name || '';
-        tdCat.appendChild(badge);
-        tr.appendChild(tdCat);
-
-        // Unit
-        const tdUnit = document.createElement('td');
-        tdUnit.textContent = p.unit || '';
-        tr.appendChild(tdUnit);
-
-        // HSN Code
-        const tdHsn = document.createElement('td');
-        tdHsn.textContent = p.hsn_code || '-';
-        tr.appendChild(tdHsn);
-
-        // GST Rate
-        const tdGst = document.createElement('td');
-        tdGst.textContent = (p.gst_rate !== undefined ? p.gst_rate : '0') + '%';
-        tr.appendChild(tdGst);
-
-        // Action Buttons
-        const tdActions = document.createElement('td');
-        const actionDiv = document.createElement('div');
-        actionDiv.className = 'action-buttons';
-
-        // Edit button
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn-icon edit-btn';
-        editBtn.title = 'Edit product';
-        editBtn.addEventListener('click', () => editProduct(p.id));
-        editBtn.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-            </svg>
-        `;
-        actionDiv.appendChild(editBtn);
-
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn-icon delete-btn';
-        deleteBtn.title = 'Delete product';
-        deleteBtn.addEventListener('click', () => deleteProduct(p.id));
-        deleteBtn.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-        `;
-        actionDiv.appendChild(deleteBtn);
-
-        tdActions.appendChild(actionDiv);
-        tr.appendChild(tdActions);
-
-        tbody.appendChild(tr);
+        let catId = p.category_id;
+        if (!groupedAll[catId]) {
+            const catObj = categories.find(c => c.id === catId);
+            const catName = catObj ? catObj.name : (p.category_name || 'Uncategorized');
+            groupedAll[catId] = {
+                id: catId,
+                name: catName,
+                subcategories: {}
+            };
+        }
+        
+        let subId = p.subcategory_id;
+        if (!subId) {
+            if (!groupedAll[catId].subcategories['none']) {
+                groupedAll[catId].subcategories['none'] = {
+                    id: null,
+                    name: 'Other Products',
+                    products: []
+                };
+            }
+            groupedAll[catId].subcategories['none'].products.push(p);
+        } else {
+            if (!groupedAll[catId].subcategories[subId]) {
+                groupedAll[catId].subcategories[subId] = {
+                    id: subId,
+                    name: p.subcategory_name || 'Other',
+                    products: []
+                };
+            }
+            groupedAll[catId].subcategories[subId].products.push(p);
+        }
     });
+
+    const activeCategoriesList = Object.values(groupedAll).sort((a, b) => a.name.localeCompare(b.name));
+
+    // Step 3: Render all active categories accordion UI
+    let totalRenderedProducts = 0;
+
+    activeCategoriesList.forEach(cat => {
+        // Count total products in this category
+        let catProductCount = 0;
+        Object.values(cat.subcategories).forEach(sub => {
+            catProductCount += sub.products.length;
+        });
+
+        // Hide empty categories (as requested: "if there is no product under a category it should not show in product list")
+        if (catProductCount === 0) {
+            return;
+        }
+
+        totalRenderedProducts += catProductCount;
+
+        const catAccordion = document.createElement('div');
+        catAccordion.className = 'category-accordion';
+
+        // Check collapse state (auto-expand during search, else check tracked state)
+        const isCollapsed = query ? false : (collapsedCategoriesState[cat.id] === true);
+
+        const catHeader = document.createElement('div');
+        catHeader.className = `category-header ${!isCollapsed ? 'active' : ''}`;
+        catHeader.innerHTML = `
+            <div class="category-title-area">
+                <span class="category-name">${escapeHtml(cat.name)}</span>
+                <span class="category-count">${catProductCount} Product${catProductCount !== 1 ? 's' : ''}</span>
+            </div>
+            <svg class="category-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        `;
+
+        const catContent = document.createElement('div');
+        catContent.className = `category-content ${isCollapsed ? 'collapsed' : ''}`;
+
+        // Toggle Category collapse
+        catHeader.addEventListener('click', () => {
+            const currentlyCollapsed = catContent.classList.contains('collapsed');
+            if (currentlyCollapsed) {
+                catHeader.classList.add('active');
+                catContent.classList.remove('collapsed');
+                collapsedCategoriesState[cat.id] = false;
+            } else {
+                catHeader.classList.remove('active');
+                catContent.classList.add('collapsed');
+                collapsedCategoriesState[cat.id] = true;
+            }
+        });
+
+        // Render Subcategories
+        const subcategories = Object.values(cat.subcategories);
+        // Sort subcategories: put 'none' at the bottom, others alphabetical
+        subcategories.sort((a, b) => {
+            if (a.id === null) return 1;
+            if (b.id === null) return -1;
+            return a.name.localeCompare(b.name);
+        });
+
+        subcategories.forEach(sub => {
+            // Hide subcategories with 0 products
+            if (sub.products.length === 0) return;
+
+            const subSection = document.createElement('div');
+            subSection.className = 'subcategory-section';
+
+            const accentColor = getSubcategoryColor(sub.name);
+            subSection.style.borderLeftColor = accentColor;
+
+            const subHeader = document.createElement('div');
+            subHeader.className = 'subcategory-header';
+            
+            const displayName = sub.id === null ? 'Other Products' : sub.name;
+            const subProductCount = sub.products.length;
+
+            subHeader.innerHTML = `
+                <div class="subcategory-title-area">
+                    <span class="subcategory-name" style="color: ${sub.id !== null ? accentColor : 'var(--text)'}">${escapeHtml(displayName)}</span>
+                    <span class="subcategory-count">${subProductCount}</span>
+                </div>
+            `;
+            subSection.appendChild(subHeader);
+
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'table-container';
+
+            const table = document.createElement('table');
+            table.className = 'subcategory-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th style="width: 15%">ID</th>
+                        <th style="width: 45%">Product Name</th>
+                        <th style="width: 12%">Unit</th>
+                        <th style="width: 13%">HSN Code</th>
+                        <th style="width: 10%">GST (%)</th>
+                        <th style="width: 5%">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+
+            const tableBody = table.querySelector('tbody');
+            sub.products.forEach(p => {
+                const tr = document.createElement('tr');
+
+                const tdId = document.createElement('td');
+                tdId.textContent = p.id ? p.id.slice(0, 8) : '';
+                tr.appendChild(tdId);
+
+                const tdName = document.createElement('td');
+                tdName.textContent = p.name || '';
+                tr.appendChild(tdName);
+
+                const tdUnit = document.createElement('td');
+                tdUnit.textContent = p.unit || '';
+                tr.appendChild(tdUnit);
+
+                const tdHsn = document.createElement('td');
+                tdHsn.textContent = p.hsn_code || '-';
+                tr.appendChild(tdHsn);
+
+                const tdGst = document.createElement('td');
+                tdGst.textContent = (p.gst_rate !== undefined ? p.gst_rate : '0') + '%';
+                tr.appendChild(tdGst);
+
+                const tdActions = document.createElement('td');
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'action-buttons';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn-icon edit-btn';
+                editBtn.title = 'Edit product';
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editProduct(p.id);
+                });
+                editBtn.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+                    </svg>
+                `;
+                actionDiv.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-icon delete-btn';
+                deleteBtn.title = 'Delete product';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteProduct(p.id);
+                });
+                deleteBtn.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                `;
+                actionDiv.appendChild(deleteBtn);
+
+                tdActions.appendChild(actionDiv);
+                tr.appendChild(tdActions);
+                tableBody.appendChild(tr);
+            });
+
+            tableContainer.appendChild(table);
+            subSection.appendChild(tableContainer);
+            catContent.appendChild(subSection);
+        });
+
+        catAccordion.appendChild(catHeader);
+        catAccordion.appendChild(catContent);
+        container.appendChild(catAccordion);
+    });
+
+    if (activeCategoriesList.length === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'card-panel';
+        emptyDiv.style.textAlign = 'center';
+        emptyDiv.style.color = 'var(--text-muted)';
+        emptyDiv.style.padding = '3rem';
+        emptyDiv.textContent = 'No matching products found under your categories.';
+        container.appendChild(emptyDiv);
+    }
+
 }
 
 function updateStats() {
     const elProducts   = document.getElementById('pmTotalProducts');
     const elCategories = document.getElementById('pmTotalCategories');
-    if (elProducts)   elProducts.innerText   = products.length;
+    const totalAllCount = categories.reduce((sum, cat) => sum + parseInt(cat.product_count || 0), 0);
+    if (elProducts)   elProducts.innerText   = totalAllCount;
     if (elCategories) elCategories.innerText = categories.length;
 }
 
@@ -283,10 +513,23 @@ async function loadSubcategoriesIntoProductModal(categoryId) {
 // 5. CRUD actions
 // ============================================
 window.setCategoryFilter = function(categoryId) {
+    currentCategory = categoryId;
+    currentPage = 1;
+    loadProducts(1);
     activeCategoryFilter = categoryId;
     renderCategoryTabs();
     renderProductTable();
 };
+// Inside the search input event listener (DOMContentLoaded or existing)
+const pmSearch = document.getElementById('pmSearch');
+if (pmSearch) {
+    pmSearch.addEventListener('input', (e) => {
+        currentSearch = e.target.value;
+        currentPage = 1;
+        loadProducts(1);
+        renderProductTable();
+    });
+}
 
 /** Called from Category dropdown change in Add Product modal */
 window.onCategoryChange = function(categoryId) {
@@ -391,115 +634,13 @@ window.deleteProduct = async function(productId) {
     }
 };
 
-window.resetProductModal = function() {
-    document.getElementById('pmProductName').value = '';
-    document.getElementById('pmProductHsn').value  = '';
-    document.getElementById('pmProductGst').value  = '';
-    const subSelect = document.getElementById('pmProductSubcategory');
-    if (subSelect) subSelect.innerHTML = `<option value="">No Subcategory</option>`;
-};
+
 
 // ============================================
 // 6. Render search filter
 // ============================================
 window.renderProductMaster = function() {
-    const query = document.getElementById('pmSearch')?.value.toLowerCase() || '';
-    const tbody  = document.querySelector('#productMasterTable tbody');
-    if (!tbody) return;
-
-    // Clear table body securely
-    tbody.innerHTML = '';
-
-    const filtered = products.filter(p =>
-        (activeCategoryFilter === 'all' || p.category_id === activeCategoryFilter) &&
-        (p.name.toLowerCase().includes(query) || (p.id && p.id.toLowerCase().includes(query)))
-    );
-
-    if (filtered.length === 0) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = 7;
-        td.style.textAlign = 'center';
-        td.style.color = 'var(--muted)';
-        td.style.padding = '2rem';
-        td.textContent = 'No products found';
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-        return;
-    }
-
-    filtered.forEach(p => {
-        const tr = document.createElement('tr');
-
-        // Product ID (slice of first 8 characters)
-        const tdId = document.createElement('td');
-        tdId.textContent = p.id ? p.id.slice(0, 8) : '';
-        tr.appendChild(tdId);
-
-        // Product Name
-        const tdName = document.createElement('td');
-        tdName.textContent = p.name || '';
-        tr.appendChild(tdName);
-
-        // Category Name with badge styling
-        const tdCat = document.createElement('td');
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.textContent = p.category_name || '';
-        tdCat.appendChild(badge);
-        tr.appendChild(tdCat);
-
-        // Unit
-        const tdUnit = document.createElement('td');
-        tdUnit.textContent = p.unit || '';
-        tr.appendChild(tdUnit);
-
-        // HSN Code
-        const tdHsn = document.createElement('td');
-        tdHsn.textContent = p.hsn_code || '-';
-        tr.appendChild(tdHsn);
-
-        // GST Rate
-        const tdGst = document.createElement('td');
-        tdGst.textContent = (p.gst_rate !== undefined ? p.gst_rate : '0') + '%';
-        tr.appendChild(tdGst);
-
-        // Action Buttons
-        const tdActions = document.createElement('td');
-        const actionDiv = document.createElement('div');
-        actionDiv.className = 'action-buttons';
-
-        // Edit button
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn-icon edit-btn';
-        editBtn.title = 'Edit product';
-        editBtn.addEventListener('click', () => editProduct(p.id));
-        editBtn.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-            </svg>
-        `;
-        actionDiv.appendChild(editBtn);
-
-        // Delete button
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn-icon delete-btn';
-        deleteBtn.title = 'Delete product';
-        deleteBtn.addEventListener('click', () => deleteProduct(p.id));
-        deleteBtn.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-        `;
-        actionDiv.appendChild(deleteBtn);
-
-        tdActions.appendChild(actionDiv);
-        tr.appendChild(tdActions);
-
-        tbody.appendChild(tr);
-    });
+    renderProductTable();
 };
 
 // ============================================
@@ -524,7 +665,7 @@ function escapeHtml(str) {
 // ============================================
 async function initProductMaster() {
     await loadCategories();
-    await loadProducts();
+    await loadProducts(1);
 }
 
 // DOMContentLoaded: ALWAYS pre-load data so categories survive page refresh.
@@ -639,11 +780,10 @@ window.resetProductModal = function() {
     if (hsnEl)  hsnEl.value  = '';
     if (gstEl)  gstEl.value  = '';
 
-    // Reset category to first option
+    // Reset category to first option and load subcategories
     const catSelect = document.getElementById('pmProductCategory');
-    if (catSelect && catSelect.options.length) catSelect.selectedIndex = 0;
-
-    // Clear subcategory dropdown
-    const subSelect = document.getElementById('pmProductSubcategory');
-    if (subSelect) subSelect.innerHTML = '<option value="">No Subcategory</option>';
+    if (catSelect && catSelect.options.length > 0) {
+        catSelect.selectedIndex = 0;
+        loadSubcategoriesIntoProductModal(catSelect.value);
+    }
 };

@@ -31,41 +31,112 @@ try {
     $insertUser->execute([$userId, $username, $email, $hashedPassword, $fullName]);
     echo "✅ Seeded user: $username (Password: $password)\n";
 
-    // 3. Insert Test Category
-    $categoryId = 'a1111111-2222-3333-4444-555555555555';
+    // 3. Insert Test Categories, Subcategories, and Products
+    $categoriesToSeed = [
+        [
+            'id' => 'a1111111-2222-3333-4444-555555555551',
+            'name' => 'Apparel & Textiles',
+            'subcategories' => [
+                [
+                    'id' => 'b1111111-2222-3333-4444-555555555551',
+                    'name' => 'Men Shirts',
+                    'products' => [
+                        ['c1111111-2222-3333-4444-555555555501', 'Premium Cotton Shirt', 'pcs', 'HSN12345', 18.00],
+                        ['c1111111-2222-3333-4444-555555555502', 'Oxford Button Down Shirt', 'pcs', 'HSN12346', 18.00]
+                    ]
+                ]
+            ]
+        ],
+        [
+            'id' => 'a1111111-2222-3333-4444-555555555552',
+            'name' => 'Footwear',
+            'subcategories' => [
+                [
+                    'id' => 'b1111111-2222-3333-4444-555555555552',
+                    'name' => 'Sneakers',
+                    'products' => [
+                        ['c1111111-2222-3333-4444-555555555503', 'Classic White Sneakers', 'pairs', 'HSN54321', 12.00]
+                    ]
+                ]
+            ]
+        ],
+        [
+            'id' => 'a1111111-2222-3333-4444-555555555553',
+            'name' => 'Electronics',
+            'subcategories' => [
+                [
+                    'id' => 'b1111111-2222-3333-4444-555555555553',
+                    'name' => 'Smartphones',
+                    'products' => [
+                        ['c1111111-2222-3333-4444-555555555504', 'Pro Phone 15', 'pcs', 'HSN98765', 18.00]
+                    ]
+                ]
+            ]
+        ],
+        [
+            'id' => 'a1111111-2222-3333-4444-555555555554',
+            'name' => 'Home & Kitchen',
+            'subcategories' => [
+                [
+                    'id' => 'b1111111-2222-3333-4444-555555555554',
+                    'name' => 'Cookware',
+                    'products' => [
+                        ['c1111111-2222-3333-4444-555555555505', 'Non-Stick Frying Pan', 'pcs', 'HSN45678', 12.00]
+                    ]
+                ]
+            ]
+        ],
+        [
+            'id' => 'a1111111-2222-3333-4444-555555555555',
+            'name' => 'Books & Stationery',
+            'subcategories' => [
+                [
+                    'id' => 'b1111111-2222-3333-4444-555555555555',
+                    'name' => 'Novels',
+                    'products' => [
+                        ['c1111111-2222-3333-4444-555555555506', 'The Great Adventure Novel', 'pcs', 'HSN78901', 5.00]
+                    ]
+                ]
+            ]
+        ]
+    ];
+
     $insertCategory = $pdo->prepare("
         INSERT INTO categories (id, name, user_id) 
         VALUES (?, ?, ?)
     ");
-    $insertCategory->execute([$categoryId, 'Apparel & Textiles', $userId]);
-    echo "✅ Seeded category: Apparel & Textiles\n";
-
-    // 4. Insert Test Subcategory
-    $subcategoryId = 'b1111111-2222-3333-4444-555555555555';
     $insertSubcategory = $pdo->prepare("
         INSERT INTO subcategories (id, category_id, name, user_id) 
         VALUES (?, ?, ?, ?)
     ");
-    $insertSubcategory->execute([$subcategoryId, $categoryId, 'Men Shirts', $userId]);
-    echo "✅ Seeded subcategory: Men Shirts\n";
-
-    // 5. Insert Test Product
-    $productId = 'c1111111-2222-3333-4444-555555555555';
     $insertProduct = $pdo->prepare("
         INSERT INTO products (id, user_id, category_id, subcategory_id, name, unit, hsn_code, gst_rate) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $insertProduct->execute([
-        $productId, 
-        $userId, 
-        $categoryId, 
-        $subcategoryId, 
-        'Premium Cotton Shirt', 
-        'pcs', 
-        'HSN12345', 
-        18.00
-    ]);
-    echo "✅ Seeded product: Premium Cotton Shirt\n";
+
+    foreach ($categoriesToSeed as $cat) {
+        $insertCategory->execute([$cat['id'], $cat['name'], $userId]);
+        echo "✅ Seeded category: {$cat['name']}\n";
+        
+        foreach ($cat['subcategories'] as $sub) {
+            $insertSubcategory->execute([$sub['id'], $cat['id'], $sub['name'], $userId]);
+            echo "   ✅ Seeded subcategory: {$sub['name']}\n";
+            
+            foreach ($sub['products'] as $prod) {
+                $insertProduct->execute([
+                    $prod[0],
+                    $userId,
+                    $cat['id'],
+                    $sub['id'],
+                    $prod[1],
+                    $prod[2],
+                    $prod[3],
+                    $prod[4]
+                ]);
+                echo "      ✅ Seeded product: {$prod[1]}\n";
+            }
+        }
+    }
     echo "\nAll test seed data successfully populated!\n";
 
 } catch (Exception $e) {

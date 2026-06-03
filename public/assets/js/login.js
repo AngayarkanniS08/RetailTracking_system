@@ -7,10 +7,6 @@
     const submitBtn  = document.getElementById('submitBtn');
     const messageBox = document.getElementById('messageBox');
 
-    // If already logged in, skip straight to dashboard
-    if (localStorage.getItem('auth_token')) {
-        window.location.href = '/index.php';
-    }
 
     // Show success banner if redirected from registration
     const params = new URLSearchParams(window.location.search);

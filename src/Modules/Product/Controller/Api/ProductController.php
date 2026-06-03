@@ -19,13 +19,17 @@ class ProductController {
     // GET /api/products
     public function index(): void {
         header('Content-Type: application/json');
+        $page = (int)($_GET['page'] ?? 1);
+        $limit = 4; // 4 products per page, as you wanted
+        $search = trim($_GET['search'] ?? '');
+        $categoryId = trim($_GET['category_id'] ?? '');
         
         try {
-            $products = $this->service->getAllProducts();
-            echo json_encode($products);
+            $paginated = $this->service->getProductsPaginated($page, $limit, $search, $categoryId);
+            echo json_encode($paginated);
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Internal server error']);
+            echo json_encode(['error' => 'Failed to load products']);
         }
     }
 

@@ -11,4 +11,5 @@ return array(
     'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
     'Core\\' => array($baseDir . '/Core'),
     'Config\\' => array($baseDir . '/../config'),
+    'App\\Common\\Helpers\\' => array($baseDir . '/helpers'),
 );

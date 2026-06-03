@@ -4,6 +4,7 @@
   - Categorization: "Manage Categories & Subcategories" modal to build product hierarchies.
   - Product Creation: "+ Add Product" modal capturing custom units, categories, and taxation (HSN/GST).
 --> <script> console.log('Token:', localStorage.getItem('auth_token'))</script>
+<link rel="stylesheet" href="public/assets/css/product.css">
         <section id="product_master" class="view-section">
           <div class="card-header">
             <span>Product Master</span>
@@ -37,24 +38,10 @@
               <div class="stat-value" style="color:var(--info)" id="pmTotalBatches">0</div>
             </div>
           </div>
-          <div class="card-panel">
-            <div class="table-container">
-              <table id="productMasterTable">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Product Name</th>
-                    <th>Category</th>
-                    <th>Unit</th>
-                    <th>HSN Code</th>
-                    <th>GST (%)</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Rendered via JS -->
-                </tbody>
-              </table>
-            </div>
+          <div id="productAccordionContainer">
+            <!-- Rendered via JS -->
           </div>
+          
+          <div id="paginationControls" class="pagination"></div>
         </section>
+

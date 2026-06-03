@@ -3,6 +3,8 @@ services:
   db:
     image: postgres:15-alpine
     container_name: retail_pos_db
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: retail_pos
       POSTGRES_USER: admin
