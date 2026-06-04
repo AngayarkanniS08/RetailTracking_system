@@ -4,7 +4,7 @@ services:
     image: postgres:15-alpine
     container_name: retail_pos_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: retail_pos
       POSTGRES_USER: admin
@@ -28,6 +28,8 @@ services:
     container_name: retail_pos_ui
     ports:
       - "8080:80"
+    environment:
+      JWT_SECRET: super_secret_key_of_retail_pos_system_2026_jwt_auth
     volumes:
       - ./public:/var/www/html/public
       - ./views:/var/www/html/views:ro
@@ -63,6 +65,9 @@ services:
       DB_NAME: retail_pos
       DB_USER: admin
       DB_PASSWORD: admin123
+      VALKEY_HOST: valkey
+      VALKEY_PORT: 6379
+      JWT_SECRET: super_secret_key_of_retail_pos_system_2026_jwt_auth
     volumes:
       - ./src:/var/www/html/src
       - ./Database:/var/www/html/Database
@@ -80,9 +85,29 @@ services:
       - internal
     restart: unless-stopped
 
+  #............................Valkey Cache Server............................
+  valkey:
+      image: valkey/valkey:7-alpine
+      container_name: retail_valkey
+      restart: unless-stopped
+      ports:
+        - "6379:6379"          # optional: expose to host for debugging
+      volumes:
+        - valkey-data:/data    # persist cache across restarts (optional)
+      command: valkey-server --appendonly yes   # enable persistence
+      networks:
+        - internal
+      healthcheck:
+        test: ["CMD", "valkey-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+volumes:
+  pgdata:
+  valkey-data:
+
 networks:
   internal:
     driver: bridge
 
-volumes:
-  pgdata:

@@ -1,4 +1,5 @@
 <?php
+
 namespace Modules\Product\Controller\Api;
 
 use Modules\Product\DTO\ProductDTO;
@@ -6,27 +7,71 @@ use Modules\Product\Service\ProductService;
 use Modules\Product\Repository\ProductRepository;
 use Modules\Product\Repository\CategoryRepository;
 use Modules\Auth\Validation\ValidationException;
+use Core\Cache\ValkeyCache;
+use Core\Middlewares\AuthMiddleware;
 use Exception;
 use PDOException;
 
-class ProductController {
+class ProductController
+{
     private ProductService $service;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->service = new ProductService(new ProductRepository(), new CategoryRepository());
     }
 
     // GET /api/products
-    public function index(): void {
+    public function index(): void
+    {
         header('Content-Type: application/json');
         $page = (int)($_GET['page'] ?? 1);
         $limit = 4; // 4 products per page, as you wanted
         $search = trim($_GET['search'] ?? '');
         $categoryId = trim($_GET['category_id'] ?? '');
-        
+
+        // Safely authenticate using JWT and extract user context
+        $user = AuthMiddleware::authenticate();
+        $userId = $user->data->user_id ?? null;
+
+        // Build cache key (unique per search, page, filters, user)
+        $cacheKey = sprintf(
+            'products:search:%s:cat:%s:page:%d:limit:%d:user:%s',
+            md5($search),
+            $categoryId ?: 'all',
+            $page,
+            $limit,
+            $userId ?: 'guest'
+        );
+
+        $valkey = null;
         try {
-            $paginated = $this->service->getProductsPaginated($page, $limit, $search, $categoryId);
-            echo json_encode($paginated);
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+            // proceed to database
+        }
+
+        try {
+            // Database query (your existing paginated fetch)
+            $result = $this->service->getProductsPaginated($page, $limit, $search, $categoryId);
+            $json = json_encode($result);
+
+            // Store in cache with TTL (e.g., 5 minutes = 300 seconds)
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (\Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load products']);
@@ -34,9 +79,10 @@ class ProductController {
     }
 
     // POST /api/products
-    public function store(): void {
+    public function store(): void
+    {
         header('Content-Type: application/json');
-        
+
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -67,9 +113,10 @@ class ProductController {
     }
 
     // PUT /api/products/{id}
-    public function update(string $id): void {
+    public function update(string $id): void
+    {
         header('Content-Type: application/json');
-        
+
 
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             http_response_code(405);
@@ -99,7 +146,8 @@ class ProductController {
     }
 
     // DELETE /api/products/{id}
-    public function destroy(string $id): void {
+    public function destroy(string $id): void
+    {
         header('Content-Type: application/json');
 
 

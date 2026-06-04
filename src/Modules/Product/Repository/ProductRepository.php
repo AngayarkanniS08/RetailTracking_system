@@ -22,10 +22,64 @@ class ProductRepository implements ProductRepositoryInterface {
      */
     public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = ''): array {
         $offset = ($page - 1) * $limit;
-        $userId = $this->getCurrentUserId(); // from RLS or session
 
-        // Base query (with user isolation)
-        $sql = "
+        // 1. Build SQL to get distinct categories matching filters
+        $catSql = "
+            SELECT DISTINCT p.category_id, c.name AS category_name
+            FROM products p
+            JOIN categories c ON c.id = p.category_id
+            LEFT JOIN subcategories s ON s.id = p.subcategory_id
+            WHERE p.user_id = current_setting('app.current_user_id')::uuid
+              AND c.user_id = current_setting('app.current_user_id')::uuid
+              AND (s.id IS NULL OR s.user_id = current_setting('app.current_user_id')::uuid)
+        ";
+        $params = [];
+        if (!empty($categoryId)) {
+            $catSql .= " AND p.category_id = ?";
+            $params[] = $categoryId;
+        }
+        if (!empty($search)) {
+            $catSql .= " AND (p.name ILIKE ? OR c.name ILIKE ? OR COALESCE(s.name, '') ILIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        // Get total count of distinct categories matching the filters
+        $countSql = "SELECT COUNT(*) FROM ($catSql) AS temp";
+        $stmt = $this->db->prepare($countSql);
+        $stmt->execute($params);
+        $total = (int) $stmt->fetchColumn();
+
+        if ($total === 0) {
+            return [
+                'data'  => [],
+                'total' => 0
+            ];
+        }
+
+        // Get the paginated list of categories for the current page
+        $paginatedCatSql = $catSql . " ORDER BY category_name LIMIT ? OFFSET ?";
+        $paginatedParams = $params;
+        $paginatedParams[] = $limit;
+        $paginatedParams[] = $offset;
+
+        $stmt = $this->db->prepare($paginatedCatSql);
+        $stmt->execute($paginatedParams);
+        $categoriesPage = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $categoryIds = array_column($categoriesPage, 'category_id');
+
+        if (empty($categoryIds)) {
+            return [
+                'data'  => [],
+                'total' => $total
+            ];
+        }
+
+        // 2. Fetch all products belonging to these categories
+        $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
+        $productSql = "
             SELECT p.id, p.name, p.category_id, c.name AS category_name,
                    p.subcategory_id, s.name AS subcategory_name,
                    p.unit, p.hsn_code, p.gst_rate, p.created_at
@@ -34,33 +88,22 @@ class ProductRepository implements ProductRepositoryInterface {
             LEFT JOIN subcategories s ON s.id = p.subcategory_id
             WHERE p.user_id = current_setting('app.current_user_id')::uuid
               AND c.user_id = current_setting('app.current_user_id')::uuid
+              AND (s.id IS NULL OR s.user_id = current_setting('app.current_user_id')::uuid)
+              AND p.category_id IN ($placeholders)
         ";
+        $productParams = $categoryIds;
 
-        $params = [];
-
-        if (!empty($categoryId)) {
-            $sql .= " AND p.category_id = ?";
-            $params[] = $categoryId;
-        }
         if (!empty($search)) {
-            $sql .= " AND (p.name ILIKE ? OR p.id::text ILIKE ?)";
-            $params[] = "%$search%";
-            $params[] = "%$search%";
+            $productSql .= " AND (p.name ILIKE ? OR c.name ILIKE ? OR COALESCE(s.name, '') ILIKE ?)";
+            $productParams[] = "%$search%";
+            $productParams[] = "%$search%";
+            $productParams[] = "%$search%";
         }
 
-        // First get total count
-        $countSql = preg_replace('/SELECT.*?FROM/is', 'SELECT COUNT(*) FROM', $sql);
-        $stmt = $this->db->prepare($countSql);
-        $stmt->execute($params);
-        $total = (int) $stmt->fetchColumn();
+        $productSql .= " ORDER BY c.name, s.name, p.name";
 
-        // Now get paginated data
-        $sql .= " ORDER BY p.name LIMIT ? OFFSET ?";
-        $params[] = $limit;
-        $params[] = $offset;
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+        $stmt = $this->db->prepare($productSql);
+        $stmt->execute($productParams);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
@@ -85,7 +128,7 @@ class ProductRepository implements ProductRepositoryInterface {
                 WHERE  p.user_id = current_setting('app.current_user_id')::uuid
                   AND  c.user_id = current_setting('app.current_user_id')::uuid
                   AND  (s.id IS NULL OR s.user_id = current_setting('app.current_user_id')::uuid)
-                ORDER  BY p.name";
+                ORDER  BY c.name, s.name, p.name";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

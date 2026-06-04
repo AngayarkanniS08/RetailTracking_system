@@ -20,6 +20,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN mkdir -p /var/www/html/tmp/sessions && \
     chown -R www-data:www-data /var/www/html/tmp && \
     chmod 755 /var/www/html/tmp/sessions
+    
+RUN pecl install redis && docker-php-ext-enable redis
 
 WORKDIR /var/www/html
 

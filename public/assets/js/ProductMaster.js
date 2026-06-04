@@ -201,21 +201,9 @@ function renderProductTable() {
     // Clear accordion container securely
     container.innerHTML = '';
 
-    const query = document.getElementById('pmSearch')?.value.toLowerCase().trim() || '';
-
-    // Step 1: Filter products by category tab and search query
+    // Products are already filtered server-side by search and category.
+    // No client-side filtering needed — just group and render.
     let filtered = products;
-    if (activeCategoryFilter !== 'all') {
-        filtered = products.filter(p => p.category_id === activeCategoryFilter);
-    }
-    if (query) {
-        filtered = filtered.filter(p => 
-            p.name.toLowerCase().includes(query) || 
-            (p.id && p.id.toLowerCase().includes(query)) ||
-            (p.category_name && p.category_name.toLowerCase().includes(query)) ||
-            (p.subcategory_name && p.subcategory_name.toLowerCase().includes(query))
-        );
-    }
 
     // Step 2: Group ALL filtered products by Category and Subcategory
     const groupedAll = {};
@@ -276,7 +264,7 @@ function renderProductTable() {
         catAccordion.className = 'category-accordion';
 
         // Check collapse state (auto-expand during search, else check tracked state)
-        const isCollapsed = query ? false : (collapsedCategoriesState[cat.id] === true);
+        const isCollapsed = collapsedCategoriesState[cat.id] === true;
 
         const catHeader = document.createElement('div');
         catHeader.className = `category-header ${!isCollapsed ? 'active' : ''}`;
@@ -515,10 +503,9 @@ async function loadSubcategoriesIntoProductModal(categoryId) {
 window.setCategoryFilter = function(categoryId) {
     currentCategory = categoryId;
     currentPage = 1;
-    loadProducts(1);
     activeCategoryFilter = categoryId;
-    renderCategoryTabs();
-    renderProductTable();
+    renderCategoryTabs();          // update active button highlight immediately
+    loadProducts(1);               // server filters by category; re-renders on response
 };
 // Inside the search input event listener (DOMContentLoaded or existing)
 const pmSearch = document.getElementById('pmSearch');
@@ -526,8 +513,7 @@ if (pmSearch) {
     pmSearch.addEventListener('input', (e) => {
         currentSearch = e.target.value;
         currentPage = 1;
-        loadProducts(1);
-        renderProductTable();
+        loadProducts(1);  // server handles search; renderProductTable called inside
     });
 }
 

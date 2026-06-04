@@ -12,7 +12,7 @@ class JWTService
     public function __construct()
     {
         // Store this secret in an environment variable or config file
-        $this->secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? 'your-secret-key-change-this';
+        $this->secretKey = $_ENV['JWT_SECRET'] ?? $_SERVER['JWT_SECRET'] ?? 'your-secret-key-change-this-to-something-longer-32-chars';
         if (empty($this->secretKey)) {
             throw new \Exception('JWT_SECRET environment variable not set');
         }

@@ -7,6 +7,7 @@ use Modules\Auth\Validation\ValidationException;
 
 use Modules\Product\Repository\Contract\CategoryRepositoryInterface;
 use App\Common\Helpers\ArrayHelper;
+use Core\Cache\ValkeyCache;
 
 class ProductService
 {
@@ -30,6 +31,19 @@ class ProductService
             'pagination' => $meta
         ];
     }
+
+    private function invalidateProductSearchCache(): void {
+    try {
+        $valkey = ValkeyCache::getClient();
+        // Scan for keys (use a pattern; be careful with large key sets)
+        $keys = $valkey->keys('products:search:*');
+        if ($keys) {
+            $valkey->del($keys);
+        }
+    } catch (\Exception $e) {
+        error_log('Cache invalidation failed: ' . $e->getMessage());
+    }
+}
 
 
     /**
@@ -63,7 +77,7 @@ class ProductService
             throw new ValidationException("A product with this name already exists");
         }
 
-        return $this->repo->create(
+        $product = $this->repo->create(
             trim($dto->name),
             $dto->categoryId,
             $dto->subcategoryId ?: null,
@@ -71,6 +85,8 @@ class ProductService
             $dto->hsnCode   ?: null,
             $dto->gstRate
         );
+        $this->invalidateProductSearchCache();
+        return $product;
     }
 
     /**
@@ -102,7 +118,7 @@ class ProductService
             throw new ValidationException("A product with this name already exists");
         }
 
-        return $this->repo->update(
+        $product = $this->repo->update(
             $id,
             trim($dto->name),
             $dto->categoryId,
@@ -111,6 +127,8 @@ class ProductService
             $dto->hsnCode   ?: null,
             $dto->gstRate
         );
+        $this->invalidateProductSearchCache();
+        return $product;
     }
 
     /**
@@ -121,6 +139,10 @@ class ProductService
             throw new ValidationException("Product not found");
         }
 
-        return $this->repo->delete($id);
+        $deleted = $this->repo->delete($id);
+        if ($deleted) {
+            $this->invalidateProductSearchCache();
+        }
+        return $deleted;
     }
 }
