@@ -225,9 +225,12 @@
         </div>
         <div class="input-group" style="flex:1;">
           <label class="input-label">Subcategory</label>
-          <select id="pmProductSubcategory" class="input-field">
-            <option value="">No Subcategory</option>
-          </select>
+          <div class="combobox" id="subcategoryCombobox">
+              <input type="text" id="pmProductSubcategoryInput" class="input-field" 
+                    placeholder="Type to search subcategory..." autocomplete="off">
+              <input type="hidden" id="pmProductSubcategoryId" value="">
+              <div id="subcategoryDropdown" class="combobox-dropdown"></div>
+          </div>
         </div>
       </div>
       <div class="input-group">

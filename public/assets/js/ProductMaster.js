@@ -453,9 +453,12 @@ function populateCategoryDropdowns() {
         catSelect.appendChild(opt);
     });
 
-    // Also trigger subcategory load for the first category
-    if (categories.length > 0) {
-        loadSubcategoriesIntoProductModal(catSelect.value);
+    const categoryId = catSelect.value;
+    if (subcategoryCombobox) {
+        subcategoryCombobox.loadForCategory(categoryId);
+    }  else {
+        // fallback to old method (if needed)
+        loadSubcategoriesIntoProductModal(categoryId);
     }
 }
 
@@ -519,7 +522,11 @@ if (pmSearch) {
 
 /** Called from Category dropdown change in Add Product modal */
 window.onCategoryChange = function(categoryId) {
-    loadSubcategoriesIntoProductModal(categoryId);
+    if (subcategoryCombobox) {
+        subcategoryCombobox.loadForCategory(categoryId);
+    } else {
+        loadSubcategoriesIntoProductModal(categoryId);
+    }
 };
 
 window.saveCategory = async function() {
@@ -577,7 +584,7 @@ window.saveSubcategory = async function() {
 window.saveProduct = async function() {
     const name          = document.getElementById('pmProductName').value.trim();
     const categoryId    = document.getElementById('pmProductCategory').value;
-    const subcategoryId = document.getElementById('pmProductSubcategory')?.value || null;
+    const subcategoryId = document.getElementById('pmProductSubcategoryId').value || null;
     const unit          = document.getElementById('pmProductUnit').value;
     const hsn           = document.getElementById('pmProductHsn').value.trim();
     const gst           = parseFloat(document.getElementById('pmProductGst').value) || 0;
@@ -690,15 +697,27 @@ window.editProduct = async function(productId) {
     
     document.getElementById('pmProductName').value = product.name;
     document.getElementById('pmProductCategory').value = product.category_id; // Assuming category_id exists
-    // Trigger subcategory dropdown population based on selected category
-    if (typeof onCategoryChange === 'function') {
-        onCategoryChange(product.category_id);
-        // Wait a bit for subcategories to load, then set value
-        setTimeout(() => {
-            if (product.subcategory_id) {
-                document.getElementById('pmProductSubcategory').value = product.subcategory_id;
-            }
-        }, 100);
+
+    if (subcategoryCombobox) {
+        await subcategoryCombobox.loadForCategory(product.category_id);
+        if (product.subcategory_id) {
+            subcategoryCombobox.hidden.value = product.subcategory_id;
+            // Find name from loaded items to set input text
+            const found = subcategoryCombobox.allItems.find(i => i.id === product.subcategory_id);
+            if (found) subcategoryCombobox.input.value = found.name;
+        }
+    } else {
+        // Trigger subcategory dropdown population based on selected category (fallback)
+        if (typeof onCategoryChange === 'function') {
+            onCategoryChange(product.category_id);
+            // Wait a bit for subcategories to load, then set value
+            setTimeout(() => {
+                const oldSelect = document.getElementById('pmProductSubcategory');
+                if (oldSelect && product.subcategory_id) {
+                    oldSelect.value = product.subcategory_id;
+                }
+            }, 100);
+        }
     }
     document.getElementById('pmProductUnit').value = product.unit;
     document.getElementById('pmProductHsn').value = product.hsn_code || '';
@@ -711,7 +730,7 @@ window.editProduct = async function(productId) {
 window.updateProduct = async function() {
     const name = document.getElementById('pmProductName').value.trim();
     const categoryId = document.getElementById('pmProductCategory').value;
-    const subcategoryId = document.getElementById('pmProductSubcategory').value || null;
+    const subcategoryId = document.getElementById('pmProductSubcategoryId')?.value || null;
     const unit = document.getElementById('pmProductUnit').value;
     const hsn = document.getElementById('pmProductHsn').value.trim();
     const gst = parseFloat(document.getElementById('pmProductGst').value) || 0;
@@ -770,6 +789,217 @@ window.resetProductModal = function() {
     const catSelect = document.getElementById('pmProductCategory');
     if (catSelect && catSelect.options.length > 0) {
         catSelect.selectedIndex = 0;
-        loadSubcategoriesIntoProductModal(catSelect.value);
+        if (subcategoryCombobox) {
+            subcategoryCombobox.loadForCategory(catSelect.value);
+        } else {
+            loadSubcategoriesIntoProductModal(catSelect.value);
+        }
     }
 };
+
+// ─────────────────────────────────────────────────────────────
+// Subcategory Combobox (Client‑Side Searchable)
+// ─────────────────────────────────────────────────────────────
+class SubcategoryCombobox {
+    constructor(inputId, hiddenId, dropdownId) {
+        this.input = document.getElementById(inputId);
+        this.hidden = document.getElementById(hiddenId);
+        this.dropdown = document.getElementById(dropdownId);
+        this.container = this.dropdown ? this.dropdown.parentElement : null;
+        this.allItems = [];          // full list (id, name)
+        this.filteredItems = [];     // after filtering
+        this.selectedIndex = -1;
+        this.isOpen = false;
+        this.currentCategoryId = null;
+        this.cache = {};             // categoryId -> subcategories array
+
+        if (!this.input) return;
+        this.initEventListeners();
+    }
+
+    initEventListeners() {
+        this.input.addEventListener('input', () => this.onInput());
+        this.input.addEventListener('focus', () => this.openDropdown());
+        this.input.addEventListener('blur', () => setTimeout(() => this.closeDropdown(), 200));
+        this.input.addEventListener('keydown', (e) => this.onKeyDown(e));
+        document.addEventListener('click', (e) => {
+            if (!this.dropdown.contains(e.target) && e.target !== this.input) {
+                this.closeDropdown();
+            }
+        });
+    }
+
+    async loadForCategory(categoryId) {
+        if (!categoryId) {
+            this.clear();
+            return;
+        }
+        this.currentCategoryId = categoryId;
+
+        // Use cache if available
+        if (this.cache[categoryId]) {
+            this.allItems = this.cache[categoryId];
+            this.filteredItems = [...this.allItems];
+            this.input.placeholder = this.allItems.length ? "Type to search subcategory..." : "No subcategories";
+            this.hidden.value = '';
+            this.input.value = '';
+            if (this.isOpen) this.renderDropdown();
+            return;
+        }
+
+        // Fetch from API
+        this.showLoading(true);
+        try {
+            const data = await window.apiRequest(`/api/subcategories?category_id=${categoryId}`);
+            if (data && !data.error) {
+                this.allItems = data.map(item => ({ id: item.id, name: item.name }));
+                this.cache[categoryId] = this.allItems;
+                this.filteredItems = [...this.allItems];
+                this.input.placeholder = this.allItems.length ? "Type to search subcategory..." : "No subcategories";
+                this.hidden.value = '';
+                this.input.value = '';
+                if (this.isOpen) this.renderDropdown();
+            }
+        } catch (err) {
+            console.error('Failed to load subcategories', err);
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    onInput() {
+        const search = this.input.value.toLowerCase().trim();
+        if (!search) {
+            this.filteredItems = [...this.allItems];
+        } else {
+            this.filteredItems = this.allItems.filter(item =>
+                item.name.toLowerCase().includes(search)
+            );
+        }
+        this.selectedIndex = -1;
+        this.renderDropdown();
+        if (!this.isOpen) this.openDropdown();
+    }
+
+    renderDropdown() {
+        if (!this.isOpen) return;
+        this.dropdown.innerHTML = '';
+        if (this.filteredItems.length === 0) {
+            const div = document.createElement('div');
+            div.className = 'combobox-item';
+            div.textContent = 'No matching subcategories';
+            this.dropdown.appendChild(div);
+        } else {
+            this.filteredItems.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = `combobox-item ${idx === this.selectedIndex ? 'selected' : ''}`;
+                div.textContent = item.name;
+                div.addEventListener('click', () => this.selectItem(item.id, item.name));
+                div.addEventListener('mouseenter', () => this.setSelectedIndex(idx));
+                this.dropdown.appendChild(div);
+            });
+        }
+    }
+
+    selectItem(id, name) {
+        this.hidden.value = id;
+        this.input.value = name;
+        this.closeDropdown();
+    }
+
+    onKeyDown(e) {
+        if (!this.isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            this.openDropdown();
+            e.preventDefault();
+            return;
+        }
+        if (!this.isOpen) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                this.selectedIndex = Math.min(this.selectedIndex + 1, this.filteredItems.length - 1);
+                this.renderDropdown();
+                this.scrollToSelected();
+                e.preventDefault();
+                break;
+            case 'ArrowUp':
+                this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
+                this.renderDropdown();
+                this.scrollToSelected();
+                e.preventDefault();
+                break;
+            case 'Enter':
+                if (this.selectedIndex >= 0 && this.filteredItems[this.selectedIndex]) {
+                    const item = this.filteredItems[this.selectedIndex];
+                    this.selectItem(item.id, item.name);
+                }
+                e.preventDefault();
+                break;
+            case 'Escape':
+                this.closeDropdown();
+                e.preventDefault();
+                break;
+        }
+    }
+
+    scrollToSelected() {
+        const selectedEl = this.dropdown.querySelector('.combobox-item.selected');
+        if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
+    }
+
+    setSelectedIndex(idx) {
+        this.selectedIndex = idx;
+        this.renderDropdown();
+    }
+
+    openDropdown() {
+        this.isOpen = true;
+        if (this.container) this.container.classList.add('is-open');
+        this.renderDropdown();
+    }
+
+    closeDropdown() {
+        this.isOpen = false;
+        if (this.container) this.container.classList.remove('is-open');
+        this.selectedIndex = -1;
+        
+        // Revert input text if it doesn't match the selected item
+        const selectedId = this.hidden.value;
+        if (selectedId) {
+            const found = this.allItems.find(item => item.id === selectedId);
+            if (found) {
+                this.input.value = found.name;
+            } else {
+                this.input.value = '';
+                this.hidden.value = '';
+            }
+        } else {
+            this.input.value = '';
+        }
+    }
+
+    clear() {
+        this.allItems = [];
+        this.filteredItems = [];
+        this.hidden.value = '';
+        this.input.value = '';
+        this.input.placeholder = 'Select a category first';
+        this.closeDropdown();
+    }
+
+    showLoading(show) {
+        // You can add a spinner inside the input or just disable temporarily
+        this.input.disabled = show;
+    }
+}
+
+// Initialize the combobox after DOM is ready
+let subcategoryCombobox = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    subcategoryCombobox = new SubcategoryCombobox(
+        'pmProductSubcategoryInput',
+        'pmProductSubcategoryId',
+        'subcategoryDropdown'
+    );
+});
