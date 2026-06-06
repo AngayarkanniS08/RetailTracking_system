@@ -29,9 +29,9 @@
       </div>
       <div style="padding: 2rem; overflow-y: auto; flex: 1;">
         <div class="input-group">
-        <label class="input-label">Select Product</label>
-        <select id="stockProduct" class="input-field" onchange="calculateInventoryMath()"></select>
-      </div>
+          <label class="input-label">Select Product</label>
+          <select id="stockProduct" class="input-field" onchange="calculateInventoryMath()"></select>
+        </div>
       <div class="input-group">
         <label class="input-label">Vendor Name</label>
         <input type="text" id="stockVendor" class="input-field" placeholder="e.g. Metro Wholesale">
@@ -385,6 +385,64 @@
         <button class="btn btn-block" id="deleteBillConfirmBtn"
           style="background:var(--danger); color:white; border:none;" onclick="executeBillDelete()">Yes, Delete</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Restock Modal -->
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content" style="max-width: 420px;">
+
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">
+          <i class="ti ti-package"></i>
+          Place restock order
+        </div>
+        <button class="close-btn" onclick="closeModal('modalOverlay')" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="stock-row">
+        <div class="stock-pill">
+          <span class="pill-label">Current stock</span>
+          <span class="pill-value" id="restockCurrentStock">-</span>
+        </div>
+        <div class="stock-pill">
+          <span class="pill-label">Max stock</span>
+          <span class="pill-value" id="restockMaxStock">-</span>
+        </div>
+        <div class="stock-pill">
+          <span class="pill-label">Deficit</span>
+          <span class="pill-value highlight" id="restockDeficit">-</span>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="label-row">
+          <label class="field-label" for="orderQty" id="restockQtyLabel">
+            Order quantity (units)<span class="required">*</span>
+          </label>
+          <span class="autofill-badge">
+            <i class="ti ti-wand"></i> Auto-filled
+          </span>
+        </div>
+        <div class="input-wrapper">
+          <input type="number" id="orderQty" min="1" />
+          <span class="input-unit" id="restockUnitSuffix">units</span>
+        </div>
+        <p class="helper-text" id="restockHelperText">
+          <i class="ti ti-info-circle"></i>
+          Suggested based on your maximum stock limit. You can adjust this amount before confirming.
+        </p>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="modal-actions" style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="closeModal('modalOverlay')">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmRestockOrder()" style="display: inline-flex; align-items: center; gap: 6px;">
+          <i class="ti ti-check"></i> Confirm order
+        </button>
+      </div>
+
     </div>
   </div>
 

@@ -12,6 +12,7 @@ use Modules\Product\Controller\Api\CategoryController;
 use Modules\Product\Controller\Api\SubcategoryController;
 use Modules\Product\Controller\Api\ProductController;
 use Modules\Product\Controller\Api\UnitController;
+use Modules\Inventory\Controller\Api\BatchController;
 
 class ApiRoutes
 {
@@ -91,6 +92,17 @@ class ApiRoutes
         $router->add('GET', '/api/units', function (): void {
             AuthMiddleware::authenticate(); // default
             (new UnitController())->index();
+        });
+
+        // ── Inventory Batches ──────────────────────────────────────
+        $router->add('GET', '/api/inventory/batches', function (): void {
+            (new BatchController())->index();
+        });
+        $router->add('POST', '/api/inventory/batches', function (): void {
+            (new BatchController())->store();
+        });
+        $router->add('PUT', '/api/inventory/batches/{id}', function (array $params): void {
+            (new BatchController())->update($params['id']);
         });
     }
 }

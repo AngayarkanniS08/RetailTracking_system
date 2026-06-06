@@ -20,7 +20,7 @@ class ProductRepository implements ProductRepositoryInterface {
      * @param string $categoryId (optional)
      * @return array{data: array, total: int}
      */
-    public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = ''): array {
+    public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array {
         $offset = ($page - 1) * $limit;
 
         // 1. Build SQL to get distinct categories matching filters
@@ -37,6 +37,10 @@ class ProductRepository implements ProductRepositoryInterface {
         if (!empty($categoryId)) {
             $catSql .= " AND p.category_id = ?";
             $params[] = $categoryId;
+        }
+        if (!empty($subcategoryId)) {
+            $catSql .= " AND p.subcategory_id = ?";
+            $params[] = $subcategoryId;
         }
         if (!empty($search)) {
             $catSql .= " AND (p.name ILIKE ? OR c.name ILIKE ? OR COALESCE(s.name, '') ILIKE ?)";
@@ -92,6 +96,11 @@ class ProductRepository implements ProductRepositoryInterface {
               AND p.category_id IN ($placeholders)
         ";
         $productParams = $categoryIds;
+
+        if (!empty($subcategoryId)) {
+            $productSql .= " AND p.subcategory_id = ?";
+            $productParams[] = $subcategoryId;
+        }
 
         if (!empty($search)) {
             $productSql .= " AND (p.name ILIKE ? OR c.name ILIKE ? OR COALESCE(s.name, '') ILIKE ?)";

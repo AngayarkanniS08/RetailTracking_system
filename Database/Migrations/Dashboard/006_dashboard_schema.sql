@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS public.inventory_batches (
     remaining_qty INT NOT NULL,
     cost_price DECIMAL(10, 2) NOT NULL,
     selling_price DECIMAL(10, 2) NOT NULL,
+    retail_price DECIMAL(10, 2) DEFAULT 0.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

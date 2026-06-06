@@ -26,9 +26,10 @@ class ProductController
     {
         header('Content-Type: application/json');
         $page = (int)($_GET['page'] ?? 1);
-        $limit = 4; // 4 products per page, as you wanted
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 4; // default to 4 if not specified
         $search = trim($_GET['search'] ?? '');
         $categoryId = trim($_GET['category_id'] ?? '');
+        $subcategoryId = trim($_GET['subcategory_id'] ?? '');
 
         // Safely authenticate using JWT and extract user context
         $user = AuthMiddleware::authenticate();
@@ -36,9 +37,10 @@ class ProductController
 
         // Build cache key (unique per search, page, filters, user)
         $cacheKey = sprintf(
-            'products:search:%s:cat:%s:page:%d:limit:%d:user:%s',
+            'products:search:%s:cat:%s:subcat:%s:page:%d:limit:%d:user:%s',
             md5($search),
             $categoryId ?: 'all',
+            $subcategoryId ?: 'all',
             $page,
             $limit,
             $userId ?: 'guest'
@@ -58,8 +60,8 @@ class ProductController
         }
 
         try {
-            // Database query (your existing paginated fetch)
-            $result = $this->service->getProductsPaginated($page, $limit, $search, $categoryId);
+            // Database query (paginated fetch with category and subcategory filtering)
+            $result = $this->service->getProductsPaginated($page, $limit, $search, $categoryId, $subcategoryId);
             $json = json_encode($result);
 
             // Store in cache with TTL (e.g., 5 minutes = 300 seconds)

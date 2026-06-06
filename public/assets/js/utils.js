@@ -72,8 +72,15 @@ function formatCurrency(amount) {
     return '₹' + parseFloat(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Helper: generate unique IDs (e.g. B12345)
+function generateId(prefix) {
+    return prefix + Math.floor(Math.random() * 100000);
+}
+
 // Export functions to global window object
 window.apiRequest = apiRequest;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.formatCurrency = formatCurrency;
+window.generateId = generateId;
+

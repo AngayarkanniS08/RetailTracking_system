@@ -1023,6 +1023,119 @@ tr:hover td {
     color: var(--text-strong);
 }
 
+/* RESTOCK MODAL STYLES */
+.stock-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.25rem;
+}
+.stock-pill {
+    flex: 1;
+    background: var(--bg-hover);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+}
+.stock-pill .pill-label {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 3px;
+}
+.stock-pill .pill-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-strong);
+}
+.stock-pill .pill-value.highlight {
+    color: var(--accent);
+}
+.field-group {
+    margin-bottom: 1.25rem;
+}
+.label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.field-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-strong);
+}
+.field-label .required {
+    color: var(--danger);
+    margin-left: 2px;
+}
+.autofill-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-subtle);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.autofill-badge i {
+    font-size: 11px;
+}
+.input-wrapper {
+    position: relative;
+}
+.input-wrapper input[type="number"] {
+    width: 100%;
+    height: 40px;
+    border: 1.5px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 0 44px 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-strong);
+    background: var(--bg-elevated);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus);
+    -moz-appearance: textfield;
+}
+.input-wrapper input[type="number"]::-webkit-inner-spin-button,
+.input-wrapper input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+.input-wrapper input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.input-unit {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--muted);
+    pointer-events: none;
+}
+.helper-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.helper-text i {
+    font-size: 13px;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.25rem 0;
+}
+
 /* THEME SWITCHER */
 .theme-panel {
     position: fixed;
@@ -1793,6 +1906,17 @@ body{
 
 .edit-btn:hover{
     background: rgba(37, 99, 235, 0.15);
+}
+
+/* RESTOCK BUTTON */
+
+.restock-btn{
+    color: #22c55e;
+    border-color: #16a34a;
+}
+
+.restock-btn:hover{
+    background: rgba(34, 197, 94, 0.15);
 }
 
 /* DELETE BUTTON */

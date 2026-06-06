@@ -8,16 +8,18 @@
         <section id="inventory" class="view-section">
           <div class="card-header">
             <span>Inventory & Batches</span>
-            <div class="d-flex" style="gap: 10px;">
+            <div class="d-flex" style="gap: 8px; align-items: center;">
               <input type="text" id="invSearch" class="input-field" placeholder="Search batches..."
-                style="width: 200px;" onkeyup="renderInventory()">
-              <select id="invCatFilter" class="input-field" style="width: auto; min-width: 140px;"
-                onchange="renderInventory()">
+                style="width: 180px; padding: 5px 10px; font-size: 0.82rem; height: 32px;" oninput="handleSearchInput()">
+              <select id="invCatFilter" class="input-field" style="width: auto; min-width: 130px; padding: 5px 32px 5px 10px; font-size: 0.82rem; height: 32px; background-position: right 0.75rem center;">
                 <option value="">All Categories</option>
               </select>
-              <button class="btn btn-primary btn-sm" onclick="resetBatchModal(); openModal('addStockModal')">+ Add New Stock</button>
+              <select id="invSubCatFilter" class="input-field" style="width: auto; min-width: 130px; padding: 5px 32px 5px 10px; font-size: 0.82rem; height: 32px; background-position: right 0.75rem center;">
+                <option value="">All Subcategories</option>
+              </select>
+              <button class="btn btn-primary btn-sm" style="padding: 5px 12px; font-size: 0.82rem; height: 32px; font-weight: 500;" onclick="openModal('addStockModal')">+ Add New Stock</button>
               <button class="btn btn-outline btn-sm" onclick="openModal('lowStockAlertModal')"
-                style="color:var(--warn); border-color:var(--warn);">🔔 Set Low Stock Alert</button>
+                style="color:var(--warn); border-color:var(--warn); padding: 5px 12px; font-size: 0.82rem; height: 32px; font-weight: 500; white-space: nowrap;">🔔 Set Alert</button>
             </div>
           </div>
           <!-- Inventory Stats -->
@@ -45,4 +47,7 @@
               </table>
             </div>
           </div>
+           <!-- Pagination -->          
+          <div id="inventoryPaginationControls" class="pagination" style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem; align-items: center;"></div>
+
         </section>

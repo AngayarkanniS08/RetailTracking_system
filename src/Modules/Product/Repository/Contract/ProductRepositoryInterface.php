@@ -2,7 +2,7 @@
 namespace Modules\Product\Repository\Contract;
 
 interface ProductRepositoryInterface {
-    public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = ''): array;
+    public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array;
     public function findAll(): array;
     public function findById(string $id): ?array;
     public function findByName(string $name): ?array;

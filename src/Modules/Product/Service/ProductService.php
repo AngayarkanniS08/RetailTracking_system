@@ -22,9 +22,9 @@ class ProductService
         $this->categoryRepo = $categoryRepo;
     }
 
-    public function getProductsPaginated(int $page, int $limit, string $search = '', string $categoryId = ''): array
+    public function getProductsPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array
     {
-        $result = $this->repo->findPaginated($page, $limit, $search, $categoryId);
+        $result = $this->repo->findPaginated($page, $limit, $search, $categoryId, $subcategoryId);
         $meta = ArrayHelper::getPaginationMeta($page, $limit, $result['total']);
         return [
             'data'       => $result['data'],
