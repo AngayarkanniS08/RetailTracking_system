@@ -1,5 +1,19 @@
   <!-- MODALS -->
 
+  <!-- Active Low Stock Alerts Modal -->
+  <div class="modal-overlay" id="activeAlertsModal">
+    <div class="modal-content" style="max-width: 500px; width: 95%;">
+      <div class="modal-header">
+        <div class="modal-title">⚠️ Active Low Stock Alerts</div>
+        <button class="close-btn" onclick="closeModal('activeAlertsModal')">&times;</button>
+      </div>
+      <div id="activeAlertsModalList" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+        <!-- Loaded dynamically -->
+      </div>
+      <button class="btn btn-outline btn-block" onclick="closeModal('activeAlertsModal')">Close</button>
+    </div>
+  </div>
+
   <!-- Low Stock Alert Modal -->
   <div class="modal-overlay" id="lowStockAlertModal">
     <div class="modal-content">
@@ -11,14 +25,36 @@
         <label class="input-label">Select Product</label>
         <select id="alertProductSelect" class="input-field"></select>
       </div>
-      <div class="input-group">
-        <label class="input-label">Alert when stock falls below</label>
-        <input type="number" id="alertThreshold" class="input-field" placeholder="e.g. 10" min="1">
+      
+      <!-- Row 1: Lead Time & Daily Sales Qty -->
+      <div class="d-flex" style="gap: 12px; margin-bottom: 1rem;">
+        <div class="input-group" style="flex: 1; margin-bottom: 0;">
+          <label class="input-label">Lead Time (days)</label>
+          <input type="number" id="alertLeadTime" class="input-field" placeholder="e.g. 5" min="0" oninput="calculateReorderPoint()">
+        </div>
+        <div class="input-group" style="flex: 1; margin-bottom: 0;">
+          <label class="input-label">Daily Sale Qty</label>
+          <input type="number" id="alertDailySale" class="input-field" placeholder="e.g. 3" min="0" oninput="calculateReorderPoint()">
+        </div>
       </div>
+
+      <!-- Row 2: Emergency Stock & Editable Calculated Threshold -->
+      <div class="d-flex" style="gap: 12px; margin-bottom: 1.5rem;">
+        <div class="input-group" style="flex: 1; margin-bottom: 0;">
+          <label class="input-label">Emergency Stock</label>
+          <input type="number" id="alertEmergencyStock" class="input-field" placeholder="e.g. 10" min="0" oninput="calculateReorderPoint()">
+        </div>
+        <div class="input-group" style="flex: 1; margin-bottom: 0;">
+          <label class="input-label">Reorder Point (Qty)</label>
+          <input type="number" id="alertThreshold" class="input-field" placeholder="Calculated value" min="1">
+        </div>
+      </div>
+
       <div id="existingAlertsList" style="margin-bottom: 1rem;"></div>
       <button class="btn btn-primary btn-block" onclick="saveLowStockAlert()">Set Alert</button>
     </div>
   </div>
+
 
   <!-- Add Stock Modal -->
   <div class="modal-overlay" id="addStockModal">

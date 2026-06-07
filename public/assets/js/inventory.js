@@ -94,7 +94,7 @@ async function loadProductsByCategory(categoryId) {
     }
 }
 // Load products for the Add Stock modal based on currently selected category/subcategory
-async function loadProductsForAddStockModal() {
+async function loadProductsForAddStockModal(selectedProductId = null) {
     const categoryId = document.getElementById('invCatFilter')?.value || '';
     const subcategoryId = document.getElementById('invSubCatFilter')?.value || '';
     const productSelect = document.getElementById('stockProduct');
@@ -103,8 +103,10 @@ async function loadProductsForAddStockModal() {
     productSelect.innerHTML = '<option value="">-- Select Product --</option>';
 
     let url = '/api/products?limit=100';
-    if (categoryId) url += `&category_id=${categoryId}`;
-    if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
+    if (!selectedProductId) {
+        if (categoryId) url += `&category_id=${categoryId}`;
+        if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
+    }
 
     try {
         const data = await window.apiRequest(url);
@@ -113,8 +115,15 @@ async function loadProductsForAddStockModal() {
             productList.forEach(prod => {
                 // Cache this product so getProduct(pid) retrieves it correctly for GST/calculations
                 window.inventoryProductsCache[prod.id] = prod;
-                productSelect.innerHTML += `<option value="${prod.id}">${escapeHtml(prod.name)}</option>`;
+                const selectedAttr = (selectedProductId && prod.id === selectedProductId) ? ' selected' : '';
+                productSelect.innerHTML += `<option value="${prod.id}"${selectedAttr}>${escapeHtml(prod.name)}</option>`;
             });
+            if (selectedProductId) {
+                productSelect.value = selectedProductId;
+                if (typeof calculateInventoryMath === 'function') {
+                    calculateInventoryMath();
+                }
+            }
         }
     } catch (err) {
         console.error('Failed to load products', err);
@@ -162,7 +171,9 @@ window.openModal = function (modalId) {
     if (modalId === 'addStockModal') {
         if (!window.currentEditingBatchId) {
             resetAddStockModalState();
-            loadProductsForAddStockModal();
+            const preselectedId = window.pendingRestockProductId || null;
+            window.pendingRestockProductId = null; // Clear it
+            loadProductsForAddStockModal(preselectedId);
         }
     }
     originalOpenModal(modalId);
@@ -345,6 +356,8 @@ async function saveStock() {
     window.closeModal('addStockModal');
     loadBatchesFromApi(currentInventoryPage);
 
+    if (typeof fetchAndRenderDbAlerts === 'function') fetchAndRenderDbAlerts();
+
     // Trigger POS updates if active
     if (typeof renderPOSItems === 'function') renderPOSItems();
     if (typeof renderPOSCatFilters === 'function') renderPOSCatFilters();
@@ -499,6 +512,7 @@ async function confirmRestockOrder() {
             batch.quantity = newQty;
             loadBatchesFromApi(currentInventoryPage);
             if (typeof renderPOSItems === 'function') renderPOSItems();
+            if (typeof fetchAndRenderDbAlerts === 'function') fetchAndRenderDbAlerts();
             window.closeModal('modalOverlay');
         } else {
             alert('Failed to restock: ' + (response.error || 'Unknown error'));
@@ -578,8 +592,11 @@ function renderInventory(stats = {}) {
             <td style="color: var(--muted);">${dateStr}</td>
             <td style="font-weight: 500; color: var(--text-strong);">${escapeHtml(p.name)}</td>
             <td>${window.formatCurrency(b.purchase_price)}</td>
-            <td>${window.formatCurrency(b.selling_price)}</td>
-            <td>${window.formatCurrency(b.retail_price)}</td>
+            <td>
+              <div style="font-weight:600; color:var(--accent);">W: ${window.formatCurrency(b.selling_price)}</div>
+              <div style="font-size:0.8rem; color:var(--warn);">R: ${window.formatCurrency(b.retail_price || (b.selling_price / b.quantity))}</div>
+              ${gstText}
+            </td>
             <td><span style="font-weight:600; color:${b.quantity <= 20 ? 'var(--warn)' : 'inherit'}">${b.quantity}</span></td>
             <td>${stockBadge}</td>
             <td>
@@ -702,6 +719,89 @@ async function loadSubcategoriesForCategory(categoryId, targetSelectId) {
     }
 }
 
+/**
+ * Fetches active low-stock alerts from the database and updates the UI badge/banner.
+ * Active = products where current stock <= configured ROP, regardless of alert_triggered.
+ */
+async function fetchAndRenderDbAlerts() {
+    try {
+        const response = await window.apiRequest('/api/inventory/alerts');
+        const badge    = document.getElementById('topbarAlertBadge');
+        const banner   = document.getElementById('globalLowStockBanner');
+        const bannerMsg = document.getElementById('globalLowStockBannerMessage');
+
+        if (response && response.success && Array.isArray(response.data)) {
+            const activeAlerts = response.data;
+            const belowCount   = activeAlerts.length;
+
+            if (belowCount > 0) {
+                if (badge) {
+                    badge.style.display = 'block';
+                }
+                if (banner) {
+                    if (window.globalLowStockBannerDismissed) {
+                        banner.style.display = 'none';
+                    } else {
+                        banner.style.display = 'flex';
+                        if (bannerMsg) {
+                            const productNames = activeAlerts.map(
+                                a => `${a.product_name} (Stock: ${a.current_stock} / ROP: ${a.rop})`
+                            );
+                            bannerMsg.innerHTML =
+                                `<strong>Low Stock Alert:</strong> ${productNames.join(', ')}`;
+                        }
+                    }
+                }
+            } else {
+                if (badge)  badge.style.display  = 'none';
+                if (banner) banner.style.display = 'none';
+                // Reset dismissed flag when alerts are cleared so it can pop up next time new alerts trigger
+                window.globalLowStockBannerDismissed = false;
+            }
+        }
+    } catch (err) {
+        console.error('Failed to poll stock alerts', err);
+    }
+}
+
+function closeGlobalLowStockBanner() {
+    window.globalLowStockBannerDismissed = true;
+    const banner = document.getElementById('globalLowStockBanner');
+    if (banner) {
+        banner.style.display = 'none';
+    }
+}
+window.closeGlobalLowStockBanner = closeGlobalLowStockBanner;
+
+// FIX: pause polling when the tab is hidden to avoid unnecessary server load
+// from long-lived background tabs left open overnight.
+let pollingInterval = null;
+
+function startPolling() {
+    if (pollingInterval) return;
+    pollingInterval = setInterval(fetchAndRenderDbAlerts, 60000);
+}
+
+function stopPolling() {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        fetchAndRenderDbAlerts(); // immediate refresh on tab focus
+        startPolling();
+    } else {
+        stopPolling();
+    }
+});
+
+// Initialize on document ready
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAndRenderDbAlerts();
+    startPolling();
+});
+
 // When category filter changes, update subcategory filter and reload batches
 document.getElementById('invCatFilter')?.addEventListener('change', async (e) => {
     const categoryId = e.target.value;
@@ -713,6 +813,338 @@ document.getElementById('invCatFilter')?.addEventListener('change', async (e) =>
 document.getElementById('invSubCatFilter')?.addEventListener('change', () => {
     loadBatchesFromApi(1);
 });
+
+// ────────────────────────────────────────────────────────────
+// 10. Low Stock Alerts Modal & Calculation Handlers
+// ────────────────────────────────────────────────────────────
+
+// Populates the product select dropdown in the Alert Modal using the same API that products loading in the inventorypage uses
+async function populateAlertProductSelect() {
+    const selectEl = document.getElementById('alertProductSelect');
+    if (!selectEl) return;
+    
+    selectEl.innerHTML = '<option value="">-- Select Product --</option>';
+
+    // Use the same category & subcategory filters currently set in the inventory page
+    const categoryId = document.getElementById('invCatFilter')?.value || '';
+    const subcategoryId = document.getElementById('invSubCatFilter')?.value || '';
+
+    let url = '/api/products?limit=100';
+    if (categoryId) url += `&category_id=${categoryId}`;
+    if (subcategoryId) url += `&subcategory_id=${subcategoryId}`;
+
+    try {
+        const data = await window.apiRequest(url);
+        const productsList = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
+        
+        if (productsList) {
+            productsList.forEach(p => {
+                // Cache this product so getProduct(pid) or handleAlertProductChange retrieves it correctly
+                window.inventoryProductsCache[p.id] = p;
+                
+                const hasAlert = p.rop && parseInt(p.rop) > 0;
+                const statusSuffix = hasAlert ? ` (Alert set: ${p.rop} ${escapeHtml(p.unit)})` : '';
+                selectEl.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}${statusSuffix}</option>`;
+            });
+        }
+    } catch (err) {
+        console.error('Error populating alert product select', err);
+    }
+    await renderExistingAlerts();
+}
+
+// Renders the list of active/configured alerts in the database
+async function renderExistingAlerts() {
+    const container = document.getElementById('existingAlertsList');
+    if (!container) return;
+    
+    try {
+        const response = await window.apiRequest('/api/inventory/alerts');
+        if (response && response.success && Array.isArray(response.data)) {
+            const alerts = response.data;
+            if (alerts.length === 0) {
+                container.innerHTML = '<div style="font-size:0.8rem; color:var(--muted); padding:8px 0;">No active low stock alerts.</div>';
+                return;
+            }
+            
+            let html = '<div style="font-size:0.8rem; font-weight:600; color:var(--text-strong); margin-bottom:6px;">Current Low Stock Products:</div>';
+            alerts.forEach(a => {
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--bg-elevated); border-radius:var(--radius-sm); margin-bottom:4px; font-size:0.82rem;">
+                        <span><strong>${escapeHtml(a.product_name)}</strong> — Stock: <span style="color:var(--danger); font-weight:600;">${a.current_stock}</span> / ROP: ${a.rop} ${escapeHtml(a.unit)}</span>
+                        <button class="btn btn-sm" style="padding:2px 8px; font-size:0.7rem; color:var(--danger); border-color:var(--danger); background:transparent;" onclick="disableLowStockAlert('${a.product_id}')">Disable</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<div style="font-size:0.8rem; color:var(--muted); padding:8px 0;">No active low stock alerts.</div>';
+        }
+    } catch (err) {
+        console.error('Error rendering existing alerts', err);
+        container.innerHTML = '';
+    }
+}
+
+// Disables/soft-resets alert parameters for a product in the database
+async function disableLowStockAlert(productId) {
+    if (!confirm('Are you sure you want to disable alerts for this product?')) {
+        return;
+    }
+    try {
+        const response = await window.apiRequest(`/api/inventory/alerts/${productId}/disable`, {
+            method: 'PATCH'
+        });
+        if (response && response.success) {
+            if (window.inventoryProductsCache[productId]) {
+                window.inventoryProductsCache[productId].daily_sales = 0;
+                window.inventoryProductsCache[productId].lead_time = 0;
+                window.inventoryProductsCache[productId].emergency_stock = 0;
+                window.inventoryProductsCache[productId].rop = 0;
+                window.inventoryProductsCache[productId].alert_triggered = false;
+            }
+            alert('Alert disabled successfully');
+            await populateAlertProductSelect();
+            if (typeof fetchAndRenderDbAlerts === 'function') {
+                await fetchAndRenderDbAlerts();
+            }
+        } else {
+            alert('Failed to disable alert: ' + (response?.error || 'Unknown error'));
+        }
+    } catch (err) {
+        console.error('Failed to disable alert', err);
+        alert('Error disabling alert: ' + err.message);
+    }
+}
+
+// Helper to open modal, populate products using the active filters, and reset inputs
+async function openLowStockAlertModal() {
+    await populateAlertProductSelect();
+    
+    const selectEl = document.getElementById('alertProductSelect');
+    if (selectEl && !selectEl.dataset.listenerAttached) {
+        selectEl.addEventListener('change', handleAlertProductChange);
+        selectEl.dataset.listenerAttached = 'true';
+    }
+
+    const leadTimeInput = document.getElementById('alertLeadTime');
+    const dailySaleInput = document.getElementById('alertDailySale');
+    const emergencyStockInput = document.getElementById('alertEmergencyStock');
+    const thresholdInput = document.getElementById('alertThreshold');
+    
+    if (leadTimeInput) leadTimeInput.value = '';
+    if (dailySaleInput) dailySaleInput.value = '';
+    if (emergencyStockInput) emergencyStockInput.value = '';
+    if (thresholdInput) thresholdInput.value = '';
+
+    openModal('lowStockAlertModal');
+}
+
+// Handles dropdown selection changes to load existing parameters of a product
+function handleAlertProductChange() {
+    const selectEl = document.getElementById('alertProductSelect');
+    if (!selectEl) return;
+
+    const productId = selectEl.value;
+    const leadTimeInput = document.getElementById('alertLeadTime');
+    const dailySaleInput = document.getElementById('alertDailySale');
+    const emergencyStockInput = document.getElementById('alertEmergencyStock');
+    const thresholdInput = document.getElementById('alertThreshold');
+
+    if (!leadTimeInput || !dailySaleInput || !emergencyStockInput || !thresholdInput) return;
+
+    if (!productId) {
+        leadTimeInput.value = '';
+        dailySaleInput.value = '';
+        emergencyStockInput.value = '';
+        thresholdInput.value = '';
+        return;
+    }
+
+    const prod = window.inventoryProductsCache[productId];
+    if (prod) {
+        leadTimeInput.value = prod.lead_time !== undefined && prod.lead_time !== null && prod.lead_time > 0 ? prod.lead_time : '';
+        dailySaleInput.value = prod.daily_sales !== undefined && prod.daily_sales !== null && prod.daily_sales > 0 ? prod.daily_sales : '';
+        emergencyStockInput.value = prod.emergency_stock !== undefined && prod.emergency_stock !== null && prod.emergency_stock > 0 ? prod.emergency_stock : '';
+        thresholdInput.value = prod.rop !== undefined && prod.rop !== null && prod.rop > 0 ? prod.rop : '';
+    } else {
+        leadTimeInput.value = '';
+        dailySaleInput.value = '';
+        emergencyStockInput.value = '';
+        thresholdInput.value = '';
+    }
+}
+
+// Dynamic Client Calculation: ROP = [lead time * dailysaleqty] + emergency stock
+function calculateReorderPoint() {
+    const leadTimeInput = document.getElementById('alertLeadTime');
+    const dailySaleInput = document.getElementById('alertDailySale');
+    const emergencyStockInput = document.getElementById('alertEmergencyStock');
+    const thresholdInput = document.getElementById('alertThreshold');
+
+    if (!leadTimeInput || !dailySaleInput || !emergencyStockInput || !thresholdInput) return;
+
+    const leadTime = parseFloat(leadTimeInput.value) || 0;
+    const dailySale = parseFloat(dailySaleInput.value) || 0;
+    const emergencyStock = parseFloat(emergencyStockInput.value) || 0;
+
+    const rop = Math.ceil((leadTime * dailySale) + emergencyStock);
+    thresholdInput.value = rop > 0 ? rop : '';
+}
+
+// Saves reorder point settings to the backend database
+async function saveLowStockAlert() {
+    const selectEl = document.getElementById('alertProductSelect');
+    if (!selectEl) return;
+
+    const productId = selectEl.value;
+    if (!productId) {
+        alert('Please select a product');
+        return;
+    }
+
+    const leadTime = parseInt(document.getElementById('alertLeadTime')?.value || '0', 10);
+    const dailySales = parseInt(document.getElementById('alertDailySale')?.value || '0', 10);
+    const emergencyStock = parseInt(document.getElementById('alertEmergencyStock')?.value || '0', 10);
+    const threshold = parseInt(document.getElementById('alertThreshold')?.value || '0', 10);
+
+    if (isNaN(threshold) || threshold <= 0) {
+        alert('Reorder point must be greater than 0');
+        return;
+    }
+
+    try {
+        const response = await window.apiRequest('/api/inventory/alerts', {
+            method: 'POST',
+            body: JSON.stringify({
+                product_id: productId,
+                daily_sales: dailySales,
+                lead_time: leadTime,
+                emergency_stock: emergencyStock
+            })
+        });
+
+        if (response && response.success) {
+            // Update local cache
+            if (window.inventoryProductsCache[productId]) {
+                window.inventoryProductsCache[productId].daily_sales = dailySales;
+                window.inventoryProductsCache[productId].lead_time = leadTime;
+                window.inventoryProductsCache[productId].emergency_stock = emergencyStock;
+                window.inventoryProductsCache[productId].rop = threshold;
+            }
+            alert('Reorder point alert saved successfully');
+            closeModal('lowStockAlertModal');
+            if (typeof fetchAndRenderDbAlerts === 'function') {
+                await fetchAndRenderDbAlerts();
+            }
+        } else {
+            alert('Failed to save reorder point: ' + (response?.error || 'Unknown error'));
+        }
+    } catch (err) {
+        console.error('Failed to save alert', err);
+        alert('Error saving alert: ' + err.message);
+    }
+}
+
+// Opens the active low stock alerts modal and fetches the list of currently triggered products
+async function openActiveAlertsModal() {
+    const listEl = document.getElementById('activeAlertsModalList');
+    if (!listEl) return;
+
+    listEl.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--muted);">Loading alerts...</div>';
+    
+    openModal('activeAlertsModal');
+
+    try {
+        const response = await window.apiRequest('/api/inventory/alerts');
+        if (response && response.success && Array.isArray(response.data)) {
+            const alerts = response.data;
+            if (alerts.length === 0) {
+                listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--muted); font-size: 0.9rem;">🎉 All products are sufficiently stocked.</div>';
+                return;
+            }
+
+            let html = '';
+            alerts.forEach(a => {
+                html += `
+                    <div style="padding: 12px; background: var(--bg-100); border-radius: var(--radius-md); border-left: 4px solid var(--danger); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1; padding-right: 12px;">
+                            <div style="font-weight: 600; color: var(--text-strong); font-size: 0.92rem;">${escapeHtml(a.product_name)}</div>
+                            <div style="font-size: 0.8rem; color: var(--muted); margin-top: 2px;">
+                                Current Stock: <span style="color: var(--danger); font-weight: 600;">${a.current_stock}</span> / ROP: ${a.rop} ${escapeHtml(a.unit)}
+                            </div>
+                        </div>
+                        <button class="btn btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-color: var(--border);" onclick="closeModal('activeAlertsModal'); openRestockForProduct('${a.product_id}')">Restock</button>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        } else {
+            listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger); font-size: 0.9rem;">Failed to load alerts.</div>';
+        }
+    } catch (err) {
+        console.error('Error fetching active alerts for modal', err);
+        listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger); font-size: 0.9rem;">Error fetching alerts.</div>';
+    }
+}
+
+// Redirects the user to restock the specific low-stock product
+async function openRestockForProduct(productId) {
+    try {
+        // 1. Ensure products cache has this product
+        let product = getProduct(productId);
+        if (!product) {
+            const prodData = await window.apiRequest('/api/products?limit=1000');
+            const prodList = Array.isArray(prodData) ? prodData : (prodData && Array.isArray(prodData.data) ? prodData.data : []);
+            if (prodList) {
+                prodList.forEach(p => {
+                    window.inventoryProductsCache[p.id] = p;
+                });
+            }
+            product = getProduct(productId);
+        }
+
+        // 2. Fetch or find the batches for this product
+        let productBatches = [];
+        if (Array.isArray(window.batches) && window.batches.length > 0) {
+            productBatches = window.batches.filter(b => b.product_id === productId);
+        }
+
+        if (productBatches.length === 0) {
+            const batchData = await window.apiRequest('/api/inventory/batches?limit=1000');
+            const batchList = Array.isArray(batchData) ? batchData : (batchData && Array.isArray(batchData.data) ? batchData.data : []);
+            if (batchList) {
+                productBatches = batchList.filter(b => b.product_id === productId);
+            }
+        }
+
+        if (productBatches.length > 0) {
+            // Sort to find the batch with the lowest remaining quantity (quantity)
+            productBatches.sort((a, b) => a.quantity - b.quantity);
+            const targetBatch = productBatches[0];
+
+            // Ensure the chosen batch is in window.batches so openRestockForBatch can find it
+            if (!Array.isArray(window.batches)) {
+                window.batches = [];
+            }
+            if (!window.batches.some(b => b.id === targetBatch.id)) {
+                window.batches.push(targetBatch);
+            }
+
+            // Open the restock modal (modalOverlay) for this batch
+            openRestockForBatch(targetBatch.id);
+        } else {
+            // Fallback: If no batch exists, open the addStockModal so they can add a new batch
+            window.pendingRestockProductId = productId;
+            openModal('addStockModal');
+        }
+    } catch (err) {
+        console.error('Error opening restock modal for product:', err);
+        // Fallback: open addStockModal
+        window.pendingRestockProductId = productId;
+        openModal('addStockModal');
+    }
+}
 
 // Attach functions to window object
 window.setPricingMode = setPricingMode;
@@ -726,7 +1158,16 @@ window.renderInventory = renderInventory;
 window.loadBatchesFromApi = loadBatchesFromApi;
 window.handleSearchInput = handleSearchInput;
 window.renderInventoryPaginationControls = renderInventoryPaginationControls;
-
+window.openLowStockAlertModal = openLowStockAlertModal;
+window.calculateReorderPoint = calculateReorderPoint;
+window.saveLowStockAlert = saveLowStockAlert;
+window.disableLowStockAlert = disableLowStockAlert;
+window.handleAlertProductChange = handleAlertProductChange;
+window.populateAlertProductSelect = populateAlertProductSelect;
+window.renderExistingAlerts = renderExistingAlerts;
+window.fetchAndRenderDbAlerts = fetchAndRenderDbAlerts;
+window.openActiveAlertsModal = openActiveAlertsModal;
+window.openRestockForProduct = openRestockForProduct;
 
 // Run when inventory section becomes visible
 if (document.getElementById('inventory') && document.getElementById('inventory').classList.contains('active')) {

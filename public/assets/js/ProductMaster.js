@@ -45,7 +45,7 @@ async function apiRequest(url, options = {}) {
 // 2. Global state
 // ============================================
 let categories = [];
-let products   = [];
+let products = [];
 let activeCategoryFilter = 'all';
 
 
@@ -76,7 +76,7 @@ async function loadProducts(page = 1) {
     if (currentSearch) {
         url += `&search=${encodeURIComponent(currentSearch)}`;
     }
-        try {
+    try {
         const data = await window.apiRequest(url);
         if (data && !data.error) {
             products = data.data;               // replace global products array with current page's products
@@ -128,7 +128,7 @@ function renderPaginationControls(pagination) {
 function renderCategoryTabs() {
     const container = document.getElementById('pmCatFilters');
     if (!container) return;
-    
+
     // Clear existing filters securely
     container.innerHTML = '';
 
@@ -139,33 +139,33 @@ function renderCategoryTabs() {
     const allBtn = document.createElement('button');
     allBtn.className = `cat-btn ${activeCategoryFilter === 'all' ? 'active' : ''}`;
     allBtn.addEventListener('click', () => setCategoryFilter('all'));
-    
+
     const allText = document.createTextNode('All ');
     allBtn.appendChild(allText);
-    
+
     const allSpan = document.createElement('span');
     allSpan.className = 'product-count';
     allSpan.textContent = totalAllCount;
     allBtn.appendChild(allSpan);
-    
+
     container.appendChild(allBtn);
 
     // Create a filter button for each category
     categories.forEach(cat => {
         const count = cat.product_count !== undefined ? parseInt(cat.product_count) : 0;
-        
+
         const catBtn = document.createElement('button');
         catBtn.className = `cat-btn ${activeCategoryFilter === cat.id ? 'active' : ''}`;
         catBtn.addEventListener('click', () => setCategoryFilter(cat.id));
-        
+
         const catText = document.createTextNode(cat.name + ' ');
         catBtn.appendChild(catText);
-        
+
         const catSpan = document.createElement('span');
         catSpan.className = 'product-count';
         catSpan.textContent = count;
         catBtn.appendChild(catSpan);
-        
+
         container.appendChild(catBtn);
     });
 }
@@ -183,7 +183,7 @@ function getSubcategoryColor(name) {
     if (lower === 'fancy' || lower === 'designer') return '#3b82f6'; // blue
     if (lower === 'lace' || lower === 'lace work') return '#06b6d4'; // cyan
     if (lower === 'border') return '#f59e0b'; // amber
-    
+
     // Generate a hash-based color if not matched (avoiding violet/purple hues to respect Purple Ban)
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
@@ -197,7 +197,7 @@ function getSubcategoryColor(name) {
 function renderProductTable() {
     const container = document.getElementById('productAccordionContainer');
     if (!container) return;
-    
+
     // Clear accordion container securely
     container.innerHTML = '';
 
@@ -218,7 +218,7 @@ function renderProductTable() {
                 subcategories: {}
             };
         }
-        
+
         let subId = p.subcategory_id;
         if (!subId) {
             if (!groupedAll[catId].subcategories['none']) {
@@ -316,7 +316,7 @@ function renderProductTable() {
 
             const subHeader = document.createElement('div');
             subHeader.className = 'subcategory-header';
-            
+
             const displayName = sub.id === null ? 'Other Products' : sub.name;
             const subProductCount = sub.products.length;
 
@@ -433,10 +433,10 @@ function renderProductTable() {
 }
 
 function updateStats() {
-    const elProducts   = document.getElementById('pmTotalProducts');
+    const elProducts = document.getElementById('pmTotalProducts');
     const elCategories = document.getElementById('pmTotalCategories');
     const totalAllCount = categories.reduce((sum, cat) => sum + parseInt(cat.product_count || 0), 0);
-    if (elProducts)   elProducts.innerText   = totalAllCount;
+    if (elProducts) elProducts.innerText = totalAllCount;
     if (elCategories) elCategories.innerText = categories.length;
 }
 
@@ -444,7 +444,7 @@ function updateStats() {
 function populateCategoryDropdowns() {
     const catSelect = document.getElementById('pmProductCategory');
     if (!catSelect) return;
-    
+
     catSelect.innerHTML = '';
     categories.forEach(cat => {
         const opt = document.createElement('option');
@@ -456,7 +456,7 @@ function populateCategoryDropdowns() {
     const categoryId = catSelect.value;
     if (subcategoryCombobox) {
         subcategoryCombobox.loadForCategory(categoryId);
-    }  else {
+    } else {
         // fallback to old method (if needed)
         loadSubcategoriesIntoProductModal(categoryId);
     }
@@ -466,7 +466,7 @@ function populateCategoryDropdowns() {
 function populateSubcategoryDropdown() {
     const select = document.getElementById('pmSubCatParent');
     if (!select) return;
-    
+
     select.innerHTML = '';
     categories.forEach(cat => {
         const opt = document.createElement('option');
@@ -482,9 +482,9 @@ async function loadSubcategoriesIntoProductModal(categoryId) {
     if (!subSelect || !categoryId) return;
 
     const data = await apiRequest(`/api/subcategories?category_id=${categoryId}`);
-    
+
     subSelect.innerHTML = '';
-    
+
     const defaultOpt = document.createElement('option');
     defaultOpt.value = '';
     defaultOpt.textContent = 'No Subcategory';
@@ -503,7 +503,7 @@ async function loadSubcategoriesIntoProductModal(categoryId) {
 // ============================================
 // 5. CRUD actions
 // ============================================
-window.setCategoryFilter = function(categoryId) {
+window.setCategoryFilter = function (categoryId) {
     currentCategory = categoryId;
     currentPage = 1;
     activeCategoryFilter = categoryId;
@@ -521,7 +521,7 @@ if (pmSearch) {
 }
 
 /** Called from Category dropdown change in Add Product modal */
-window.onCategoryChange = function(categoryId) {
+window.onCategoryChange = function (categoryId) {
     if (subcategoryCombobox) {
         subcategoryCombobox.loadForCategory(categoryId);
     } else {
@@ -529,7 +529,7 @@ window.onCategoryChange = function(categoryId) {
     }
 };
 
-window.saveCategory = async function() {
+window.saveCategory = async function () {
     const name = document.getElementById('pmCategoryName').value.trim();
     if (!name) {
         alert('Please enter a category name');
@@ -549,9 +549,9 @@ window.saveCategory = async function() {
     }
 };
 
-window.saveSubcategory = async function() {
+window.saveSubcategory = async function () {
     const categoryId = document.getElementById('pmSubCatParent')?.value;
-    const subName    = document.getElementById('pmSubCategoryName').value.trim();
+    const subName = document.getElementById('pmSubCategoryName').value.trim();
 
     if (!categoryId) {
         alert('Please select a parent category');
@@ -581,13 +581,13 @@ window.saveSubcategory = async function() {
     }
 };
 
-window.saveProduct = async function() {
-    const name          = document.getElementById('pmProductName').value.trim();
-    const categoryId    = document.getElementById('pmProductCategory').value;
+window.saveProduct = async function () {
+    const name = document.getElementById('pmProductName').value.trim();
+    const categoryId = document.getElementById('pmProductCategory').value;
     const subcategoryId = document.getElementById('pmProductSubcategoryId').value || null;
-    const unit          = document.getElementById('pmProductUnit').value;
-    const hsn           = document.getElementById('pmProductHsn').value.trim();
-    const gst           = parseFloat(document.getElementById('pmProductGst').value) || 0;
+    const unit = document.getElementById('pmProductUnit').value;
+    const hsn = document.getElementById('pmProductHsn').value.trim();
+    const gst = parseFloat(document.getElementById('pmProductGst').value) || 0;
 
     if (!name || !categoryId || !unit) {
         alert('Product name, category, and unit are required');
@@ -598,10 +598,10 @@ window.saveProduct = async function() {
         method: 'POST',
         body: JSON.stringify({
             name,
-            category_id:    categoryId,
+            category_id: categoryId,
             subcategory_id: subcategoryId || null,
             unit,
-            hsn_code: hsn  || null,
+            hsn_code: hsn || null,
             gst_rate: gst
         })
     });
@@ -616,7 +616,7 @@ window.saveProduct = async function() {
     }
 };
 
-window.deleteProduct = async function(productId) {
+window.deleteProduct = async function (productId) {
     if (!confirm('Delete this product? This action cannot be undone.')) return;
     const data = await apiRequest(`/api/products/${productId}`, { method: 'DELETE' });
     if (data && data.success) {
@@ -625,6 +625,11 @@ window.deleteProduct = async function(productId) {
     } else {
         alert(data?.error || 'Failed to delete product');
     }
+    // Inside window.deleteProduct after successful api call:
+    if (typeof removeLowStockAlert === 'function') {
+        removeLowStockAlert(productId);
+    }
+
 };
 
 
@@ -632,7 +637,7 @@ window.deleteProduct = async function(productId) {
 // ============================================
 // 6. Render search filter
 // ============================================
-window.renderProductMaster = function() {
+window.renderProductMaster = function () {
     renderProductTable();
 };
 
@@ -679,7 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let editingProductId = null;
 
 // Called when clicking the Edit button (pencil icon)
-window.editProduct = async function(productId) {
+window.editProduct = async function (productId) {
     // Find product in the local `products` array (fetched from API)
     const product = products.find(p => p.id === productId);
     if (!product) {
@@ -687,14 +692,14 @@ window.editProduct = async function(productId) {
         return;
     }
     editingProductId = productId;
-    
+
     // Populate the Add Product modal with existing data
     document.getElementById('addProductModalTitle').innerText = 'Edit Product';
     document.getElementById('addProductModalBtn').innerText = 'Update Product';
     // Change the button's onclick to our update function
     const saveBtn = document.getElementById('addProductModalBtn');
     saveBtn.onclick = updateProduct;
-    
+
     document.getElementById('pmProductName').value = product.name;
     document.getElementById('pmProductCategory').value = product.category_id; // Assuming category_id exists
 
@@ -722,24 +727,24 @@ window.editProduct = async function(productId) {
     document.getElementById('pmProductUnit').value = product.unit;
     document.getElementById('pmProductHsn').value = product.hsn_code || '';
     document.getElementById('pmProductGst').value = product.gst_rate;
-    
+
     openModal('addProductModal');
 };
 
 // Called when the modal's save button is in "Update" mode
-window.updateProduct = async function() {
+window.updateProduct = async function () {
     const name = document.getElementById('pmProductName').value.trim();
     const categoryId = document.getElementById('pmProductCategory').value;
     const subcategoryId = document.getElementById('pmProductSubcategoryId')?.value || null;
     const unit = document.getElementById('pmProductUnit').value;
     const hsn = document.getElementById('pmProductHsn').value.trim();
     const gst = parseFloat(document.getElementById('pmProductGst').value) || 0;
-    
+
     if (!name || !categoryId || !unit) {
         alert('Product name, category, and unit are required');
         return;
     }
-    
+
     const data = await apiRequest(`/api/products/${editingProductId}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -751,7 +756,7 @@ window.updateProduct = async function() {
             gst_rate: gst
         })
     });
-    
+
     if (data && data.success) {
         // Refresh products list
         await loadProducts();
@@ -765,25 +770,25 @@ window.updateProduct = async function() {
 };
 
 // Reset modal back to "Add" mode
-window.resetProductModal = function() {
+window.resetProductModal = function () {
     editingProductId = null;
 
     const title = document.getElementById('addProductModalTitle');
-    const btn   = document.getElementById('addProductModalBtn');
+    const btn = document.getElementById('addProductModalBtn');
 
     if (title) title.innerText = 'Add New Product';
     if (btn) {
         btn.innerText = 'Save Product';
-        btn.onclick   = saveProduct;   // ← always point back to Add
+        btn.onclick = saveProduct;   // ← always point back to Add
     }
 
     // Clear form fields
     const nameEl = document.getElementById('pmProductName');
-    const hsnEl  = document.getElementById('pmProductHsn');
-    const gstEl  = document.getElementById('pmProductGst');
+    const hsnEl = document.getElementById('pmProductHsn');
+    const gstEl = document.getElementById('pmProductGst');
     if (nameEl) nameEl.value = '';
-    if (hsnEl)  hsnEl.value  = '';
-    if (gstEl)  gstEl.value  = '';
+    if (hsnEl) hsnEl.value = '';
+    if (gstEl) gstEl.value = '';
 
     // Reset category to first option and load subcategories
     const catSelect = document.getElementById('pmProductCategory');
@@ -962,7 +967,7 @@ class SubcategoryCombobox {
         this.isOpen = false;
         if (this.container) this.container.classList.remove('is-open');
         this.selectedIndex = -1;
-        
+
         // Revert input text if it doesn't match the selected item
         const selectedId = this.hidden.value;
         if (selectedId) {

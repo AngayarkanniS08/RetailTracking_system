@@ -104,5 +104,22 @@ class ApiRoutes
         $router->add('PUT', '/api/inventory/batches/{id}', function (array $params): void {
             (new BatchController())->update($params['id']);
         });
+
+        // ── Product Alerts (6-Layer flow) ──────────────────────────
+        $router->add('GET', '/api/inventory/alerts', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Inventory\Controller\Api\AlertController())->index();
+        });
+        $router->add('POST', '/api/inventory/alerts', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Inventory\Controller\Api\AlertController())->store();
+        });
+        // FIX: renamed from DELETE to PATCH .../disable
+        // Reason: the operation resets alert fields to zero (soft-disable), it does
+        // not remove a database row. DELETE semantics were misleading to consumers.
+        $router->add('PATCH', '/api/inventory/alerts/{productId}/disable', function (array $params): void {
+            AuthMiddleware::authenticate(900); // Shorter expiry for modifications
+            (new \Modules\Inventory\Controller\Api\AlertController())->disable($params['productId']);
+        });
     }
 }

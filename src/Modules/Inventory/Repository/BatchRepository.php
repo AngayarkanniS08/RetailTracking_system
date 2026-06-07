@@ -86,11 +86,32 @@ class BatchRepository implements BatchRepositoryInterface
             $data['retail_price'] ?? 0.00,
             $data['created_at'] ?? date('Y-m-d H:i:s')
         ]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result && !empty($result['product_id'])) {
+            $currentUserId = $this->getCurrentUserId();
+            if ($currentUserId) {
+                try {
+                    $hook = new \Modules\Inventory\Repository\StockAlertHook();
+                    $hook->evaluateProductStockAlert($result['product_id'], $currentUserId);
+                } catch (\Exception $e) {
+                    error_log("Failed evaluating stock alert hook: " . $e->getMessage());
+                }
+            }
+        }
+
+        return $result;
     }
 
     public function updateall(string $id, array $data): bool
     {
+        $stmtProduct = $this->db->prepare("
+            SELECT product_id FROM public.inventory_batches 
+            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+        ");
+        $stmtProduct->execute([$id]);
+        $productId = $stmtProduct->fetchColumn();
+
         $stmt = $this->db->prepare("
             UPDATE public.inventory_batches
             SET batch_number = ?,
@@ -98,11 +119,11 @@ class BatchRepository implements BatchRepositoryInterface
                 selling_price = ?,
                 retail_price = ?,
                 remaining_qty = ?,
-                created_at = ?
-                update_at = now()
+                created_at = ?,
+                updated_at = now()
             WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
         ");
-        return $stmt->execute([
+        $success = $stmt->execute([
             $data['vendor_name'],
             $data['purchase_price'],
             $data['selling_price'],
@@ -111,6 +132,26 @@ class BatchRepository implements BatchRepositoryInterface
             $data['created_at'],
             $id
         ]);
+
+        if ($success && $productId) {
+            $currentUserId = $this->getCurrentUserId();
+            if ($currentUserId) {
+                try {
+                    $hook = new \Modules\Inventory\Repository\StockAlertHook();
+                    $hook->evaluateProductStockAlert($productId, $currentUserId);
+                } catch (\Exception $e) {
+                    error_log("Failed evaluating stock alert hook in update: " . $e->getMessage());
+                }
+            }
+        }
+
+        return $success;
+    }
+
+    private function getCurrentUserId(): string
+    {
+        $stmt = $this->db->query("SELECT current_setting('app.current_user_id', true)");
+        return $stmt->fetchColumn() ?: '';
     }
 
     public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array

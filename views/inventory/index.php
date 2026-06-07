@@ -18,7 +18,7 @@
                 <option value="">All Subcategories</option>
               </select>
               <button class="btn btn-primary btn-sm" style="padding: 5px 12px; font-size: 0.82rem; height: 32px; font-weight: 500;" onclick="openModal('addStockModal')">+ Add New Stock</button>
-              <button class="btn btn-outline btn-sm" onclick="openModal('lowStockAlertModal')"
+              <button class="btn btn-outline btn-sm" onclick="openLowStockAlertModal()"
                 style="color:var(--warn); border-color:var(--warn); padding: 5px 12px; font-size: 0.82rem; height: 32px; font-weight: 500; white-space: nowrap;">🔔 Set Alert</button>
             </div>
           </div>
@@ -48,6 +48,6 @@
             </div>
           </div>
            <!-- Pagination -->          
-          <div id="inventoryPaginationControls" class="pagination" style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem; align-items: center;"></div>
+          <div id="inventoryPaginationControls" class="pagination" style="argin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem; align-items: center;"></div>
 
         </section>

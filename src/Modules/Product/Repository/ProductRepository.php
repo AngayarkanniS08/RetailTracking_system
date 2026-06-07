@@ -86,7 +86,8 @@ class ProductRepository implements ProductRepositoryInterface {
         $productSql = "
             SELECT p.id, p.name, p.category_id, c.name AS category_name,
                    p.subcategory_id, s.name AS subcategory_name,
-                   p.unit, p.hsn_code, p.gst_rate, p.created_at
+                   p.unit, p.hsn_code, p.gst_rate, p.created_at,
+                   p.daily_sales, p.lead_time, p.emergency_stock, p.rop, p.alert_triggered
             FROM products p
             JOIN categories c ON c.id = p.category_id
             LEFT JOIN subcategories s ON s.id = p.subcategory_id
@@ -130,7 +131,8 @@ class ProductRepository implements ProductRepositoryInterface {
     public function findAll(): array {
         $sql = "SELECT p.id, p.name, p.category_id, c.name AS category_name,
                        p.subcategory_id, s.name AS subcategory_name,
-                       p.unit, p.hsn_code, p.gst_rate, p.created_at
+                       p.unit, p.hsn_code, p.gst_rate, p.created_at,
+                       p.daily_sales, p.lead_time, p.emergency_stock, p.rop, p.alert_triggered
                 FROM   products p
                 JOIN   categories c   ON c.id = p.category_id
                 LEFT JOIN subcategories s ON s.id = p.subcategory_id
@@ -145,7 +147,8 @@ class ProductRepository implements ProductRepositoryInterface {
     public function findById(string $id): ?array {
         $sql = "SELECT p.id, p.name, p.category_id, c.name AS category_name,
                        p.subcategory_id, s.name AS subcategory_name,
-                       p.unit, p.hsn_code, p.gst_rate, p.created_at
+                       p.unit, p.hsn_code, p.gst_rate, p.created_at,
+                       p.daily_sales, p.lead_time, p.emergency_stock, p.rop, p.alert_triggered
                 FROM   products p
                 JOIN   categories c   ON c.id = p.category_id
                 LEFT JOIN subcategories s ON s.id = p.subcategory_id
