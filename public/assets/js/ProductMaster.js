@@ -616,21 +616,25 @@ window.saveProduct = async function () {
     }
 };
 
-window.deleteProduct = async function (productId) {
-    if (!confirm('Delete this product? This action cannot be undone.')) return;
-    const data = await apiRequest(`/api/products/${productId}`, { method: 'DELETE' });
-    if (data && data.success) {
-        await loadProducts();
-        await loadCategories();
-    } else {
-        alert(data?.error || 'Failed to delete product');
-    }
-    // Inside window.deleteProduct after successful api call:
-    if (typeof removeLowStockAlert === 'function') {
-        removeLowStockAlert(productId);
-    }
+// Store the product ID to be deleted
+let pendingDeleteProductId = null;
 
+window.deleteProduct = function (productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    pendingDeleteProductId = productId;
+    document.getElementById('deleteProductName').innerText = product.name;
+    // Reset modal body to default confirmation message
+    const modalBody = document.getElementById('deleteProductModalBody');
+    modalBody.innerHTML = `
+        <p>Are you sure you want to delete the product <strong>${escapeHtml(product.name)}</strong>?</p>
+        <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone. All batches and sale records linked to this product will also be affected.</p>
+    `;
+    openModal('deleteProductModal');
 };
+
+
+
 
 
 

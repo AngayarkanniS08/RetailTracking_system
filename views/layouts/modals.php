@@ -71,7 +71,11 @@
       <div class="input-group">
         <label class="input-label">Vendor Name</label>
         <input type="text" id="stockVendor" class="input-field" placeholder="e.g. Metro Wholesale">
+      </div><div class="input-group">
+        <label class="input-label">Batch ID/Number</label>
+        <input type="text" id="stockBatchId" class="input-field" placeholder="e.g. Metro Wholesale">
       </div>
+
       <div class="segment-control" style="margin-bottom: 20px;">
         <div class="segment-item active" id="segWholesale" onclick="setPricingMode('wholesale')">📦 Wholesale Mode</div>
         <div class="segment-item" id="segRetail" onclick="setPricingMode('retail')">✂️ Retail Mode</div>
@@ -482,3 +486,20 @@
     </div>
   </div>
 
+<!-- Delete Product Confirmation Modal -->
+<div id="deleteProductModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <div class="modal-title">Confirm Delete</div>
+            <button class="close-btn" onclick="closeModal('deleteProductModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete the product <strong id="deleteProductName"></strong>?</p>
+            <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone. All batches and sale records linked to this product will also be affected.</p>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
+            <button class="btn btn-outline" onclick="closeModal('deleteProductModal')">Cancel</button>
+            <button class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+        </div>
+    </div>
+</div>

@@ -19,7 +19,8 @@ class BatchRepository implements BatchRepositoryInterface
             SELECT 
                 id, 
                 product_id, 
-                batch_number AS vendor_name, 
+                batch_number, 
+                vendor_name, 
                 initial_qty, 
                 remaining_qty AS quantity, 
                 cost_price AS purchase_price, 
@@ -41,7 +42,8 @@ class BatchRepository implements BatchRepositoryInterface
             SELECT 
                 id, 
                 product_id, 
-                batch_number AS vendor_name, 
+                batch_number, 
+                vendor_name, 
                 initial_qty, 
                 remaining_qty AS quantity, 
                 cost_price AS purchase_price, 
@@ -61,13 +63,14 @@ class BatchRepository implements BatchRepositoryInterface
     {
         $stmt = $this->db->prepare("
             INSERT INTO public.inventory_batches (
-                user_id, product_id, batch_number, initial_qty, remaining_qty, cost_price, selling_price, retail_price, created_at
+                user_id, product_id, batch_number,vendor_name, initial_qty, remaining_qty, cost_price, selling_price, retail_price, created_at
             ) VALUES (
-                current_setting('app.current_user_id')::uuid, ?, ?, ?, ?, ?, ?, ?, ?
+                current_setting('app.current_user_id')::uuid, ?, ?, ?, ?, ?, ?, ?, ?, ?
             ) RETURNING 
                 id, 
                 product_id, 
-                batch_number AS vendor_name, 
+                batch_number,
+                vendor_name, 
                 initial_qty, 
                 remaining_qty AS quantity, 
                 cost_price AS purchase_price, 
@@ -79,6 +82,7 @@ class BatchRepository implements BatchRepositoryInterface
         $stmt->execute([
             $data['product_id'],
             $data['batch_number'],
+            $data['vendor_name'],
             $data['initial_qty'],
             $data['remaining_qty'] ?? $data['initial_qty'],
             $data['cost_price'],
@@ -115,6 +119,7 @@ class BatchRepository implements BatchRepositoryInterface
         $stmt = $this->db->prepare("
             UPDATE public.inventory_batches
             SET batch_number = ?,
+                vendor_name = ?,
                 cost_price = ?,
                 selling_price = ?,
                 retail_price = ?,
@@ -124,6 +129,7 @@ class BatchRepository implements BatchRepositoryInterface
             WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
         ");
         $success = $stmt->execute([
+            $data['batch_number'],
             $data['vendor_name'],
             $data['purchase_price'],
             $data['selling_price'],
@@ -194,7 +200,8 @@ class BatchRepository implements BatchRepositoryInterface
             SELECT 
                 b.id, 
                 b.product_id, 
-                b.batch_number AS vendor_name, 
+                b.batch_number,
+                b.vendor_name, 
                 b.initial_qty, 
                 b.remaining_qty AS quantity, 
                 b.cost_price AS purchase_price, 

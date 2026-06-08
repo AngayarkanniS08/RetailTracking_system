@@ -148,7 +148,7 @@ function resetAddStockModalState() {
     }
 
     // Clear fields
-    const fields = ['stockVendor', 'stockPP', 'stockProfit', 'stockSP', 'retailBasePrice', 'retailProfit', 'retailSP', 'stockQty', 'stockDate'];
+    const fields = ['stockVendor', 'stockBatchId', 'stockPP', 'stockProfit', 'stockSP', 'retailBasePrice', 'retailProfit', 'retailSP', 'stockQty', 'stockDate'];
     fields.forEach(f => {
         const el = document.getElementById(f);
         if (el) el.value = '';
@@ -296,6 +296,7 @@ async function saveStock() {
     const productSelect = document.getElementById('stockProduct');
     const pid = productSelect ? productSelect.value : '';
     const vname = document.getElementById('stockVendor') ? document.getElementById('stockVendor').value : '';
+    const batchNo = document.getElementById('stockBatchId') ? document.getElementById('stockBatchId').value : '';
     const pp = parseFloat(document.getElementById('stockPP') ? document.getElementById('stockPP').value : 0);
     const sp = parseFloat(document.getElementById('stockSP') ? document.getElementById('stockSP').value : 0);
     const retailSP = parseFloat(document.getElementById('retailSP') ? document.getElementById('retailSP').value : 0);
@@ -310,6 +311,7 @@ async function saveStock() {
     const payload = {
         product_id: pid,
         vendor_name: vname,
+        batch_number: batchNo,
         purchase_price: pp,
         selling_price: sp,
         retail_price: retailSP || (sp / qty),
@@ -392,6 +394,9 @@ async function editBatch(batchId) {
     }
 
     // 3. Populate base values
+    const batchNoEl = document.getElementById('stockBatchId');
+    if (batchNoEl) batchNoEl.value = batch.batch_number || '';
+
     const vendorEl = document.getElementById('stockVendor');
     if (vendorEl) vendorEl.value = batch.vendor_name || '';
 
@@ -615,7 +620,7 @@ function renderInventory(stats = {}) {
         }
         tbody.innerHTML += `
           <tr>
-            <td style="font-family: var(--mono); color: var(--muted-strong);">${b.id}</td>
+           <td style="font-family: var(--mono); color: var(--muted-strong);">${escapeHtml(b.batch_number || '')}</td>
             <td style="color: var(--muted);">${dateStr}</td>
             <td style="color: var(--muted-strong);">${escapeHtml(b.vendor_name || '')}</td>
             <td style="font-weight: 500; color: var(--text-strong);">${escapeHtml(p.name)}</td>

@@ -89,3 +89,4 @@ CREATE INDEX idx_purchases_created_at ON purchases(created_at);
 CREATE INDEX idx_inventory_batches_product_id ON inventory_batches(product_id);
 CREATE INDEX idx_inventory_batches_user_id ON inventory_batches(user_id);
 CREATE INDEX idx_stock_list_product_id ON stock_list(product_id);
+

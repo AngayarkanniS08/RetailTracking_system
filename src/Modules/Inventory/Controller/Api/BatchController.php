@@ -51,7 +51,8 @@ class BatchController
             $input = json_decode(file_get_contents('php://input'), true);
 
             $productId   = trim($input['product_id'] ?? '');
-            $batchNumber = trim($input['vendor_name'] ?? $input['batch_number'] ?? '');
+            $batchNumber = trim($input['batch_number'] ?? $input['batch_id'] ?? '');
+            $vendorName  = trim($input['vendor_name'] ?? '');
             $initialQty  = (int)($input['quantity'] ?? $input['initial_qty'] ?? 0);
             $costPrice   = (float)($input['purchase_price'] ?? $input['cost_price'] ?? 0);
             $sellingPrice = (float)($input['selling_price'] ?? 0);
@@ -66,7 +67,7 @@ class BatchController
 
             if (empty($batchNumber)) {
                 http_response_code(422);
-                echo json_encode(['error' => 'Batch number/Vendor Name is required']);
+                echo json_encode(['error' => 'Batch ID / Number is required']);
                 return;
             }
 
@@ -79,6 +80,7 @@ class BatchController
             $batchData = [
                 'product_id'   => $productId,
                 'batch_number' => $batchNumber,
+                'vendor_name' => $vendorName,
                 'initial_qty'  => $initialQty,
                 'cost_price'   => $costPrice,
                 'selling_price' => $sellingPrice,
@@ -125,15 +127,17 @@ class BatchController
             }
 
             // Merge input parameters or fallback to current database values
+            $batchNumber = isset($input['batch_number']) ? trim($input['batch_number']) : (isset($input['batch_id']) ? trim($input['batch_id']) : $existing['batch_number']);
             $vendorName = isset($input['vendor_name']) ? trim($input['vendor_name']) : $existing['vendor_name'];
             $purchasePrice = isset($input['purchase_price']) ? (float)$input['purchase_price'] : $existing['purchase_price'];
             $sellingPrice = isset($input['selling_price']) ? (float)$input['selling_price'] : $existing['selling_price'];
             $retailPrice = isset($input['retail_price']) ? (float)$input['retail_price'] : $existing['retail_price'];
             $quantity = isset($input['quantity']) ? (int)$input['quantity'] : $existing['quantity'];
             $createdAt = isset($input['created_at']) ? trim($input['created_at']) : $existing['created_at'];
-            if (empty($vendorName)) {
+
+            if (empty($batchNumber)) {
                 http_response_code(422);
-                echo json_encode(['error' => 'Vendor Name/Batch number is required']);
+                echo json_encode(['error' => 'Batch ID / Number is required']);
                 return;
             }
             if ($quantity < 0) {
@@ -144,6 +148,7 @@ class BatchController
             
             $batchData = [
                 'vendor_name' => $vendorName,
+                'batch_number' => $batchNumber,
                 'purchase_price' => $purchasePrice,
                 'selling_price' => $sellingPrice,
                 'retail_price' => $retailPrice,
