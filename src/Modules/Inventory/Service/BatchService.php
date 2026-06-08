@@ -49,10 +49,10 @@ class BatchService
         }
     }
 
-        public function getBatchesPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array
+    public function getBatchesPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array
     {
         $result = $this->repo->findPaginated($page, $limit, $search, $categoryId, $subcategoryId);
-        $stats = $this->repo->getStats();
+        $stats = $this->repo->getStats($search, $categoryId, $subcategoryId);
         
         $totalPages = ceil($result['total'] / $limit);
         

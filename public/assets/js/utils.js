@@ -12,7 +12,7 @@ async function apiRequest(path, options = {}) {
 
     const token = localStorage.getItem('auth_token');
     if (!token && !path.includes('/api/login') && !path.includes('/api/register')) {
-        window.location.href = '/index.php';
+        window.location.href = '/index.php?action=logout';
         throw new Error('Not authenticated');
     }
 
@@ -30,7 +30,7 @@ async function apiRequest(path, options = {}) {
         if (res.status === 401) {
             localStorage.removeItem('auth_token');
             localStorage.removeItem('auth_user');
-                window.location.href = '/index.php';
+            window.location.href = '/index.php?action=logout';
             throw new Error('Session expired');
         }
 

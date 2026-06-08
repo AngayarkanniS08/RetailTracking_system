@@ -8,5 +8,5 @@ interface BatchRepositoryInterface
     public function create(array $data): array;
     public function updateall(string $id, array $data): bool;
     public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array;
-    public function getStats(): array;
+    public function getStats(string $search = '', string $categoryId = '', string $subcategoryId = ''): array;
 }

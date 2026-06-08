@@ -530,6 +530,29 @@ function renderInventory(stats = {}) {
     let calculatedStockValue = 0;
     let totalBatchesCalculated = 0;
     let lowStockCalculated = 0;
+    // 1. Calculate Sales Revenue & Costs
+    let stockSoldValue = 0;
+    let stockSoldCost = 0;
+
+    window.sale_items.forEach(item => {
+        stockSoldValue += item.qty * item.price;
+
+        // Attempt to find the purchase cost to calculate net margins
+        let pCost = 0;
+        if (item.batch_id) {
+            const batch = window.batches.find(b => b.id === item.batch_id);
+            pCost = batch ? batch.purchase_price : 0;
+        }
+        if (pCost === 0 && item.product_id) {
+            const productBatch = window.batches.find(b => b.product_id === item.product_id);
+            pCost = productBatch ? productBatch.purchase_price : 0;
+        }
+        stockSoldCost += item.qty * pCost;
+    });
+
+    // 2. Compute Profit Amount
+    const profitAmount = stockSoldValue - stockSoldCost;
+
 
     window.batches.forEach(b => {
         calculatedStockValue += b.quantity * b.purchase_price;
@@ -540,28 +563,31 @@ function renderInventory(stats = {}) {
     const statsGrid = document.getElementById('inventoryStats');
     if (statsGrid) {
         const currentStockValue = typeof stats.total_stock_value !== 'undefined' ? stats.total_stock_value : calculatedStockValue;
-        const totalBatches = typeof stats.total_batches !== 'undefined' ? stats.total_batches : totalBatchesCalculated;
         const lowStockCount = typeof stats.low_stock_count !== 'undefined' ? stats.low_stock_count : lowStockCalculated;
-        let stockSoldValue = 0;
-        window.sale_items.forEach(item => {
-            stockSoldValue += item.qty * item.price;
-        });
+
         statsGrid.innerHTML = `
+            <!-- Card 1: Current Stock Value -->
             <div class="stat-card">
               <div class="stat-label">Current Stock Value</div>
               <div class="stat-value" style="color:var(--info)">${window.formatCurrency(currentStockValue)}</div>
               <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Based on purchase cost</div>
             </div>
+
+            <!-- Card 2: Stock Sold Value -->
             <div class="stat-card">
               <div class="stat-label">Stock Sold Value</div>
               <div class="stat-value" style="color:var(--ok)">${window.formatCurrency(stockSoldValue)}</div>
               <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Total revenue from sales</div>
             </div>
+
+            <!-- Card 3: Profit Amount -->
             <div class="stat-card">
-              <div class="stat-label">Total Batches</div>
-              <div class="stat-value">${totalBatches}</div>
-              <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Across all products</div>
+              <div class="stat-label">Profit Amount</div>
+              <div class="stat-value" style="color:var(--accent-2)">${window.formatCurrency(profitAmount)}</div>
+              <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Total profit from sales</div>
             </div>
+
+            <!-- Card 4: Low Stock Alert -->
             <div class="stat-card">
               <div class="stat-label">Low / Out of Stock</div>
               <div class="stat-value" style="color:${lowStockCount > 0 ? 'var(--warn)' : 'var(--ok)'}">${lowStockCount}</div>
@@ -569,6 +595,7 @@ function renderInventory(stats = {}) {
             </div>
         `;
     }
+
     const tbody = document.querySelector('#inventoryTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
@@ -726,13 +753,13 @@ async function loadSubcategoriesForCategory(categoryId, targetSelectId) {
 async function fetchAndRenderDbAlerts() {
     try {
         const response = await window.apiRequest('/api/inventory/alerts');
-        const badge    = document.getElementById('topbarAlertBadge');
-        const banner   = document.getElementById('globalLowStockBanner');
+        const badge = document.getElementById('topbarAlertBadge');
+        const banner = document.getElementById('globalLowStockBanner');
         const bannerMsg = document.getElementById('globalLowStockBannerMessage');
 
         if (response && response.success && Array.isArray(response.data)) {
             const activeAlerts = response.data;
-            const belowCount   = activeAlerts.length;
+            const belowCount = activeAlerts.length;
 
             if (belowCount > 0) {
                 if (badge) {
@@ -753,7 +780,7 @@ async function fetchAndRenderDbAlerts() {
                     }
                 }
             } else {
-                if (badge)  badge.style.display  = 'none';
+                if (badge) badge.style.display = 'none';
                 if (banner) banner.style.display = 'none';
                 // Reset dismissed flag when alerts are cleared so it can pop up next time new alerts trigger
                 window.globalLowStockBannerDismissed = false;
@@ -788,6 +815,7 @@ function stopPolling() {
 }
 
 document.addEventListener('visibilitychange', () => {
+    if (!document.getElementById('dashboardView')) return;
     if (document.visibilityState === 'visible') {
         fetchAndRenderDbAlerts(); // immediate refresh on tab focus
         startPolling();
@@ -798,8 +826,10 @@ document.addEventListener('visibilitychange', () => {
 
 // Initialize on document ready
 document.addEventListener('DOMContentLoaded', () => {
-    fetchAndRenderDbAlerts();
-    startPolling();
+    if (document.getElementById('dashboardView')) {
+        fetchAndRenderDbAlerts();
+        startPolling();
+    }
 });
 
 // When category filter changes, update subcategory filter and reload batches
@@ -822,7 +852,7 @@ document.getElementById('invSubCatFilter')?.addEventListener('change', () => {
 async function populateAlertProductSelect() {
     const selectEl = document.getElementById('alertProductSelect');
     if (!selectEl) return;
-    
+
     selectEl.innerHTML = '<option value="">-- Select Product --</option>';
 
     // Use the same category & subcategory filters currently set in the inventory page
@@ -836,12 +866,12 @@ async function populateAlertProductSelect() {
     try {
         const data = await window.apiRequest(url);
         const productsList = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
-        
+
         if (productsList) {
             productsList.forEach(p => {
                 // Cache this product so getProduct(pid) or handleAlertProductChange retrieves it correctly
                 window.inventoryProductsCache[p.id] = p;
-                
+
                 const hasAlert = p.rop && parseInt(p.rop) > 0;
                 const statusSuffix = hasAlert ? ` (Alert set: ${p.rop} ${escapeHtml(p.unit)})` : '';
                 selectEl.innerHTML += `<option value="${p.id}">${escapeHtml(p.name)}${statusSuffix}</option>`;
@@ -857,7 +887,7 @@ async function populateAlertProductSelect() {
 async function renderExistingAlerts() {
     const container = document.getElementById('existingAlertsList');
     if (!container) return;
-    
+
     try {
         const response = await window.apiRequest('/api/inventory/alerts');
         if (response && response.success && Array.isArray(response.data)) {
@@ -866,7 +896,7 @@ async function renderExistingAlerts() {
                 container.innerHTML = '<div style="font-size:0.8rem; color:var(--muted); padding:8px 0;">No active low stock alerts.</div>';
                 return;
             }
-            
+
             let html = '<div style="font-size:0.8rem; font-weight:600; color:var(--text-strong); margin-bottom:6px;">Current Low Stock Products:</div>';
             alerts.forEach(a => {
                 html += `
@@ -920,7 +950,7 @@ async function disableLowStockAlert(productId) {
 // Helper to open modal, populate products using the active filters, and reset inputs
 async function openLowStockAlertModal() {
     await populateAlertProductSelect();
-    
+
     const selectEl = document.getElementById('alertProductSelect');
     if (selectEl && !selectEl.dataset.listenerAttached) {
         selectEl.addEventListener('change', handleAlertProductChange);
@@ -931,7 +961,7 @@ async function openLowStockAlertModal() {
     const dailySaleInput = document.getElementById('alertDailySale');
     const emergencyStockInput = document.getElementById('alertEmergencyStock');
     const thresholdInput = document.getElementById('alertThreshold');
-    
+
     if (leadTimeInput) leadTimeInput.value = '';
     if (dailySaleInput) dailySaleInput.value = '';
     if (emergencyStockInput) emergencyStockInput.value = '';
@@ -1052,7 +1082,7 @@ async function openActiveAlertsModal() {
     if (!listEl) return;
 
     listEl.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--muted);">Loading alerts...</div>';
-    
+
     openModal('activeAlertsModal');
 
     try {
@@ -1168,7 +1198,6 @@ window.renderExistingAlerts = renderExistingAlerts;
 window.fetchAndRenderDbAlerts = fetchAndRenderDbAlerts;
 window.openActiveAlertsModal = openActiveAlertsModal;
 window.openRestockForProduct = openRestockForProduct;
-
 // Run when inventory section becomes visible
 if (document.getElementById('inventory') && document.getElementById('inventory').classList.contains('active')) {
     initInventory();

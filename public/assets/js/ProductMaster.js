@@ -4,8 +4,8 @@
 async function apiRequest(url, options = {}) {
     const token = localStorage.getItem('auth_token');
     if (!token) {
-        console.warn('No auth token – redirecting to login');
-        window.location.href = '/index.php?action=login';
+        console.warn('No auth token – redirecting to logout');
+        window.location.href = '/index.php?action=logout';
         return null;
     }
     const headers = {
@@ -26,7 +26,7 @@ async function apiRequest(url, options = {}) {
 
     if (response.status === 401) {
         localStorage.removeItem('auth_token');
-        window.location.href = '/index.php?action=login';
+        window.location.href = '/index.php?action=logout';
         return null;
     }
 

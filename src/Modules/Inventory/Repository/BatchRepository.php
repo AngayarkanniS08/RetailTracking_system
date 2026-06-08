@@ -218,23 +218,44 @@ class BatchRepository implements BatchRepositoryInterface
         ];
     }
     
- public function getStats(): array
+    public function getStats(string $search = '', string $categoryId = '', string $subcategoryId = ''): array
     {
-        $stmt = $this->db->prepare("
+        $sql = "
+            FROM public.inventory_batches b
+            JOIN public.products p ON p.id = b.product_id
+            WHERE b.user_id = current_setting('app.current_user_id')::uuid
+        ";
+        $params = [];
+        if (!empty($categoryId)) {
+            $sql .= " AND p.category_id = ?";
+            $params[] = $categoryId;
+        }
+        if (!empty($subcategoryId)) {
+            $sql .= " AND p.subcategory_id = ?";
+            $params[] = $subcategoryId;
+        }
+        if (!empty($search)) {
+            $sql .= " AND (p.name ILIKE ? OR b.batch_number ILIKE ? OR b.id::text ILIKE ?)";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+            $params[] = "%$search%";
+        }
+
+        $selectSql = "
             SELECT 
-                COALESCE(SUM(remaining_qty * cost_price), 0) AS total_stock_value,
-                COUNT(*) AS total_batches,
-                COUNT(CASE WHEN remaining_qty <= 20 THEN 1 END) AS low_stock_count
-            FROM public.inventory_batches
-            WHERE user_id = current_setting('app.current_user_id')::uuid
-        ");
-        $stmt->execute();
+                COALESCE(SUM(b.remaining_qty * b.cost_price), 0) AS total_stock_value,
+                COUNT(b.id) AS total_batches,
+                COUNT(CASE WHEN b.remaining_qty <= 20 THEN 1 END) AS low_stock_count
+            " . $sql;
+
+        $stmt = $this->db->prepare($selectSql);
+        $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
         return [
             'total_stock_value' => (float)($row['total_stock_value'] ?? 0),
             'total_batches' => (int)($row['total_batches'] ?? 0),
             'low_stock_count' => (int)($row['low_stock_count'] ?? 0)
         ];
     }
-
 }
