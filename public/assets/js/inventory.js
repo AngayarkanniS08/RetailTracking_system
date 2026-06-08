@@ -617,6 +617,7 @@ function renderInventory(stats = {}) {
           <tr>
             <td style="font-family: var(--mono); color: var(--muted-strong);">${b.id}</td>
             <td style="color: var(--muted);">${dateStr}</td>
+            <td style="color: var(--muted-strong);">${escapeHtml(b.vendor_name || '')}</td>
             <td style="font-weight: 500; color: var(--text-strong);">${escapeHtml(p.name)}</td>
             <td>${window.formatCurrency(b.purchase_price)}</td>
             <td>

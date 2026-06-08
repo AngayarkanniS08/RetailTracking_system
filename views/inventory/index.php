@@ -33,6 +33,7 @@
                   <tr>
                     <th>Batch ID</th>
                     <th>Date</th>
+                    <th>Vendor</th>
                     <th>Product</th>
                     <th>Cost P.</th>
                     <th>Sell P. (Base)</th>
