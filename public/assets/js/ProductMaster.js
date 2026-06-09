@@ -616,28 +616,6 @@ window.saveProduct = async function () {
     }
 };
 
-// Store the product ID to be deleted
-let pendingDeleteProductId = null;
-
-window.deleteProduct = function (productId) {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    pendingDeleteProductId = productId;
-    document.getElementById('deleteProductName').innerText = product.name;
-    // Reset modal body to default confirmation message
-    const modalBody = document.getElementById('deleteProductModalBody');
-    modalBody.innerHTML = `
-        <p>Are you sure you want to delete the product <strong>${escapeHtml(product.name)}</strong>?</p>
-        <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone. All batches and sale records linked to this product will also be affected.</p>
-    `;
-    openModal('deleteProductModal');
-};
-
-
-
-
-
-
 // ============================================
 // 6. Render search filter
 // ============================================
@@ -670,6 +648,18 @@ async function initProductMaster() {
     await loadProducts(1);
 }
 
+// Tracks which product id is awaiting delete confirmation
+let pendingDeleteProductId = null;
+
+window.deleteProduct = function (productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    pendingDeleteProductId = productId;
+    const nameSpan = document.getElementById('deleteProductName');
+    if (nameSpan) nameSpan.innerText = product.name;
+    openModal('deleteProductModal');
+};
+
 // DOMContentLoaded: ALWAYS pre-load data so categories survive page refresh.
 // Sidebar.js also calls initProductMaster() on every navigation to product_master.
 document.addEventListener('DOMContentLoaded', () => {
@@ -683,7 +673,45 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn) btn.onclick = saveProduct;
 
     initProductMaster();
+
+    // Handle delete confirmation
+    const deleteModal = document.getElementById('deleteProductModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('click', async (e) => {
+            if (e.target.id === 'confirmDeleteBtn' && pendingDeleteProductId) {
+                const productId = pendingDeleteProductId;
+                const data = await apiRequest(`/api/products/${productId}`, { method: 'DELETE' });
+                if (data && data.success) {
+                    await loadProducts();        // refresh product list
+                    await loadCategories();      // update category counts
+                    closeModal('deleteProductModal');
+                    pendingDeleteProductId = null;
+                    // Reset modal body to default (optional)
+                    const modalBody = document.getElementById('deleteProductModalBody');
+                    modalBody.innerHTML = `
+                    <p>Are you sure you want to delete the product <strong id="deleteProductName"></strong>?</p>
+                    <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone. All batches and sale records linked to this product will also be affected.</p>
+                `;
+                } else {
+                    const errorMsg = data?.error || 'Failed to delete product';
+                    const modalBody = document.getElementById('deleteProductModalBody');
+                    modalBody.innerHTML = `
+                    <div style="color: var(--danger); margin-bottom: 1rem;">
+                        <strong>Error:</strong> ${escapeHtml(errorMsg)}
+                    </div>
+                    <p>Please remove all associated batches before deleting this product.</p>
+                `;
+                    const modalFooter = deleteModal.querySelector('.modal-footer');
+                    if (modalFooter) {
+                        modalFooter.innerHTML = '<button class="btn btn-primary" onclick="closeModal(\'deleteProductModal\')">Close</button>';
+                    }
+                    pendingDeleteProductId = null;
+                }
+            }
+        });
+    }
 });
+
 // Global variable to track which product is being edited
 let editingProductId = null;
 

@@ -493,7 +493,7 @@
             <div class="modal-title">Confirm Delete</div>
             <button class="close-btn" onclick="closeModal('deleteProductModal')">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" id="deleteProductModalBody">
             <p>Are you sure you want to delete the product <strong id="deleteProductName"></strong>?</p>
             <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone. All batches and sale records linked to this product will also be affected.</p>
         </div>
