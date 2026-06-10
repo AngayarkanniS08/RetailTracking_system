@@ -1,4 +1,4 @@
-.PHONY: up down restart migrate seed logs status test-all
+.PHONY: up down restart migrate seed logs status test-all cache-keys cache-inventory cache-products cache-clear
 
 # Build and start all services in the background
 up:
@@ -42,3 +42,19 @@ test-all:
 	docker compose exec app-api php Database/Seed.php
 	@echo "=== Testing restart ==="
 	docker compose restart
+
+# List all keys in Valkey cache
+cache-keys:
+	docker exec -it retail_valkey valkey-cli keys "*"
+
+# List only inventory search cache keys
+cache-inventory:
+	docker exec -it retail_valkey valkey-cli keys "inventory:batches:*"
+
+# List only product search cache keys
+cache-products:
+	docker exec -it retail_valkey valkey-cli keys "products:search:*"
+
+# Clear all Valkey cache
+cache-clear:
+	docker exec -it retail_valkey valkey-cli flushall

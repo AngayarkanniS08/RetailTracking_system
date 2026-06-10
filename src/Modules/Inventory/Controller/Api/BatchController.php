@@ -4,6 +4,7 @@ namespace Modules\Inventory\Controller\Api;
 use Modules\Inventory\Service\BatchService;
 use Modules\Inventory\Repository\BatchRepository;
 use Core\Middlewares\AuthMiddleware;
+use Core\Cache\ValkeyCache;
 use Exception;
 
 class BatchController
@@ -24,16 +25,54 @@ class BatchController
         $search = trim($_GET['search'] ?? '');
         $categoryId = trim($_GET['category_id'] ?? '');
         $subcategoryId = trim($_GET['subcategory_id'] ?? '');
+
+        // Safely authenticate using JWT and extract user context
+        $user = AuthMiddleware::authenticate();
+        $userId = $user->data->user_id ?? null;
+
+        // Build cache key (unique per search, page, filters, user)
+        $cacheKey = sprintf(
+            'inventory:batches:search:%s:cat:%s:subcat:%s:page:%d:limit:%d:user:%s',
+            md5($search),
+            $categoryId ?: 'all',
+            $subcategoryId ?: 'all',
+            $page,
+            $limit,
+            $userId ?: 'guest'
+        );
+
+        $valkey = null;
+        try {
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+            // proceed to database
+        }
         
         try {
-            AuthMiddleware::authenticate();
             $batches = $this->service->getBatchesPaginated($page, $limit, $search, $categoryId, $subcategoryId);
-            echo json_encode($batches);
+            $json = json_encode($batches);
+            // 2. Write response to cache with a TTL (e.g., 300 seconds / 5 minutes)
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (\Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load stock batches: ' . $e->getMessage()]);
         }
     }
+
+
 
     // POST /api/inventory/batches
     public function store(): void

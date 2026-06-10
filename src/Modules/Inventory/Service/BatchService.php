@@ -44,6 +44,11 @@ class BatchService
             if ($keys) {
                 $valkey->del($keys);
             }
+            //Clear inventory search cache keys to prevent serving stale search data
+            $batchKeys = $valkey->keys('inventory:batches:*');
+            if ($batchKeys) {
+                $valkey->del($batchKeys);
+            }
         } catch (\Exception $e) {
             error_log('Valkey cache invalidation error: ' . $e->getMessage());
         }
