@@ -66,7 +66,11 @@
       <div style="padding: 2rem; overflow-y: auto; flex: 1;">
         <div class="input-group">
           <label class="input-label">Select Product</label>
-          <select id="stockProduct" class="input-field" onchange="calculateInventoryMath()"></select>
+          <div class="combobox" id="stockProductCombobox" style="width: 100%;">
+            <input type="text" id="stockProductInput" class="input-field" placeholder="Type to search product..." autocomplete="off">
+            <input type="hidden" id="stockProduct" value="">
+            <div id="stockProductDropdown" class="combobox-dropdown"></div>
+          </div>
         </div>
       <div class="input-group">
         <label class="input-label">Vendor Name</label>

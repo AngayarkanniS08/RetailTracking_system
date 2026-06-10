@@ -45,22 +45,9 @@ async function loadCategoriesForInventory() {
     try {
         const data = await window.apiRequest('/api/categories');
         if (data && !data.error) {
-            // Category filter in inventory table
-            const filterSelect = document.getElementById('invCatFilter');
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="">All Categories</option>';
-                data.forEach(cat => {
-                    filterSelect.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
-                });
-            }
-
-            // Category dropdown inside "Add New Stock" modal
-            const stockCatSelect = document.getElementById('stockCategory');
-            if (stockCatSelect) {
-                stockCatSelect.innerHTML = '<option value="">-- Select Category --</option>';
-                data.forEach(cat => {
-                    stockCatSelect.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
-                });
+            const categories = data.map(cat => ({ id: cat.id, name: cat.name }));
+            if (invCategoryCombobox) {
+                invCategoryCombobox.setItems(categories);
             }
         }
     } catch (err) {
@@ -81,14 +68,14 @@ async function loadProductsByCategory(categoryId) {
         }
         const data = await window.apiRequest(url);
         const productList = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
-        productSelect.innerHTML = '<option value="">-- Select Product --</option>';
-        if (productList) {
-            productList.forEach(prod => {
-                // Cache this product
-                window.inventoryProductsCache[prod.id] = prod;
-                productSelect.innerHTML += `<option value="${prod.id}">${escapeHtml(prod.name)}</option>`;
-            });
-        }
+        const items = productList.map(prod => {
+            // Keep local inventory products cache mapping intact
+            window.inventoryProductsCache[prod.id] = prod;
+            return { id: prod.id, name: prod.name };
+        });
+
+        stockProductCombobox.setItems(items);
+
     } catch (err) {
         console.error('Failed to load products', err);
     }
@@ -1181,6 +1168,205 @@ async function openRestockForProduct(productId) {
         openModal('addStockModal');
     }
 }
+
+class SearchableCombobox {
+    constructor(inputId, hiddenId, dropdownId, onSelectCallback) {
+        this.input = document.getElementById(inputId);
+        this.hidden = document.getElementById(hiddenId);
+        this.dropdown = document.getElementById(dropdownId);
+        this.container = this.dropdown ? this.dropdown.parentElement : null;
+        this.onSelect = onSelectCallback;
+        this.allItems = [];          // Full list: [{id, name}]
+        this.filteredItems = [];     // Current matches
+        this.selectedIndex = -1;
+        this.isOpen = false;
+
+        if (!this.input) return;
+        this.initEventListeners();
+    }
+
+    initEventListeners() {
+        this.input.addEventListener('input', () => this.onInput());
+        this.input.addEventListener('focus', () => this.openDropdown());
+        this.input.addEventListener('blur', () => setTimeout(() => this.closeDropdown(), 200));
+        this.input.addEventListener('keydown', (e) => this.onKeyDown(e));
+        document.addEventListener('click', (e) => {
+            if (!this.dropdown.contains(e.target) && e.target !== this.input) {
+                this.closeDropdown();
+            }
+        });
+    }
+
+    setItems(items) {
+        this.allItems = items;
+        this.filteredItems = [...items];
+        if (this.isOpen) this.renderDropdown();
+    }
+
+    onInput() {
+        const search = this.input.value.toLowerCase().trim();
+        if (!search) {
+            this.filteredItems = [...this.allItems];
+        } else {
+            this.filteredItems = this.allItems.filter(item =>
+                item.name.toLowerCase().includes(search)
+            );
+        }
+        this.selectedIndex = -1;
+        this.renderDropdown();
+        if (!this.isOpen) this.openDropdown();
+    }
+
+    renderDropdown() {
+        if (!this.isOpen) return;
+        this.dropdown.innerHTML = '';
+        if (this.filteredItems.length === 0) {
+            const div = document.createElement('div');
+            div.className = 'combobox-item';
+            div.textContent = 'No matches found';
+            this.dropdown.appendChild(div);
+        } else {
+            this.filteredItems.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = `combobox-item ${idx === this.selectedIndex ? 'selected' : ''}`;
+                div.textContent = item.name;
+                div.addEventListener('click', () => this.selectItem(item.id, item.name));
+                div.addEventListener('mouseenter', () => {
+                    this.selectedIndex = idx;
+                    this.renderDropdown();
+                });
+                this.dropdown.appendChild(div);
+            });
+        }
+    }
+
+    selectItem(id, name) {
+        this.hidden.value = id;
+        this.input.value = name;
+        this.closeDropdown();
+        if (typeof this.onSelect === 'function') {
+            this.onSelect(id, name);
+        }
+    }
+
+    onKeyDown(e) {
+        if (!this.isOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            this.openDropdown();
+            e.preventDefault();
+            return;
+        }
+        if (!this.isOpen) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                this.selectedIndex = Math.min(this.selectedIndex + 1, this.filteredItems.length - 1);
+                this.renderDropdown();
+                this.scrollToSelected();
+                e.preventDefault();
+                break;
+            case 'ArrowUp':
+                this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
+                this.renderDropdown();
+                this.scrollToSelected();
+                e.preventDefault();
+                break;
+            case 'Enter':
+                if (this.selectedIndex >= 0 && this.filteredItems[this.selectedIndex]) {
+                    const item = this.filteredItems[this.selectedIndex];
+                    this.selectItem(item.id, item.name);
+                }
+                e.preventDefault();
+                break;
+            case 'Escape':
+                this.closeDropdown();
+                e.preventDefault();
+                break;
+        }
+    }
+
+    scrollToSelected() {
+        const selectedEl = this.dropdown.querySelector('.combobox-item.selected');
+        if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
+    }
+
+    openDropdown() {
+        this.isOpen = true;
+        if (this.container) this.container.classList.add('is-open');
+        this.renderDropdown();
+    }
+
+    closeDropdown() {
+        this.isOpen = false;
+        if (this.container) this.container.classList.remove('is-open');
+        this.selectedIndex = -1;
+
+        const selectedId = this.hidden.value;
+        if (selectedId) {
+            const found = this.allItems.find(item => item.id === selectedId);
+            if (found) {
+                this.input.value = found.name;
+            } else {
+                this.input.value = '';
+                this.hidden.value = '';
+            }
+        } else {
+            this.input.value = '';
+        }
+    }
+
+    clear() {
+        this.allItems = [];
+        this.filteredItems = [];
+        this.hidden.value = '';
+        this.input.value = '';
+        this.closeDropdown();
+    }
+}
+
+async function loadSubcategoriesForInventoryCombobox(categoryId) {
+    if (!invSubcategoryCombobox) return;
+    if (!categoryId) {
+        invSubcategoryCombobox.clear();
+        invSubcategoryCombobox.input.placeholder = "All Subcategories";
+        return;
+    }
+    try {
+        const data = await window.apiRequest(`/api/subcategories?category_id=${categoryId}`);
+        if (data && !data.error) {
+            const subcategories = data.map(sub => ({ id: sub.id, name: sub.name }));
+            invSubcategoryCombobox.setItems(subcategories);
+            invSubcategoryCombobox.input.placeholder = "Type to search...";
+        }
+    } catch (err) {
+        console.error('Failed to load subcategories', err);
+    }
+}
+
+
+let invCategoryCombobox = null;
+let invSubcategoryCombobox = null;
+let stockProductCombobox = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Category Filter Combobox
+    invCategoryCombobox = new SearchableCombobox('invCatInput', 'invCatFilter', 'invCatDropdown', async (id) => {
+        await loadSubcategoriesForInventoryCombobox(id);
+        loadBatchesFromApi(1); // Reload inventory table records
+    });
+
+    // 2. Subcategory Filter Combobox
+    invSubcategoryCombobox = new SearchableCombobox('invSubCatInput', 'invSubCatFilter', 'invSubCatDropdown', () => {
+        loadBatchesFromApi(1); // Reload inventory table records
+    });
+
+    // 3. Product Selection in Add Stock Modal
+    stockProductCombobox = new SearchableCombobox('stockProductInput', 'stockProduct', 'stockProductDropdown', () => {
+        if (typeof calculateInventoryMath === 'function') {
+            calculateInventoryMath();
+        }
+    });
+});
+
 
 // Attach functions to window object
 window.setPricingMode = setPricingMode;
