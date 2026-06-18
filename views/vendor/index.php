@@ -8,11 +8,9 @@
           <div class="card-header">
             <span>Vendor List</span>
             <div class="d-flex" style="gap: 10px;">
-              <input type="text" id="slSearch" class="input-field" placeholder="Search vendors..." style="width: 200px;"
-                onkeyup="renderStockList()">
-              <button class="btn btn-outline btn-sm" onclick="openModal('lowStockAlertModal')"
-                style="color:var(--warn); border-color:var(--warn)">🔔 Set Low Stock Alert</button>
-              <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal')">+ New Purchase</button>
+              <input type="text" id="vendorSearch" class="input-field" placeholder="Search purchases..." style="width: 200px;"
+                onkeyup="loadPurchases(1)">
+              <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal'); loadProductsForVendor();">+ Add Vendor</button>
             </div>
           </div>
 
@@ -37,14 +35,14 @@
           </div>
 
           <div class="card-panel">
-            <div class="table-container">
-              <table id="vendorSummaryTable">
+            <div class="data-table">
+              <table id="vendorPurchaseTable">
                 <thead>
                   <tr>
                     <th>Vendor Name</th>
-                    <th>Total Orders</th>
-                    <th>Total Purchased (₹)</th>
-                    <th>Total Paid (₹)</th>
+                    <th>Purchase Date</th>
+                    <th>Total Bill (₹)</th>
+                    <th>Amount Paid (₹)</th>
                     <th>Balance Due (₹)</th>
                     <th>Status</th>
                     <th>Action</th>

@@ -76,4 +76,15 @@ class Database {
             ->prepare("SELECT set_config('app.current_user_id', ?, false)")
             ->execute([$userId]);
     }
+
+    /**
+     * Reads back the user ID set by setCurrentUser().
+     * Returns null if not set (unauthenticated request).
+     */
+    public static function getCurrentUser(): ?string {
+        $stmt = self::getConnection()
+            ->query("SELECT current_setting('app.current_user_id', true)");
+        $value = $stmt ? $stmt->fetchColumn() : null;
+        return ($value !== '' && $value !== null) ? (string) $value : null;
+    }
 }

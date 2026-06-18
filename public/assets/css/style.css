@@ -990,12 +990,22 @@ tr:hover td {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    width: 100%;
-    max-width: 500px;
-    padding: 2rem;
     box-shadow: var(--shadow-xl);
     animation: rise 0.2s var(--ease-out);
+    padding: 2rem;
+    display: flex;         /* Helps organize internal structure if needed */
+    flex-direction: column;
+
+    /* --- RESPONSIVE SCREEN-FIT SIZING --- */
+    width: 50vw;          /* Takes up 90% of the browser width */
+    max-width: 1200px;    /* Optional caps: won't look too stretched on massive monitors */
+    
+    height: 85vh;         /* Takes up exactly 85% of the browser height */
+    max-height: 85vh;     /* Hard limit to ensure it never hides off-screen */
+    
+    overflow-y: auto;     /* Makes content scrollable inside if it overflows */
 }
+
 
 .modal-header {
     display: flex;

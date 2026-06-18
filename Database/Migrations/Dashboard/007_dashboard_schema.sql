@@ -64,21 +64,80 @@ ALTER TABLE public.purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory_batches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stock_list ENABLE ROW LEVEL SECURITY;
 
--- Create policies for isolation
-CREATE POLICY "Users can access their own sales" ON public.sales
-    USING (user_id = current_setting('app.current_user_id', true)::uuid);
-    
-CREATE POLICY "Users can access their own sales_items" ON sales_items
-    USING (EXISTS (SELECT 1 FROM sales WHERE sales.id = sale_id AND sales.user_id = current_setting('app.current_user_id', true)::uuid));
 
-CREATE POLICY "Users can access their own purchases" ON public.purchases
-    USING (user_id = current_setting('app.current_user_id', true)::uuid);
-    
-CREATE POLICY "Users can access their own inventory batches" ON public.inventory_batches
-    USING (user_id = current_setting('app.current_user_id', true)::uuid);
+-- ============================================
+-- CONDITIONAL POLICIES (Idempotent Migration)
+-- ============================================
 
-CREATE POLICY "Users can access their own stock list" ON public.stock_list
-    USING (user_id = current_setting('app.current_user_id', true)::uuid);
+-- 1. Policy for public.sales
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' AND tablename = 'sales' AND policyname = 'Users can access their own sales'
+    ) THEN
+        CREATE POLICY "Users can access their own sales" ON public.sales
+            USING (user_id = current_setting('app.current_user_id', true)::uuid);
+    END IF;
+END
+$$;
+
+-- 2. Policy for public.sales_items (Child table isolation via parent)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'sales_items' AND policyname = 'Users can access their own sales_items'
+    ) THEN
+        CREATE POLICY "Users can access their own sales_items" ON public.sales_items
+            USING (EXISTS (
+                SELECT 1 FROM public.sales 
+                WHERE sales.id = sale_id 
+                AND sales.user_id = current_setting('app.current_user_id', true)::uuid
+            ));
+    END IF;
+END
+$$;
+
+-- 3. Policy for public.purchases
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' AND tablename = 'purchases' AND policyname = 'Users can access their own purchases'
+    ) THEN
+        CREATE POLICY "Users can access their own purchases" ON public.purchases
+            USING (user_id = current_setting('app.current_user_id', true)::uuid);
+    END IF;
+END
+$$;
+
+-- 4. Policy for public.inventory_batches
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' AND tablename = 'inventory_batches' AND policyname = 'Users can access their own inventory batches'
+    ) THEN
+        CREATE POLICY "Users can access their own inventory batches" ON public.inventory_batches
+            USING (user_id = current_setting('app.current_user_id', true)::uuid);
+    END IF;
+END
+$$;
+
+-- 5. Policy for public.stock_list
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'public' AND tablename = 'stock_list' AND policyname = 'Users can access their own stock list'
+    ) THEN
+        CREATE POLICY "Users can access their own stock list" ON public.stock_list
+            USING (user_id = current_setting('app.current_user_id', true)::uuid);
+    END IF;
+END
+$$;
+
 
 CREATE INDEX idx_sales_user_id ON sales(user_id);
 CREATE INDEX idx_sales_created_at ON sales(created_at);

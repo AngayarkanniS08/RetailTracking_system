@@ -3,6 +3,7 @@
 namespace Core;
 
 use Core\Router;
+use config\Database;
 use Core\Middlewares\AuthMiddleware;
 use Modules\Auth\Controller\Api\ForgotPasswordController;
 use Modules\Auth\Controller\Api\ResetPasswordController;
@@ -121,5 +122,42 @@ class ApiRoutes
             AuthMiddleware::authenticate(900); // Shorter expiry for modifications
             (new \Modules\Inventory\Controller\Api\AlertController())->disable($params['productId']);
         });
+
+                // ── Vendors (Standalone Profile Management) ────────────────
+        // ── Vendor Purchases (6-Layer flow) ──────────────────────────
+
+        // GET /api/purchases – list all purchases (paginated, filterable)
+        $router->add('GET', '/api/purchases', function (): void {
+            (new \Modules\Vendor\Controller\PurchaseController())->index();
+        });
+
+        // POST /api/purchases – create a new purchase (with vendor on-the-fly)
+        $router->add('POST', '/api/purchases', function (): void {
+            (new \Modules\Vendor\Controller\PurchaseController())->store();
+        });
+
+        // GET /api/purchases/{id} – get a single purchase with its items
+        $router->add('GET', '/api/purchases/{id}', function (array $params): void {
+            (new \Modules\Vendor\Controller\PurchaseController())->show($params['id']);
+        });
+
+        // POST /api/purchases/{id}/pay – record a payment against a purchase
+        $router->add('POST', '/api/purchases/{id}/pay', function (array $params): void {
+            AuthMiddleware::authenticate(900); // Shorter expiry for payment operations
+            (new \Modules\Vendor\Controller\PurchaseController())->recordPayment($params['id']);
+        });
+
+        // (Optional) PUT /api/purchases/{id} – update a purchase
+        $router->add('PUT', '/api/purchases/{id}', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Vendor\Controller\PurchaseController())->update($params['id']);
+        });
+
+        // (Optional) DELETE /api/purchases/{id} – delete a purchase
+        $router->add('DELETE', '/api/purchases/{id}', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Vendor\Controller\PurchaseController())->destroy($params['id']);
+        });
+            
     }
 }

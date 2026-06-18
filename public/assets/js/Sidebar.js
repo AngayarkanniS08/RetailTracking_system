@@ -44,6 +44,9 @@ function switchTab(sectionId) {
     if (sectionId === 'inventory') {
         if (typeof initInventory === 'function') initInventory();
     }
+    if (sectionId === 'vendor_list') {
+        if (typeof initVendorPage === 'function') initVendorPage();
+    }
     if (sectionId === 'credit') {
         if (typeof initCredit === 'function') initCredit();
     }

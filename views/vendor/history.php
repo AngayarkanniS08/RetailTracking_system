@@ -1,7 +1,7 @@
         <section id="vendorhistory" class="view-section">
           <div class="card-header">
             <div style="display:flex; align-items:center; gap:12px;">
-              <button class="btn btn-outline btn-sm" onclick="switchTab('stocklist')"
+              <button class="btn btn-outline btn-sm" onclick="switchTab('vendor_list')"
                 style="display:flex; align-items:center; gap:6px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <polyline points="15 18 9 12 15 6"></polyline>

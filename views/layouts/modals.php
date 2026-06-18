@@ -212,6 +212,10 @@
         <label class="input-label">Vendor Name</label>
         <input type="text" id="slVendorName" class="input-field" placeholder="e.g. Erode Textile Market">
       </div>
+      <div class="input-group">
+        <label class="input-label">Contact Number</label>
+        <input type="text" id="slVendorPhone" class="input-field" placeholder="e.g. 9876543210">
+      </div>
       <div class="d-flex">
         <div class="input-group" style="flex:1;">
           <label class="input-label" id="slQtyLabel">Quantity</label>
@@ -237,7 +241,35 @@
           <input type="date" id="slPurchaseDate" class="input-field">
         </div>
       </div>
-      <button class="btn btn-primary btn-block" onclick="saveStockEntry()">Save Entry</button>
+      <button class="btn btn-primary btn-block" id="savePurchaseBtn" onclick="saveStockEntry()">Save Entry</button>
+    </div>
+  </div>
+
+  <!-- Vendor Payment Modal -->
+  <div class="modal-overlay" id="vendorPaymentModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Pay Vendor</div>
+        <button class="close-btn" onclick="closeModal('vendorPaymentModal')">&times;</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Vendor Name</label>
+        <input type="text" id="vpVendorName" class="input-field" placeholder="e.g. Erode Textile Market">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Amount Paying now</label>
+        <input type="number" id="slAmountPaying" class="input-field" placeholder="e.g. 3000" min="0">
+      </div>
+      <div id="slBalancedisplay"
+        style="margin-top:-10px; margin-bottom:15px; font-size: 0.8rem; color: var(--muted); display:flex; justify-content:space-between; padding: 0 5px;">
+        <span id="slBalanceText">Balance After Payment: ₹0.00</span>
+      </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Payment Date</label>
+          <input type="date" id="vpPaymentDate" class="input-field">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="recordPayment()">Record Payment</button>
     </div>
   </div>
 

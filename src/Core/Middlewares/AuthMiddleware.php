@@ -77,4 +77,9 @@ class AuthMiddleware
         exit;
     }
 
+    public static function getUserId(): string
+    {
+        return $_SESSION['user_id'] ?? ''; // or fetch from JWT
+    }
+
 }
