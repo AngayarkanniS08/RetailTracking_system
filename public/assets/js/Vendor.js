@@ -364,11 +364,20 @@ async function editPurchase(purchaseId) {
     try {
         const data = await window.apiRequest(`/api/purchases/${purchaseId}`);
         if (data && !data.error) {
-            // Populate modal fields
             document.getElementById('editPurchaseId').value = purchaseId;
-            document.getElementById('editPurchaseDate').value = data.purchase_date || '';
-            document.getElementById('editBaseAmount').value = data.base_amount || 0;
-            document.getElementById('editAmountPaid').value = data.amount_paid || 0;
+            let formattedDate = '';
+            if (data.purchaseDate) {
+                const dateObj = new Date(data.purchaseDate);
+                if (!isNaN(dateObj.getTime())) {
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    formattedDate = `${year}-${month}-${day}`;
+                }
+            }
+            document.getElementById('editPurchaseDate').value = formattedDate;
+            document.getElementById('editBaseAmount').value = data.baseAmount || 0;
+            document.getElementById('editAmountPaid').value = data.amountPaid || 0;
              // ── Render Items ──
             const container = document.getElementById('editItemsContainer');
             container.innerHTML = '';
@@ -402,7 +411,7 @@ function addEditItemRow(item = null, index = 0) {
     const productIdInput = document.createElement('input');
     productIdInput.type = 'hidden';
     productIdInput.name = `edit_items[${index}][product_id]`;
-    productIdInput.value = item?.product_id || '';
+    productIdInput.value = item?.productId || '';
     row.appendChild(productIdInput);
 
     // Product Name (readonly display – or you can make it a dropdown)
@@ -411,7 +420,7 @@ function addEditItemRow(item = null, index = 0) {
     productNameInput.className = 'input-field';
     productNameInput.style.cssText = 'flex: 2;';
     productNameInput.placeholder = 'Product Name';
-    productNameInput.value = item?.product_name || '';
+    productNameInput.value = item?.productName || '';
     productNameInput.readOnly = true;
     row.appendChild(productNameInput);
 
@@ -431,7 +440,7 @@ function addEditItemRow(item = null, index = 0) {
     unitPriceInput.className = 'input-field';
     unitPriceInput.style.cssText = 'flex: 1;';
     unitPriceInput.placeholder = 'Unit Price';
-    unitPriceInput.value = item?.unit_price || 0;
+    unitPriceInput.value = item?.unitPrice || 0;
     unitPriceInput.step = '0.01';
     row.appendChild(unitPriceInput);
 

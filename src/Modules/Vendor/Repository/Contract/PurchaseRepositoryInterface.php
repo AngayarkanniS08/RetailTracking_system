@@ -15,7 +15,8 @@ interface PurchaseRepositoryInterface {
     public function createPurchase(Purchase $purchase): Purchase;
     public function findPurchaseById(string $id, bool $withItems = false): ?Purchase;
     public function findAllPurchases(int $page, int $limit, array $filters):array;
-    public function updatePurchase(string $purchaseId,string $status): bool;
+    public function updatePurchase(Purchase $purchase): Purchase;
+    public function replacePurchaseItems(string $purchaseId, array $items): void;
     //purchase item methods
     public function createPurchaseItems(array $items, string $purchaseId): void;
 

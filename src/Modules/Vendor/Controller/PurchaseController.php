@@ -179,14 +179,59 @@ class PurchaseController
         }
     }
 
-    /**
-     * PUT /api/purchases/{id} – Update a purchase (optional)
+        /**
+     * PUT /api/purchases/{id}
+     * Update purchase header and items
      */
     public function update(string $id): void
     {
-        // TODO: Implement if needed
-        http_response_code(501);
-        echo json_encode(['error' => 'Not implemented']);
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        AuthMiddleware::authenticate();
+
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        // Build item DTOs
+        $items = [];
+        foreach ($input['items'] ?? [] as $itemData) {
+            $items[] = new PurchaseItemDTO(
+                productId: $itemData['product_id'] ?? '',
+                quantity: (float)($itemData['quantity'] ?? 0),
+                unitPrice: (float)($itemData['unit_price'] ?? 0)
+            );
+        }
+
+        $dto = new PurchaseDTO(
+            vendorName: '',  // Not updating vendor name in this version
+            phone: '',       // Not updating phone
+            purchaseDate: trim($input['purchase_date'] ?? date('Y-m-d')),
+            baseAmount: (float)($input['base_amount'] ?? 0),
+            amountPaid: (float)($input['amount_paid'] ?? 0),
+            items: $items
+        );
+
+        try {
+            $userId = AuthMiddleware::getUserId();
+            $purchase = $this->service->updatePurchase($id, $dto, $userId);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Purchase updated successfully',
+                'purchase' => $purchase
+            ]);
+        } catch (ValidationException $e) {
+            http_response_code(422);
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            error_log('Purchase update error: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Internal server error']);
+        }
     }
 
     /**

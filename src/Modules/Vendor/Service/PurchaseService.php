@@ -179,4 +179,76 @@ class PurchaseService
         }
         return 'partial';
     }
+
+    /**
+ * Update an existing purchase (header + items)
+ * @throws ValidationException
+ */
+    public function updatePurchase(string $purchaseId, PurchaseDTO $dto, string $userId): Purchase
+    {
+        // 1. Validate
+        if (empty($dto->items)) {
+            throw new ValidationException("At least one item is required");
+        }
+        if ($dto->baseAmount <= 0) {
+            throw new ValidationException("Base amount must be positive");
+        }
+        if ($dto->amountPaid < 0) {
+            throw new ValidationException("Amount paid cannot be negative");
+        }
+        if ($dto->amountPaid > $dto->baseAmount) {
+            throw new ValidationException("Amount paid cannot exceed base amount");
+        }
+
+        // 2. Validate each item
+        foreach ($dto->items as $itemDTO) {
+            if (empty($itemDTO->productId)) {
+                throw new ValidationException("Product ID is required for each item");
+            }
+            if ($itemDTO->quantity <= 0) {
+                throw new ValidationException("Quantity must be positive");
+            }
+            if ($itemDTO->unitPrice < 0) {
+                throw new ValidationException("Unit price cannot be negative");
+            }
+        }
+
+        // 3. Check if purchase exists
+        $existing = $this->repo->findPurchaseById($purchaseId);
+        if (!$existing) {
+            throw new ValidationException("Purchase not found");
+        }
+
+        // 4. Update header
+        $purchase = new Purchase(
+            id: $purchaseId,
+            vendorId: $existing->vendorId,
+            purchaseDate: $dto->purchaseDate,
+            baseAmount: $dto->baseAmount,
+            amountPaid: $dto->amountPaid,
+            status: $this->determineStatus($dto->amountPaid, $dto->baseAmount),
+            userId: $userId,
+            createdAt: $existing->createdAt,
+            updatedAt: null,
+            items: null
+        );
+        $purchase = $this->repo->updatePurchase($purchase);
+
+        // 5. Replace items (delete old, insert new)
+        $items = [];
+        foreach ($dto->items as $itemDTO) {
+            $items[] = new PurchaseItem(
+                id: null,
+                purchaseId: $purchaseId,
+                productId: $itemDTO->productId,
+                quantity: $itemDTO->quantity,
+                unitPrice: $itemDTO->unitPrice,
+                totalPrice: $itemDTO->quantity * $itemDTO->unitPrice
+            );
+        }
+        $this->repo->replacePurchaseItems($purchaseId, $items);
+
+        // 6. Reload with items
+        return $this->repo->findPurchaseById($purchaseId, true);
+    }
 }

@@ -280,40 +280,75 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         ];
     }
 
-    public function updatePurchase(string $purchaseId, string $status): bool
-    {
-        if ($status === 'paid') {
-            $stmt = $this->db->prepare("
-                UPDATE vendor_purchases
-                SET amount_paid = total_amount, updated_at = now()
-                WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
-            ");
-            $stmt->execute([$purchaseId]);
-            return $stmt->rowCount() > 0;
-        } elseif ($status === 'pending') {
-            $stmt = $this->db->prepare("
-                UPDATE vendor_purchases
-                SET amount_paid = 0, updated_at = now()
-                WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
-            ");
-            $stmt->execute([$purchaseId]);
-            return $stmt->rowCount() > 0;
-        }
-        return false;
-    }
-
-    public function recordPayment(string $purchaseId, float $amount): bool
+    public function updatePurchase(Purchase $purchase): Purchase
     {
         $stmt = $this->db->prepare("
             UPDATE vendor_purchases
-            SET amount_paid = amount_paid + ?,
+            SET purchase_date = ?,
+                total_amount = ?,
+                amount_paid = ?,
                 updated_at = now()
             WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
-              AND amount_paid + ? <= total_amount
+            RETURNING updated_at
         ");
-        $stmt->execute([$amount, $purchaseId, $amount]);
-        return $stmt->rowCount() > 0;
+        $stmt->execute([
+            $purchase->purchaseDate,
+            $purchase->baseAmount,
+            $purchase->amountPaid,
+            $purchase->id
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $purchase->updatedAt = $row['updated_at'];
+        }
+        $purchase->status = $purchase->amountPaid >= $purchase->baseAmount ? 'paid' : ($purchase->amountPaid > 0 ? 'partial' : 'pending');
+        return $purchase;
     }
+
+    public function replacePurchaseItems(string $purchaseId, array $items): void
+    {
+        $this->db->beginTransaction();
+        try {
+            // Delete old items
+            $stmt = $this->db->prepare("DELETE FROM vendor_purchase_items WHERE purchase_id = ?");
+            $stmt->execute([$purchaseId]);
+
+            // Insert new items
+            $stmt = $this->db->prepare("
+                INSERT INTO vendor_purchase_items (id, purchase_id, product_id, product_name_snapshot, quantity, unit_cost)
+                VALUES (gen_random_uuid(), ?, ?, ?, ?, ?)
+            ");
+            $nameStmt = $this->db->prepare("SELECT name FROM products WHERE id = ?");
+            foreach ($items as $item) {
+                $nameStmt->execute([$item->productId]);
+                $productName = $nameStmt->fetchColumn() ?: 'Unknown Product';
+
+                $stmt->execute([
+                    $purchaseId,
+                    $item->productId,
+                    $productName,
+                    $item->quantity,
+                    $item->unitPrice
+                ]);
+            }
+            $this->db->commit();
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+        public function recordPayment(string $purchaseId, float $amount): bool
+        {
+            $stmt = $this->db->prepare("
+                UPDATE vendor_purchases
+                SET amount_paid = amount_paid + ?,
+                    updated_at = now()
+                WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+                AND amount_paid + ? <= total_amount
+            ");
+            $stmt->execute([$amount, $purchaseId, $amount]);
+            return $stmt->rowCount() > 0;
+        }
 
     public function getVendorHistory(string $vendorId): array
     {
