@@ -232,6 +232,7 @@ function renderPurchaseTable(purchases) {
     purchases.forEach(p => {
         const tr = tbody.insertRow();
         tr.insertCell().innerText = p.vendorName || p.vendorId || '-';
+        tr.insertCell().innerText = p.vendorPhone || '-';
         tr.insertCell().innerText = formatDate(p.purchaseDate);
         tr.insertCell().innerText = formatCurrency(p.baseAmount || 0);
         tr.insertCell().innerText = formatCurrency(p.amountPaid || 0);

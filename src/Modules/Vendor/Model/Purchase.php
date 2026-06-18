@@ -14,6 +14,7 @@ class Purchase {
         public ?string $userId = null,
         public ?string $createdAt = null,
         public ?string $updatedAt = null,
-        public ?string $vendorName = null
+        public ?string $vendorName = null,
+        public ?string $vendorPhone = null
     ) {}
 }
