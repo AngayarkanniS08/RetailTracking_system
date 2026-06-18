@@ -244,7 +244,10 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $dataSql = "
             SELECT p.id, p.vendor_id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid,
                 p.user_id, p.created_at, p.updated_at,
-                v.name AS vendor_name, v.contact_info AS vendor_phone
+                v.name AS vendor_name, v.contact_info AS vendor_phone,
+                (SELECT COUNT(*) FROM vendor_purchases 
+                WHERE vendor_id = p.vendor_id 
+                    AND user_id = current_setting('app.current_user_id')::uuid) AS total_orders
         " . $sqlBase . $filterSql . " ORDER BY p.purchase_date DESC LIMIT ? OFFSET ?";
         
         $dataParams = array_merge($params, [$limit, $offset]);
@@ -266,7 +269,8 @@ class PurchaseRepository implements PurchaseRepositoryInterface
                 createdAt: $row['created_at'] ?? null,
                 updatedAt: $row['updated_at'] ?? null,
                 vendorName: $row['vendor_name'] ?? null,
-                vendorPhone: $row['vendor_phone'] ?? null
+                vendorPhone: $row['vendor_phone'] ?? null,
+                totalOrders: (int)($row['total_orders'] ?? 0)
             );
         }, $rows);
 

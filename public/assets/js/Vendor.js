@@ -231,13 +231,37 @@ function renderPurchaseTable(purchases) {
     }
     purchases.forEach(p => {
         const tr = tbody.insertRow();
+        
+        // 1. Vendor Name
         tr.insertCell().innerText = p.vendorName || p.vendorId || '-';
+        
+        // 2. Contact Info
         tr.insertCell().innerText = p.vendorPhone || '-';
+        
+        // 3. Purchase Date
         tr.insertCell().innerText = formatDate(p.purchaseDate);
+        
+        // 4. Total orders
+        const ordersCell = tr.insertCell();
+        ordersCell.innerHTML = `
+            <span style="font-weight: 500;">
+                📦 ${p.totalOrders || 0}
+            </span>
+        `;
+        
+        // 5. Total Bill
         tr.insertCell().innerText = formatCurrency(p.baseAmount || 0);
+        
+        // 6. Amount Paid
         tr.insertCell().innerText = formatCurrency(p.amountPaid || 0);
+        
+        // 7. Balance Due
         tr.insertCell().innerText = formatCurrency((p.baseAmount || 0) - (p.amountPaid || 0));
+        
+        // 8. Status
         tr.insertCell().innerHTML = `<span class="badge badge-${p.status === 'paid' ? 'ok' : (p.status === 'partial' ? 'warn' : 'danger')}">${p.status}</span>`;
+        
+        // 9. Action
         tr.insertCell().innerHTML = `
             <button class="btn-icon" onclick="viewPurchase('${p.id}')" title="View Details">👁️</button>
             ${p.status !== 'paid' ? `<button class="btn-icon" onclick="recordPayment('${p.id}')" title="Record Payment">💰</button>` : ''}

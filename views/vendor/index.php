@@ -42,6 +42,7 @@
                     <th>Vendor Name</th>
                     <th>Contact</th>
                     <th>Purchase Date</th>
+                    <th>Total orders</th>
                     <th>Total Bill (₹)</th>
                     <th>Amount Paid (₹)</th>
                     <th>Balance Due (₹)</th>
