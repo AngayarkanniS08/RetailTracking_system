@@ -539,3 +539,44 @@
         </div>
     </div>
 </div>
+
+<!--Vendor page-->
+<!-- Edit Purchase Modal -->
+<div id="editPurchaseModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <div class="modal-title">Edit Purchase</div>
+            <button class="close-btn" onclick="closeModal('editPurchaseModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editPurchaseId">
+            
+            <div class="input-group">
+                <label>Purchase Date</label>
+                <input type="date" id="editPurchaseDate" class="input-field">
+            </div>
+            <div class="input-group">
+                <label>Base Amount (₹)</label>
+                <input type="number" id="editBaseAmount" class="input-field" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>Amount Paid (₹)</label>
+                <input type="number" id="editAmountPaid" class="input-field" step="0.01">
+            </div>
+            <!-- ── Items Section ── -->
+            <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Items</label>
+                <div id="editItemsContainer">
+                    <!-- Items will be rendered here by JS -->
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="addEditItemRow()">+ Add Item</button>
+            </div>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
+            <button class="btn btn-outline" onclick="closeModal('editPurchaseModal')">Cancel</button>
+            <button class="btn btn-primary" id="saveEditPurchaseBtn" onclick="saveEditPurchase()">Update Purchase</button>
+        </div>
+    </div>
+</div>

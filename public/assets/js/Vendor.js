@@ -262,8 +262,21 @@ function renderPurchaseTable(purchases) {
         tr.insertCell().innerHTML = `<span class="badge badge-${p.status === 'paid' ? 'ok' : (p.status === 'partial' ? 'warn' : 'danger')}">${p.status}</span>`;
         
         // 9. Action
-        tr.insertCell().innerHTML = `
-            <button class="btn-icon" onclick="viewPurchase('${p.id}')" title="View Details">👁️</button>
+        const actionCell = tr.insertCell();
+        actionCell.innerHTML = `
+            <button class="btn-icon" onclick="editPurchase('${p.id}')" title="Edit Purchase">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+                </svg>
+            </button>
+            <button class="btn-icon" onclick="viewPurchase('${p.id}')" title="View Details">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none"/>
+                </svg>
+            </button>
             ${p.status !== 'paid' ? `<button class="btn-icon" onclick="recordPayment('${p.id}')" title="Record Payment">💰</button>` : ''}
         `;
     });
@@ -347,6 +360,179 @@ async function recordPayment(purchaseId) {
     }
 }
 
+async function editPurchase(purchaseId) {
+    try {
+        const data = await window.apiRequest(`/api/purchases/${purchaseId}`);
+        if (data && !data.error) {
+            // Populate modal fields
+            document.getElementById('editPurchaseId').value = purchaseId;
+            document.getElementById('editPurchaseDate').value = data.purchase_date || '';
+            document.getElementById('editBaseAmount').value = data.base_amount || 0;
+            document.getElementById('editAmountPaid').value = data.amount_paid || 0;
+             // ── Render Items ──
+            const container = document.getElementById('editItemsContainer');
+            container.innerHTML = '';
+            if (data.items && data.items.length > 0) {
+                data.items.forEach((item, index) => {
+                    addEditItemRow(item, index);
+                });
+            } else {
+                // Add one empty row if no items
+                addEditItemRow(null, 0);
+            }
+            
+            openModal('editPurchaseModal');
+        } else {
+            alert('Failed to load purchase details');
+        }
+    } catch (err) {
+        console.error('Error loading purchase:', err);
+        alert('Error loading purchase details');
+    }
+}
+
+function addEditItemRow(item = null, index = 0) {
+    const container = document.getElementById('editItemsContainer');
+    const row = document.createElement('div');
+    row.className = 'edit-item-row';
+    row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+    row.dataset.index = index;
+
+    // Product ID (hidden) – we'll keep it as a hidden field or a dropdown
+    const productIdInput = document.createElement('input');
+    productIdInput.type = 'hidden';
+    productIdInput.name = `edit_items[${index}][product_id]`;
+    productIdInput.value = item?.product_id || '';
+    row.appendChild(productIdInput);
+
+    // Product Name (readonly display – or you can make it a dropdown)
+    const productNameInput = document.createElement('input');
+    productNameInput.type = 'text';
+    productNameInput.className = 'input-field';
+    productNameInput.style.cssText = 'flex: 2;';
+    productNameInput.placeholder = 'Product Name';
+    productNameInput.value = item?.product_name || '';
+    productNameInput.readOnly = true;
+    row.appendChild(productNameInput);
+
+    // Quantity
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.className = 'input-field';
+    qtyInput.style.cssText = 'flex: 1;';
+    qtyInput.placeholder = 'Qty';
+    qtyInput.value = item?.quantity || 1;
+    qtyInput.step = 'any';
+    row.appendChild(qtyInput);
+
+    // Unit Price
+    const unitPriceInput = document.createElement('input');
+    unitPriceInput.type = 'number';
+    unitPriceInput.className = 'input-field';
+    unitPriceInput.style.cssText = 'flex: 1;';
+    unitPriceInput.placeholder = 'Unit Price';
+    unitPriceInput.value = item?.unit_price || 0;
+    unitPriceInput.step = '0.01';
+    row.appendChild(unitPriceInput);
+
+    // Remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn-icon delete-btn';
+    removeBtn.innerHTML = '✕';
+    removeBtn.title = 'Remove item';
+    removeBtn.onclick = function() {
+        if (container.children.length > 1) {
+            row.remove();
+        } else {
+            alert('At least one item is required');
+        }
+    };
+    row.appendChild(removeBtn);
+
+    container.appendChild(row);
+}
+
+async function saveEditPurchase() {
+    const purchaseId = document.getElementById('editPurchaseId').value;
+    const purchaseDate = document.getElementById('editPurchaseDate').value;
+    const baseAmount = parseFloat(document.getElementById('editBaseAmount').value) || 0;
+    const amountPaid = parseFloat(document.getElementById('editAmountPaid').value) || 0;
+
+    if (!purchaseId) {
+        alert('Invalid purchase');
+        return;
+    }
+    if (baseAmount < 0 || amountPaid < 0) {
+        alert('Amounts cannot be negative');
+        return;
+    }
+    if (amountPaid > baseAmount) {
+        alert('Amount paid cannot exceed base amount');
+        return;
+    }
+
+    // ── Collect items from the form ──
+    const itemRows = document.querySelectorAll('.edit-item-row');
+    const items = [];
+    let hasError = false;
+    itemRows.forEach(row => {
+        const productId = row.querySelector('input[name*="product_id"]')?.value || '';
+        const quantity = parseFloat(row.querySelector('input[placeholder="Qty"]')?.value) || 0;
+        const unitPrice = parseFloat(row.querySelector('input[placeholder="Unit Price"]')?.value) || 0;
+        if (!productId) {
+            hasError = true;
+            return;
+        }
+        if (quantity <= 0) {
+            hasError = true;
+            return;
+        }
+        items.push({
+            product_id: productId,
+            quantity: quantity,
+            unit_price: unitPrice
+        });
+    });
+
+    if (hasError || items.length === 0) {
+        alert('Please fill all item fields correctly');
+        return;
+    }
+
+    const payload = {
+        purchase_date: purchaseDate,
+        base_amount: baseAmount,
+        amount_paid: amountPaid,
+        items: items
+    };
+
+    const btn = document.getElementById('saveEditPurchaseBtn');
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = 'Updating...';
+
+    try {
+        const response = await window.apiRequest(`/api/purchases/${purchaseId}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+        if (response && response.success) {
+            alert('Purchase updated successfully');
+            closeModal('editPurchaseModal');
+            await loadPurchases(currentPurchasePage);
+        } else {
+            alert(response?.error || 'Failed to update purchase');
+        }
+    } catch (err) {
+        console.error('Update error:', err);
+        alert('Network error. Please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
+}
+
 // ============================================
 // 7. Initialisation
 // ============================================
@@ -361,6 +547,8 @@ window.saveStockEntry = saveStockEntry;
 window.recordPayment = recordPayment;
 window.viewPurchase = viewPurchase;
 window.initVendorPage = initVendorPage;
+window.saveEditPurchase = saveEditPurchase;
+window.editPurchase = editPurchase;
 
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('vendor_list')?.classList.contains('active')) {
