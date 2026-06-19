@@ -264,20 +264,28 @@ function renderPurchaseTable(purchases) {
         // 9. Action
         const actionCell = tr.insertCell();
         actionCell.innerHTML = `
-            <button class="btn-icon" onclick="editPurchase('${p.id}')" title="Edit Purchase">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
-                </svg>
-            </button>
-            <button class="btn-icon" onclick="viewPurchase('${p.id}')" title="View Details">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="16" x2="12" y2="12"/>
-                    <circle cx="12" cy="8" r="0.5" fill="currentColor" stroke="none"/>
-                </svg>
-            </button>
-            ${p.status !== 'paid' ? `<button class="btn-icon" onclick="recordPayment('${p.id}')" title="Record Payment">💰</button>` : ''}
+            <div class="action-buttons">
+                <button class="btn-icon edit-btn" onclick="editPurchase('${p.id}')" title="Edit Purchase">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </button>
+                ${p.vendorId ?`<button class="btn-icon history-btn" onclick="switchtab('vendorhistory','${p.vendorId}')" title="View History">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                        <path d="M3 3v5h5"/>
+                        <path d="M12 7v5l4 2"/>
+                    </svg>
+                </button>` : ''}
+                ${p.status !== 'paid' ? `
+                <button class="btn-icon restock-btn" onclick="recordPayment('${p.id}')" title="Record Payment">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="6" width="20" height="12" rx="2"/>
+                        <circle cx="12" cy="12" r="2"/>
+                        <path d="M6 12h.01M18 12h.01"/>
+                    </svg>
+                </button>` : ''}
+            </div>
         `;
     });
 }
@@ -540,6 +548,138 @@ async function saveEditPurchase() {
         btn.disabled = false;
         btn.innerText = originalText;
     }
+}
+async function initVendorHistory(vendorId = null) {
+    const titleEl = document.getElementById('vendorHistoryTitle');
+    const subtitleEl = document.getElementById('vendorHistorySubtitle');
+    const bodyEl = document.getElementById('vendorHistoryBody');
+
+    titleEl.innerText = vendorId ? 'Loading vendor history...' : 'Purchase History — All Vendors';
+    subtitleEl.innerText = '';
+    bodyEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">Loading...</p>';
+
+    const url = vendorId
+        ? `/api/vendors/${encodeURIComponent(vendorId)}/history`
+        : `/api/vendors/history/all`;
+
+    try {
+        const data = await window.apiRequest(url);
+        console.log('Vendor history API response:', data); // Debug
+
+        // Safely extract purchases
+        const purchases = Array.isArray(data) ? data : (data?.data || []);
+        console.log('Purchases extracted:', purchases); // Debug
+
+        if (purchases.length === 0) {
+            bodyEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">No purchases found.</p>';
+            return;
+        }
+
+        // Update title with vendor name if available
+        if (vendorId && purchases[0]?.vendorName) {
+            titleEl.innerText = purchases[0].vendorName + ' – History';
+            subtitleEl.innerText = purchases[0].vendorPhone || '';
+        }
+
+        // Render stats and body
+        renderVendorHistoryStats(purchases);
+        renderVendorHistoryBody(purchases);
+
+    } catch (err) {
+        console.error('Error loading vendor history:', err);
+        bodyEl.innerHTML = '<p style="color:var(--danger); text-align:center; padding:2rem;">Failed to load purchase history. Please try again.</p>';
+    }
+}
+
+function renderVendorHistoryStats(purchases) {
+    const totalBilled = purchases.reduce((sum, p) => sum + (p.baseAmount || 0), 0);
+    const totalPaid = purchases.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
+    document.getElementById('vhTotalBilled').innerText = formatCurrency(totalBilled);
+    document.getElementById('vhTotalPaid').innerText = formatCurrency(totalPaid);
+    document.getElementById('vhBalance').innerText = formatCurrency(totalBilled - totalPaid);
+}
+
+function renderVendorHistoryBody(purchases) {
+    const body = document.getElementById('vendorHistoryBody');
+    if (purchases.length === 0) {
+        body.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">No purchases found.</p>';
+        return;
+    }
+    const grouped = {};
+    purchases.forEach(p => {
+        const date = formatDate(p.purchaseDate);
+        (grouped[date] ||= []).push(p);
+    });
+
+    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+    let html = '';
+    sortedDates.forEach(date => {
+        const orders = grouped[date].length;
+        const totalBilled = grouped[date].reduce((sum, p) => sum + (p.baseAmount || 0), 0);
+        const totalPaid = grouped[date].reduce((sum, p) => sum + (p.amountPaid || 0), 0);
+        const totalDue = totalBilled - totalPaid;
+        html += `
+            <details class="accordion" open style="background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:1rem; overflow:hidden;">
+                <summary class="accordion-header" style="cursor:pointer; display:flex; align-items:center; justify-content:center; gap:1.5rem; font-size:0.9rem; padding:0.85rem 1rem; user-select:none; transition:background 0.2s;">
+                    <span style="font-weight:700; font-size:1.05rem; color:var(--text);">${date}</span>
+                    <span style="color:var(--muted-strong);">Orders: <strong>${orders}</strong></span>
+                    <span>Billed: ${formatCurrency(totalBilled)}</span>
+                    <span>Paid: ${formatCurrency(totalPaid)}</span>
+                    <span style="font-weight:700; color:${totalDue > 0 ? 'var(--danger)' : 'var(--ok)'};">Due: ${formatCurrency(totalDue)}</span>
+                </summary>
+                <div class="accordion-body" style="padding:0.5rem;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Vendor</th>
+                                <th>Items</th>
+                                <th>Billed</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        grouped[date].forEach(p => {
+            const balance = (p.baseAmount || 0) - (p.amountPaid || 0);
+            const statusClass = p.status === 'completed' || p.status === 'paid' ? 'badge-success'
+                : p.status === 'cancelled' ? 'badge-danger'
+                : 'badge-warning';
+            let itemsHtml = '';
+            if (p.items && p.items.length > 0) {
+                p.items.forEach(item => {
+                    itemsHtml += `
+                            <div style="font-size:0.8rem; padding:2px 0; color:var(--muted);">
+                                • ${item.product_name || 'Product'} — ${item.quantity} × ₹${item.unit_price}
+                            </div>`;
+                });
+            }
+            html += `
+                            <tr>
+                                <td style="font-family:var(--mono); font-size:0.8rem; color:var(--muted-strong);">${p.id ? p.id.slice(0, 8) : '-'}</td>
+                                <td>${p.vendorName || '-'}</td>
+                                <td>${itemsHtml || '-'}</td>
+                                <td>${formatCurrency(p.baseAmount || 0)}</td>
+                                <td style="color:var(--ok);">${formatCurrency(p.amountPaid || 0)}</td>
+                                <td style="font-weight:700; color:${balance > 0 ? 'var(--danger)' : 'var(--ok)'};">${formatCurrency(balance)}</td>
+                                <td><span class="badge ${statusClass}">${p.status || 'N/A'}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="recordPayment('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
+                                        Pay
+                                    </button>
+                                </td>
+                            </tr>`;
+        });
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </details>`;
+    });
+    body.innerHTML = html;
 }
 
 // ============================================

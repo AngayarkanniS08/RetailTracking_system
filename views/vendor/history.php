@@ -1,4 +1,4 @@
-        <section id="vendorhistory" class="view-section">
+    <section id="vendorhistory" class="view-section">
           <div class="card-header">
             <div style="display:flex; align-items:center; gap:12px;">
               <button class="btn btn-outline btn-sm" onclick="switchTab('vendor_list')"
@@ -13,8 +13,6 @@
               <span id="vendorHistorySubtitle" style="font-size:0.8rem; color:var(--muted);"></span>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
-              <button class="btn btn-outline btn-sm" onclick="openModal('lowStockAlertModal')"
-                style="color:var(--warn); border-color:var(--warn);">🔔 Set Low Stock Alert</button>
               <button class="btn btn-primary btn-sm" id="vendorRestockBtn">+ New Purchase</button>
             </div>
           </div>

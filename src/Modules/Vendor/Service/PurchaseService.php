@@ -251,4 +251,14 @@ class PurchaseService
         // 6. Reload with items
         return $this->repo->findPurchaseById($purchaseId, true);
     }
+
+    public function getVendorHistory(string $vendorId): array
+    {
+        return $this->repo->getVendorHistory($vendorId);
+    }
+
+    public function getAllVendorHistory(): array
+    {
+        return $this->repo->findAllVendorHistory();
+    }
 }

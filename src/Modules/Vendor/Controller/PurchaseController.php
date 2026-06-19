@@ -42,9 +42,13 @@ class PurchaseController
         $page = (int)($_GET['page'] ?? 1);
         $limit = (int)($_GET['limit'] ?? 10);
         $search = $_GET['search'] ?? '';
+        $vendorId = $_GET['vendor_id'] ?? '';
         $filters = [];
         if (!empty($search)) {
             $filters['search'] = $search;
+        }
+        if (!empty($_GET['vendor_id'])) {
+            $filters['vendor_id'] = $_GET['vendor_id'];
         }
         // Add other filters if needed: vendor_id, date_from, date_to, status
 
@@ -242,5 +246,33 @@ class PurchaseController
         // TODO: Implement if needed
         http_response_code(501);
         echo json_encode(['error' => 'Not implemented']);
+    }
+
+    public function vendorHistory(string $vendorId): void
+    {
+        header('Content-Type: application/json');
+        AuthMiddleware::authenticate();
+
+        try {
+            $history = $this->service->getVendorHistory($vendorId);
+            echo json_encode($history);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load vendor history']);
+        }
+    }
+
+    public function allHistory(): void
+    {
+        header('Content-Type: application/json');
+        AuthMiddleware::authenticate();
+
+        try {
+            $history = $this->service->getAllVendorHistory();
+            echo json_encode($history);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load vendor history']);
+        }
     }
 }

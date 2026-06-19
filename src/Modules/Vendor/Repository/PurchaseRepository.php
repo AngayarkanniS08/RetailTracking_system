@@ -355,9 +355,11 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT p.id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid,
                 p.created_at,
+                v.name AS vendor_name, v.contact_info AS vendor_phone,
                 pi.product_id, pi.quantity, pi.unit_cost AS unit_price,
                 COALESCE(pr.name, pi.product_name_snapshot) AS product_name
             FROM vendor_purchases p
+            JOIN vendors v ON v.id = p.vendor_id
             LEFT JOIN vendor_purchase_items pi ON pi.purchase_id = p.id
             LEFT JOIN products pr ON pr.id = pi.product_id
             WHERE p.vendor_id = ? AND p.user_id = current_setting('app.current_user_id')::uuid
@@ -372,10 +374,12 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             if (!isset($history[$purchaseId])) {
                 $history[$purchaseId] = [
                     'id' => $row['id'],
-                    'purchase_date' => $row['purchase_date'],
-                    'base_amount' => (float)$row['base_amount'],
-                    'amount_paid' => (float)$row['amount_paid'],
+                    'purchaseDate' => $row['purchase_date'],
+                    'baseAmount' => (float)$row['base_amount'],
+                    'amountPaid' => (float)$row['amount_paid'],
                     'status' => $row['amount_paid'] >= $row['base_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending'),
+                    'vendorName' => $row['vendor_name'],
+                    'vendorPhone' => $row['vendor_phone'],
                     'items' => []
                 ];
             }
@@ -458,5 +462,50 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    public function findAllVendorHistory(): array
+    {
+        $stmt = $this->db->query("
+            SELECT p.id, p.vendor_id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid,
+                p.created_at,
+                v.name AS vendor_name, v.contact_info AS vendor_phone,
+                pi.product_id, pi.quantity, pi.unit_cost AS unit_price,
+                COALESCE(pr.name, pi.product_name_snapshot) AS product_name
+            FROM vendor_purchases p
+            JOIN vendors v ON v.id = p.vendor_id
+            LEFT JOIN vendor_purchase_items pi ON pi.purchase_id = p.id
+            LEFT JOIN products pr ON pr.id = pi.product_id
+            WHERE p.user_id = current_setting('app.current_user_id')::uuid
+            ORDER BY p.purchase_date DESC
+        ");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $history = [];
+        foreach ($rows as $row) {
+            $purchaseId = $row['id'];
+            if (!isset($history[$purchaseId])) {
+                $history[$purchaseId] = [
+                    'id' => $row['id'],
+                    'purchaseDate' => $row['purchase_date'],
+                    'baseAmount' => (float)$row['base_amount'],
+                    'amountPaid' => (float)$row['amount_paid'],
+                    'status' => $row['amount_paid'] >= $row['base_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending'),
+                    'vendorName' => $row['vendor_name'],
+                    'vendorPhone' => $row['vendor_phone'],
+                    'items' => []
+                ];
+            }
+            if ($row['product_id']) {
+                $history[$purchaseId]['items'][] = [
+                    'product_id' => $row['product_id'],
+                    'product_name' => $row['product_name'],
+                    'quantity' => (float)$row['quantity'],
+                    'unit_price' => (float)$row['unit_price'],
+                    'total_line' => (float)($row['quantity'] * $row['unit_price'])
+                ];
+            }
+        }
+        return array_values($history);
     }
 }

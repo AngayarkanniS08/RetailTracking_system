@@ -1929,6 +1929,18 @@ body{
     background: rgba(34, 197, 94, 0.15);
 }
 
+/* HISTORY BUTTON */
+
+.history-btn{
+    color: var(--accent-2);
+    border-color: var(--accent-2-muted);
+}
+
+.history-btn:hover{
+    background: var(--accent-2-subtle);
+}
+
+
 /* DELETE BUTTON */
 
 .delete-btn{
@@ -1968,5 +1980,79 @@ input[type=number] {
     -moz-appearance: textfield;
 }
 
+/* Vendor History specific styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+        }
+        .stat-label {
+            font-size: 0.78rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-strong);
+            margin-top: 0.25rem;
+        }
+        .date-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-100);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: background var(--duration-fast);
+            user-select: none;
+        }
+        .date-group-header:hover {
+            background: var(--panel-hover);
+        }
+        .date-group-header .dg-date {
+            font-weight: 600;
+            color: var(--text-strong);
+            font-size: 0.95rem;
+        }
+        .date-group-header .dg-meta {
+            font-size: 0.8rem;
+            color: var(--muted);
+            display: flex;
+            gap: 16px;
+        }
+        .date-group-header .dg-arrow {
+            color: var(--muted);
+            transition: transform 0.2s;
+            font-size: 1.1rem;
+        }
+        .date-group-header.open .dg-arrow {
+            transform: rotate(90deg);
+        }
+        .date-group-body {
+            display: none;
+            margin-bottom: 12px;
+        }
+        .date-group-body.open {
+            display: block;
+            animation: rise 0.15s ease-out;
+        }
+        .badge-paid { background: var(--ok-subtle); color: var(--ok); }
+        .badge-partial { background: var(--warn-subtle); color: var(--warn); }
+        .badge-pending { background: var(--danger-subtle); color: var(--danger); }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
 
 

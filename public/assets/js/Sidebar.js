@@ -16,7 +16,7 @@ const sections = [
 ];
 
 // Switch to a specific section by ID
-function switchTab(sectionId) {
+function switchTab(sectionId, vendorId = null) {
     // Hide all sections
     sections.forEach(id => {
         const section = document.getElementById(id);
@@ -50,8 +50,10 @@ function switchTab(sectionId) {
     if (sectionId === 'credit') {
         if (typeof initCredit === 'function') initCredit();
     }
-    // Add others as you build them
+    if (sectionId === 'vendorhistory' && typeof initVendorHistory === 'function') initVendorHistory(vendorId);
+
 }
+
 
 // Initialise sidebar click handlers
 function initSidebar() {

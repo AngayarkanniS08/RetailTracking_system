@@ -158,6 +158,16 @@ class ApiRoutes
             AuthMiddleware::authenticate(900);
             (new \Modules\Vendor\Controller\PurchaseController())->destroy($params['id']);
         });
+
+            $router->add('GET', '/api/vendors/{id}/history', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Vendor\Controller\PurchaseController())->vendorHistory($params['id']);
+        });
+
+        $router->add('GET', '/api/vendors/history/all', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Vendor\Controller\PurchaseController())->allHistory();
+        });
             
     }
 }
