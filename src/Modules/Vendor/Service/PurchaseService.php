@@ -46,8 +46,15 @@ class PurchaseService
         if ($dto->amountPaid < 0) {
             throw new ValidationException("Amount paid cannot be negative");
         }
-        if ($dto->amountPaid > $dto->baseAmount) {
-            throw new ValidationException("Amount paid cannot exceed base amount");
+        // Calculate total (base + GST) from items
+        $totalAmount = 0;
+        foreach ($dto->items as $item) {
+            $itemTotal = $item->quantity * $item->unitPrice;
+            $gstAmount = $itemTotal * ($item->gstRate / 100);
+            $totalAmount += $itemTotal + $gstAmount;
+        }
+        if ($dto->amountPaid > $totalAmount) {
+            throw new ValidationException("Amount paid cannot exceed total amount");
         }
 
         // 2. Validate each item
@@ -80,24 +87,32 @@ class PurchaseService
             items: null
         );
 
-        // 5. Save purchase header
-        $purchase = $this->repo->createPurchase($purchase);
+        // 5. Save purchase header + items in a single transaction
+        $this->repo->beginTransaction();
+        try {
+            $purchase = $this->repo->createPurchase($purchase);
 
-        // 6. Create purchase items
-        $items = [];
-        foreach ($dto->items as $itemDTO) {
-            $items[] = new PurchaseItem(
-                id: null,
-                purchaseId: $purchase->id,
-                productId: $itemDTO->productId,
-                quantity: $itemDTO->quantity,
-                unitPrice: $itemDTO->unitPrice,
-                totalPrice: $itemDTO->quantity * $itemDTO->unitPrice
-            );
+            $items = [];
+            foreach ($dto->items as $itemDTO) {
+                $items[] = new PurchaseItem(
+                    id: null,
+                    purchaseId: $purchase->id,
+                    productId: $itemDTO->productId,
+                    quantity: $itemDTO->quantity,
+                    unitPrice: $itemDTO->unitPrice,
+                    totalPrice: $itemDTO->quantity * $itemDTO->unitPrice,
+                    gstRate: $itemDTO->gstRate
+                );
+            }
+            $this->repo->createPurchaseItems($items, $purchase->id);
+
+            $this->repo->commit();
+        } catch (\Exception $e) {
+            $this->repo->rollback();
+            throw $e;
         }
-        $this->repo->createPurchaseItems($items, $purchase->id);
 
-        // 7. Load items back into purchase for response
+        // 6. Load items back into purchase for response
         $purchase->items = $items;
 
         return $purchase;
@@ -112,7 +127,7 @@ class PurchaseService
             throw new ValidationException("Payment amount must be positive");
         }
 
-        $purchase = $this->repo->findPurchaseById($purchaseId);
+        $purchase = $this->repo->findPurchaseById($purchaseId, true);
         if (!$purchase) {
             throw new ValidationException("Purchase not found");
         }
@@ -121,8 +136,18 @@ class PurchaseService
             throw new ValidationException("Purchase is already fully paid");
         }
 
+        // Calculate total with GST
+        $totalAmount = $purchase->baseAmount;
+        if ($purchase->items) {
+            $gstSum = 0;
+            foreach ($purchase->items as $item) {
+                $gstSum += $item->quantity * $item->unitPrice * ($item->gstRate / 100);
+            }
+            $totalAmount += $gstSum;
+        }
+
         $newPaid = $purchase->amountPaid + $amount;
-        if ($newPaid > $purchase->baseAmount) {
+        if ($newPaid > $totalAmount) {
             throw new ValidationException("Payment would exceed total amount");
         }
 
@@ -149,20 +174,11 @@ class PurchaseService
     public function getPurchases(int $page = 1, int $limit = 10, array $filters = []): array
     {
         $result = $this->repo->findAllPurchases($page, $limit, $filters);
-        $totalPages = ceil($result['total'] / $limit);
         $stats = $this->repo->getGlobalPurchaseStats();
         
         return [
             'data' => $result['data'],
-            'stats' => $stats,
-            'pagination' => [
-                'current_page' => $page,
-                'total_pages'  => max(1, (int)$totalPages),
-                'limit'        => $limit,
-                'total_records'=> $result['total'],
-                'has_next'     => $page < $totalPages,
-                'has_prev'     => $page > 1
-            ]
+            'stats' => $stats
         ];
     }
 
@@ -196,8 +212,16 @@ class PurchaseService
         if ($dto->amountPaid < 0) {
             throw new ValidationException("Amount paid cannot be negative");
         }
-        if ($dto->amountPaid > $dto->baseAmount) {
-            throw new ValidationException("Amount paid cannot exceed base amount");
+        // Calculate total (base + GST) from items
+        $totalAmount = 0;
+        foreach ($dto->items as $item) {
+            $itemTotal = $item->quantity * $item->unitPrice;
+            $gstAmount = $itemTotal * ($item->gstRate / 100);
+            $totalAmount += $itemTotal + $gstAmount;
+        }
+
+        if ($dto->amountPaid > $totalAmount) {
+            throw new ValidationException("Amount paid cannot exceed total amount (₹" . number_format($totalAmount, 2) . ")");
         }
 
         // 2. Validate each item
@@ -219,36 +243,44 @@ class PurchaseService
             throw new ValidationException("Purchase not found");
         }
 
-        // 4. Update header
-        $purchase = new Purchase(
-            id: $purchaseId,
-            vendorId: $existing->vendorId,
-            purchaseDate: $dto->purchaseDate,
-            baseAmount: $dto->baseAmount,
-            amountPaid: $dto->amountPaid,
-            status: $this->determineStatus($dto->amountPaid, $dto->baseAmount),
-            userId: $userId,
-            createdAt: $existing->createdAt,
-            updatedAt: null,
-            items: null
-        );
-        $purchase = $this->repo->updatePurchase($purchase);
-
-        // 5. Replace items (delete old, insert new)
-        $items = [];
-        foreach ($dto->items as $itemDTO) {
-            $items[] = new PurchaseItem(
-                id: null,
-                purchaseId: $purchaseId,
-                productId: $itemDTO->productId,
-                quantity: $itemDTO->quantity,
-                unitPrice: $itemDTO->unitPrice,
-                totalPrice: $itemDTO->quantity * $itemDTO->unitPrice
+        // 4. Update header + replace items in a single transaction
+        $this->repo->beginTransaction();
+        try {
+            $purchase = new Purchase(
+                id: $purchaseId,
+                vendorId: $existing->vendorId,
+                purchaseDate: $dto->purchaseDate,
+                baseAmount: $dto->baseAmount,
+                amountPaid: $dto->amountPaid,
+                status: $this->determineStatus($dto->amountPaid, $dto->baseAmount),
+                userId: $userId,
+                createdAt: $existing->createdAt,
+                updatedAt: null,
+                items: null
             );
-        }
-        $this->repo->replacePurchaseItems($purchaseId, $items);
+            $purchase = $this->repo->updatePurchase($purchase);
 
-        // 6. Reload with items
+            $items = [];
+            foreach ($dto->items as $itemDTO) {
+                $items[] = new PurchaseItem(
+                    id: null,
+                    purchaseId: $purchaseId,
+                    productId: $itemDTO->productId,
+                    quantity: $itemDTO->quantity,
+                    unitPrice: $itemDTO->unitPrice,
+                    totalPrice: $itemDTO->quantity * $itemDTO->unitPrice,
+                    gstRate: $itemDTO->gstRate
+                );
+            }
+            $this->repo->replacePurchaseItems($purchaseId, $items);
+
+            $this->repo->commit();
+        } catch (\Exception $e) {
+            $this->repo->rollback();
+            throw $e;
+        }
+
+        // 5. Reload with items
         return $this->repo->findPurchaseById($purchaseId, true);
     }
 

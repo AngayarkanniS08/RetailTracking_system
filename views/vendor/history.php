@@ -1,3 +1,28 @@
+<?php
+// Get vendor_id from URL
+$vendorId = $_GET['vendor_id'] ?? '';
+
+// If no vendor_id, show all vendors (or show an error)
+if (empty($vendorId)) {
+    // Option 1: Show all vendors
+    $pageTitle = 'All Vendors – Purchase History';
+    $vendorName = 'All Vendors';
+} else {
+    // Fetch vendor name from database
+    try {
+        $pdo = \Config\Database::getConnection();
+        $stmt = $pdo->prepare("SELECT name FROM vendors WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid");
+        $stmt->execute([$vendorId]);
+        $vendor = $stmt->fetch(PDO::FETCH_ASSOC);
+        $vendorName = $vendor['name'] ?? 'Vendor';
+        $pageTitle = $vendorName . ' – Purchase History';
+    } catch (Exception $e) {
+        $vendorName = 'Vendor';
+        $pageTitle = 'Vendor Purchase History';
+    }
+}
+?>    
+    
     <section id="vendorhistory" class="view-section">
           <div class="card-header">
             <div style="display:flex; align-items:center; gap:12px;">
@@ -25,7 +50,7 @@
           <!-- Financial Summary mini-cards -->
           <div class="stats-grid" style="margin-bottom:1.5rem;">
             <div class="stat-card">
-              <div class="stat-label">Total Billed</div>
+              <div class="stat-label">Total</div>
               <div class="stat-value" id="vhTotalBilled">₹0.00</div>
             </div>
             <div class="stat-card">

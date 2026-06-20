@@ -6,6 +6,10 @@ use Modules\Vendor\Model\Purchase;
 use Modules\Vendor\Model\PurchaseItem;
 
 interface PurchaseRepositoryInterface {
+    public function beginTransaction(): void;
+    public function commit(): void;
+    public function rollback(): void;
+
     //vendor methods
     public function findOrCreateVendor(string $name, string $phone): Vendor;
     public function findVendorById(string $id, bool $withPurchases = false): ?Vendor;

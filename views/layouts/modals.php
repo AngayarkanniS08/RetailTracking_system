@@ -204,7 +204,7 @@
       </div>
       <div class="input-group">
         <label class="input-label">Stock Name</label>
-        <select id="slStockName" class="input-field" onchange="updateSlUnit()">
+        <select id="slStockName" class="input-field">
           <!-- Populated from products -->
         </select>
       </div>
@@ -223,14 +223,13 @@
         </div>
         <div class="input-group" style="flex:1;">
           <label class="input-label">Base Amount (₹)</label>
-          <input type="number" id="slAmount" class="input-field" placeholder="0.00" min="0" oninput="calculateSlGst()">
+          <input type="number" id="slAmount" class="input-field" placeholder="0.00" min="0" oninput="calculatePurchaseTotal()">
         </div>
       </div>
-      <div id="slGstDisplay"
-        style="margin-top:-10px; margin-bottom:15px; font-size: 0.8rem; color: var(--muted); display:flex; justify-content:space-between; padding: 0 5px;">
-        <span id="slGstRateText">GST (0%): ₹0.00</span>
-        <strong id="slTotalText" style="color:var(--text-strong)">Total Bill: ₹0.00</strong>
-      </div>
+      <div class="input-group">
+        <label>GST Rate (%)</label>
+        <input type="number" id="purchaseGstRate" class="input-field" step="0.01" value="0" oninput="calculatePurchaseTotal()">
+    </div>
       <div class="d-flex">
         <div class="input-group" style="flex:1;">
           <label class="input-label">Amount Paid (₹)</label>

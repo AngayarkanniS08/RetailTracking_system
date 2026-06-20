@@ -21,7 +21,7 @@
               <div class="stat-value" id="slTotalVendors">0</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Total Purchased</div>
+              <div class="stat-label">Total</div>
               <div class="stat-value" id="slTotalAmount">₹0.00</div>
             </div>
             <div class="stat-card">
@@ -41,12 +41,10 @@
                   <tr>
                     <th>Vendor Name</th>
                     <th>Contact</th>
-                    <th>Purchase Date</th>
-                    <th>Total orders</th>
-                    <th>Total Bill (₹)</th>
-                    <th>Amount Paid (₹)</th>
-                    <th>Balance Due (₹)</th>
-                    <th>Status</th>
+                    <th>Orders</th>
+                    <th>Total (₹)</th>
+                    <th>Paid (₹)</th>
+                    <th>Balance (₹)</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -56,4 +54,5 @@
               </table>
             </div>
           </div>
+          <div id="purchasePaginationControls" style="display:none;"></div>
         </section>

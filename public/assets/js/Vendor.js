@@ -42,16 +42,15 @@ async function loadProductsForVendor() {
     select.innerHTML = '<option value="">Loading products...</option>';
     try {
         const data = await window.apiRequest('/api/products?limit=1000');
-        console.log('API response:', data);  // ← ADD THIS
         
         const products = Array.isArray(data) ? data : (data.data || []);
-        console.log('Products array:', products);  // ← ADD THIS
         
         select.innerHTML = '<option value="">-- Select Product --</option>';
         products.forEach(p => {
             const opt = document.createElement('option');
             opt.value = p.id;
             opt.textContent = p.name;
+            opt.dataset.gst = p.gst_rate ?? 0;
             select.appendChild(opt);
         });
     } catch (err) {
@@ -59,6 +58,13 @@ async function loadProductsForVendor() {
         select.innerHTML = '<option value="">Error loading products</option>';
     }
 }
+
+document.getElementById('slStockName')?.addEventListener('change', function() {
+    const selected = this.options[this.selectedIndex];
+    const gstRate = parseFloat(selected?.dataset?.gst) || 0;
+    document.getElementById('purchaseGstRate').value = gstRate;
+    calculatePurchaseTotal();
+});
 
 // ============================================
 // 2. Load vendors for dropdown
@@ -127,8 +133,10 @@ async function saveStockEntry() {
         alert('Base amount must be greater than zero');
         return;
     }
-    if (amountPaid > baseAmount) {
-        alert('Amount paid cannot exceed base amount');
+    const gstRate = parseFloat(document.getElementById('purchaseGstRate').value) || 0;
+    const totalAmount = baseAmount + (baseAmount * gstRate / 100);
+    if (amountPaid > totalAmount) {
+        alert('Amount paid cannot exceed total amount');
         return;
     }
 
@@ -142,7 +150,8 @@ async function saveStockEntry() {
         items: [{
             product_id: productId,
             quantity: quantity,
-            unit_price: baseAmount / quantity   // calculate unit price
+            unit_price: baseAmount / quantity,
+            gst_rate: gstRate
         }]
     };
 
@@ -170,8 +179,8 @@ async function saveStockEntry() {
             document.getElementById('slPaid').value = '';
             document.getElementById('slPurchaseDate').value = '';
             // Refresh purchase list if on vendor page
-            if (typeof loadPurchases === 'function') {
-                loadPurchases(1);
+            if (typeof loadVendorSummaries === 'function') {
+                loadVendorSummaries();
             }
         } else {
             alert(response?.error || 'Failed to save purchase');
@@ -185,9 +194,48 @@ async function saveStockEntry() {
     }
 }
 
+function calculatePurchaseTotal() {
+    const baseAmount = parseFloat(document.getElementById('slAmount').value) || 0;
+    const gstRate = parseFloat(document.getElementById('purchaseGstRate').value) || 0;
+    const gstAmount = baseAmount * (gstRate / 100);
+    const totalAmount = baseAmount + gstAmount;
+
+    let display = document.getElementById('purchaseGstDisplay');
+    if (!display) {
+        const container = document.getElementById('purchaseGstRate').closest('.input-group');
+        display = document.createElement('div');
+        display.id = 'purchaseGstDisplay';
+        display.style.cssText = 'font-size:0.8rem; margin-top:4px; color:var(--muted-strong);';
+        container.appendChild(display);
+    }
+    display.innerHTML = `Base: <strong>${formatCurrency(baseAmount)}</strong> &nbsp;|&nbsp; GST @${gstRate}%: <strong>${formatCurrency(gstAmount)}</strong> &nbsp;|&nbsp; Total: <strong>${formatCurrency(totalAmount)}</strong>`;
+}
+
 // ============================================
-// 4. Load and render purchase list
+// 4. Load and render vendor summary (one row per vendor)
 // ============================================
+async function loadVendorSummaries() {
+    try {
+        const response = await window.apiRequest('/api/purchases?limit=1000');
+        const vendors = response.data || [];
+        const stats = response.stats || {};
+
+        // Update stats cards
+        const totalVendorsEl = document.getElementById('slTotalVendors');
+        const totalPurchasedEl = document.getElementById('slTotalAmount');
+        const totalPaidEl = document.getElementById('slTotalPaid');
+        const totalBalanceEl = document.getElementById('slTotalBalance');
+        if (totalVendorsEl) totalVendorsEl.innerText = stats.total_vendors ?? vendors.length;
+        if (totalPurchasedEl) totalPurchasedEl.innerText = formatCurrency(stats.total_purchased ?? 0);
+        if (totalPaidEl) totalPaidEl.innerText = formatCurrency(stats.total_paid ?? 0);
+        if (totalBalanceEl) totalBalanceEl.innerText = formatCurrency(stats.balance_due ?? 0);
+
+        renderVendorSummaryTable(vendors);
+    } catch (err) {
+        console.error('Error loading vendor summaries', err);
+    }
+}
+
 async function loadPurchases(page = 1) {
     currentPurchasePage = page;
     const search = document.getElementById('vendorSearch')?.value || '';
@@ -199,18 +247,6 @@ async function loadPurchases(page = 1) {
             const purchases = data.data || [];
             totalPurchasePages = data.pagination?.total_pages || 1;
 
-            // Update stats cards
-            if (data.stats) {
-                const totalVendorsEl = document.getElementById('slTotalVendors');
-                const totalPurchasedEl = document.getElementById('slTotalAmount');
-                const totalPaidEl = document.getElementById('slTotalPaid');
-                const totalBalanceEl = document.getElementById('slTotalBalance');
-                if (totalVendorsEl) totalVendorsEl.innerText = data.stats.total_vendors || 0;
-                if (totalPurchasedEl) totalPurchasedEl.innerText = formatCurrency(data.stats.total_purchased || 0);
-                if (totalPaidEl) totalPaidEl.innerText = formatCurrency(data.stats.total_paid || 0);
-                if (totalBalanceEl) totalBalanceEl.innerText = formatCurrency(data.stats.balance_due || 0);
-            }
-
             renderPurchaseTable(purchases);
             renderPurchasePagination(data.pagination);
         } else {
@@ -221,71 +257,35 @@ async function loadPurchases(page = 1) {
     }
 }
 
-function renderPurchaseTable(purchases) {
+function renderVendorSummaryTable(vendors) {
     const tbody = document.querySelector('#vendorPurchaseTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    if (purchases.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:2rem;">No purchases found</td></tr>';
+    if (vendors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:2rem;">No vendors found</td></tr>';
         return;
     }
-    purchases.forEach(p => {
+    vendors.forEach(v => {
         const tr = tbody.insertRow();
-        
-        // 1. Vendor Name
-        tr.insertCell().innerText = p.vendorName || p.vendorId || '-';
-        
-        // 2. Contact Info
-        tr.insertCell().innerText = p.vendorPhone || '-';
-        
-        // 3. Purchase Date
-        tr.insertCell().innerText = formatDate(p.purchaseDate);
-        
-        // 4. Total orders
+
+        tr.insertCell().innerText = v.vendorName || '-';
+        tr.insertCell().innerText = v.vendorPhone || '-';
+
         const ordersCell = tr.insertCell();
-        ordersCell.innerHTML = `
-            <span style="font-weight: 500;">
-                📦 ${p.totalOrders || 0}
-            </span>
-        `;
-        
-        // 5. Total Bill
-        tr.insertCell().innerText = formatCurrency(p.baseAmount || 0);
-        
-        // 6. Amount Paid
-        tr.insertCell().innerText = formatCurrency(p.amountPaid || 0);
-        
-        // 7. Balance Due
-        tr.insertCell().innerText = formatCurrency((p.baseAmount || 0) - (p.amountPaid || 0));
-        
-        // 8. Status
-        tr.insertCell().innerHTML = `<span class="badge badge-${p.status === 'paid' ? 'ok' : (p.status === 'partial' ? 'warn' : 'danger')}">${p.status}</span>`;
-        
-        // 9. Action
+        ordersCell.innerHTML = `<span style="font-weight:500;">📦 ${v.totalOrders}</span>`;
+
+        tr.insertCell().innerText = formatCurrency(v.totalBilled);
+        tr.insertCell().innerText = formatCurrency(v.totalPaid);
+
+        const balance = v.balanceDue;
+        const balanceCell = tr.insertCell();
+        balanceCell.innerHTML = `<span style="font-weight:700; color:${balance > 0 ? 'var(--danger)' : 'var(--ok)'};">${formatCurrency(balance)}</span>`;
+
         const actionCell = tr.insertCell();
         actionCell.innerHTML = `
-            <div class="action-buttons">
-                <button class="btn-icon edit-btn" onclick="editPurchase('${p.id}')" title="Edit Purchase">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                    </svg>
-                </button>
-                ${p.vendorId ?`<button class="btn-icon history-btn" onclick="switchtab('vendorhistory','${p.vendorId}')" title="View History">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                        <path d="M3 3v5h5"/>
-                        <path d="M12 7v5l4 2"/>
-                    </svg>
-                </button>` : ''}
-                ${p.status !== 'paid' ? `
-                <button class="btn-icon restock-btn" onclick="recordPayment('${p.id}')" title="Record Payment">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="2" y="6" width="20" height="12" rx="2"/>
-                        <circle cx="12" cy="12" r="2"/>
-                        <path d="M6 12h.01M18 12h.01"/>
-                    </svg>
-                </button>` : ''}
-            </div>
+            <button class="btn btn-sm btn-outline" onclick="switchTab('vendorhistory','${v.vendorId}')" style="padding:2px 10px; font-size:0.75rem;">
+                View History
+            </button>
         `;
     });
 }
@@ -338,6 +338,15 @@ async function viewPurchase(purchaseId) {
         console.error(err);
         alert('Error loading details');
     }
+}
+
+function viewVendorHistory(vendorId) {
+    if (!vendorId) {
+        alert('No vendor selected');
+        return;
+    }
+    // Redirect to vendor history page with vendor_id as query parameter
+    window.location.href = `/vendor/history.php?vendor_id=${vendorId}`;
 }
 
 // ============================================
@@ -452,6 +461,16 @@ function addEditItemRow(item = null, index = 0) {
     unitPriceInput.step = '0.01';
     row.appendChild(unitPriceInput);
 
+    // GST Rate (%)
+    const gstInput = document.createElement('input');
+    gstInput.type = 'number';
+    gstInput.className = 'input-field';
+    gstInput.style.cssText = 'flex: 0.6;';
+    gstInput.placeholder = 'GST %';
+    gstInput.value = item?.gstRate || 0;
+    gstInput.step = '0.01';
+    row.appendChild(gstInput);
+
     // Remove button
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
@@ -484,19 +503,16 @@ async function saveEditPurchase() {
         alert('Amounts cannot be negative');
         return;
     }
-    if (amountPaid > baseAmount) {
-        alert('Amount paid cannot exceed base amount');
-        return;
-    }
-
     // ── Collect items from the form ──
     const itemRows = document.querySelectorAll('.edit-item-row');
     const items = [];
     let hasError = false;
+    let totalGst = 0;
     itemRows.forEach(row => {
         const productId = row.querySelector('input[name*="product_id"]')?.value || '';
         const quantity = parseFloat(row.querySelector('input[placeholder="Qty"]')?.value) || 0;
         const unitPrice = parseFloat(row.querySelector('input[placeholder="Unit Price"]')?.value) || 0;
+        const gstRate = parseFloat(row.querySelector('input[placeholder="GST %"]')?.value) || 0;
         if (!productId) {
             hasError = true;
             return;
@@ -505,15 +521,21 @@ async function saveEditPurchase() {
             hasError = true;
             return;
         }
+        totalGst += quantity * unitPrice * (gstRate / 100);
         items.push({
             product_id: productId,
             quantity: quantity,
-            unit_price: unitPrice
+            unit_price: unitPrice,
+            gst_rate: gstRate
         });
     });
 
     if (hasError || items.length === 0) {
         alert('Please fill all item fields correctly');
+        return;
+    }
+    if (amountPaid > baseAmount + totalGst) {
+        alert('Amount paid cannot exceed total amount');
         return;
     }
 
@@ -564,24 +586,18 @@ async function initVendorHistory(vendorId = null) {
 
     try {
         const data = await window.apiRequest(url);
-        console.log('Vendor history API response:', data); // Debug
-
-        // Safely extract purchases
         const purchases = Array.isArray(data) ? data : (data?.data || []);
-        console.log('Purchases extracted:', purchases); // Debug
 
         if (purchases.length === 0) {
             bodyEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">No purchases found.</p>';
             return;
         }
 
-        // Update title with vendor name if available
         if (vendorId && purchases[0]?.vendorName) {
             titleEl.innerText = purchases[0].vendorName + ' – History';
             subtitleEl.innerText = purchases[0].vendorPhone || '';
         }
 
-        // Render stats and body
         renderVendorHistoryStats(purchases);
         renderVendorHistoryBody(purchases);
 
@@ -623,7 +639,7 @@ function renderVendorHistoryBody(purchases) {
                 <summary class="accordion-header" style="cursor:pointer; display:flex; align-items:center; justify-content:center; gap:1.5rem; font-size:0.9rem; padding:0.85rem 1rem; user-select:none; transition:background 0.2s;">
                     <span style="font-weight:700; font-size:1.05rem; color:var(--text);">${date}</span>
                     <span style="color:var(--muted-strong);">Orders: <strong>${orders}</strong></span>
-                    <span>Billed: ${formatCurrency(totalBilled)}</span>
+                    <span>Total: ${formatCurrency(totalBilled)}</span>
                     <span>Paid: ${formatCurrency(totalPaid)}</span>
                     <span style="font-weight:700; color:${totalDue > 0 ? 'var(--danger)' : 'var(--ok)'};">Due: ${formatCurrency(totalDue)}</span>
                 </summary>
@@ -634,7 +650,9 @@ function renderVendorHistoryBody(purchases) {
                                 <th>ID</th>
                                 <th>Vendor</th>
                                 <th>Items</th>
-                                <th>Billed</th>
+                                <th>Base Amt</th>
+                                <th>GST</th>
+                                <th>Total</th>
                                 <th>Paid</th>
                                 <th>Balance</th>
                                 <th>Status</th>
@@ -644,30 +662,40 @@ function renderVendorHistoryBody(purchases) {
                         <tbody>
         `;
         grouped[date].forEach(p => {
-            const balance = (p.baseAmount || 0) - (p.amountPaid || 0);
             const statusClass = p.status === 'completed' || p.status === 'paid' ? 'badge-success'
                 : p.status === 'cancelled' ? 'badge-danger'
                 : 'badge-warning';
             let itemsHtml = '';
+            let totalGst = 0;
             if (p.items && p.items.length > 0) {
                 p.items.forEach(item => {
+                    const gstAmount = (item.quantity * item.unit_price * (item.gst_rate || 0)) / 100;
+                    totalGst += gstAmount;
                     itemsHtml += `
                             <div style="font-size:0.8rem; padding:2px 0; color:var(--muted);">
                                 • ${item.product_name || 'Product'} — ${item.quantity} × ₹${item.unit_price}
+                                <span style="color:var(--muted-strong);"> (GST @${item.gst_rate || 0}%: ₹${gstAmount.toFixed(2)})</span>
                             </div>`;
                 });
             }
+            const totalAmount = (p.baseAmount || 0) + totalGst;
+            const balance = totalAmount - (p.amountPaid || 0);
             html += `
                             <tr>
                                 <td style="font-family:var(--mono); font-size:0.8rem; color:var(--muted-strong);">${p.id ? p.id.slice(0, 8) : '-'}</td>
                                 <td>${p.vendorName || '-'}</td>
                                 <td>${itemsHtml || '-'}</td>
                                 <td>${formatCurrency(p.baseAmount || 0)}</td>
+                                <td style="font-size:0.8rem; color:var(--muted-strong);">${formatCurrency(totalGst)}</td>
+                                <td style="font-weight:600;">${formatCurrency(totalAmount)}</td>
                                 <td style="color:var(--ok);">${formatCurrency(p.amountPaid || 0)}</td>
                                 <td style="font-weight:700; color:${balance > 0 ? 'var(--danger)' : 'var(--ok)'};">${formatCurrency(balance)}</td>
                                 <td><span class="badge ${statusClass}">${p.status || 'N/A'}</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary" onclick="recordPayment('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
+                                <td style="display:flex; gap:4px;">
+                                    <button class="btn btn-sm btn-primary" onclick="editPurchase('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
+                                        Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline" onclick="recordPayment('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
                                         Pay
                                     </button>
                                 </td>
@@ -682,11 +710,12 @@ function renderVendorHistoryBody(purchases) {
     body.innerHTML = html;
 }
 
+
 // ============================================
 // 7. Initialisation
 // ============================================
 async function initVendorPage() {
-    await loadPurchases(1);
+    await loadVendorSummaries();
 }
 
 // Call load functions when the modal opens (called from button)

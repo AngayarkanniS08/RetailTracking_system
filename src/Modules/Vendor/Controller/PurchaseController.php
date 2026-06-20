@@ -85,7 +85,8 @@ class PurchaseController
             $items[] = new PurchaseItemDTO(
                 productId: $itemData['product_id'] ?? '',
                 quantity: (float)($itemData['quantity'] ?? 0),
-                unitPrice: (float)($itemData['unit_price'] ?? 0)
+                unitPrice: (float)($itemData['unit_price'] ?? 0),
+                gstRate: (float)($itemData['gst_rate'] ?? 0)
             );
         }
 
@@ -207,7 +208,8 @@ class PurchaseController
             $items[] = new PurchaseItemDTO(
                 productId: $itemData['product_id'] ?? '',
                 quantity: (float)($itemData['quantity'] ?? 0),
-                unitPrice: (float)($itemData['unit_price'] ?? 0)
+                unitPrice: (float)($itemData['unit_price'] ?? 0),
+                gstRate: (float)($itemData['gst_rate'] ?? 0)
             );
         }
 

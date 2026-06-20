@@ -11,6 +11,7 @@ class PurchaseItem
         public float   $quantity,
         public float   $unitPrice,
         public ?float  $totalPrice = null,
-        public ?string $productName = null
+        public ?string $productName = null,
+        public float   $gstRate = 0
     ) {}
 }
