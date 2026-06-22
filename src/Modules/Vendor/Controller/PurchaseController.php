@@ -168,6 +168,7 @@ class PurchaseController
 
         $input = json_decode(file_get_contents('php://input'), true);
         $amount = (float)($input['amount'] ?? 0);
+        $paymentDate = $input['payment_date'] ?? date('Y-m-d');
 
         if ($amount <= 0) {
             http_response_code(422);
@@ -176,7 +177,7 @@ class PurchaseController
         }
 
         try {
-            $purchase = $this->service->recordPayment($id, $amount);
+            $purchase = $this->service->recordPayment($id, $amount, $paymentDate);
             echo json_encode([
                 'success' => true,
                 'message' => 'Payment recorded successfully',
@@ -283,6 +284,34 @@ class PurchaseController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load vendor history']);
+        }
+    }
+
+    public function vendorPayments(string $vendorId): void
+    {
+        header('Content-Type: application/json');
+        AuthMiddleware::authenticate();
+
+        try {
+            $payments = $this->service->getVendorPayments($vendorId);
+            echo json_encode($payments);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load vendor payments']);
+        }
+    }
+
+    public function allPayments(): void
+    {
+        header('Content-Type: application/json');
+        AuthMiddleware::authenticate();
+
+        try {
+            $payments = $this->service->getAllPayments();
+            echo json_encode($payments);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load payments']);
         }
     }
 

@@ -8,6 +8,7 @@ use Modules\Vendor\Model\PurchaseItem;
 use Modules\Vendor\Model\Vendor;
 use Modules\Vendor\Repository\Contract\PurchaseRepositoryInterface;
 use Modules\Auth\Validation\ValidationException;
+use App\Common\Helpers\ArrayHelper;
 
 class PurchaseService
 {
@@ -121,7 +122,7 @@ class PurchaseService
     /**
      * Record a payment against a purchase
      */
-    public function recordPayment(string $purchaseId, float $amount): Purchase
+    public function recordPayment(string $purchaseId, float $amount, string $paymentDate = null): Purchase
     {
         if ($amount <= 0) {
             throw new ValidationException("Payment amount must be positive");
@@ -151,7 +152,7 @@ class PurchaseService
             throw new ValidationException("Payment would exceed total amount");
         }
 
-        $success = $this->repo->recordPayment($purchaseId, $amount);
+        $success = $this->repo->recordPayment($purchaseId, $amount, $paymentDate);
         if (!$success) {
             throw new ValidationException("Failed to record payment");
         }
@@ -175,9 +176,11 @@ class PurchaseService
     {
         $result = $this->repo->findAllPurchases($page, $limit, $filters);
         $stats = $this->repo->getGlobalPurchaseStats();
+        $pagination = ArrayHelper::getPaginationMeta($page, $limit, $result['total']);
         
         return [
             'data' => $result['data'],
+            'pagination' => $pagination,
             'stats' => $stats
         ];
     }
@@ -297,5 +300,15 @@ class PurchaseService
     public function getAllVendors(): array
     {
         return $this->repo->findAllVendors();
+    }
+
+    public function getVendorPayments(string $vendorId): array
+    {
+        return $this->repo->getVendorPayments($vendorId);
+    }
+
+    public function getAllPayments(): array
+    {
+        return $this->repo->findAllPayments();
     }
 }

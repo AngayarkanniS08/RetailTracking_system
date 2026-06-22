@@ -281,12 +281,6 @@
         <button class="close-btn" onclick="closeModal('quickPurchaseModal')">&times;</button>
       </div>
       <div class="input-group">
-        <label class="input-label">Select Vendor</label>
-        <select id="qpVendorId" class="input-field" onchange="onVendorSelect()">
-          <option value="">-- Select Vendor --</option>
-        </select>
-      </div>
-      <div class="input-group">
         <label class="input-label">Vendor Name</label>
         <input type="text" id="qpVendorName" class="input-field" readonly>
       </div>

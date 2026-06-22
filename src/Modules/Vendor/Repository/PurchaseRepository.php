@@ -233,6 +233,18 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             $params[] = "%{$filters['search']}%";
         }
 
+        $countStmt = $this->db->prepare("
+            SELECT COUNT(*) FROM vendors v
+            WHERE v.user_id = current_setting('app.current_user_id')::uuid $searchSql
+        ");
+        $countStmt->execute($params);
+        $total = (int)$countStmt->fetchColumn();
+
+        $offset = ($page - 1) * $limit;
+        $paginatedParams = $params;
+        $paginatedParams[] = $limit;
+        $paginatedParams[] = $offset;
+
         $stmt = $this->db->prepare("
             SELECT v.id AS vendor_id, v.name AS vendor_name, v.contact_info AS vendor_phone,
                 COUNT(p.id) AS total_orders,
@@ -251,8 +263,9 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             $searchSql
             GROUP BY v.id, v.name, v.contact_info
             ORDER BY v.name ASC
+            LIMIT ? OFFSET ?
         ");
-        $stmt->execute($params);
+        $stmt->execute($paginatedParams);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $summaries = array_map(fn($r) => [
             'vendorId' => $r['vendor_id'],
@@ -266,7 +279,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
         return [
             'data' => $summaries,
-            'total' => count($summaries)
+            'total' => $total
         ];
     }
 
@@ -321,17 +334,85 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             ]);
         }
     }
-        public function recordPayment(string $purchaseId, float $amount): bool
+        public function recordPayment(string $purchaseId, float $amount, string $paymentDate = null): bool
         {
-            $stmt = $this->db->prepare("
-                UPDATE vendor_purchases
-                SET amount_paid = amount_paid + ?,
-                    updated_at = now()
-                WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
-            ");
-            $stmt->execute([$amount, $purchaseId]);
-            return $stmt->rowCount() > 0;
+            $this->db->beginTransaction();
+            try {
+                $stmt = $this->db->prepare("
+                    UPDATE vendor_purchases
+                    SET amount_paid = amount_paid + ?,
+                        updated_at = now()
+                    WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+                ");
+                $stmt->execute([$amount, $purchaseId]);
+                $updated = $stmt->rowCount() > 0;
+
+                if ($updated) {
+                    $insertStmt = $this->db->prepare("
+                        INSERT INTO vendor_payments (id, user_id, purchase_id, amount, payment_date)
+                        VALUES (gen_random_uuid(), current_setting('app.current_user_id')::uuid, ?, ?, ?::timestamptz)
+                    ");
+                    $insertStmt->execute([$purchaseId, $amount, $paymentDate ?? date('Y-m-d')]);
+                }
+
+                $this->db->commit();
+                return $updated;
+            } catch (\Exception $e) {
+                $this->db->rollBack();
+                throw $e;
+            }
         }
+
+    public function getVendorPayments(string $vendorId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT pymt.id, pymt.amount, pymt.payment_date, pymt.created_at,
+                   vp.id AS purchase_id, vp.total_amount AS base_amount, vp.amount_paid,
+                   v.name AS vendor_name, v.contact_info AS vendor_phone
+            FROM vendor_payments pymt
+            JOIN vendor_purchases vp ON vp.id = pymt.purchase_id
+            JOIN vendors v ON v.id = vp.vendor_id
+            WHERE vp.vendor_id = ? AND pymt.user_id = current_setting('app.current_user_id')::uuid
+            ORDER BY pymt.payment_date DESC
+        ");
+        $stmt->execute([$vendorId]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return array_map(fn($r) => [
+            'id' => $r['id'],
+            'purchaseId' => $r['purchase_id'],
+            'amount' => (float)$r['amount'],
+            'paymentDate' => $r['payment_date'],
+            'vendorName' => $r['vendor_name'],
+            'vendorPhone' => $r['vendor_phone'],
+            'purchaseBaseAmount' => (float)$r['base_amount'],
+            'purchaseAmountPaid' => (float)$r['amount_paid']
+        ], $rows);
+    }
+
+    public function findAllPayments(): array
+    {
+        $stmt = $this->db->query("
+            SELECT pymt.id, pymt.amount, pymt.payment_date, pymt.created_at,
+                   vp.id AS purchase_id, vp.total_amount AS base_amount, vp.amount_paid,
+                   v.name AS vendor_name, v.contact_info AS vendor_phone
+            FROM vendor_payments pymt
+            JOIN vendor_purchases vp ON vp.id = pymt.purchase_id
+            JOIN vendors v ON v.id = vp.vendor_id
+            WHERE pymt.user_id = current_setting('app.current_user_id')::uuid
+            ORDER BY pymt.payment_date DESC
+        ");
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return array_map(fn($r) => [
+            'id' => $r['id'],
+            'purchaseId' => $r['purchase_id'],
+            'amount' => (float)$r['amount'],
+            'paymentDate' => $r['payment_date'],
+            'vendorName' => $r['vendor_name'],
+            'vendorPhone' => $r['vendor_phone'],
+            'purchaseBaseAmount' => (float)$r['base_amount'],
+            'purchaseAmountPaid' => (float)$r['amount_paid']
+        ], $rows);
+    }
 
     public function getVendorHistory(string $vendorId): array
     {

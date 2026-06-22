@@ -215,37 +215,29 @@ function calculatePurchaseTotal() {
 // 4. Load and render vendor summary (one row per vendor)
 // ============================================
 async function loadVendorSummaries() {
-    try {
-        const response = await window.apiRequest('/api/purchases?limit=1000');
-        const vendors = response.data || [];
-        const stats = response.stats || {};
-
-        // Update stats cards
-        const totalVendorsEl = document.getElementById('slTotalVendors');
-        const totalPurchasedEl = document.getElementById('slTotalAmount');
-        const totalPaidEl = document.getElementById('slTotalPaid');
-        const totalBalanceEl = document.getElementById('slTotalBalance');
-        if (totalVendorsEl) totalVendorsEl.innerText = stats.total_vendors ?? vendors.length;
-        if (totalPurchasedEl) totalPurchasedEl.innerText = formatCurrency(stats.total_purchased ?? 0);
-        if (totalPaidEl) totalPaidEl.innerText = formatCurrency(stats.total_paid ?? 0);
-        if (totalBalanceEl) totalBalanceEl.innerText = formatCurrency(stats.balance_due ?? 0);
-
-        renderVendorSummaryTable(vendors);
-    } catch (err) {
-        console.error('Error loading vendor summaries', err);
-    }
+    await loadPurchases(1);
 }
 
 async function loadPurchases(page = 1) {
     currentPurchasePage = page;
     const search = document.getElementById('vendorSearch')?.value || '';
-    let url = `/api/purchases?page=${page}&limit=10`;
+    let url = `/api/purchases?page=${page}&limit=5`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     try {
         const data = await window.apiRequest(url);
         if (data && !data.error) {
             const purchases = data.data || [];
             totalPurchasePages = data.pagination?.total_pages || 1;
+            const stats = data.stats || {};
+
+            const totalVendorsEl = document.getElementById('slTotalVendors');
+            const totalPurchasedEl = document.getElementById('slTotalAmount');
+            const totalPaidEl = document.getElementById('slTotalPaid');
+            const totalBalanceEl = document.getElementById('slTotalBalance');
+            if (totalVendorsEl) totalVendorsEl.innerText = stats.total_vendors ?? purchases.length;
+            if (totalPurchasedEl) totalPurchasedEl.innerText = formatCurrency(stats.total_purchased ?? 0);
+            if (totalPaidEl) totalPaidEl.innerText = formatCurrency(stats.total_paid ?? 0);
+            if (totalBalanceEl) totalBalanceEl.innerText = formatCurrency(stats.balance_due ?? 0);
 
             renderVendorSummaryTable(purchases);
             renderPurchasePagination(data.pagination);
@@ -286,6 +278,9 @@ function renderVendorSummaryTable(vendors) {
             <button class="btn btn-sm btn-outline" onclick="switchTab('vendorhistory','${v.vendorId}')" style="padding:2px 10px; font-size:0.75rem;">
                 View History
             </button>
+            <button class="btn btn-sm btn-primary" onclick="openQuickPurchaseForVendor('${v.vendorId}','${(v.vendorName || '').replace(/'/g, "\\'")}','${(v.vendorPhone || '').replace(/'/g, "\\'")}')" style="padding:2px 10px; font-size:0.75rem;">
+                +Add
+            </button>
         `;
     });
 }
@@ -297,7 +292,7 @@ function renderPurchasePagination(pagination) {
         container.style.display = 'none';
         return;
     }
-    container.style.display = 'flex';
+    container.style.cssText = 'display:flex; justify-content:center; align-items:center; gap:12px;';
     container.innerHTML = `
         <button class="pagination-btn" id="prevPurchaseBtn" ${!pagination.has_prev ? 'disabled' : ''}>← Previous</button>
         <span class="pagination-info">Page ${pagination.current_page} of ${pagination.total_pages}</span>
@@ -315,29 +310,8 @@ function renderPurchasePagination(pagination) {
 // 5. View purchase details (simple alert)
 // ============================================
 async function viewPurchase(purchaseId) {
-    try {
-        const data = await window.apiRequest(`/api/purchases/${purchaseId}`);
-        if (data && !data.error) {
-            const p = data;
-            let details = `Vendor: ${p.vendorName || p.vendorId}\n`;
-            details += `Date: ${formatDate(p.purchaseDate)}\n`;
-            details += `Total: ${formatCurrency(p.baseAmount)}\n`;
-            details += `Paid: ${formatCurrency(p.amountPaid)}\n`;
-            details += `Status: ${p.status}\n`;
-            details += `Items:\n`;
-            if (p.items && p.items.length) {
-                p.items.forEach(item => {
-                    details += `  - ${item.productName || item.productId}: ${item.quantity} x ${formatCurrency(item.unitPrice)} = ${formatCurrency(item.quantity * item.unitPrice)}\n`;
-                });
-            }
-            alert(details);
-        } else {
-            alert('Failed to load purchase details');
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Error loading details');
-    }
+    const purchBtn = document.getElementById('togglePurchasesBtn');
+    if (purchBtn) purchBtn.click();
 }
 
 function viewVendorHistory(vendorId) {
@@ -394,10 +368,11 @@ async function submitVendorPayment() {
         alert('Please enter a valid positive amount');
         return;
     }
+    const paymentDate = document.getElementById('vpPaymentDate').value || new Date().toISOString().split('T')[0];
     try {
         const response = await window.apiRequest(`/api/purchases/${purchaseId}/pay`, {
             method: 'POST',
-            body: JSON.stringify({ amount: payAmount })
+            body: JSON.stringify({ amount: payAmount, payment_date: paymentDate })
         });
         if (response && response.success) {
             alert('Payment recorded');
@@ -612,40 +587,104 @@ async function saveEditPurchase() {
         btn.innerText = originalText;
     }
 }
+// ── Payment / Purchase history toggle state ──────────────────────────
+let currentHistoryVendorId = null;
+let currentHistoryMode = 'purchases';
+let currentHistoryPage = 1;
+let totalHistoryPages = 1;
+
 async function initVendorHistory(vendorId = null) {
+    currentHistoryVendorId = vendorId;
+    currentHistoryMode = 'purchases';
+    currentHistoryPage = 1;
+
+    const purchBtn = document.getElementById('togglePurchasesBtn');
+    const payBtn = document.getElementById('togglePaymentsBtn');
+    if (purchBtn) { purchBtn.className = 'btn btn-sm btn-primary'; }
+    if (payBtn) { payBtn.className = 'btn btn-sm btn-outline'; }
+
+    document.getElementById('purchaseStats')?.style.setProperty('display', '');
+    document.getElementById('paymentStats')?.style.setProperty('display', 'none');
+
+    loadCurrentHistory();
+}
+
+async function loadCurrentHistory() {
     const titleEl = document.getElementById('vendorHistoryTitle');
     const subtitleEl = document.getElementById('vendorHistorySubtitle');
     const bodyEl = document.getElementById('vendorHistoryBody');
 
-    titleEl.innerText = vendorId ? 'Loading vendor history...' : 'Purchase History — All Vendors';
+    if (currentHistoryMode === 'purchases') {
+        titleEl.innerText = currentHistoryVendorId ? 'Loading vendor history...' : 'Purchase History — All Vendors';
+    } else {
+        titleEl.innerText = currentHistoryVendorId ? 'Loading payment history...' : 'Payment History — All Vendors';
+    }
     subtitleEl.innerText = '';
     bodyEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">Loading...</p>';
 
-    const url = vendorId
-        ? `/api/vendors/${encodeURIComponent(vendorId)}/history`
-        : `/api/vendors/history/all`;
+    const url = currentHistoryMode === 'purchases'
+        ? (currentHistoryVendorId ? `/api/vendors/${encodeURIComponent(currentHistoryVendorId)}/history` : '/api/vendors/history/all')
+        : (currentHistoryVendorId ? `/api/vendors/${encodeURIComponent(currentHistoryVendorId)}/payments` : '/api/vendors/payments/all');
 
     try {
         const data = await window.apiRequest(url);
-        const purchases = Array.isArray(data) ? data : (data?.data || []);
+        const records = Array.isArray(data) ? data : (data?.data || []);
 
-        if (purchases.length === 0) {
-            bodyEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">No purchases found.</p>';
+        if (records.length === 0) {
+            bodyEl.innerHTML = `<p style="color:var(--muted); text-align:center; padding:2rem;">No ${currentHistoryMode === 'purchases' ? 'purchases' : 'payments'} found.</p>`;
+            document.getElementById('purchaseStats')?.style.setProperty('display', currentHistoryMode === 'purchases' ? '' : 'none');
+            document.getElementById('paymentStats')?.style.setProperty('display', currentHistoryMode === 'payments' ? '' : 'none');
             return;
         }
 
-        if (vendorId && purchases[0]?.vendorName) {
-            titleEl.innerText = purchases[0].vendorName + ' – History';
-            subtitleEl.innerText = purchases[0].vendorPhone || '';
+        if (currentHistoryMode === 'purchases') {
+            if (currentHistoryVendorId && records[0]?.vendorName) {
+                titleEl.innerText = records[0].vendorName + ' – History';
+                subtitleEl.innerText = records[0].vendorPhone || '';
+            }
+            renderVendorHistoryStats(records);
+            const grouped = groupByDate(records, 'purchaseDate');
+            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+            totalHistoryPages = Math.max(1, Math.ceil(sortedDates.length / 5));
+            renderVendorHistoryBody(grouped, sortedDates, currentHistoryPage);
+            renderHistoryPagination();
+        } else {
+            if (currentHistoryVendorId && records[0]?.vendorName) {
+                titleEl.innerText = records[0].vendorName + ' – Payment History';
+                subtitleEl.innerText = records[0].vendorPhone || '';
+            }
+            renderPaymentHistoryStats(records);
+            const grouped = groupByDate(records, 'paymentDate');
+            const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+            totalHistoryPages = Math.max(1, Math.ceil(sortedDates.length / 5));
+            renderPaymentHistoryBody(grouped, sortedDates, currentHistoryPage);
+            renderHistoryPagination();
         }
-
-        renderVendorHistoryStats(purchases);
-        renderVendorHistoryBody(purchases);
-
     } catch (err) {
-        console.error('Error loading vendor history:', err);
-        bodyEl.innerHTML = '<p style="color:var(--danger); text-align:center; padding:2rem;">Failed to load purchase history. Please try again.</p>';
+        console.error('Error loading history:', err);
+        bodyEl.innerHTML = `<p style="color:var(--danger); text-align:center; padding:2rem;">Failed to load ${currentHistoryMode === 'purchases' ? 'purchase' : 'payment'} history. Please try again.</p>`;
     }
+}
+
+function switchHistoryTab(mode) {
+    currentHistoryMode = mode;
+    currentHistoryPage = 1;
+    const purchBtn = document.getElementById('togglePurchasesBtn');
+    const payBtn = document.getElementById('togglePaymentsBtn');
+    if (purchBtn) { purchBtn.className = mode === 'purchases' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'; }
+    if (payBtn) { payBtn.className = mode === 'payments' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline'; }
+    document.getElementById('purchaseStats')?.style.setProperty('display', mode === 'purchases' ? '' : 'none');
+    document.getElementById('paymentStats')?.style.setProperty('display', mode === 'payments' ? '' : 'none');
+    loadCurrentHistory();
+}
+
+function groupByDate(records, dateField) {
+    const grouped = {};
+    records.forEach(r => {
+        const date = formatDate(r[dateField]);
+        (grouped[date] ||= []).push(r);
+    });
+    return grouped;
 }
 
 function renderVendorHistoryStats(purchases) {
@@ -656,21 +695,17 @@ function renderVendorHistoryStats(purchases) {
     document.getElementById('vhBalance').innerText = formatCurrency(totalBilled - totalPaid);
 }
 
-function renderVendorHistoryBody(purchases) {
+function renderVendorHistoryBody(grouped, sortedDates, page) {
     const body = document.getElementById('vendorHistoryBody');
-    if (purchases.length === 0) {
+    if (!sortedDates || sortedDates.length === 0) {
         body.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">No purchases found.</p>';
         return;
     }
-    const grouped = {};
-    purchases.forEach(p => {
-        const date = formatDate(p.purchaseDate);
-        (grouped[date] ||= []).push(p);
-    });
-
-    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+    const perPage = 5;
+    const start = (page - 1) * perPage;
+    const pageDates = sortedDates.slice(start, start + perPage);
     let html = '';
-    sortedDates.forEach(date => {
+    pageDates.forEach(date => {
         const orders = grouped[date].length;
         const totalBilled = grouped[date].reduce((sum, p) => sum + (p.baseAmount || 0), 0);
         const totalPaid = grouped[date].reduce((sum, p) => sum + (p.amountPaid || 0), 0);
@@ -751,6 +786,96 @@ function renderVendorHistoryBody(purchases) {
     body.innerHTML = html;
 }
 
+function renderHistoryPagination() {
+    const container = document.getElementById('historyPaginationControls');
+    if (!container) return;
+    if (totalHistoryPages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.cssText = 'display:flex; justify-content:center; align-items:center; gap:12px; margin-top:1rem;';
+    container.innerHTML = `
+        <button class="pagination-btn" id="prevHistoryBtn" ${currentHistoryPage <= 1 ? 'disabled' : ''}>← Previous</button>
+        <span class="pagination-info">Page ${currentHistoryPage} of ${totalHistoryPages}</span>
+        <button class="pagination-btn" id="nextHistoryBtn" ${currentHistoryPage >= totalHistoryPages ? 'disabled' : ''}>Next →</button>
+    `;
+    document.getElementById('prevHistoryBtn')?.addEventListener('click', () => {
+        if (currentHistoryPage > 1) {
+            currentHistoryPage--;
+            loadCurrentHistory();
+        }
+    });
+    document.getElementById('nextHistoryBtn')?.addEventListener('click', () => {
+        if (currentHistoryPage < totalHistoryPages) {
+            currentHistoryPage++;
+            loadCurrentHistory();
+        }
+    });
+}
+
+function renderPaymentHistoryStats(payments) {
+    const total = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const count = payments.length;
+    const avg = count > 0 ? total / count : 0;
+    document.getElementById('vhPaymentTotal').innerText = formatCurrency(total);
+    document.getElementById('vhPaymentCount').innerText = count;
+    document.getElementById('vhAvgPayment').innerText = formatCurrency(avg);
+}
+
+function renderPaymentHistoryBody(grouped, sortedDates, page) {
+    const body = document.getElementById('vendorHistoryBody');
+    if (!sortedDates || sortedDates.length === 0) {
+        body.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">No payments found.</p>';
+        return;
+    }
+    const perPage = 5;
+    const start = (page - 1) * perPage;
+    const pageDates = sortedDates.slice(start, start + perPage);
+    let html = '';
+    pageDates.forEach(date => {
+        const paymentsOnDate = grouped[date];
+        const totalAmount = paymentsOnDate.reduce((sum, p) => sum + (p.amount || 0), 0);
+        html += `
+            <details class="accordion" open style="background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:1rem; overflow:hidden;">
+                <summary class="accordion-header" style="cursor:pointer; display:flex; align-items:center; justify-content:center; gap:1.5rem; font-size:0.9rem; padding:0.85rem 1rem; user-select:none; transition:background 0.2s;">
+                    <span style="font-weight:700; font-size:1.05rem; color:var(--text);">${date}</span>
+                    <span style="color:var(--muted-strong);">Payments: <strong>${paymentsOnDate.length}</strong></span>
+                    <span>Total: ${formatCurrency(totalAmount)}</span>
+                </summary>
+                <div class="accordion-body" style="padding:0.5rem;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                ${!currentHistoryVendorId ? '<th>Vendor</th>' : ''}
+                                <th>Amount</th>
+                                <th>Purchase Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        paymentsOnDate.forEach(p => {
+            html += `
+                            <tr>
+                                ${!currentHistoryVendorId ? `<td>${p.vendorName || '-'}</td>` : ''}
+                                <td style="font-weight:600; color:var(--ok);">${formatCurrency(p.amount || 0)}</td>
+                                <td>${formatCurrency(p.purchaseBaseAmount || 0)}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline" onclick="viewPurchase('${p.purchaseId}')" style="padding:2px 10px; font-size:0.75rem;">
+                                        View Purchase
+                                    </button>
+                                </td>
+                            </tr>`;
+        });
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </details>`;
+    });
+    body.innerHTML = html;
+}
+
 
 // ============================================
 // 7. Quick Purchase (existing vendor)
@@ -774,6 +899,13 @@ async function loadVendorsForQuickPurchase() {
         console.error('Failed to load vendors', err);
         select.innerHTML = '<option value="">Error loading vendors</option>';
     }
+}
+
+async function openQuickPurchaseForVendor(vendorId, vendorName, vendorPhone) {
+    openModal('quickPurchaseModal');
+    document.getElementById('qpVendorName').value = vendorName;
+    document.getElementById('qpVendorPhone').value = vendorPhone;
+    loadProductsForQuickPurchase();
 }
 
 function onVendorSelect() {
@@ -821,8 +953,6 @@ function calculateQpTotal() {
 }
 
 async function saveQuickPurchase() {
-    const vendorSelect = document.getElementById('qpVendorId');
-    const vendorId = vendorSelect.value;
     const vendorName = document.getElementById('qpVendorName').value.trim();
     const vendorPhone = document.getElementById('qpVendorPhone').value.trim();
     const productSelect = document.getElementById('qpStockName');
@@ -834,7 +964,7 @@ async function saveQuickPurchase() {
     const amountPaid = parseFloat(document.getElementById('qpPaid').value) || 0;
     const purchaseDate = document.getElementById('qpPurchaseDate').value || new Date().toISOString().split('T')[0];
 
-    if (!vendorId) { alert('Please select a vendor'); return; }
+    if (!vendorName) { alert('Vendor name is required'); return; }
     if (!productId) { alert('Please select a product'); return; }
     if (quantity <= 0) { alert('Quantity must be greater than zero'); return; }
     if (unitPrice <= 0) { alert('Unit price must be greater than zero'); return; }
@@ -904,11 +1034,11 @@ window.initVendorPage = initVendorPage;
 window.saveEditPurchase = saveEditPurchase;
 window.editPurchase = editPurchase;
 window.submitVendorPayment = submitVendorPayment;
-window.loadVendorsForQuickPurchase = loadVendorsForQuickPurchase;
-window.onVendorSelect = onVendorSelect;
 window.loadProductsForQuickPurchase = loadProductsForQuickPurchase;
 window.calculateQpTotal = calculateQpTotal;
 window.saveQuickPurchase = saveQuickPurchase;
+window.openQuickPurchaseForVendor = openQuickPurchaseForVendor;
+window.switchHistoryTab = switchHistoryTab;
 
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('vendor_list')?.classList.contains('active')) {

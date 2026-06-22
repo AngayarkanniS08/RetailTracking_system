@@ -34,7 +34,7 @@ if (empty($vendorId)) {
                 Back to Vendor List
               </button>
               <span id="vendorHistoryTitle"
-                style="font-size:1.1rem; font-weight:600; color:var(--text-strong);">Purchase History</span>
+                style="font-size:1.1rem; font-weight:600; color:var(--text-strong);">History</span>
               <span id="vendorHistorySubtitle" style="font-size:0.8rem; color:var(--muted);"></span>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
@@ -47,8 +47,8 @@ if (empty($vendorId)) {
             <!-- Rendered by JS -->
           </div>
 
-          <!-- Financial Summary mini-cards -->
-          <div class="stats-grid" style="margin-bottom:1.5rem;">
+          <!-- Financial Summary mini-cards (purchase mode) -->
+          <div class="stats-grid" style="margin-bottom:1.5rem;" id="purchaseStats">
             <div class="stat-card">
               <div class="stat-label">Total</div>
               <div class="stat-value" id="vhTotalBilled">₹0.00</div>
@@ -63,9 +63,32 @@ if (empty($vendorId)) {
             </div>
           </div>
 
+          <!-- Financial Summary mini-cards (payment mode, hidden by default) -->
+          <div class="stats-grid" style="margin-bottom:1.5rem; display:none;" id="paymentStats">
+            <div class="stat-card">
+              <div class="stat-label">Total Payments</div>
+              <div class="stat-value" id="vhPaymentTotal">₹0.00</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Payment Count</div>
+              <div class="stat-value" id="vhPaymentCount">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg Payment</div>
+              <div class="stat-value" id="vhAvgPayment">₹0.00</div>
+            </div>
+          </div>
+
+          <!-- Toggle buttons -->
+          <div style="display:flex; gap:6px; margin-bottom:1rem;">
+            <button class="btn btn-sm btn-primary" id="togglePurchasesBtn" onclick="switchHistoryTab('purchases')">Purchase History</button>
+            <button class="btn btn-sm btn-outline" id="togglePaymentsBtn" onclick="switchHistoryTab('payments')">Payment History</button>
+          </div>
+
           <div class="card-panel">
             <div id="vendorHistoryBody">
               <!-- Date-grouped accordions rendered by JS -->
             </div>
+            <div id="historyPaginationControls" style="display:none;"></div>
           </div>
         </section>

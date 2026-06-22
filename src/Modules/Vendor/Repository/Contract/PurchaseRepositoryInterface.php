@@ -27,7 +27,9 @@ interface PurchaseRepositoryInterface {
     public function createPurchaseItems(array $items, string $purchaseId): void;
 
     //payment methods
-    public function recordPayment(string $purchaseId, float $amount): bool;
+    public function recordPayment(string $purchaseId, float $amount, string $paymentDate = null): bool;
+    public function getVendorPayments(string $vendorId): array;
+    public function findAllPayments(): array;
 
     //vendor history methods
     public function getVendorHistory(string $vendorId): array;
