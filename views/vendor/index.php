@@ -10,7 +10,7 @@
             <div class="d-flex" style="gap: 10px;">
               <input type="text" id="vendorSearch" class="input-field" placeholder="Search purchases..." style="width: 200px;"
                 onkeyup="loadPurchases(1)">
-              <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal'); loadProductsForVendor();">+ Add Vendor</button>
+              <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal'); loadProductsForVendor();">+ New Purchase</button>
             </div>
           </div>
 

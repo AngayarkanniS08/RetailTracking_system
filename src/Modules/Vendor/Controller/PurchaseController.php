@@ -135,8 +135,16 @@ class PurchaseController
                 echo json_encode(['error' => 'Purchase not found']);
                 return;
             }
-            echo json_encode($purchase);
-        } catch (Exception $e) {
+            $response = json_decode(json_encode($purchase), true);
+            $totalGst = 0;
+            if ($purchase->items) {
+                foreach ($purchase->items as $item) {
+                    $totalGst += $item->quantity * $item->unitPrice * ($item->gstRate / 100);
+                }
+            }
+            $response['totalGst'] = $totalGst;
+            echo json_encode($response);
+        } catch (\Throwable $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load purchase']);
         }
@@ -275,6 +283,25 @@ class PurchaseController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load vendor history']);
+        }
+    }
+
+    public function vendorList(): void
+    {
+        header('Content-Type: application/json');
+        AuthMiddleware::authenticate();
+
+        try {
+            $vendors = $this->service->getAllVendors();
+            $result = array_map(fn($v) => [
+                'id' => $v->id,
+                'name' => $v->name,
+                'contact_info' => $v->phone
+            ], $vendors);
+            echo json_encode($result);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load vendors']);
         }
     }
 }

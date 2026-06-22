@@ -81,6 +81,25 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         );
     }
 
+    public function findAllVendors(): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT id, name, contact_info AS phone, created_at, updated_at
+            FROM vendors
+            WHERE user_id = current_setting('app.current_user_id')::uuid
+            ORDER BY name ASC
+        ");
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map(fn($row) => new Vendor(
+            id: $row['id'],
+            name: $row['name'],
+            phone: $row['phone'],
+            createdAt: $row['created_at'] ?? null,
+            updatedAt: $row['updated_at'] ?? null
+        ), $rows);
+    }
+
     public function updateVendor(Vendor $vendor): Vendor
     {
         $stmt = $this->db->prepare("
@@ -183,7 +202,11 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             }
         }
 
-        $status = $row['amount_paid'] >= $row['base_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending');
+        $totalWithGst = (float)$row['base_amount'];
+        foreach ($items as $item) {
+            $totalWithGst += $item->quantity * $item->unitPrice * ($item->gstRate / 100);
+        }
+        $status = $row['amount_paid'] >= $totalWithGst ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending');
 
         return new Purchase(
             id: $row['id'],

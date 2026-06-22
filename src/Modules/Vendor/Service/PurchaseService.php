@@ -293,4 +293,9 @@ class PurchaseService
     {
         return $this->repo->findAllVendorHistory();
     }
+
+    public function getAllVendors(): array
+    {
+        return $this->repo->findAllVendors();
+    }
 }

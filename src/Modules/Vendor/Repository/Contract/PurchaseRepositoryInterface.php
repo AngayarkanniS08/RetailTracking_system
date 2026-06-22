@@ -13,6 +13,7 @@ interface PurchaseRepositoryInterface {
     //vendor methods
     public function findOrCreateVendor(string $name, string $phone): Vendor;
     public function findVendorById(string $id, bool $withPurchases = false): ?Vendor;
+    public function findAllVendors(): array;
     public function updateVendor(Vendor $vendor): Vendor;
     public function deleteVendor(string $id): bool;
     //purchase methods

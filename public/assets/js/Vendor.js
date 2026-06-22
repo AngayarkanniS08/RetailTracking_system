@@ -247,7 +247,7 @@ async function loadPurchases(page = 1) {
             const purchases = data.data || [];
             totalPurchasePages = data.pagination?.total_pages || 1;
 
-            renderPurchaseTable(purchases);
+            renderVendorSummaryTable(purchases);
             renderPurchasePagination(data.pagination);
         } else {
             console.error('Failed to load purchases');
@@ -353,9 +353,43 @@ function viewVendorHistory(vendorId) {
 // 6. Record payment
 // ============================================
 async function recordPayment(purchaseId) {
-    const amount = prompt('Enter payment amount (₹):', '0');
-    if (!amount) return;
-    const payAmount = parseFloat(amount);
+    try {
+        const data = await window.apiRequest(`/api/purchases/${purchaseId}`);
+        if (!data || data.error) {
+            alert(data?.error || 'Failed to load purchase details');
+            return;
+        }
+        const totalAmount = (data.baseAmount || 0) + (data.totalGst || 0);
+        const balance = totalAmount - (data.amountPaid || 0);
+        document.getElementById('vpPurchaseId').value = purchaseId;
+        document.getElementById('vpVendorId').value = data.vendorId || '';
+        document.getElementById('vpVendorName').value = data.vendorName || '';
+        document.getElementById('slAmountPaying').value = '';
+        document.getElementById('vpPaymentDate').value = new Date().toISOString().slice(0, 10);
+        const balanceSpan = document.getElementById('slBalanceText');
+        balanceSpan.dataset.originalBalance = balance;
+        balanceSpan.textContent = 'Balance After Payment: ₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        document.getElementById('slAmountPaying').oninput = function() {
+            const entered = parseFloat(this.value) || 0;
+            const orig = parseFloat(balanceSpan.dataset.originalBalance) || 0;
+            const remaining = Math.max(0, orig - entered);
+            balanceSpan.textContent = 'Balance After Payment: ₹' + remaining.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        };
+        openModal('vendorPaymentModal');
+    } catch (err) {
+        console.error(err);
+        alert('Error loading purchase details');
+    }
+}
+
+async function submitVendorPayment() {
+    const purchaseId = document.getElementById('vpPurchaseId').value;
+    const amountInput = document.getElementById('slAmountPaying');
+    const payAmount = parseFloat(amountInput.value);
+    if (!purchaseId) {
+        alert('Purchase ID is missing');
+        return;
+    }
     if (isNaN(payAmount) || payAmount <= 0) {
         alert('Please enter a valid positive amount');
         return;
@@ -367,7 +401,13 @@ async function recordPayment(purchaseId) {
         });
         if (response && response.success) {
             alert('Payment recorded');
+            closeModal('vendorPaymentModal');
+            const vendorId = document.getElementById('vpVendorId').value;
             loadPurchases(currentPurchasePage);
+            const historySection = document.getElementById('vendorhistory');
+            if (historySection && historySection.classList.contains('active')) {
+                initVendorHistory(vendorId || null);
+            }
         } else {
             alert(response?.error || 'Failed to record payment');
         }
@@ -376,6 +416,7 @@ async function recordPayment(purchaseId) {
         alert('Network error');
     }
 }
+
 
 async function editPurchase(purchaseId) {
     try {
@@ -695,9 +736,9 @@ function renderVendorHistoryBody(purchases) {
                                     <button class="btn btn-sm btn-primary" onclick="editPurchase('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
                                         Edit
                                     </button>
-                                    <button class="btn btn-sm btn-outline" onclick="recordPayment('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
+                                    ${balance > 0 ? `<button class="btn btn-sm btn-outline" onclick="recordPayment('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
                                         Pay
-                                    </button>
+                                    </button>` : ''}
                                 </td>
                             </tr>`;
         });
@@ -712,7 +753,142 @@ function renderVendorHistoryBody(purchases) {
 
 
 // ============================================
-// 7. Initialisation
+// 7. Quick Purchase (existing vendor)
+// ============================================
+async function loadVendorsForQuickPurchase() {
+    const select = document.getElementById('qpVendorId');
+    if (!select) return;
+    select.innerHTML = '<option value="">Loading vendors...</option>';
+    try {
+        const data = await window.apiRequest('/api/vendors');
+        const vendors = Array.isArray(data) ? data : (data.data || []);
+        select.innerHTML = '<option value="">-- Select Vendor --</option>';
+        vendors.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.id;
+            opt.textContent = v.name;
+            opt.dataset.phone = v.contact_info || '';
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Failed to load vendors', err);
+        select.innerHTML = '<option value="">Error loading vendors</option>';
+    }
+}
+
+function onVendorSelect() {
+    const select = document.getElementById('qpVendorId');
+    const selected = select.options[select.selectedIndex];
+    document.getElementById('qpVendorName').value = selected?.textContent || '';
+    document.getElementById('qpVendorPhone').value = selected?.dataset?.phone || '';
+}
+
+function loadProductsForQuickPurchase() {
+    const select = document.getElementById('qpStockName');
+    if (!select) return;
+    select.innerHTML = '<option value="">Loading products...</option>';
+    window.apiRequest('/api/products?limit=1000').then(data => {
+        const products = Array.isArray(data) ? data : (data.data || []);
+        select.innerHTML = '<option value="">-- Select Product --</option>';
+        products.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.name;
+            opt.dataset.gst = p.gst_rate ?? 0;
+            select.appendChild(opt);
+        });
+    }).catch(err => {
+        console.error('Failed to load products', err);
+        select.innerHTML = '<option value="">Error loading products</option>';
+    });
+}
+
+function calculateQpTotal() {
+    const qty = parseFloat(document.getElementById('qpQty').value) || 0;
+    const unitPrice = parseFloat(document.getElementById('qpUnitPrice').value) || 0;
+    const gstRate = parseFloat(document.getElementById('qpGstRate').value) || 0;
+    const base = qty * unitPrice;
+    document.getElementById('qpBaseAmount').value = base.toFixed(2);
+    const gstAmount = base * (gstRate / 100);
+    let display = document.getElementById('qpGstDisplay');
+    if (!display) {
+        display = document.createElement('div');
+        display.id = 'qpGstDisplay';
+        display.style.cssText = 'font-size:0.8rem; margin-top:4px; color:var(--muted-strong);';
+        document.getElementById('qpGstRate').closest('.input-group').appendChild(display);
+    }
+    display.innerHTML = `Base: <strong>${formatCurrency(base)}</strong> &nbsp;|&nbsp; GST @${gstRate}%: <strong>${formatCurrency(gstAmount)}</strong> &nbsp;|&nbsp; Total: <strong>${formatCurrency(base + gstAmount)}</strong>`;
+}
+
+async function saveQuickPurchase() {
+    const vendorSelect = document.getElementById('qpVendorId');
+    const vendorId = vendorSelect.value;
+    const vendorName = document.getElementById('qpVendorName').value.trim();
+    const vendorPhone = document.getElementById('qpVendorPhone').value.trim();
+    const productSelect = document.getElementById('qpStockName');
+    const productId = productSelect.value;
+    const quantity = parseFloat(document.getElementById('qpQty').value) || 0;
+    const unitPrice = parseFloat(document.getElementById('qpUnitPrice').value) || 0;
+    const baseAmount = parseFloat(document.getElementById('qpBaseAmount').value) || 0;
+    const gstRate = parseFloat(document.getElementById('qpGstRate').value) || 0;
+    const amountPaid = parseFloat(document.getElementById('qpPaid').value) || 0;
+    const purchaseDate = document.getElementById('qpPurchaseDate').value || new Date().toISOString().split('T')[0];
+
+    if (!vendorId) { alert('Please select a vendor'); return; }
+    if (!productId) { alert('Please select a product'); return; }
+    if (quantity <= 0) { alert('Quantity must be greater than zero'); return; }
+    if (unitPrice <= 0) { alert('Unit price must be greater than zero'); return; }
+
+    const totalAmount = baseAmount + (baseAmount * gstRate / 100);
+    if (amountPaid > totalAmount) { alert('Amount paid cannot exceed total amount'); return; }
+
+    const payload = {
+        vendor_name: vendorName,
+        phone: vendorPhone,
+        purchase_date: purchaseDate,
+        base_amount: baseAmount,
+        amount_paid: amountPaid,
+        items: [{
+            product_id: productId,
+            quantity: quantity,
+            unit_price: unitPrice,
+            gst_rate: gstRate
+        }]
+    };
+
+    const btn = document.getElementById('saveQpBtn');
+    btn.disabled = true;
+    btn.innerText = 'Saving...';
+    try {
+        const response = await window.apiRequest('/api/purchases', {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        if (response && response.success) {
+            alert('Purchase saved successfully');
+            closeModal('quickPurchaseModal');
+            if (typeof loadVendorSummaries === 'function') loadVendorSummaries();
+        } else {
+            alert(response?.error || 'Failed to save purchase');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Network error');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = 'Save Purchase';
+    }
+}
+
+document.getElementById('qpStockName')?.addEventListener('change', function() {
+    const selected = this.options[this.selectedIndex];
+    const gstRate = parseFloat(selected?.dataset?.gst) || 0;
+    document.getElementById('qpGstRate').value = gstRate;
+    calculateQpTotal();
+});
+
+// ============================================
+// 8. Initialisation
 // ============================================
 async function initVendorPage() {
     await loadVendorSummaries();
@@ -727,6 +903,12 @@ window.viewPurchase = viewPurchase;
 window.initVendorPage = initVendorPage;
 window.saveEditPurchase = saveEditPurchase;
 window.editPurchase = editPurchase;
+window.submitVendorPayment = submitVendorPayment;
+window.loadVendorsForQuickPurchase = loadVendorsForQuickPurchase;
+window.onVendorSelect = onVendorSelect;
+window.loadProductsForQuickPurchase = loadProductsForQuickPurchase;
+window.calculateQpTotal = calculateQpTotal;
+window.saveQuickPurchase = saveQuickPurchase;
 
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('vendor_list')?.classList.contains('active')) {

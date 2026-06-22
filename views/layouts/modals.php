@@ -251,9 +251,11 @@
         <div class="modal-title">Pay Vendor</div>
         <button class="close-btn" onclick="closeModal('vendorPaymentModal')">&times;</button>
       </div>
+      <input type="hidden" id="vpPurchaseId">
+      <input type="hidden" id="vpVendorId">
       <div class="input-group">
         <label class="input-label">Vendor Name</label>
-        <input type="text" id="vpVendorName" class="input-field" placeholder="e.g. Erode Textile Market">
+        <input type="text" id="vpVendorName" class="input-field" readonly>
       </div>
       <div class="input-group">
         <label class="input-label">Amount Paying now</label>
@@ -263,12 +265,72 @@
         style="margin-top:-10px; margin-bottom:15px; font-size: 0.8rem; color: var(--muted); display:flex; justify-content:space-between; padding: 0 5px;">
         <span id="slBalanceText">Balance After Payment: ₹0.00</span>
       </div>
+      <div class="input-group" style="flex:1;">
+        <label class="input-label">Payment Date</label>
+        <input type="date" id="vpPaymentDate" class="input-field">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="submitVendorPayment()">Record Payment</button>
+    </div>
+  </div>
+
+  <!-- Quick Purchase Modal -->
+  <div class="modal-overlay" id="quickPurchaseModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Quick Purchase — Existing Vendor</div>
+        <button class="close-btn" onclick="closeModal('quickPurchaseModal')">&times;</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Select Vendor</label>
+        <select id="qpVendorId" class="input-field" onchange="onVendorSelect()">
+          <option value="">-- Select Vendor --</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Vendor Name</label>
+        <input type="text" id="qpVendorName" class="input-field" readonly>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Contact Number</label>
+        <input type="text" id="qpVendorPhone" class="input-field" readonly>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Product</label>
+        <select id="qpStockName" class="input-field">
+          <option value="">-- Select Product --</option>
+        </select>
+      </div>
+      <div class="d-flex">
         <div class="input-group" style="flex:1;">
-          <label class="input-label">Payment Date</label>
-          <input type="date" id="vpPaymentDate" class="input-field">
+          <label class="input-label">Quantity</label>
+          <input type="number" id="qpQty" class="input-field" placeholder="0" min="0">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Unit Price (₹)</label>
+          <input type="number" id="qpUnitPrice" class="input-field" placeholder="0.00" min="0" oninput="calculateQpTotal()">
         </div>
       </div>
-      <button class="btn btn-primary btn-block" onclick="recordPayment()">Record Payment</button>
+      <div class="d-flex">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Base Amount (₹)</label>
+          <input type="number" id="qpBaseAmount" class="input-field" placeholder="0.00" min="0" readonly>
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">GST (%)</label>
+          <input type="number" id="qpGstRate" class="input-field" step="0.01" value="0" oninput="calculateQpTotal()">
+        </div>
+      </div>
+      <div class="d-flex">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Amount Paid (₹)</label>
+          <input type="number" id="qpPaid" class="input-field" placeholder="0.00" min="0">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Purchase Date</label>
+          <input type="date" id="qpPurchaseDate" class="input-field">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" id="saveQpBtn" onclick="saveQuickPurchase()">Save Purchase</button>
     </div>
   </div>
 
