@@ -253,10 +253,10 @@ class PurchaseRepository implements PurchaseRepositoryInterface
                     FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
                 )), 0) AS total_billed,
                 COALESCE(SUM(p.amount_paid), 0) AS total_paid,
-                COALESCE(SUM(p.total_amount + (
+                COALESCE(GREATEST(SUM(p.total_amount + (
                     SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
                     FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                ) - p.amount_paid), 0) AS balance_due
+                ) - p.amount_paid), 0), 0) AS balance_due
             FROM vendors v
             LEFT JOIN vendor_purchases p ON p.vendor_id = v.id
             WHERE v.user_id = current_setting('app.current_user_id')::uuid
@@ -363,8 +363,19 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             }
         }
 
-    public function getVendorPayments(string $vendorId): array
+    public function getVendorPayments(string $vendorId, array $filters = []): array
     {
+        $dateSql = '';
+        $dateParams = [];
+        if (!empty($filters['date'])) {
+            $dateSql = ' AND pymt.payment_date::date = ?';
+            $dateParams[] = $filters['date'];
+        } elseif (!empty($filters['month']) && !empty($filters['year'])) {
+            $dateSql = ' AND EXTRACT(MONTH FROM pymt.payment_date) = ? AND EXTRACT(YEAR FROM pymt.payment_date) = ?';
+            $dateParams[] = $filters['month'];
+            $dateParams[] = $filters['year'];
+        }
+
         $stmt = $this->db->prepare("
             SELECT pymt.id, pymt.amount, pymt.payment_date, pymt.created_at,
                    vp.id AS purchase_id, vp.total_amount AS base_amount, vp.amount_paid,
@@ -373,9 +384,10 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             JOIN vendor_purchases vp ON vp.id = pymt.purchase_id
             JOIN vendors v ON v.id = vp.vendor_id
             WHERE vp.vendor_id = ? AND pymt.user_id = current_setting('app.current_user_id')::uuid
+            $dateSql
             ORDER BY pymt.payment_date DESC
         ");
-        $stmt->execute([$vendorId]);
+        $stmt->execute(array_merge([$vendorId], $dateParams));
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return array_map(fn($r) => [
             'id' => $r['id'],
@@ -389,9 +401,20 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         ], $rows);
     }
 
-    public function findAllPayments(): array
+    public function findAllPayments(array $filters = []): array
     {
-        $stmt = $this->db->query("
+        $dateSql = '';
+        $dateParams = [];
+        if (!empty($filters['date'])) {
+            $dateSql = ' AND pymt.payment_date::date = ?';
+            $dateParams[] = $filters['date'];
+        } elseif (!empty($filters['month']) && !empty($filters['year'])) {
+            $dateSql = ' AND EXTRACT(MONTH FROM pymt.payment_date) = ? AND EXTRACT(YEAR FROM pymt.payment_date) = ?';
+            $dateParams[] = $filters['month'];
+            $dateParams[] = $filters['year'];
+        }
+
+        $stmt = $this->db->prepare("
             SELECT pymt.id, pymt.amount, pymt.payment_date, pymt.created_at,
                    vp.id AS purchase_id, vp.total_amount AS base_amount, vp.amount_paid,
                    v.name AS vendor_name, v.contact_info AS vendor_phone
@@ -399,8 +422,10 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             JOIN vendor_purchases vp ON vp.id = pymt.purchase_id
             JOIN vendors v ON v.id = vp.vendor_id
             WHERE pymt.user_id = current_setting('app.current_user_id')::uuid
+            $dateSql
             ORDER BY pymt.payment_date DESC
         ");
+        $stmt->execute($dateParams);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return array_map(fn($r) => [
             'id' => $r['id'],
@@ -414,8 +439,19 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         ], $rows);
     }
 
-    public function getVendorHistory(string $vendorId): array
+    public function getVendorHistory(string $vendorId, array $filters = []): array
     {
+        $dateSql = '';
+        $dateParams = [];
+        if (!empty($filters['date'])) {
+            $dateSql = ' AND p.purchase_date::date = ?';
+            $dateParams[] = $filters['date'];
+        } elseif (!empty($filters['month']) && !empty($filters['year'])) {
+            $dateSql = ' AND EXTRACT(MONTH FROM p.purchase_date) = ? AND EXTRACT(YEAR FROM p.purchase_date) = ?';
+            $dateParams[] = $filters['month'];
+            $dateParams[] = $filters['year'];
+        }
+
         $stmt = $this->db->prepare("
             SELECT p.id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid,
                 p.created_at,
@@ -427,9 +463,10 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             LEFT JOIN vendor_purchase_items pi ON pi.purchase_id = p.id
             LEFT JOIN products pr ON pr.id = pi.product_id
             WHERE p.vendor_id = ? AND p.user_id = current_setting('app.current_user_id')::uuid
+            $dateSql
             ORDER BY p.purchase_date DESC
         ");
-        $stmt->execute([$vendorId]);
+        $stmt->execute(array_merge([$vendorId], $dateParams));
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $history = [];
@@ -465,10 +502,16 @@ class PurchaseRepository implements PurchaseRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT
-                COALESCE(SUM(total_amount), 0) AS total_spent,
+                COALESCE(SUM(total_amount + (
+                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
+                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
+                )), 0) AS total_spent,
                 COALESCE(SUM(amount_paid), 0) AS total_paid,
-                COALESCE(SUM(total_amount - amount_paid), 0) AS balance_due
-            FROM vendor_purchases
+                COALESCE(GREATEST(SUM(total_amount + (
+                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
+                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
+                ) - amount_paid), 0), 0) AS balance_due
+            FROM vendor_purchases p
             WHERE vendor_id = ? AND user_id = current_setting('app.current_user_id')::uuid
         ");
         $stmt->execute([$vendorId]);
@@ -490,10 +533,10 @@ class PurchaseRepository implements PurchaseRepositoryInterface
                     FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
                 )), 0) AS total_purchased,
                 COALESCE(SUM(amount_paid), 0) AS total_paid,
-                COALESCE(SUM(total_amount + (
+                COALESCE(GREATEST(SUM(total_amount + (
                     SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
                     FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                ) - amount_paid), 0) AS balance_due
+                ) - amount_paid), 0), 0) AS balance_due
             FROM vendor_purchases p
             WHERE user_id = current_setting('app.current_user_id')::uuid
         ");
@@ -529,9 +572,20 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         }
     }
 
-    public function findAllVendorHistory(): array
+    public function findAllVendorHistory(array $filters = []): array
     {
-        $stmt = $this->db->query("
+        $dateSql = '';
+        $dateParams = [];
+        if (!empty($filters['date'])) {
+            $dateSql = ' AND p.purchase_date::date = ?';
+            $dateParams[] = $filters['date'];
+        } elseif (!empty($filters['month']) && !empty($filters['year'])) {
+            $dateSql = ' AND EXTRACT(MONTH FROM p.purchase_date) = ? AND EXTRACT(YEAR FROM p.purchase_date) = ?';
+            $dateParams[] = $filters['month'];
+            $dateParams[] = $filters['year'];
+        }
+
+        $stmt = $this->db->prepare("
             SELECT p.id, p.vendor_id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid,
                 p.created_at,
                 v.name AS vendor_name, v.contact_info AS vendor_phone,
@@ -542,8 +596,10 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             LEFT JOIN vendor_purchase_items pi ON pi.purchase_id = p.id
             LEFT JOIN products pr ON pr.id = pi.product_id
             WHERE p.user_id = current_setting('app.current_user_id')::uuid
+            $dateSql
             ORDER BY p.purchase_date DESC
         ");
+        $stmt->execute($dateParams);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $history = [];

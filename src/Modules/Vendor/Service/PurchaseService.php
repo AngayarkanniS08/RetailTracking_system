@@ -109,7 +109,7 @@ class PurchaseService
             $this->repo->createPurchaseItems($items, $purchase->id);
 
             $this->repo->commit();
-            $this->invalidateVendorListCache();
+            $this->invalidateVendorCaches();
         } catch (\Exception $e) {
             $this->repo->rollback();
             throw $e;
@@ -159,7 +159,7 @@ class PurchaseService
             throw new ValidationException("Failed to record payment");
         }
 
-        $this->invalidateVendorListCache();
+        $this->invalidateVendorCaches();
 
         // Refresh the purchase
         return $this->repo->findPurchaseById($purchaseId);
@@ -282,7 +282,7 @@ class PurchaseService
             $this->repo->replacePurchaseItems($purchaseId, $items);
 
             $this->repo->commit();
-            $this->invalidateVendorListCache();
+            $this->invalidateVendorCaches();
         } catch (\Exception $e) {
             $this->repo->rollback();
             throw $e;
@@ -292,14 +292,14 @@ class PurchaseService
         return $this->repo->findPurchaseById($purchaseId, true);
     }
 
-    public function getVendorHistory(string $vendorId): array
+    public function getVendorHistory(string $vendorId, array $filters = []): array
     {
-        return $this->repo->getVendorHistory($vendorId);
+        return $this->repo->getVendorHistory($vendorId, $filters);
     }
 
-    public function getAllVendorHistory(): array
+    public function getAllVendorHistory(array $filters = []): array
     {
-        return $this->repo->findAllVendorHistory();
+        return $this->repo->findAllVendorHistory($filters);
     }
 
     public function getAllVendors(): array
@@ -307,26 +307,28 @@ class PurchaseService
         return $this->repo->findAllVendors();
     }
 
-    public function getVendorPayments(string $vendorId): array
+    public function getVendorPayments(string $vendorId, array $filters = []): array
     {
-        return $this->repo->getVendorPayments($vendorId);
+        return $this->repo->getVendorPayments($vendorId, $filters);
     }
 
-    public function getAllPayments(): array
+    public function getAllPayments(array $filters = []): array
     {
-        return $this->repo->findAllPayments();
+        return $this->repo->findAllPayments($filters);
     }
 
-    private function invalidateVendorListCache(): void
+    private function invalidateVendorCaches(): void
     {
         try {
             $valkey = ValkeyCache::getClient();
-            $keys = $valkey->keys('vendors:list:*');
-            if ($keys) {
-                $valkey->del($keys);
+            foreach (['vendors:list:*', 'vendors:history:*', 'vendors:payments:*'] as $pattern) {
+                $keys = $valkey->keys($pattern);
+                if ($keys) {
+                    $valkey->del($keys);
+                }
             }
         } catch (\Exception $e) {
-            error_log('Valkey vendor list cache invalidation failed: ' . $e->getMessage());
+            error_log('Valkey vendor cache invalidation failed: ' . $e->getMessage());
         }
     }
 }

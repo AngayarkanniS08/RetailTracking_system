@@ -269,7 +269,7 @@ function renderVendorSummaryTable(vendors) {
         tr.insertCell().innerText = formatCurrency(v.totalBilled);
         tr.insertCell().innerText = formatCurrency(v.totalPaid);
 
-        const balance = v.balanceDue;
+        const balance = Math.max(0, v.balanceDue);
         const balanceCell = tr.insertCell();
         balanceCell.innerHTML = `<span style="font-weight:700; color:${balance > 0 ? 'var(--danger)' : 'var(--ok)'};">${formatCurrency(balance)}</span>`;
 
@@ -622,9 +622,31 @@ async function loadCurrentHistory() {
     subtitleEl.innerText = '';
     bodyEl.innerHTML = '<p style="color:var(--muted); text-align:center; padding:2rem;">Loading...</p>';
 
-    const url = currentHistoryMode === 'purchases'
+    const vhMonth = document.getElementById('vhMonthSearch')?.value || '';
+    const vhDate = document.getElementById('vhDateSearch')?.value || '';
+    let url = currentHistoryMode === 'purchases'
         ? (currentHistoryVendorId ? `/api/vendors/${encodeURIComponent(currentHistoryVendorId)}/history` : '/api/vendors/history/all')
         : (currentHistoryVendorId ? `/api/vendors/${encodeURIComponent(currentHistoryVendorId)}/payments` : '/api/vendors/payments/all');
+    const monthNames = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+    const params = [];
+    if (vhDate) {
+        params.push(`date=${encodeURIComponent(vhDate)}`);
+    } else if (vhMonth) {
+        const parts = vhMonth.split('-');
+        if (parts.length >= 2 && parts[0].length === 4 && parts[1].length === 2) {
+            params.push(`year=${parts[0]}&month=${parts[1]}`);
+        } else {
+            const trimmed = vhMonth.trim();
+            const m = monthNames[trimmed.toLowerCase().slice(0,3)];
+            if (m) {
+                params.push(`year=${new Date().getFullYear()}&month=${m}`);
+            } else {
+                bodyEl.innerHTML = `<p style="color:var(--danger); text-align:center; padding:2rem;">Invalid month. Use the picker or type a month name (e.g. June).</p>`;
+                return;
+            }
+        }
+    }
+    if (params.length) url += '?' + params.join('&');
 
     try {
         const data = await window.apiRequest(url);
@@ -687,12 +709,17 @@ function groupByDate(records, dateField) {
     return grouped;
 }
 
+function calcTotalWithGst(p) {
+    let gst = 0;
+    if (p.items) p.items.forEach(item => { gst += item.quantity * item.unit_price * (item.gst_rate || 0) / 100; });
+    return (p.baseAmount || 0) + gst;
+}
 function renderVendorHistoryStats(purchases) {
-    const totalBilled = purchases.reduce((sum, p) => sum + (p.baseAmount || 0), 0);
+    const totalBilled = purchases.reduce((sum, p) => sum + calcTotalWithGst(p), 0);
     const totalPaid = purchases.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
     document.getElementById('vhTotalBilled').innerText = formatCurrency(totalBilled);
     document.getElementById('vhTotalPaid').innerText = formatCurrency(totalPaid);
-    document.getElementById('vhBalance').innerText = formatCurrency(totalBilled - totalPaid);
+    document.getElementById('vhBalance').innerText = formatCurrency(Math.max(0, totalBilled - totalPaid));
 }
 
 function renderVendorHistoryBody(grouped, sortedDates, page) {
@@ -707,9 +734,9 @@ function renderVendorHistoryBody(grouped, sortedDates, page) {
     let html = '';
     pageDates.forEach(date => {
         const orders = grouped[date].length;
-        const totalBilled = grouped[date].reduce((sum, p) => sum + (p.baseAmount || 0), 0);
+        const totalBilled = grouped[date].reduce((sum, p) => sum + calcTotalWithGst(p), 0);
         const totalPaid = grouped[date].reduce((sum, p) => sum + (p.amountPaid || 0), 0);
-        const totalDue = totalBilled - totalPaid;
+        const totalDue = Math.max(0, totalBilled - totalPaid);
         html += `
             <details class="accordion" open style="background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:1rem; overflow:hidden;">
                 <summary class="accordion-header" style="cursor:pointer; display:flex; align-items:center; justify-content:center; gap:1.5rem; font-size:0.9rem; padding:0.85rem 1rem; user-select:none; transition:background 0.2s;">
@@ -755,7 +782,7 @@ function renderVendorHistoryBody(grouped, sortedDates, page) {
                 });
             }
             const totalAmount = (p.baseAmount || 0) + totalGst;
-            const balance = totalAmount - (p.amountPaid || 0);
+            const balance = Math.max(0, totalAmount - (p.amountPaid || 0));
             html += `
                             <tr>
                                 <td style="font-family:var(--mono); font-size:0.8rem; color:var(--muted-strong);">${p.id ? p.id.slice(0, 8) : '-'}</td>
@@ -1034,12 +1061,25 @@ window.initVendorPage = initVendorPage;
 window.saveEditPurchase = saveEditPurchase;
 window.editPurchase = editPurchase;
 window.submitVendorPayment = submitVendorPayment;
+function searchVendorHistory() {
+    currentHistoryPage = 1;
+    loadCurrentHistory();
+}
+
+function clearVendorHistorySearch() {
+    document.getElementById('vhMonthSearch').value = '';
+    document.getElementById('vhDateSearch').value = '';
+    currentHistoryPage = 1;
+    loadCurrentHistory();
+}
+
 window.loadProductsForQuickPurchase = loadProductsForQuickPurchase;
 window.calculateQpTotal = calculateQpTotal;
 window.saveQuickPurchase = saveQuickPurchase;
 window.openQuickPurchaseForVendor = openQuickPurchaseForVendor;
 window.switchHistoryTab = switchHistoryTab;
-
+window.searchVendorHistory = searchVendorHistory;
+window.clearVendorHistorySearch = clearVendorHistorySearch;
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('vendor_list')?.classList.contains('active')) {
         initVendorPage();

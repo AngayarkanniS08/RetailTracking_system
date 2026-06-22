@@ -38,7 +38,10 @@ if (empty($vendorId)) {
               <span id="vendorHistorySubtitle" style="font-size:0.8rem; color:var(--muted);"></span>
             </div>
             <div style="display:flex; gap:10px; align-items:center;">
-              <button class="btn btn-primary btn-sm" id="vendorRestockBtn">+ New Purchase</button>
+              <input type="month" id="vhMonthSearch" class="input-field" style="width:160px;" title="Search by month (use the date picker, or type YYYY-MM)" placeholder="Select month">
+              <input type="date" id="vhDateSearch" class="input-field" style="width:150px;" title="Search by exact date">
+              <button class="btn btn-primary btn-sm" onclick="searchVendorHistory()" style="padding:2px 12px;">Search</button>
+              <button class="btn btn-sm btn-outline" onclick="clearVendorHistorySearch()" style="padding:2px 10px;">Clear</button>
             </div>
           </div>
 

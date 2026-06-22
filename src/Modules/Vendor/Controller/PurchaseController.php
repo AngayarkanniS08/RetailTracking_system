@@ -296,11 +296,52 @@ class PurchaseController
     public function vendorHistory(string $vendorId): void
     {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+        $user = AuthMiddleware::authenticate();
+        $userId = $user->data->user_id ?? null;
+
+        $month = $_GET['month'] ?? '';
+        $year = $_GET['year'] ?? '';
+        $date = $_GET['date'] ?? '';
+        $filters = [];
+        if (!empty($date)) {
+            $filters['date'] = $date;
+        } elseif (!empty($month) && !empty($year)) {
+            $filters['month'] = $month;
+            $filters['year'] = $year;
+        }
+
+        $cacheKey = sprintf(
+            'vendors:history:%s:date:%s:month:%s:year:%s:user:%s',
+            $vendorId,
+            md5($date),
+            md5($month),
+            md5($year),
+            $userId ?: 'guest'
+        );
+
+        $valkey = null;
+        try {
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+        }
 
         try {
-            $history = $this->service->getVendorHistory($vendorId);
-            echo json_encode($history);
+            $history = $this->service->getVendorHistory($vendorId, $filters);
+            $json = json_encode($history);
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (\Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load vendor history']);
@@ -310,11 +351,51 @@ class PurchaseController
     public function allHistory(): void
     {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+        $user = AuthMiddleware::authenticate();
+        $userId = $user->data->user_id ?? null;
+
+        $month = $_GET['month'] ?? '';
+        $year = $_GET['year'] ?? '';
+        $date = $_GET['date'] ?? '';
+        $filters = [];
+        if (!empty($date)) {
+            $filters['date'] = $date;
+        } elseif (!empty($month) && !empty($year)) {
+            $filters['month'] = $month;
+            $filters['year'] = $year;
+        }
+
+        $cacheKey = sprintf(
+            'vendors:history:all:date:%s:month:%s:year:%s:user:%s',
+            md5($date),
+            md5($month),
+            md5($year),
+            $userId ?: 'guest'
+        );
+
+        $valkey = null;
+        try {
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+        }
 
         try {
-            $history = $this->service->getAllVendorHistory();
-            echo json_encode($history);
+            $history = $this->service->getAllVendorHistory($filters);
+            $json = json_encode($history);
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (\Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load vendor history']);
@@ -324,11 +405,52 @@ class PurchaseController
     public function vendorPayments(string $vendorId): void
     {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+        $user = AuthMiddleware::authenticate();
+        $userId = $user->data->user_id ?? null;
+
+        $month = $_GET['month'] ?? '';
+        $year = $_GET['year'] ?? '';
+        $date = $_GET['date'] ?? '';
+        $filters = [];
+        if (!empty($date)) {
+            $filters['date'] = $date;
+        } elseif (!empty($month) && !empty($year)) {
+            $filters['month'] = $month;
+            $filters['year'] = $year;
+        }
+
+        $cacheKey = sprintf(
+            'vendors:payments:%s:date:%s:month:%s:year:%s:user:%s',
+            $vendorId,
+            md5($date),
+            md5($month),
+            md5($year),
+            $userId ?: 'guest'
+        );
+
+        $valkey = null;
+        try {
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+        }
 
         try {
-            $payments = $this->service->getVendorPayments($vendorId);
-            echo json_encode($payments);
+            $payments = $this->service->getVendorPayments($vendorId, $filters);
+            $json = json_encode($payments);
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (\Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load vendor payments']);
@@ -338,11 +460,51 @@ class PurchaseController
     public function allPayments(): void
     {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+        $user = AuthMiddleware::authenticate();
+        $userId = $user->data->user_id ?? null;
+
+        $month = $_GET['month'] ?? '';
+        $year = $_GET['year'] ?? '';
+        $date = $_GET['date'] ?? '';
+        $filters = [];
+        if (!empty($date)) {
+            $filters['date'] = $date;
+        } elseif (!empty($month) && !empty($year)) {
+            $filters['month'] = $month;
+            $filters['year'] = $year;
+        }
+
+        $cacheKey = sprintf(
+            'vendors:payments:all:date:%s:month:%s:year:%s:user:%s',
+            md5($date),
+            md5($month),
+            md5($year),
+            $userId ?: 'guest'
+        );
+
+        $valkey = null;
+        try {
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+        }
 
         try {
-            $payments = $this->service->getAllPayments();
-            echo json_encode($payments);
+            $payments = $this->service->getAllPayments($filters);
+            $json = json_encode($payments);
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (\Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load payments']);
