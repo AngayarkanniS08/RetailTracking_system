@@ -11,6 +11,7 @@ use Modules\Product\Repository\CategoryRepository;
 use Modules\Inventory\Service\BatchService;
 use Modules\Inventory\Repository\BatchRepository;
 use Core\Middlewares\AuthMiddleware;
+use Core\Cache\ValkeyCache;
 use Modules\Auth\Validation\ValidationException;
 use Exception;
 
@@ -37,7 +38,7 @@ class PurchaseController
     public function index(): void
     {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
+        $user = AuthMiddleware::authenticate();
 
         $page = (int)($_GET['page'] ?? 1);
         $limit = (int)($_GET['limit'] ?? 10);
@@ -52,9 +53,42 @@ class PurchaseController
         }
         // Add other filters if needed: vendor_id, date_from, date_to, status
 
+        $userId = $user->data->user_id ?? null;
+
+        // Build cache key (unique per search, page, filters, user)
+        $cacheKey = sprintf(
+            'vendors:list:search:%s:page:%d:limit:%d:user:%s',
+            md5($search),
+            $page,
+            $limit,
+            $userId ?: 'guest'
+        );
+
+        $valkey = null;
+        try {
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+        }
+
         try {
             $result = $this->service->getPurchases($page, $limit, $filters);
-            echo json_encode($result);
+            $json = json_encode($result);
+
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (\Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load purchases: ' . $e->getMessage()]);

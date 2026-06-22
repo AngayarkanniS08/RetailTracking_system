@@ -9,6 +9,7 @@ use Modules\Vendor\Model\Vendor;
 use Modules\Vendor\Repository\Contract\PurchaseRepositoryInterface;
 use Modules\Auth\Validation\ValidationException;
 use App\Common\Helpers\ArrayHelper;
+use Core\Cache\ValkeyCache;
 
 class PurchaseService
 {
@@ -108,6 +109,7 @@ class PurchaseService
             $this->repo->createPurchaseItems($items, $purchase->id);
 
             $this->repo->commit();
+            $this->invalidateVendorListCache();
         } catch (\Exception $e) {
             $this->repo->rollback();
             throw $e;
@@ -156,6 +158,8 @@ class PurchaseService
         if (!$success) {
             throw new ValidationException("Failed to record payment");
         }
+
+        $this->invalidateVendorListCache();
 
         // Refresh the purchase
         return $this->repo->findPurchaseById($purchaseId);
@@ -278,6 +282,7 @@ class PurchaseService
             $this->repo->replacePurchaseItems($purchaseId, $items);
 
             $this->repo->commit();
+            $this->invalidateVendorListCache();
         } catch (\Exception $e) {
             $this->repo->rollback();
             throw $e;
@@ -310,5 +315,18 @@ class PurchaseService
     public function getAllPayments(): array
     {
         return $this->repo->findAllPayments();
+    }
+
+    private function invalidateVendorListCache(): void
+    {
+        try {
+            $valkey = ValkeyCache::getClient();
+            $keys = $valkey->keys('vendors:list:*');
+            if ($keys) {
+                $valkey->del($keys);
+            }
+        } catch (\Exception $e) {
+            error_log('Valkey vendor list cache invalidation failed: ' . $e->getMessage());
+        }
     }
 }
