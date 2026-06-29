@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Legacy GST Billing Interface</title>
+    <style>
+        /* ===== RESET & BASE ===== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ===== DESKTOP WINDOW ===== */
+        .desktop-window {
+            width: 1360px;
+            max-width: 100%;
+            background: #f0f0f0;
+            border: 2px solid #5a5a6e;
+            border-radius: 8px 8px 6px 6px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== 1. TOP HEADER BAR ===== */
+        .window-header {
+            background: linear-gradient(180deg, #dcebf4 0%, #c5d8e8 100%);
+            padding: 6px 12px 4px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #8a9aa8;
+            user-select: none;
+        }
+
+        .window-header .win-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a2a3a;
+        }
+
+        .window-header .win-title .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #2a5a7a;
+            border-radius: 2px;
+            position: relative;
+        }
+        .window-header .win-title .icon::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 6px;
+            height: 6px;
+            background: #8ab4d8;
+            border-radius: 1px;
+            box-shadow: 4px 4px 0 #8ab4d8, 4px 0 0 #8ab4d8, 0 4px 0 #8ab4d8;
+        }
+
+        .window-header .win-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .window-header .win-controls button {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #7a8a9a;
+            background: #e8ecf0;
+            border-radius: 3px;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            color: #1a2a3a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.1s;
+        }
+        .window-header .win-controls button:hover {
+            background: #d0d8e0;
+        }
+        .window-header .win-controls button.close:hover {
+            background: #e04343;
+            color: #fff;
+            border-color: #c03030;
+        }
+
+        .window-header .win-info {
+            display: flex;
+            gap: 20px;
+            font-size: 11px;
+            color: #1a2a3a;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 2px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(120, 150, 180, 0.3);
+        }
+        .window-header .win-info span {
+            white-space: nowrap;
+        }
+
+        /* ===== 2. PRIMARY NAVIGATION (RIBBON) ===== */
+        .primary-nav {
+            background: #f8f9fa;
+            border-bottom: 1px solid #b0b8c0;
+            padding: 6px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+        }
+
+        .primary-nav .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .primary-nav .nav-tab {
+            background: #d1e4f9;
+            border: 1px solid #a0b8d0;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            padding: 6px 16px 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #0a1a2a;
+            position: relative;
+            margin-bottom: -1px;
+            box-shadow: inset 0 1px 0 #fff;
+        }
+        .primary-nav .nav-tab .sub {
+            font-weight: 400;
+            font-size: 11px;
+            color: #3a5a7a;
+            margin-left: 8px;
+        }
+        .primary-nav .nav-tab .dropdown-arrow {
+            font-size: 10px;
+            margin-left: 6px;
+            color: #4a6a8a;
+        }
+
+        .primary-nav .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 12px;
+        }
+        .primary-nav .nav-right .menu-item {
+            color: #1a2a3a;
+            cursor: default;
+        }
+        .primary-nav .nav-right .menu-item strong {
+            font-weight: 700;
+            color: #0a1a2a;
+        }
+        .primary-nav .nav-right .menu-item .hotkey {
+            color: #5a7a9a;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+
+        /* ===== 3. MAIN LAYOUT: SIDEBAR + CONTENT ===== */
+        .main-layout {
+            display: flex;
+            min-height: 520px;
+            background: #f5f5f5;
+        }
+
+        /* ===== RIGHT SIDEBAR ===== */
+        .sidebar {
+            width: 220px;
+            min-width: 220px;
+            background: #f5f5f5;
+            border-left: 1px solid #c8c8d0;
+            border-top: 1px solid #c8c8d0;
+            padding: 8px 6px 12px 6px;
+            overflow-y: auto;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            order: 2;
+        }
+
+        .sidebar .menu-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .sidebar .menu-group .group-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: #6a7a8a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 4px 2px 4px;
+            border-bottom: 1px solid #e0e0e8;
+            margin-bottom: 2px;
+        }
+
+        .sidebar .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 8px 3px 6px;
+            border-radius: 3px;
+            color: #1a2a3a;
+            cursor: default;
+            transition: background 0.1s;
+            font-size: 11px;
+        }
+        .sidebar .menu-item:hover {
+            background: #dce6f0;
+        }
+        .sidebar .menu-item .key {
+            font-weight: 700;
+            color: #0a1a2a;
+            min-width: 22px;
+        }
+        .sidebar .menu-item .label {
+            flex: 1;
+            margin-left: 6px;
+        }
+        .sidebar .menu-item .hotkey {
+            color: #5a7a9a;
+            font-weight: 400;
+            font-size: 10px;
+        }
+
+        .sidebar .divider {
+            border-top: 1px solid #d8d8e0;
+            margin: 6px 0 4px 0;
+        }
+
+        .sidebar .bottom-links {
+            margin-top: auto;
+            padding-top: 8px;
+            border-top: 1px solid #d8d8e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            font-size: 10px;
+            color: #2a4a6a;
+        }
+        .sidebar .bottom-links span {
+            cursor: default;
+        }
+        .sidebar .bottom-links span:hover {
+            text-decoration: underline;
+            color: #0a2a4a;
+        }
+
+        /* ===== 4. MAIN CONTENT AREA ===== */
+        .content-area {
+            flex: 1;
+            background: #ffffff;
+            padding: 12px 16px 10px 16px;
+            border-top: 1px solid #c8c8d0;
+            display: flex;
+            flex-direction: column;
+            order: 1;
+            overflow-x: auto;
+        }
+
+        .content-area .grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #3a4a5a;
+        }
+        .content-area .grid-header .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .content-area .grid-header .left .badge {
+            background: #d1e4f9;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 11px;
+            color: #0a2a4a;
+            border: 1px solid #a0b8d0;
+        }
+        .content-area .grid-header .right {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: #4a6a8a;
+        }
+
+        /* ===== DATA GRID ===== */
+        .table-wrap {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid #b8b8c8;
+            border-radius: 2px;
+            background: #fff;
+        }
+
+        .data-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            table-layout: fixed;
+        }
+
+        .data-grid thead th {
+            background: #e6f0f9;
+            color: #0a1a2a;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 6px 6px 5px 6px;
+            border: 1px solid #b8c8d8;
+            border-top: none;
+            border-left: none;
+            text-align: left;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .data-grid thead th:last-child {
+            border-right: none;
+        }
+        .data-grid thead th:first-child {
+            border-left: 1px solid #b8c8d8;
+        }
+
+        .data-grid tbody td {
+            padding: 4px 6px;
+            border: 1px solid #d0d8e0;
+            border-top: none;
+            border-left: none;
+            height: 28px;
+            vertical-align: middle;
+            color: #1a2a3a;
+            background: #fff;
+            font-size: 12px;
+        }
+        .data-grid tbody td:first-child {
+            border-left: 1px solid #d0d8e0;
+        }
+        .data-grid tbody td:last-child {
+            border-right: 1px solid #d0d8e0;
+        }
+
+        /* Zebra striping */
+        .data-grid tbody tr:nth-child(even) td {
+            background: #f9f9fc;
+        }
+
+        /* Active row / cell */
+        .data-grid tbody tr.active-row td {
+            background: #eef4fa;
+            border-bottom-color: #0078d7;
+        }
+        .data-grid tbody tr.active-row td:first-child {
+            border-left: 3px solid #0078d7;
+            padding-left: 4px;
+        }
+        .data-grid tbody .active-cell {
+            background: #fff9e6 !important;
+            outline: 1.5px solid #0078d7;
+            outline-offset: -1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Column widths */
+        .data-grid .col-date {
+            width: 85px;
+        }
+        .data-grid .col-vch {
+            width: 90px;
+        }
+        .data-grid .col-sale-type {
+            width: 90px;
+        }
+        .data-grid .col-mat {
+            width: 100px;
+        }
+        .data-grid .col-narr {
+            width: 140px;
+        }
+        .data-grid .col-qty {
+            width: 70px;
+        }
+        .data-grid .col-price {
+            width: 80px;
+        }
+        .data-grid .col-amount {
+            width: 90px;
+        }
+        .data-grid .col-tax {
+            width: 70px;
+        }
+
+        .data-grid .text-right {
+            text-align: right;
+        }
+        .data-grid .text-center {
+            text-align: center;
+        }
+        .data-grid .text-muted {
+            color: #6a7a8a;
+        }
+
+        /* ===== 5. BOTTOM SUMMARY PANEL ===== */
+        .bottom-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px 8px 16px;
+            background: #f5f5f5;
+            border-top: 1px solid #c8c8d0;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+        }
+
+        .bottom-panel .summary-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            font-size: 12px;
+            color: #1a2a3a;
+            flex-wrap: wrap;
+        }
+        .bottom-panel .summary-left .label {
+            color: #4a5a6a;
+            font-weight: 500;
+        }
+        .bottom-panel .summary-left .value {
+            font-weight: 600;
+            color: #0a1a2a;
+        }
+        .bottom-panel .summary-left .value.highlight {
+            color: #005a9e;
+        }
+        .bottom-panel .summary-left .sep {
+            color: #b0b8c0;
+        }
+
+        .bottom-panel .summary-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .bottom-panel .btn {
+            padding: 4px 14px;
+            background: #e8ecf0;
+            border: 1px solid #a0a8b0;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1a2a3a;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            font-family: inherit;
+            white-space: nowrap;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bottom-panel .btn:hover {
+            background: #dce4ec;
+            border-color: #7a8a9a;
+        }
+        .bottom-panel .btn.primary {
+            background: #c5d8e8;
+            border-color: #7a9ab8;
+            font-weight: 700;
+        }
+        .bottom-panel .btn.primary:hover {
+            background: #b0c8dc;
+            border-color: #5a7a9a;
+        }
+        .bottom-panel .btn.save {
+            background: #2a5a7a;
+            border-color: #1a3a5a;
+            color: #fff;
+        }
+        .bottom-panel .btn.save:hover {
+            background: #1a4a6a;
+        }
+        .bottom-panel .btn.quit {
+            background: #c8c8d0;
+            border-color: #8a8a9a;
+        }
+        .bottom-panel .btn.quit:hover {
+            background: #b8b8c0;
+        }
+
+        /* ===== 6. STATUS BAR ===== */
+        .status-bar {
+            background: #2b2b3a;
+            padding: 4px 16px 4px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #d0d0e0;
+            border-top: 1px solid #1a1a2a;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            min-height: 28px;
+        }
+
+        .status-bar .left {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .status-bar .left .cmd {
+            color: #8ab4d8;
+        }
+        .status-bar .left .cmd-key {
+            color: #e8e8f0;
+            font-weight: 700;
+        }
+
+        .status-bar .right {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            color: #9aaab8;
+        }
+        .status-bar .right .highlight {
+            color: #c0d8e8;
+        }
+
+        /* ===== SCROLLBAR STYLING ===== */
+        .table-wrap::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        .table-wrap::-webkit-scrollbar-track {
+            background: #e8e8ee;
+        }
+        .table-wrap::-webkit-scrollbar-thumb {
+            background: #b0b8c8;
+            border-radius: 6px;
+            border: 1px solid #8a8a9a;
+        }
+        .table-wrap::-webkit-scrollbar-thumb:hover {
+            background: #9aa8b8;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: #e8e8ee;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #b0b8c8;
+            border-radius: 4px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1200px) {
+            .desktop-window {
+                width: 100%;
+                border-radius: 4px;
+            }
+            .sidebar {
+                width: 180px;
+                min-width: 180px;
+            }
+            .window-header .win-info {
+                display: none;
+            }
+            .data-grid .col-narr {
+                width: 100px;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .sidebar {
+                display: none;
+            }
+            .primary-nav .nav-right {
+                display: none;
+            }
+            .bottom-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .bottom-panel .summary-right {
+                justify-content: flex-end;
+            }
+            .data-grid .col-mat,
+            .data-grid .col-narr {
+                width: 80px;
+            }
+            .data-grid .col-sale-type {
+                width: 70px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .window-header .win-info {
+                display: none;
+            }
+            .primary-nav .nav-tab {
+                font-size: 11px;
+                padding: 4px 10px;
+            }
+            .primary-nav .nav-tab .sub {
+                display: none;
+            }
+            .data-grid {
+                font-size: 10px;
+            }
+            .data-grid thead th {
+                font-size: 9px;
+                padding: 4px 4px;
+            }
+            .data-grid tbody td {
+                padding: 2px 4px;
+                font-size: 10px;
+                height: 22px;
+            }
+            .bottom-panel .btn {
+                font-size: 10px;
+                padding: 2px 10px;
+                height: 26px;
+            }
+            .status-bar {
+                font-size: 8px;
+            }
+        }
+
+        /* ===== UTILITY ===== */
+        .border-inset {
+            border-style: inset !important;
+            border-color: #b0b8c0 !important;
+            background: #fafcfe !important;
+        }
+        .cursor-default {
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="desktop-window">
+
+        <!-- ============================================================ -->
+        <!-- 1. TOP HEADER BAR                                             -->
+        <!-- ============================================================ -->
+        <div class="window-header">
+            <div class="win-title">
+                <span class="icon"></span>
+                <span>GST Billing Software v6.2</span>
+            </div>
+            <div class="win-info">
+                <span>📞 Support: 1800-123-4567</span>
+                <span>📅 12-06-2026</span>
+                <span>🕒 11:45:32</span>
+                <span>📋 License: PRO-2026</span>
+            </div>
+            <div class="win-controls">
+                <button title="Minimize">─</button>
+                <button title="Maximize">☐</button>
+                <button class="close" title="Close">✕</button>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 2. PRIMARY NAVIGATION (RIBBON)                                -->
+        <!-- ============================================================ -->
+        <div class="primary-nav">
+            <div class="nav-left">
+                <div class="nav-tab">
+                    Sales : Add : Series – Main
+                    <span class="sub">GST</span>
+                    <span class="dropdown-arrow">▼</span>
+                </div>
+                <span style="font-size:12px; color:#4a6a8a; font-weight:500;">Tax Type : GST</span>
+            </div>
+            <div class="nav-right">
+                <span class="menu-item"><strong>List</strong> <span class="hotkey">F5</span></span>
+                <span class="menu-item"><strong>Paste</strong> <span class="hotkey">F13</span></span>
+                <span class="menu-item"><strong>Tax Type :</strong> GST</span>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 3. MAIN LAYOUT                                               -->
+        <!-- ============================================================ -->
+        <div class="main-layout">
+
+            <!-- ===== CONTENT AREA (Data Grid) ===== -->
+            <div class="content-area">
+
+                <div class="grid-header">
+                    <div class="left">
+                        <span style="font-weight:700; color:#0a1a2a;">📋 Sales Entry</span>
+                        <span class="badge">Active</span>
+                        <span style="font-size:11px; color:#4a6a8a;">Voucher No: <strong>12333/2026-27</strong></span>
+                    </div>
+                    <div class="right">
+                        <span>🔍 Search</span>
+                        <span>📄 New</span>
+                        <span>✏️ Edit</span>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="data-grid" id="billingGrid">
+                        <thead>
+                            <tr>
+                                <th class="col-date">Date</th>
+                                <th class="col-vch">Vch No</th>
+                                <th class="col-sale-type">Sale Type</th>
+                                <th class="col-mat">Mat. Centre</th>
+                                <th class="col-narr">Narration</th>
+                                <th class="col-qty text-right">Qty. Unit</th>
+                                <th class="col-price text-right">Price</th>
+                                <th class="col-amount text-right">Amount</th>
+                                <th class="col-tax text-right">Tax (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Row 1 – active / data row -->
+                            <tr class="active-row">
+                                <td class="active-cell" contenteditable="true">12-06-2026</td>
+                                <td contenteditable="true">Cash</td>
+                                <td contenteditable="true">12333/2026-27</td>
+                                <td contenteditable="true">Main</td>
+                                <td contenteditable="true">Retail sale – cotton fabric</td>
+                                <td class="text-right" contenteditable="true">25.00</td>
+                                <td class="text-right" contenteditable="true">120.00</td>
+                                <td class="text-right" contenteditable="true">3,000.00</td>
+                                <td class="text-right" contenteditable="true">5.0</td>
+                            </tr>
+                            <!-- Row 2 -->
+                            <tr>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                            </tr>
+                            <!-- Row 3 -->
+                            <tr>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                            </tr>
+                            <!-- Row 4 -->
+                            <tr>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                            </tr>
+                            <!-- Row 5 -->
+                            <tr>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                            </tr>
+                            <!-- Row 6 -->
+                            <tr>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                            </tr>
+                            <!-- Row 7 -->
+                            <tr>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                            </tr>
+                            <!-- Row 8 -->
+                            <tr>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                                <td class="text-right" contenteditable="true"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ===== 5. BOTTOM SUMMARY PANEL (inside content area) ===== -->
+                <div class="bottom-panel">
+                    <div class="summary-left">
+                        <span><span class="label">Automatic Date</span> <span class="value">12-06-2026</span></span>
+                        <span class="sep">|</span>
+                        <span><span class="label">Tax Value</span> <span class="value highlight">₹ 150.00</span></span>
+                        <span class="sep">|</span>
+                        <span><span class="label">Discount</span> <span class="value">₹ 0.00</span></span>
+                        <span class="sep">|</span>
+                        <span><span class="label">GST</span> <span class="value highlight">₹ 150.00</span></span>
+                    </div>
+                    <div class="summary-right">
+                        <button class="btn primary">Total 0.00</button>
+                        <button class="btn">Update Discount</button>
+                        <button class="btn">Check Scheme</button>
+                        <button class="btn save">💾 Save</button>
+                        <button class="btn quit">✕ Quit</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===== SIDEBAR ===== -->
+            <div class="sidebar">
+
+                <!-- Group 1: F-Key Shortcuts -->
+                <div class="menu-group">
+                    <div class="group-label">⚡ F-Key Commands</div>
+                    <div class="menu-item"><span class="key">F1</span><span class="label">Help</span><span class="hotkey">Alt+H</span></div>
+                    <div class="menu-item"><span class="key">F2</span><span class="label">Add Account</span><span class="hotkey">Ctrl+A</span></div>
+                    <div class="menu-item"><span class="key">F3</span><span class="label">Add Item</span><span class="hotkey">Ctrl+I</span></div>
+                    <div class="menu-item"><span class="key">F4</span><span class="label">Add Master</span><span class="hotkey">Ctrl+M</span></div>
+                    <div class="menu-item"><span class="key">F5</span><span class="label">Add Voucher</span><span class="hotkey">Ctrl+V</span></div>
+                    <div class="menu-item"><span class="key">F6</span><span class="label">Add Payment</span><span class="hotkey">Ctrl+P</span></div>
+                    <div class="menu-item"><span class="key">F7</span><span class="label">Add Receipt</span><span class="hotkey">Ctrl+R</span></div>
+                    <div class="menu-item"><span class="key">F8</span><span class="label">Add Journal</span><span class="hotkey">Ctrl+J</span></div>
+                    <div class="menu-item"><span class="key">F9</span><span class="label">Add Sales</span><span class="hotkey">Ctrl+S</span></div>
+                    <div class="menu-item"><span class="key">F10</span><span class="label">Add Purchase</span><span class="hotkey">Ctrl+U</span></div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Group 2: Alphabetical Shortcuts -->
+                <div class="menu-group">
+                    <div class="group-label">📂 Reports &amp; Utilities</div>
+                    <div class="menu-item"><span class="key">B</span><span class="label">Balance Sheet</span><span class="hotkey">F11</span></div>
+                    <div class="menu-item"><span class="key">T</span><span class="label">Trial Balance</span><span class="hotkey">F12</span></div>
+                    <div class="menu-item"><span class="key">S</span><span class="label">Stock Status</span><span class="hotkey">F13</span></div>
+                    <div class="menu-item"><span class="key">A</span><span class="label">Acc Summary</span><span class="hotkey">F14</span></div>
+                    <div class="menu-item"><span class="key">L</span><span class="label">Acc Ledger</span><span class="hotkey">F15</span></div>
+                    <div class="menu-item"><span class="key">I</span><span class="label">Item Summary</span><span class="hotkey">F16</span></div>
+                    <div class="menu-item"><span class="key">D</span><span class="label">Item A/cGrp</span><span class="hotkey">F17</span></div>
+                    <div class="menu-item"><span class="key">G</span><span class="label">GST Summary</span><span class="hotkey">F18</span></div>
+                    <div class="menu-item"><span class="key">U</span><span class="label">Utility User</span><span class="hotkey">F19</span></div>
+                    <div class="menu-item"><span class="key">C</span><span class="label">Configuration</span><span class="hotkey">F20</span></div>
+                    <div class="menu-item"><span class="key">L</span><span class="label">Look Program</span><span class="hotkey">F21</span></div>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Bottom section -->
+                <div class="bottom-links">
+                    <span>🎓 Training Videos</span>
+                    <span>🔗 GST Portal</span>
+                    <span>🔍 Search Forms</span>
+                    <span>💾 Backup</span>
+                    <span>⭐ Refer &amp; Earn</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 6. STATUS BAR                                                 -->
+        <!-- ============================================================ -->
+        <div class="status-bar">
+            <div class="left">
+                <span class="cmd"><span class="cmd-key">Esc</span> : Quit</span>
+                <span class="cmd"><span class="cmd-key">F12</span> : Show</span>
+                <span class="cmd"><span class="cmd-key">F6</span> : Delete</span>
+                <span class="cmd"><span class="cmd-key">F7</span> : Add</span>
+                <span class="cmd"><span class="cmd-key">F8</span> : Edit</span>
+                <span class="cmd"><span class="cmd-key">F9</span> : Save</span>
+            </div>
+            <div class="right">
+                <span>👤 User: <span class="highlight">Admin</span></span>
+                <span>📅 12-06-2026</span>
+                <span>🕒 11:45:32</span>
+                <span>🔌 Port: <span class="highlight">532C</span></span>
+                <span>📍 <span class="highlight">Summy</span></span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Script: Click on any cell to make it "active" (focus)        -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            const grid = document.getElementById('billingGrid');
+            if (!grid) return;
+
+            // Remove active-row from all rows, then add to the row containing the clicked cell
+            grid.addEventListener('focusin', function(e) {
+                const td = e.target.closest('td');
+                if (!td) return;
+                const tr = td.closest('tr');
+                if (!tr) return;
+
+                // Remove active-row from all rows
+                grid.querySelectorAll('tbody tr').forEach(row => row.classList.remove('active-row'));
+
+                // Add active-row to the clicked row
+                tr.classList.add('active-row');
+
+                // Remove active-cell from all cells, then add to the clicked cell
+                grid.querySelectorAll('.active-cell').forEach(cell => cell.classList.remove('active-cell'));
+                td.classList.add('active-cell');
+            });
+
+            // Also handle initial active state: ensure first row is active on load
+            const firstRow = grid.querySelector('tbody tr');
+            if (firstRow) {
+                firstRow.classList.add('active-row');
+                const firstCell = firstRow.querySelector('td');
+                if (firstCell) firstCell.classList.add('active-cell');
+            }
+
+            // Allow Enter to move to next row (optional UX)
+            grid.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const td = e.target.closest('td');
+                    if (!td) return;
+                    const tr = td.closest('tr');
+                    if (!tr) return;
+                    const nextRow = tr.nextElementSibling;
+                    if (nextRow) {
+                        e.preventDefault();
+                        const nextCell = nextRow.querySelector('td');
+                        if (nextCell) nextCell.focus();
+                    }
+                }
+            });
+
+            // Double-click to edit (already contenteditable)
+            console.log('Legacy GST Billing Interface loaded.');
+        })();
+    </script>
+
+</body>
+</html>

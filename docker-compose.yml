@@ -41,7 +41,6 @@ services:
       # Shadow backend API/Database directories to keep them physically empty
       - /var/www/html/src/Modules/Auth/Controller/Api
       - /var/www/html/src/Modules/Product/Controller/Api
-      - /var/www/html/src/Modules/Billing/Controller/Api
       - /var/www/html/src/Modules/Reports/Controller/Api
       - /var/www/html/Database
     depends_on:

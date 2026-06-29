@@ -98,7 +98,6 @@ cache-products:
 cache-vendor:
 	docker exec -it retail_valkey valkey-cli keys "vendors:list:*"
 
-# Clear all Valkey cache
 cache-clear:
 	docker exec -it retail_valkey valkey-cli flushall
 

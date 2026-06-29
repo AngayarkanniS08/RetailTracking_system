@@ -183,6 +183,37 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->allPayments();
         });
+
+        // ── Billing / Invoices ─────────────────────────────────────────
+        $router->add('GET', '/api/invoices', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Billing\Controller\InvoiceController())->index();
+        });
+
+        $router->add('POST', '/api/invoices', function (): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Billing\Controller\InvoiceController())->store();
+        });
+
+        $router->add('GET', '/api/invoices/{id}', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Billing\Controller\InvoiceController())->show($params['id']);
+        });
+
+        $router->add('POST', '/api/invoices/{id}/cancel', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Billing\Controller\InvoiceController())->cancel($params['id']);
+        });
+
+        $router->add('POST', '/api/invoices/{id}/return', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Billing\Controller\InvoiceController())->returnItems($params['id']);
+        });
+
+        $router->add('GET', '/api/customers/{id}/ledger', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Billing\Controller\InvoiceController())->customerLedger($params['id']);
+        });
             
     }
 }

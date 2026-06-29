@@ -52,6 +52,10 @@ function switchTab(sectionId, vendorId = null) {
     }
     if (sectionId === 'vendorhistory' && typeof initVendorHistory === 'function') initVendorHistory(vendorId);
 
+    if (sectionId === 'billing_pos') {
+        if (posProducts.length === 0) loadPOSData();
+    }
+
 }
 
 
