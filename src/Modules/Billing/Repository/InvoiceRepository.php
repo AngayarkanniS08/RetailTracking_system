@@ -584,7 +584,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             ) VALUES (
                 gen_random_uuid(),
                 current_setting('app.current_user_id')::uuid, ?, ?,
-                ?, ?, ?, ?, ?, now()
+                ?, ?, ?, ?, ?, clock_timestamp()
             )
             RETURNING id, user_id, customer_id, invoice_id,
                       entry_type, debit, credit, balance, notes, created_at

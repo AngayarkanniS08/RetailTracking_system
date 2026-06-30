@@ -74,8 +74,8 @@ services:
       - ./tmp:/var/www/html/tmp
       - ./src/index.php:/var/www/html/index.php
       - ./src/.htaccess:/var/www/html/.htaccess
-      # Shadow UI directories to keep them physically empty
-      - /var/www/html/views
+      - ./views:/var/www/html/views:ro
+      # Keep public directory empty in API container
       - /var/www/html/public
     depends_on:
       db:

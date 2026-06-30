@@ -210,9 +210,50 @@ class ApiRoutes
             (new \Modules\Billing\Controller\InvoiceController())->returnItems($params['id']);
         });
 
+        $router->add('GET', '/api/invoices/{id}/receipt', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Billing\Controller\InvoiceController())->receipt($params['id']);
+        });
+
+        // ── POS Search (Valkey-cached) ──────────────────────────────
+        $router->add('GET', '/api/pos/search', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Billing\Controller\Api\PosSearchController())->search();
+        });
+
+        $router->add('POST', '/api/pos/search/flush', function (): void {
+            (new \Modules\Billing\Controller\Api\PosSearchController())->flushCache();
+        });
+
+        // ── Customers / Credit (Kadan) ─────────────────────────
+        $router->add('GET', '/api/customers', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Customer\Controller\Api\CustomerController())->index();
+        });
+
+        $router->add('POST', '/api/customers', function (): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Customer\Controller\Api\CustomerController())->store();
+        });
+
+        $router->add('GET', '/api/customers/{id}', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Customer\Controller\Api\CustomerController())->show($params['id']);
+        });
+
+        $router->add('PUT', '/api/customers/{id}', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Customer\Controller\Api\CustomerController())->update($params['id']);
+        });
+
+        $router->add('POST', '/api/customers/{id}/pay', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Customer\Controller\Api\CustomerController())->pay($params['id']);
+        });
+
         $router->add('GET', '/api/customers/{id}/ledger', function (array $params): void {
             AuthMiddleware::authenticate();
-            (new \Modules\Billing\Controller\InvoiceController())->customerLedger($params['id']);
+            (new \Modules\Customer\Controller\Api\CustomerController())->ledger($params['id']);
         });
             
     }

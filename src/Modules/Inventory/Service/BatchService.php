@@ -39,15 +39,17 @@ class BatchService
     {
         try {
             $valkey = ValkeyCache::getClient();
-            // Clear any cached dashboard or stock intelligence reports
             $keys = $valkey->keys('reports:*');
             if ($keys) {
                 $valkey->del($keys);
             }
-            //Clear inventory search cache keys to prevent serving stale search data
             $batchKeys = $valkey->keys('inventory:batches:*');
             if ($batchKeys) {
                 $valkey->del($batchKeys);
+            }
+            $posKeys = $valkey->keys('pos:search:*');
+            if ($posKeys) {
+                $valkey->del($posKeys);
             }
         } catch (\Exception $e) {
             error_log('Valkey cache invalidation error: ' . $e->getMessage());

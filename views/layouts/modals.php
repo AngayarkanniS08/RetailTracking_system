@@ -160,12 +160,36 @@
         <button class="close-btn" onclick="closeModal('addCustomerModal')">&times;</button>
       </div>
       <div class="input-group">
-        <label class="input-label">Full Name</label>
+        <label class="input-label">Full Name <span style="color:var(--danger);">*</span></label>
         <input type="text" id="custName" class="input-field" placeholder="Customer Name">
       </div>
       <div class="input-group">
-        <label class="input-label">Phone Number</label>
+        <label class="input-label">Phone Number <span style="color:var(--danger);">*</span></label>
         <input type="text" id="custPhone" class="input-field" placeholder="10-digit number">
+      </div>
+      <div class="d-flex" style="gap:10px;">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Email</label>
+          <input type="email" id="custEmail" class="input-field" placeholder="email@example.com">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">GSTIN</label>
+          <input type="text" id="custGstin" class="input-field" placeholder="GSTIN (optional)">
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Address</label>
+        <input type="text" id="custAddress" class="input-field" placeholder="Address (optional)">
+      </div>
+      <div class="d-flex" style="gap:10px;">
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Credit Limit (₹) <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <input type="number" id="custCreditLimit" class="input-field" placeholder="0" min="0">
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">Opening Balance (₹) <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <input type="number" id="custOpeningBalance" class="input-field" placeholder="0" min="0">
+        </div>
       </div>
       <button class="btn btn-primary btn-block" onclick="saveCustomer()">Save Customer</button>
     </div>
@@ -189,7 +213,11 @@
       <input type="hidden" id="payCustId">
       <div class="input-group">
         <label class="input-label">Amount Received (₹)</label>
-        <input type="number" id="payAmount" class="input-field" placeholder="Enter amount">
+        <input type="number" id="payAmount" class="input-field" placeholder="Enter amount" min="0" step="1">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Notes (optional)</label>
+        <input type="text" id="payNotes" class="input-field" placeholder="e.g. Partial payment">
       </div>
       <button class="btn btn-primary btn-block" onclick="processPayment()">Record Payment</button>
     </div>

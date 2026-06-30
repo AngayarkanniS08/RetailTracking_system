@@ -47,8 +47,8 @@ function switchTab(sectionId, vendorId = null) {
     if (sectionId === 'vendor_list') {
         if (typeof initVendorPage === 'function') initVendorPage();
     }
-    if (sectionId === 'credit') {
-        if (typeof initCredit === 'function') initCredit();
+    if (sectionId === 'credit_kadan' || sectionId === 'credit') {
+        if (typeof loadCreditPage === 'function') loadCreditPage();
     }
     if (sectionId === 'vendorhistory' && typeof initVendorHistory === 'function') initVendorHistory(vendorId);
 

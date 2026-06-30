@@ -267,4 +267,34 @@ class InvoiceController
             echo json_encode(['error' => 'Failed to load customer ledger']);
         }
     }
+
+    /**
+     * GET /api/invoices/{id}/receipt
+     */
+    public function receipt(string $id): void
+    {
+        AuthMiddleware::authenticate();
+
+        try {
+            $invoice = $this->service->getInvoice($id);
+            if (!$invoice) {
+                http_response_code(404);
+                echo 'Invoice not found';
+                return;
+            }
+
+            $shop = [
+                'name' => 'Pudheera Fashion Shop',
+                'address' => "New Bus Stand, Valliyoor - 627 117",
+                'gst' => '33ABBFA1628A1ZC',
+                'phone' => '9384261577'
+            ];
+
+            header('Content-Type: text/html; charset=utf-8');
+            require __DIR__ . '/../../../../views/billing/receipt.php';
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo 'Failed to load receipt';
+        }
+    }
 }

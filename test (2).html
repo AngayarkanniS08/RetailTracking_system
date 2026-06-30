@@ -888,6 +888,32 @@
       background: var(--bg-hover);
     }
 
+    /* Price Mode Toggle Badge */
+    .price-mode-badge {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 50%;
+      margin-left: 4px;
+      vertical-align: middle;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      user-select: none;
+      background: var(--accent);
+      color: #fff;
+    }
+    .price-mode-badge.mode-retail {
+      background: var(--warn, #f59e0b);
+      color: #fff;
+    }
+    .price-mode-badge:hover {
+      opacity: 0.8;
+    }
+
     /* ===== BILLING BOTTOM BAR (cart moved below) ===== */
     .billing-bottom-bar {
       display: flex;
@@ -1884,26 +1910,27 @@
             <table class="billing-grid" id="billingGrid">
               <thead>
                 <tr>
-                  <th style="width:85px;">Date</th>
-                  <th style="width:90px;">Vch No</th>
-                  <th style="width:90px;">Sale Type</th>
-                  <th style="width:100px;">Mat. Centre</th>
-                  <th style="width:140px;">Narration</th>
+                  <th style="width:100px;">Batch No</th>
+                  <th style="width:160px;">Particulars</th>
+                  <th style="width:80px; text-align:right;">
+                    Price <span id="priceModeLabel" class="price-mode-badge">W</span>
+                  </th>
+                  <th style="width:70px; text-align:right;">Discount</th>
+                  <th style="width:60px;">Unit</th>
                   <th style="width:70px; text-align:right;">Qty</th>
-                  <th style="width:80px; text-align:right;">Price</th>
+                  <th style="width:70px; text-align:right;">GST</th>
                   <th style="width:90px; text-align:right;">Amount</th>
-                  <th style="width:70px; text-align:right;">Tax (%)</th>
                 </tr>
               </thead>
               <tbody>
-                <tr class="bg-active"><td class="cell-active" contenteditable="true">12-06-2026</td><td contenteditable="true">Cash</td><td contenteditable="true">12333/2026-27</td><td contenteditable="true">Main</td><td contenteditable="true">Retail sale – cotton fabric</td><td style="text-align:right" contenteditable="true">25.00</td><td style="text-align:right" contenteditable="true">120.00</td><td style="text-align:right" contenteditable="true">3,000.00</td><td style="text-align:right" contenteditable="true">5.0</td></tr>
-                <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
-                <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
-                <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
-                <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
-                <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
-                <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
-                <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td class="cell-active" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
               </tbody>
             </table>
           </div>
@@ -2820,13 +2847,13 @@
 
     // Batches (Vendor Specific)
     let batches = [
-      { id: 'B1001', product_id: 'P001', vendor_name: 'Erode Textile Market', purchase_price: 85, selling_price: 120, quantity: 200, created_at: new Date(Date.now() - 86400000 * 5) },
-      { id: 'B1002', product_id: 'P001', vendor_name: 'Chennai Fabrics Co.', purchase_price: 90, selling_price: 130, quantity: 80, created_at: new Date(Date.now() - 86400000 * 3) },
-      { id: 'B1003', product_id: 'P002', vendor_name: 'Kanchipuram Silk House', purchase_price: 350, selling_price: 500, quantity: 50, created_at: new Date(Date.now() - 86400000 * 7) },
-      { id: 'B1004', product_id: 'P003', vendor_name: 'Madurai Thread Works', purchase_price: 25, selling_price: 40, quantity: 300, created_at: new Date(Date.now() - 86400000 * 2) },
-      { id: 'B1005', product_id: 'P004', vendor_name: 'Bead Craft Suppliers', purchase_price: 60, selling_price: 95, quantity: 150, created_at: new Date(Date.now() - 86400000) },
-      { id: 'B1006', product_id: 'P005', vendor_name: 'Zip & Button House', purchase_price: 8, selling_price: 15, quantity: 500, created_at: new Date() },
-      { id: 'B1007', product_id: 'P006', vendor_name: 'Coimbatore Lace Works', purchase_price: 18, selling_price: 35, quantity: 120, created_at: new Date(Date.now() - 86400000 * 12) }
+      { id: 'B1001', product_id: 'P001', vendor_name: 'Erode Textile Market', purchase_price: 85, selling_price: 120, retail_price: 145, quantity: 200, created_at: new Date(Date.now() - 86400000 * 5) },
+      { id: 'B1002', product_id: 'P001', vendor_name: 'Chennai Fabrics Co.', purchase_price: 90, selling_price: 130, retail_price: 155, quantity: 80, created_at: new Date(Date.now() - 86400000 * 3) },
+      { id: 'B1003', product_id: 'P002', vendor_name: 'Kanchipuram Silk House', purchase_price: 350, selling_price: 500, retail_price: 580, quantity: 50, created_at: new Date(Date.now() - 86400000 * 7) },
+      { id: 'B1004', product_id: 'P003', vendor_name: 'Madurai Thread Works', purchase_price: 25, selling_price: 40, retail_price: 50, quantity: 300, created_at: new Date(Date.now() - 86400000 * 2) },
+      { id: 'B1005', product_id: 'P004', vendor_name: 'Bead Craft Suppliers', purchase_price: 60, selling_price: 95, retail_price: 120, quantity: 150, created_at: new Date(Date.now() - 86400000) },
+      { id: 'B1006', product_id: 'P005', vendor_name: 'Zip & Button House', purchase_price: 8, selling_price: 15, retail_price: 20, quantity: 500, created_at: new Date() },
+      { id: 'B1007', product_id: 'P006', vendor_name: 'Coimbatore Lace Works', purchase_price: 18, selling_price: 35, retail_price: 48, quantity: 120, created_at: new Date(Date.now() - 86400000 * 12) }
     ];
 
     // Customers
@@ -2887,6 +2914,7 @@
 
     // POS State
     let cart = [];
+    let priceMode = 'wholesale'; // 'wholesale' or 'retail'
 
     /* =======================================================================
        2. UI INTERACTIONS & THEME
@@ -3232,7 +3260,10 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
             <div class="psd-name">${m.product.name}</div>
             <div class="psd-meta">${m.batch.id} | ${m.batch.vendor_name || '-'}</div>
           </div>
-          <div class="psd-price">${formatCurrency(m.batch.selling_price)}</div>
+          <div class="psd-price">
+            <span style="color:var(--accent);font-weight:600;">W: ${formatCurrency(m.batch.selling_price)}</span>
+            <span style="color:var(--warn);font-weight:600;"> R: ${formatCurrency(m.batch.retail_price || m.batch.selling_price * 1.2)}</span>
+          </div>
         </div>`;
       });
       dropdown.innerHTML = html;
@@ -3281,24 +3312,25 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
 
       const cells = targetRow.querySelectorAll('td');
       const qty = 1;
-      const price = batch.selling_price;
+      const price = priceMode === 'wholesale' ? batch.selling_price : (batch.retail_price || batch.selling_price * 1.2);
       const amount = qty * price;
       const tax = product.gst || 0;
 
-      cells[0].textContent = todayStr();               // Date
-      cells[1].textContent = 'Auto';                     // Vch No
-      cells[2].textContent = 'Cash';                     // Sale Type
-      cells[3].textContent = 'Main';                     // Mat. Centre
-      cells[4].textContent = product.name;               // Narration
-      cells[5].textContent = qty.toFixed(2);             // Qty
-      cells[6].textContent = price.toFixed(2);           // Price
-      cells[7].textContent = amount.toFixed(2);          // Amount
-      cells[8].textContent = tax.toFixed(1);             // Tax (%)
+      targetRow.setAttribute('data-batch-id', batchId);
+      cells[0].textContent = batchId;                        // Batch No
+      cells[1].textContent = product.name;                   // Particulars
+      cells[2].textContent = price.toFixed(2);               // Price
+      cells[3].textContent = '0.00';                         // Discount
+      cells[4].textContent = product.unit || 'Nos';          // Unit
+      cells[5].textContent = qty.toFixed(2);                 // Qty
+      cells[6].textContent = tax.toFixed(1);                 // GST
+      cells[7].textContent = amount.toFixed(2);              // Amount
 
       // Add to cart state for bottom bar totals
       const existing = cart.find(c => c.batch_id === batchId);
       if (existing) {
         if (existing.qty < batch.quantity) existing.qty++;
+        existing.price = price; // update price if mode changed
       } else {
         cart.push({
           batch_id: batchId,
@@ -3317,12 +3349,69 @@ Amount Paid:                        ${formatCurrency(amtPaid)}`;
       targetRow.classList.add('bg-active');
       cells[0].classList.add('cell-active');
 
-      // Clear search
+      // Clear search & refocus on search bar
       document.getElementById('posSearch').value = '';
       document.getElementById('posSearchDropdown').style.display = 'none';
-      // Focus the qty cell of the filled row
-      if (cells[5]) cells[5].focus();
+      document.getElementById('posSearch').focus();
     }
+
+    /* Toggle between wholesale / retail price mode */
+    function togglePriceMode(force) {
+      if (force && (force === 'wholesale' || force === 'retail')) {
+        if (priceMode === force) return; // already set
+        priceMode = force;
+      } else {
+        priceMode = priceMode === 'wholesale' ? 'retail' : 'wholesale';
+      }
+      const badge = document.getElementById('priceModeLabel');
+      if (badge) {
+        badge.textContent = priceMode === 'wholesale' ? 'W' : 'R';
+        badge.classList.toggle('mode-retail', priceMode === 'retail');
+      }
+
+      // Update all filled rows and cart entries
+      const rows = document.querySelectorAll('#billingGrid tbody tr');
+      let changed = false;
+      rows.forEach(function(tr) {
+        const bid = tr.getAttribute('data-batch-id');
+        if (!bid) return;
+        const batch = getBatch(bid);
+        if (!batch) return;
+        const cells = tr.querySelectorAll('td');
+        const qty = parseFloat(cells[5].textContent) || 0;
+        if (qty === 0) return;
+
+        const newPrice = priceMode === 'wholesale' ? batch.selling_price : (batch.retail_price || batch.selling_price * 1.2);
+        const newAmount = qty * newPrice;
+        const tax = parseFloat(cells[6].textContent) || 0;
+
+        cells[2].textContent = newPrice.toFixed(2);
+        cells[7].textContent = newAmount.toFixed(2);
+
+        // Update matching cart entry
+        const item = cart.find(function(c) { return c.batch_id === bid; });
+        if (item) {
+          item.price = newPrice;
+        }
+        changed = true;
+      });
+
+      if (changed) calculateCart();
+    }
+
+    /* Keyboard shortcut: w/r only when focused inside a Price cell (col index 6) */
+    document.addEventListener('keydown', function(e) {
+      const key = e.key.toLowerCase();
+      if (key !== 'w' && key !== 'r') return;
+      const td = e.target.closest('td');
+      if (!td) return;
+      const tr = td.closest('tr');
+      if (!tr) return;
+      if (tr.closest('#billingGrid') && Array.from(tr.cells).indexOf(td) === 2) {
+        e.preventDefault();
+        togglePriceMode(key === 'w' ? 'wholesale' : 'retail');
+      }
+    });
 
     /* Grid cell focus: highlight active row/cell */
     document.addEventListener('DOMContentLoaded', function() {

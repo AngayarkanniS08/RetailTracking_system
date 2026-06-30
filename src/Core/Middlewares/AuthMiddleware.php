@@ -15,10 +15,17 @@ class AuthMiddleware
         $headers = getallheaders();
         $authHeader = $headers['Authorization'] ?? '';
 
+        // Fallback: accept token via query param (for window.open etc.)
         if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            http_response_code(401);
-            echo json_encode(['error' => 'No token provided']);
-            exit;
+            $queryToken = $_GET['token'] ?? '';
+            if ($queryToken !== '') {
+                $authHeader = 'Bearer ' . $queryToken;
+                $matches = [1 => $queryToken];
+            }
+        }
+
+        if (!isset($matches[1]) || empty($matches[1])) {
+            self::sendError('no_token', 'No token provided');
         }
 
         $token = $matches[1];

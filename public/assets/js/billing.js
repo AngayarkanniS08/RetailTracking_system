@@ -6,6 +6,347 @@ window.posCategories = [];
 window.posCategoryMap = {};
 window.activePosCategory = '';
 window.cart = [];
+window.priceMode = 'wholesale';
+/* Cache of search results for instant row filling (batches not yet in posBatches) */
+window._posSearchCache = {};
+
+function todayStr() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2,'0') + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + d.getFullYear();
+}
+
+/* Search state for paginated API search */
+window._posSearchState = { term: '', page: 1, totalPages: 1 };
+
+/* Search autocomplete: Valkey-cached API with pagination */
+async function onPOSSearchKeyup(e) {
+    const input = document.getElementById('posSearch');
+    const dropdown = document.getElementById('posSearchDropdown');
+    if (!input || !dropdown) return;
+    const term = input.value.trim().toLowerCase();
+
+    if (!term) { dropdown.style.display = 'none'; return; }
+
+    // Reset page on new term
+    if (term !== _posSearchState.term) {
+        _posSearchState.term = term;
+        _posSearchState.page = 1;
+    }
+
+    try {
+        const res = await window.apiRequest(`/api/pos/search?q=${encodeURIComponent(term)}&page=${_posSearchState.page}&limit=8`);
+        const matches = Array.isArray(res) ? res : (res.data || []);
+        const pagination = res.pagination || {};
+
+        if (!matches.length) { dropdown.style.display = 'none'; return; }
+
+        _posSearchState.totalPages = pagination.total_pages || 1;
+
+        // Cache search results for instant grid filling (even if not in posBatches)
+        matches.forEach(m => { _posSearchCache[m.batch_id] = m; });
+
+        let html = '';
+        matches.forEach(m => {
+            const sp = parseFloat(m.selling_price) || 0;
+            const rp = parseFloat(m.retail_price) || sp * 1.2;
+            html += `<div class="psd-item" onclick="selectPOSProduct('${m.batch_id}')">
+                <div>
+                    <div class="psd-name">${m.product_name}</div>
+                    <div class="psd-meta">${m.batch_number || m.batch_id} | ${m.vendor_name || '-'}</div>
+                </div>
+                <div class="psd-price">
+                    <span style="color:var(--accent);font-weight:600;">W: ₹${sp.toFixed(2)}</span>
+                    <span style="color:var(--warn);font-weight:600;"> R: ₹${rp.toFixed(2)}</span>
+                </div>
+            </div>`;
+        });
+
+        // Add pagination bar
+        const start = (pagination.total > 0) ? ((pagination.current_page - 1) * 8 + 1) : 0;
+        const end = Math.min(pagination.current_page * 8, pagination.total);
+        html += `<div class="psd-pagination">
+            <span>${start}-${end} of ${pagination.total}</span>
+            <span>
+                ${pagination.has_prev ? `<button class="psd-page-btn" onclick="event.stopPropagation();_posSearchState.page--;onPOSSearchKeyup({key:''})">◀ Prev</button>` : ''}
+                ${pagination.has_next ? `<button class="psd-page-btn" onclick="event.stopPropagation();_posSearchState.page++;onPOSSearchKeyup({key:''})">Next ▶</button>` : ''}
+            </span>
+        </div>`;
+
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            const firstItem = dropdown.querySelector('.psd-item');
+            if (firstItem) firstItem.click();
+        }
+    } catch (err) {
+        console.error('POS search error:', err);
+        dropdown.style.display = 'none';
+    }
+}
+
+/* Select a product from search → fill first empty row in billing grid */
+function selectPOSProduct(batchId) {
+    // Try search cache first (handles newly added batches)
+    let cached = _posSearchCache[batchId];
+    let batch = posBatches.find(b => b.id === batchId);
+    let product = posProducts.find(p => batch && p.id === batch.product_id);
+
+    // If not in global arrays but in search cache, add them dynamically
+    if (!batch && cached) {
+        batch = {
+            id: cached.batch_id,
+            batch_number: cached.batch_number,
+            product_id: cached.product_id,
+            quantity: parseInt(cached.quantity) || 0,
+            selling_price: cached.selling_price,
+            retail_price: cached.retail_price,
+            vendor_name: cached.vendor_name || ''
+        };
+        posBatches.push(batch);
+
+        product = posProducts.find(p => p.id === cached.product_id);
+        if (!product) {
+            product = {
+                id: cached.product_id,
+                name: cached.product_name,
+                unit: cached.unit || 'Nos',
+                gst_rate: parseFloat(cached.gst_rate) || 0,
+                hsn_code: cached.hsn_code || ''
+            };
+            posProducts.push(product);
+        }
+    }
+
+    if (!batch || !product) return;
+
+    const tbody = document.querySelector('#billingGrid tbody');
+    if (!tbody) return;
+
+    let targetRow = null;
+    const rows = tbody.querySelectorAll('tr');
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].querySelectorAll('td');
+        let isEmpty = true;
+        for (let j = 0; j < cells.length; j++) {
+            if (cells[j].textContent.trim() !== '') { isEmpty = false; break; }
+        }
+        if (isEmpty) { targetRow = rows[i]; break; }
+    }
+    if (!targetRow) return;
+
+    const cells = targetRow.querySelectorAll('td');
+    const qty = 1;
+    const price = priceMode === 'wholesale'
+        ? (parseFloat(batch.selling_price) || 0)
+        : (parseFloat(batch.retail_price) || parseFloat(batch.selling_price) * 1.2 || 0);
+    const amount = qty * price;
+    const tax = parseFloat(product.gst_rate) || 0;
+
+    targetRow.setAttribute('data-batch-id', batchId);
+    cells[0].textContent = batch.batch_number || batch.id;    // Batch No
+    cells[1].textContent = product.name;                      // Particulars
+    cells[2].textContent = price.toFixed(2);                  // Price
+    cells[3].textContent = '0.00';                            // Discount
+    cells[4].textContent = product.unit || 'Nos';             // Unit
+    cells[5].textContent = qty.toFixed(2);                    // Qty
+    cells[6].textContent = tax.toFixed(1);                    // GST (%)
+    cells[7].textContent = amount.toFixed(2);                 // Amount
+
+    const existing = cart.find(c => c.batchId === batchId);
+    if (existing) {
+        const stock = batch.quantity || batch.remaining_qty || 0;
+        if (existing.qty < stock) existing.qty++;
+        existing.sellingPrice = price;
+    } else {
+        cart.push({
+            batchId: batch.id,
+            productId: product.id,
+            name: product.name,
+            unit: product.unit || 'pcs',
+            qty: qty,
+            sellingPrice: price,
+            gstRate: tax,
+            discount: 0
+        });
+    }
+    calculateCart();
+
+    rows.forEach(r => r.classList.remove('bg-active'));
+    targetRow.classList.add('bg-active');
+    cells[0].classList.add('cell-active');
+
+    // Clear search & refocus search bar
+    const searchInput = document.getElementById('posSearch');
+    if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+    const dd = document.getElementById('posSearchDropdown');
+    if (dd) { dd.style.display = 'none'; }
+}
+
+/* Close search dropdown on outside click */
+document.addEventListener('click', function(e) {
+    const dd = document.getElementById('posSearchDropdown');
+    if (dd && !e.target.closest('.pos-search-area')) dd.style.display = 'none';
+});
+
+/* Toggle between wholesale / retail price mode */
+function togglePriceMode(force) {
+    if (force && (force === 'wholesale' || force === 'retail')) {
+        if (priceMode === force) return;
+        priceMode = force;
+    } else {
+        priceMode = priceMode === 'wholesale' ? 'retail' : 'wholesale';
+    }
+    const badge = document.getElementById('priceModeLabel');
+    if (badge) {
+        badge.textContent = priceMode === 'wholesale' ? 'W' : 'R';
+        badge.classList.toggle('mode-retail', priceMode === 'retail');
+    }
+
+    const rows = document.querySelectorAll('#billingGrid tbody tr');
+    let changed = false;
+    rows.forEach(function(tr) {
+        const bid = tr.getAttribute('data-batch-id');
+        if (!bid) return;
+        const batch = posBatches.find(b => b.id === bid);
+        if (!batch) return;
+        const cells = tr.querySelectorAll('td');
+        const qty = parseFloat(cells[5].textContent) || 0;
+        if (qty === 0) return;
+
+        const newPrice = priceMode === 'wholesale'
+            ? (parseFloat(batch.selling_price) || 0)
+            : (parseFloat(batch.retail_price) || parseFloat(batch.selling_price) * 1.2 || 0);
+        const newAmount = qty * newPrice;
+
+        cells[2].textContent = newPrice.toFixed(2);
+        cells[7].textContent = newAmount.toFixed(2);
+
+        const item = cart.find(function(c) { return c.batchId === bid; });
+        if (item) {
+            item.sellingPrice = newPrice;
+        }
+        changed = true;
+    });
+
+    if (changed) calculateCart();
+}
+
+/* Keyboard shortcut: w/r only when focused inside a Price cell */
+document.addEventListener('keydown', function(e) {
+    const key = (e.key || '').toLowerCase();
+    if (key !== 'w' && key !== 'r') return;
+    const td = e.target.closest('td');
+    if (!td) return;
+    const tr = td.closest('tr');
+    if (!tr) return;
+    if (tr.closest('#billingGrid') && Array.from(tr.cells).indexOf(td) === 2) {
+        e.preventDefault();
+        togglePriceMode(key === 'w' ? 'wholesale' : 'retail');
+    }
+});
+
+/* Grid cell focus: highlight active row/cell */
+(function initBillingGrid() {
+    const grid = document.getElementById('billingGrid');
+    if (!grid) return;
+
+    grid.addEventListener('focusin', function(e) {
+        const td = e.target.closest('td');
+        if (!td) return;
+        const tr = td.closest('tr');
+        if (!tr) return;
+        grid.querySelectorAll('tbody tr').forEach(r => r.classList.remove('bg-active'));
+        grid.querySelectorAll('.cell-active').forEach(c => c.classList.remove('cell-active'));
+        tr.classList.add('bg-active');
+        td.classList.add('cell-active');
+    });
+
+    grid.addEventListener('keydown', function(e) {
+        const td = e.target.closest('td');
+        if (!td) return;
+        const tr = td.closest('tr');
+        if (!tr) return;
+        const rows = grid.querySelectorAll('tbody tr');
+        const currentRow = Array.from(rows).indexOf(tr);
+        const cells = tr.querySelectorAll('td');
+        const cellIndex = Array.from(tr.children).indexOf(td);
+
+        if (e.key === 'Enter') {
+            const nextRow = tr.nextElementSibling;
+            if (nextRow) {
+                e.preventDefault();
+                const nextCells = nextRow.querySelectorAll('td');
+                if (nextCells[cellIndex]) nextCells[cellIndex].focus();
+            }
+            return;
+        }
+
+        // Arrow Left / Right → move columns
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            const next = e.key === 'ArrowRight' ? cellIndex + 1 : cellIndex - 1;
+            if (next >= 0 && next < cells.length) cells[next].focus();
+            return;
+        }
+
+        // Delete key → remove row with confirmation
+        if (e.key === 'Delete') {
+            const bid = tr.getAttribute('data-batch-id');
+            if (!bid) return; // empty row, let browser default
+            e.preventDefault();
+            window._deleteTargetRow = tr;
+            document.getElementById('deleteRowItemName').textContent = cells[1].textContent || 'this item';
+            openModal('deleteRowModal');
+            return;
+        }
+
+        // Arrow Up / Down
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const isDown = e.key === 'ArrowDown';
+            const navDelta = isDown ? 1 : -1;
+            const valDelta = isDown ? -1 : 1; // down = decrease, up = increase
+
+            // Qty column (index 5) → increment/decrement qty
+            if (cellIndex === 5) {
+                const qty = parseFloat(cells[5].textContent) || 0;
+                if (qty === 0) return;
+                const newQty = Math.max(1, qty + valDelta);
+                const bid = tr.getAttribute('data-batch-id');
+                const batch = bid && posBatches.find(b => b.id === bid);
+                const maxQty = batch ? (batch.quantity || batch.remaining_qty || 0) : Infinity;
+                if (newQty > maxQty) return;
+                const price = parseFloat(cells[2].textContent) || 0;
+                cells[5].textContent = newQty.toFixed(2);
+                cells[7].textContent = (newQty * price).toFixed(2);
+                const item = cart.find(c => c.batchId === bid);
+                if (item) { item.qty = newQty; }
+                calculateCart();
+                return;
+            }
+
+            // Discount column (index 3) → increment/decrement discount
+            if (cellIndex === 3) {
+                const disc = parseFloat(cells[3].textContent) || 0;
+                const newDisc = Math.max(0, disc + valDelta);
+                cells[3].textContent = newDisc.toFixed(2);
+                const bid = tr.getAttribute('data-batch-id');
+                const item = cart.find(c => c.batchId === bid);
+                if (item) { item.discount = newDisc; }
+                calculateCart();
+                return;
+            }
+
+            // Other columns → move to same cell in prev/next row
+            const targetRow = rows[currentRow + navDelta];
+            if (!targetRow) return;
+            const targetCells = targetRow.querySelectorAll('td');
+            if (targetCells[cellIndex]) targetCells[cellIndex].focus();
+        }
+    });
+})();
 
 async function loadPOSData() {
     try {
@@ -25,6 +366,7 @@ async function loadPOSData() {
         renderPOSCatFilters();
         renderPOSItems();
         populateCustomerSelect();
+        restoreGridFromCart();
     } catch (e) {
         console.error('Failed to load POS data:', e);
     }
@@ -129,6 +471,53 @@ function renderPOSItems() {
 
     html += '</tbody></table>';
     grid.innerHTML = html;
+}
+
+/* Persist cart to sessionStorage */
+function saveCart() {
+    try { sessionStorage.setItem('posCart', JSON.stringify(cart)); } catch (e) {}
+}
+
+/* Restore grid rows from sessionStorage cart after data loads */
+function restoreGridFromCart() {
+    const stored = sessionStorage.getItem('posCart');
+    if (!stored) return;
+    try {
+        cart = JSON.parse(stored);
+    } catch (e) { cart = []; return; }
+    if (!cart.length) return;
+
+    cart.forEach(function(item) {
+        const batch = posBatches.find(function(b) { return b.id === item.batchId; });
+        const product = posProducts.find(function(p) { return p.id === item.productId; });
+        if (!batch || !product) return;
+
+        const tbody = document.querySelector('#billingGrid tbody');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        let targetRow = null;
+        for (let i = 0; i < rows.length; i++) {
+            const cells = rows[i].querySelectorAll('td');
+            let empty = true;
+            for (let j = 0; j < cells.length; j++) {
+                if (cells[j].textContent.trim() !== '') { empty = false; break; }
+            }
+            if (empty) { targetRow = rows[i]; break; }
+        }
+        if (!targetRow) return;
+
+        const cells = targetRow.querySelectorAll('td');
+        targetRow.setAttribute('data-batch-id', item.batchId);
+        cells[0].textContent = batch.batch_number || batch.id;
+        cells[1].textContent = product.name;
+        cells[2].textContent = (item.sellingPrice || 0).toFixed(2);
+        cells[3].textContent = (item.discount || 0).toFixed(2);
+        cells[4].textContent = product.unit || 'Nos';
+        cells[5].textContent = (item.qty || 1).toFixed(2);
+        cells[6].textContent = (item.gstRate || 0).toFixed(1);
+        cells[7].textContent = ((item.qty || 1) * (item.sellingPrice || 0)).toFixed(2);
+    });
+    calculateCart();
 }
 
 function addToCart(batchId) {
@@ -240,6 +629,7 @@ function calculateCart() {
     document.getElementById('cartTotal').textContent = '₹' + grandTotal.toFixed(2);
 
     window._posCalc = { subtotal, totalGst, billDiscount, totalDiscount, roundOff, grandTotal, applyGst };
+    saveCart();
 }
 
 async function populateCustomerSelect() {
@@ -285,6 +675,10 @@ async function processCheckout() {
         items: items
     };
 
+    // Open receipt window early (before await) to avoid popup blocker
+    const apiBase = window.location.protocol + '//' + window.location.hostname + ':8081';
+    let receiptWin = window.open('', '_blank');
+
     try {
         const result = await window.apiRequest('/api/invoices', {
             method: 'POST',
@@ -293,13 +687,62 @@ async function processCheckout() {
 
         if (result.success) {
             cart = [];
+
+            // Clear all grid rows
+            const tbody = document.querySelector('#billingGrid tbody');
+            if (tbody) {
+                tbody.querySelectorAll('tr').forEach(function(tr) {
+                    tr.removeAttribute('data-batch-id');
+                    tr.querySelectorAll('td').forEach(function(c) { c.textContent = ''; });
+                    tr.classList.remove('bg-active');
+                });
+            }
+
+            sessionStorage.removeItem('posCart');
             renderCart();
             document.getElementById('amountPaidInput').value = '';
             document.getElementById('cartDiscountInput').value = '';
-            alert('Invoice created: ' + result.invoice.invoiceNumber);
+
+            // Navigate receipt window with token as query param
+            const token = localStorage.getItem('auth_token');
+            const receiptUrl = apiBase + '/api/invoices/' + result.invoice.id + '/receipt?token=' + encodeURIComponent(token || '');
+            if (receiptWin && !receiptWin.closed) {
+                receiptWin.location.href = receiptUrl;
+            } else {
+                window.open(receiptUrl, '_blank');
+            }
+
             loadPOSData();
         }
     } catch (e) {
+        if (receiptWin && !receiptWin.closed) receiptWin.close();
         alert('Checkout failed: ' + e.message);
     }
+}
+
+/* Delete row confirmation */
+function closeDeleteConfirm() {
+    closeModal('deleteRowModal');
+    window._deleteTargetRow = null;
+}
+
+function confirmDeleteRow() {
+    const tr = window._deleteTargetRow;
+    if (!tr) { closeDeleteConfirm(); return; }
+
+    const bid = tr.getAttribute('data-batch-id');
+
+    // Clear all cells
+    tr.querySelectorAll('td').forEach(function(c) { c.textContent = ''; });
+    tr.removeAttribute('data-batch-id');
+    tr.classList.remove('bg-active');
+
+    // Remove from cart
+    if (bid) {
+        const idx = cart.findIndex(function(c) { return c.batchId === bid; });
+        if (idx !== -1) cart.splice(idx, 1);
+    }
+
+    calculateCart();
+    closeDeleteConfirm();
 }

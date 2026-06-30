@@ -219,22 +219,40 @@ class InvoiceService
                 ));
             }
 
-            if ($balanceDue > 0 && $dto->customerId) {
+            if ($dto->customerId) {
                 $currentBalance = $this->repo->getCustomerBalance($dto->customerId);
-                $newBalance = $currentBalance + $balanceDue;
 
+                // Record full invoice amount as debit
+                $invoiceBalance = $currentBalance + $grandTotal;
                 $this->repo->addLedgerEntry(new CustomerLedger(
                     id: null,
                     userId: $userId,
                     customerId: $dto->customerId,
                     entryType: 'invoice',
-                    debit: $balanceDue,
+                    debit: $grandTotal,
                     credit: 0,
-                    balance: $newBalance,
+                    balance: $invoiceBalance,
                     invoiceId: $saved->id,
                     notes: "Invoice {$invoiceNumber}",
                     createdAt: null
                 ));
+
+                // Record checkout payment as credit so credit page shows total_paid correctly
+                if ($dto->amountPaid > 0) {
+                    $balanceAfterPayment = $invoiceBalance - $dto->amountPaid;
+                    $this->repo->addLedgerEntry(new CustomerLedger(
+                        id: null,
+                        userId: $userId,
+                        customerId: $dto->customerId,
+                        entryType: 'payment',
+                        debit: 0,
+                        credit: $dto->amountPaid,
+                        balance: max($balanceAfterPayment, 0),
+                        invoiceId: $saved->id,
+                        notes: "Checkout payment - Invoice {$invoiceNumber}",
+                        createdAt: null
+                    ));
+                }
             }
 
             $this->repo->commit();
