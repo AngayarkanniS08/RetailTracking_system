@@ -11,14 +11,20 @@ class VersionHelper
 
         $rootDir = __DIR__ . '/../..';
         $gitDir = $rootDir . '/.git';
-        $versionFile = $rootDir . '/version.txt';
 
-        // Try reading from version.txt (Docker/production)
-        if (file_exists($versionFile)) {
-            $v = trim(file_get_contents($versionFile));
-            if ($v) {
-                self::$version = $v;
-                return self::$version;
+        // Check version.txt locations (ordered by likelihood in Docker)
+        $candidates = [
+            $rootDir . '/public/assets/version.txt',
+            $rootDir . '/version.txt',
+            $rootDir . '/tmp/version.txt',
+        ];
+        foreach ($candidates as $f) {
+            if (file_exists($f)) {
+                $v = trim(file_get_contents($f));
+                if ($v) {
+                    self::$version = $v;
+                    return self::$version;
+                }
             }
         }
 
@@ -57,9 +63,6 @@ class VersionHelper
         if ($status) $dirty = '-dirty';
 
         self::$version = "$tag-$count-g$hash$dirty";
-
-        // Cache to version.txt for Docker
-        file_put_contents($versionFile, self::$version);
 
         return self::$version;
     }
