@@ -59,14 +59,24 @@
               <span class="bbb-sep">|</span>
               <span>GST: <strong id="cartGst">₹0.00</strong></span>
               <span class="bbb-sep">|</span>
-              <span>Discount (₹): <input type="number" id="cartDiscountInput" class="input-field" placeholder="0" min="0" style="width:80px; padding:3px 6px; text-align:right; font-size:0.85rem;" oninput="calculateCart()"></span>
+              <span class="bbb-discount-wrap">
+                <span class="bbb-label">Discount</span>
+                <input type="number" id="cartDiscountInput" class="bbb-input bbb-input-discount" placeholder="0" min="0" oninput="calculateCart()">
+              </span>
             </div>
             <div class="bbb-right">
               <span style="font-size:1.2rem; font-weight:700;">Total: <span id="cartTotal">₹0.00</span></span>
-              <select id="billCustomerSelect" class="input-field" style="width:auto; min-width:160px;">
-                <option value="">-- Walk-in Customer --</option>
-              </select>
-              <input type="number" id="amountPaidInput" class="input-field" placeholder="Amount (₹)" style="width:110px;">
+              <div class="customer-search-combobox">
+                <input type="text" id="customerSearchInput" class="input-field" placeholder="Customer name or phone..."
+                       autocomplete="off" onkeyup="onCustomerSearchKeyup(event)" onfocus="onCustomerSearchKeyup({key:''})">
+                <input type="hidden" id="billCustomerId" value="">
+                <div id="customerSearchDropdown" class="customer-search-dropdown"></div>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="openModal('addCustomerModal')" style="padding:4px 10px; font-size:0.85rem; white-space:nowrap;">+ Add</button>
+              <span class="bbb-paid-wrap">
+                <span class="bbb-label">Paying</span>
+                <input type="number" id="amountPaidInput" class="bbb-input bbb-input-paid" placeholder="₹ 0">
+              </span>
               <button class="btn btn-primary" onclick="processCheckout()">Checkout & Print</button>
             </div>
           </div>

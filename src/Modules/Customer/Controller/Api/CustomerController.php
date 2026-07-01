@@ -197,6 +197,7 @@ class CustomerController
                 'balance' => $e->balance,
                 'notes' => $e->notes,
                 'invoice_id' => $e->invoiceId,
+                'invoice_status' => $e->invoiceStatus,
                 'created_at' => $e->createdAt,
                 'payment_receipt' => $e->entryType === 'payment' && $e->notes && preg_match('/\[(PAY-\d+-\d+)\]/', $e->notes, $m) ? $m[1] : null
             ], $entries);

@@ -1,5 +1,11 @@
 /* billing.js — POS Billing Module */
 
+function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+}
+
 window.posProducts = [];
 window.posBatches = [];
 window.posCategories = [];
@@ -632,25 +638,104 @@ function calculateCart() {
     saveCart();
 }
 
-async function populateCustomerSelect() {
-    const select = document.getElementById('billCustomerSelect');
-    if (!select) return;
-    try {
-        const data = await window.apiRequest('/api/customers?limit=500');
-        const customers = Array.isArray(data) ? data : (data.data || []);
-        select.innerHTML = '<option value="">-- Walk-in Customer (No Credit) --</option>';
-        customers.forEach(c => {
-            select.innerHTML += `<option value="${c.id}">${c.name} (${c.phone})</option>`;
-        });
-    } catch (e) {
-        console.error('Failed to load customers:', e);
+// ── Customer search (typeahead) ──────────────────────────
+
+let _custSearchState = { term: '', page: 1 };
+
+async function onCustomerSearchKeyup(e) {
+    const input = document.getElementById('customerSearchInput');
+    const dropdown = document.getElementById('customerSearchDropdown');
+    const wrap = document.querySelector('.customer-search-combobox');
+    if (!input || !dropdown || !wrap) return;
+
+    if (e.key === 'Escape') { dropdown.classList.remove('is-open'); dropdown.innerHTML = ''; return; }
+
+    const term = input.value.trim().toLowerCase();
+
+    if (term !== _custSearchState.term) {
+        _custSearchState.term = term;
+        _custSearchState.page = 1;
     }
+
+    try {
+        const url = term
+            ? `/api/customers?search=${encodeURIComponent(term)}&page=${_custSearchState.page}&limit=8`
+            : '/api/customers?limit=8';
+        const res = await window.apiRequest(url);
+        const customers = Array.isArray(res) ? res : (res.data || []);
+        if (!customers.length) { dropdown.classList.remove('is-open'); return; }
+        renderCustomerDropdown(dropdown, customers, res.total || 0, res.page || 1);
+        dropdown.classList.add('is-open');
+        wrap.classList.add('is-open');
+
+        if (term && (e.key === 'Enter' || e.key === 'Tab')) {
+            e.preventDefault();
+            const firstItem = dropdown.querySelector('.cs-item');
+            if (firstItem) firstItem.click();
+        }
+    } catch (_) {
+        dropdown.classList.remove('is-open');
+    }
+}
+
+function renderCustomerDropdown(dropdown, customers, total, page) {
+    const limit = 8;
+    const start = total > 0 ? (page - 1) * limit + 1 : 0;
+    const end = Math.min(page * limit, total);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    let html = '';
+    customers.forEach(c => {
+        const bal = parseFloat(c.current_balance || c.balance || 0);
+        html += `<div class="cs-item" onclick="selectCustomer('${c.id}','${escHtml(c.name)}')">
+            <div class="cs-item-main">${escHtml(c.name)}</div>
+            <div class="cs-item-sub">${escHtml(c.phone)}${bal > 0 ? ' &middot; Due ₹' + bal.toFixed(2) : ''}</div>
+        </div>`;
+    });
+
+    if (total > limit) {
+        html += `<div class="cs-pagination">
+            <span>${start}–${end} of ${total}</span>
+            <span>
+                ${page > 1 ? `<button class="cs-page-btn" onclick="event.stopPropagation();_custSearchState.page--;onCustomerSearchKeyup({key:''})">◀ Prev</button>` : ''}
+                ${page < totalPages ? `<button class="cs-page-btn" onclick="event.stopPropagation();_custSearchState.page++;onCustomerSearchKeyup({key:''})">Next ▶</button>` : ''}
+            </span>
+        </div>`;
+    }
+
+    dropdown.innerHTML = html;
+}
+
+function selectCustomer(id, name) {
+    document.getElementById('billCustomerId').value = id;
+    document.getElementById('customerSearchInput').value = name;
+    const dd = document.getElementById('customerSearchDropdown');
+    dd.classList.remove('is-open');
+    dd.innerHTML = '';
+    const wrap = document.querySelector('.customer-search-combobox');
+    if (wrap) wrap.classList.remove('is-open');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    const wrap = document.querySelector('.customer-search-combobox');
+    if (wrap && !wrap.contains(e.target)) {
+        const dd = document.getElementById('customerSearchDropdown');
+        if (dd) { dd.classList.remove('is-open'); dd.innerHTML = ''; }
+    }
+});
+
+// Backward compat: refresh customer search input (used by saveCustomer in credit.js)
+async function populateCustomerSelect() {
+    // Load latest customers into cache — no-op needed for typeahead
 }
 
 async function processCheckout() {
     const amountPaid = parseFloat(document.getElementById('amountPaidInput')?.value || 0);
-    const customerId = document.getElementById('billCustomerSelect')?.value || null;
-    const customerName = customerId ? null : (document.getElementById('billCustomerSelect')?.selectedOptions?.[0]?.text || 'Walk-in');
+    const customerId = document.getElementById('billCustomerId')?.value || null;
+    const customerName = customerId
+        ? null
+        : (document.getElementById('customerSearchInput')?.value.trim() || 'Walk-in');
     const calc = window._posCalc;
 
     if (!cart.length) { alert('Cart is empty'); return; }
@@ -702,6 +787,8 @@ async function processCheckout() {
             renderCart();
             document.getElementById('amountPaidInput').value = '';
             document.getElementById('cartDiscountInput').value = '';
+            document.getElementById('customerSearchInput').value = '';
+            document.getElementById('billCustomerId').value = '';
 
             // Navigate receipt window with token as query param
             const token = localStorage.getItem('auth_token');

@@ -160,6 +160,11 @@ class InvoiceController
                 echo json_encode(['error' => 'Invoice not found']);
                 return;
             }
+            if ($invoice->invoiceStatus === 'deleted') {
+                http_response_code(410);
+                echo json_encode(['error' => 'This bill has been deleted']);
+                return;
+            }
             echo json_encode($invoice);
         } catch (\Throwable $e) {
             http_response_code(500);
@@ -282,13 +287,11 @@ class InvoiceController
                 echo 'Invoice not found';
                 return;
             }
-
-            $shop = [
-                'name' => 'Pudheera Fashion Shop',
-                'address' => "New Bus Stand, Valliyoor - 627 117",
-                'gst' => '33ABBFA1628A1ZC',
-                'phone' => '9384261577'
-            ];
+            if ($invoice->invoiceStatus === 'deleted') {
+                http_response_code(410);
+                echo 'This bill has been deleted';
+                return;
+            }
 
             header('Content-Type: text/html; charset=utf-8');
             require __DIR__ . '/../../../../views/billing/receipt.php';

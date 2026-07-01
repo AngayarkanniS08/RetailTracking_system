@@ -85,9 +85,11 @@ async function toggleBills(className, custId) {
             ? new Date(entry.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
             : '';
         const isPay = entry.entry_type === 'payment' || (entry.debit === 0 && entry.credit > 0);
+        const isDeleted = entry.invoice_status === 'deleted';
+        const delBadge = isDeleted ? ' <span style="color:var(--danger);font-size:0.65rem;">(Deleted)</span>' : '';
         const typeLabel = isPay
             ? '<span style="color:var(--ok); font-weight:600;">Payment</span>'
-            : `<span style="color:var(--accent);">${entry.entry_type === 'opening' ? 'Opening' : entry.notes || 'Invoice'}</span>`;
+            : `<span style="color:var(--accent);">${entry.entry_type === 'opening' ? 'Opening' : entry.notes || 'Invoice'}${delBadge}</span>`;
         const bal = entry.balance;
         const balBadge = bal <= 0
             ? '<span class="badge badge-ok" style="font-size:0.7rem;">Cleared</span>'
@@ -96,7 +98,7 @@ async function toggleBills(className, custId) {
         let viewBtn = '';
         if (isPay) {
             viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewPaymentReceipt('${entry.id}')">View</button>`;
-        } else if (entry.invoice_id) {
+        } else if (entry.invoice_id && entry.invoice_status !== 'deleted') {
             viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewInvoice('${entry.invoice_id}')">View</button>`;
         }
 
@@ -168,7 +170,7 @@ function saveCustomer() {
     window.apiRequest('/api/customers', {
         method: 'POST',
         body: JSON.stringify(payload)
-    }).then(data => {
+    }).then(async (data) => {
         closeModal('addCustomerModal');
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
@@ -177,10 +179,13 @@ function saveCustomer() {
         if (document.getElementById('custAddress')) document.getElementById('custAddress').value = '';
         if (document.getElementById('custCreditLimit')) document.getElementById('custCreditLimit').value = '';
         if (document.getElementById('custOpeningBalance')) document.getElementById('custOpeningBalance').value = '';
-        loadCreditPage();
-        if (typeof populateCustomerSelect === 'function') {
-            populateCustomerSelect();
+        const custIdField = document.getElementById('billCustomerId');
+        if (custIdField) {
+            custIdField.value = data.customer.id;
+            const custInput = document.getElementById('customerSearchInput');
+            if (custInput) custInput.value = data.customer.name;
         }
+        loadCreditPage();
     }).catch(err => {
         alert('Failed to add customer: ' + err.message);
     });

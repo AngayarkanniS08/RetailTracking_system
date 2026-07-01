@@ -12,6 +12,7 @@ class CreditLedger
         public float   $credit,
         public float   $balance,
         public ?string $invoiceId = null,
+        public ?string $invoiceStatus = null,
         public ?string $notes = null,
         public ?string $createdAt = null
     ) {}

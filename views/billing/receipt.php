@@ -1,9 +1,15 @@
 <?php
-if (!isset($invoice) || !isset($shop)) {
+if (!isset($invoice)) {
     http_response_code(500);
     echo 'Missing invoice data';
     return;
 }
+$shop = [
+    'name' => 'Pudeera Fashion Shop',
+    'address' => "New Bus Stand, Valliyoor - 627 117",
+    'gst' => '33ABBFA1628A1ZC',
+    'phone' => '9384261577'
+];
 $items = $invoice->items ?? [];
 $date = !empty($invoice->billedAt) ? date('d/m/y', strtotime($invoice->billedAt)) : '';
 $cgst = $invoice->totalGst / 2;

@@ -169,9 +169,11 @@ class CustomerRepository implements CustomerRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT cl.id, cl.user_id, cl.customer_id, cl.invoice_id,
                    cl.entry_type, cl.debit, cl.credit, cl.balance, cl.notes, cl.created_at,
-                   pr.receipt_number AS payment_receipt
+                   pr.receipt_number AS payment_receipt,
+                   i.invoice_status
             FROM customer_ledger cl
             LEFT JOIN payment_receipts pr ON pr.ledger_id = cl.id AND cl.entry_type = 'payment'
+            LEFT JOIN invoices i ON i.id = cl.invoice_id
             WHERE cl.customer_id = ? AND cl.user_id = current_setting('app.current_user_id')::uuid
             ORDER BY cl.created_at DESC
             LIMIT ? OFFSET ?
@@ -188,6 +190,7 @@ class CustomerRepository implements CustomerRepositoryInterface
             credit: (float)$row['credit'],
             balance: (float)$row['balance'],
             invoiceId: $row['invoice_id'],
+            invoiceStatus: $row['invoice_status'],
             notes: $row['payment_receipt'] ? "{$row['notes']} [{$row['payment_receipt']}]" : $row['notes'],
             createdAt: $row['created_at']
         ), $rows);
@@ -197,12 +200,13 @@ class CustomerRepository implements CustomerRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT
-                COALESCE(SUM(debit), 0) AS total_purchases,
-                COALESCE(SUM(credit), 0) AS total_paid,
-                COUNT(*) FILTER (WHERE entry_type = 'invoice') AS total_bills,
-                COUNT(*) FILTER (WHERE entry_type = 'invoice' AND balance = 0) AS bills_cleared
-            FROM customer_ledger
-            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id')::uuid
+                COALESCE(SUM(cl.debit), 0) AS total_purchases,
+                COALESCE(SUM(cl.credit), 0) AS total_paid,
+                COUNT(*) FILTER (WHERE cl.entry_type = 'invoice') AS total_bills,
+                COUNT(*) FILTER (WHERE cl.entry_type = 'invoice' AND COALESCE(i.balance_due, 0) <= 0) AS bills_cleared
+            FROM customer_ledger cl
+            LEFT JOIN invoices i ON i.id = cl.invoice_id
+            WHERE cl.customer_id = ? AND cl.user_id = current_setting('app.current_user_id')::uuid
         ");
         $stmt->execute([$customerId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

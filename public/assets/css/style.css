@@ -555,6 +555,168 @@ select.input-field {
       flex-wrap: wrap;
     }
 
+    .billing-bottom-bar .bbb-discount-wrap,
+    .billing-bottom-bar .bbb-paid-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .billing-bottom-bar .bbb-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted-strong);
+    }
+
+    .billing-bottom-bar .bbb-input {
+      width: 90px;
+      padding: 6px 10px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      text-align: right;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+      background: var(--bg-elevated);
+      color: var(--text-strong);
+    }
+
+    .billing-bottom-bar .bbb-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+    }
+
+    .billing-bottom-bar .bbb-input-discount {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+    }
+    .billing-bottom-bar .bbb-input-discount:focus {
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+    }
+
+    .billing-bottom-bar .bbb-input-paid {
+      width: 120px;
+      border-color: #10b981;
+      background: #ecfdf5;
+      color: #065f46;
+      font-size: 1.1rem;
+    }
+    .billing-bottom-bar .bbb-input-paid:focus {
+      border-color: #059669;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.25);
+    }
+
+    /* ===== Customer Search Combobox (Product Master style) ===== */
+    .customer-search-combobox {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+    .customer-search-combobox .input-field {
+        width: 200px;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        transition: border 0.2s, box-shadow 0.2s;
+    }
+    .customer-search-combobox.is-open .input-field {
+        border-color: #ff5a5f !important;
+        box-shadow: 0 0 0 3px rgba(255, 90, 95, 0.25) !important;
+    }
+
+    .customer-search-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #181c26;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3);
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+        pointer-events: none;
+        transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+    }
+    .customer-search-dropdown.is-open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+        border-color: #ff5a5f;
+        box-shadow: 0 10px 30px rgba(255,90,95,0.15), 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    /* Items */
+    .customer-search-dropdown .cs-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        color: var(--text);
+        font-size: 0.85rem;
+        margin: 4px;
+        border-radius: 6px;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .customer-search-dropdown .cs-item:hover {
+        background: #ff5a5f;
+        color: #ffffff;
+    }
+    .customer-search-dropdown .cs-item .cs-item-main {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .customer-search-dropdown .cs-item .cs-item-sub {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        margin-top: 2px;
+    }
+    .customer-search-dropdown .cs-item:hover .cs-item-sub {
+        opacity: 1;
+    }
+
+    /* Scrollbar */
+    .customer-search-dropdown::-webkit-scrollbar { width: 6px; }
+    .customer-search-dropdown::-webkit-scrollbar-track { background: transparent; }
+    .customer-search-dropdown::-webkit-scrollbar-thumb {
+        background: rgba(255,90,95,0.25);
+        border-radius: 3px;
+    }
+    .customer-search-dropdown::-webkit-scrollbar-thumb:hover {
+        background: #ff5a5f;
+    }
+
+    /* Pagination */
+    .customer-search-dropdown .cs-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 14px;
+        font-size: 0.75rem;
+        color: var(--muted);
+        border-top: 1px solid #334155;
+        margin-top: 4px;
+    }
+    .customer-search-dropdown .cs-pagination .cs-page-btn {
+        background: #ff5a5f;
+        color: #fff;
+        border: none;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        margin: 0 2px;
+    }
+    .customer-search-dropdown .cs-pagination .cs-page-btn:hover {
+        opacity: 0.85;
+    }
+
     /* ===== POS SEARCH DROPDOWN ===== */
     .pos-search-dropdown {
       position: absolute;
