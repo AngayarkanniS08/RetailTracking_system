@@ -9,6 +9,10 @@
             <span>Customer Credit (Kadan)</span>
             <button class="btn btn-outline btn-sm" onclick="openModal('addCustomerModal')">+ Add Customer</button>
           </div>
+          <div class="input-group" style="margin-bottom:1rem;">
+            <input type="text" id="creditSearch" class="input-field" placeholder="Search customers by name or phone..."
+                   oninput="onCreditSearchInput()">
+          </div>
           <div class="card-panel">
             <div class="table-container">
               <table id="creditTable">

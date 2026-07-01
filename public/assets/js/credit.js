@@ -2,18 +2,30 @@
 
 window.creditCustomers = [];
 window.creditLedgerCache = {};
+let _creditSearchTimer = null;
 
-async function loadCreditPage() {
+async function loadCreditPage(search) {
     const section = document.getElementById('credit_kadan');
     if (!section || !section.classList.contains('active')) return;
 
     try {
-        const data = await window.apiRequest('/api/customers?limit=100');
+        let url = '/api/customers?limit=100';
+        if (search) url += '&search=' + encodeURIComponent(search);
+        const data = await window.apiRequest(url);
         window.creditCustomers = Array.isArray(data) ? data : (data.data || []);
         renderCreditTable();
     } catch (e) {
         console.error('Failed to load credit page:', e);
     }
+}
+
+function onCreditSearchInput() {
+    clearTimeout(_creditSearchTimer);
+    const input = document.getElementById('creditSearch');
+    const term = input ? input.value.trim() : '';
+    _creditSearchTimer = setTimeout(function() {
+        loadCreditPage(term || null);
+    }, 300);
 }
 
 function renderCreditTable() {
@@ -58,9 +70,9 @@ function renderCreditTable() {
 }
 
 async function toggleBills(className, custId) {
-    const rows = document.querySelectorAll(`tr.${CSS.escape(className)}`);
-    if (rows.length > 0) {
-        rows.forEach(r => r.style.display = r.style.display === 'none' ? '' : 'none');
+    const existingRows = document.querySelectorAll(`tr.${CSS.escape(className)}`);
+    if (existingRows.length > 0) {
+        existingRows.forEach(r => r.style.display = r.style.display === 'none' ? '' : 'none');
         return;
     }
 
@@ -77,6 +89,18 @@ async function toggleBills(className, custId) {
     const entries = window.creditLedgerCache[custId];
     const tbody = document.querySelector('#creditTable tbody');
 
+    // Find the customer row (the one with the Bills button for this className)
+    let customerRow = null;
+    for (let i = 0; i < tbody.rows.length; i++) {
+        const btn = tbody.rows[i].querySelector('.btn');
+        if (btn && btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(className)) {
+            customerRow = tbody.rows[i];
+            break;
+        }
+    }
+    if (!customerRow) return;
+
+    let ledgerHtml = '';
     entries.forEach(entry => {
         const dateStr = entry.created_at
             ? new Date(entry.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -102,7 +126,7 @@ async function toggleBills(className, custId) {
             viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewInvoice('${entry.invoice_id}')">View</button>`;
         }
 
-        tbody.innerHTML += `
+        ledgerHtml += `
           <tr class="${CSS.escape(className)}" style="display:none; background: var(--bg-100);">
             <td colspan="2" style="font-size:0.8rem; color:var(--muted); padding-left:24px;">${dateStr} ${timeStr}</td>
             <td style="font-size:0.85rem;">${typeLabel}</td>
@@ -115,6 +139,11 @@ async function toggleBills(className, custId) {
           </tr>
         `;
     });
+
+    customerRow.insertAdjacentHTML('afterend', ledgerHtml);
+    setTimeout(function() {
+        document.querySelectorAll(`tr.${CSS.escape(className)}`).forEach(function(r) { r.style.display = ''; });
+    }, 50);
 }
 
 function viewInvoice(invoiceId) {

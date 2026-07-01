@@ -6,6 +6,7 @@ use Modules\Customer\DTO\CreditPaymentDTO;
 use Modules\Customer\Service\CustomerService;
 use Modules\Customer\Repository\CustomerRepository;
 use Core\Middlewares\AuthMiddleware;
+use Core\Cache\ValkeyCache;
 use Modules\Auth\Validation\ValidationException;
 use Exception;
 
@@ -26,14 +27,45 @@ class CustomerController
     {
         header('Content-Type: application/json');
         $user = AuthMiddleware::authenticate();
+        $userId = $user->data->user_id ?? '';
 
         $page = (int)($_GET['page'] ?? 1);
         $limit = (int)($_GET['limit'] ?? 20);
         $search = $_GET['search'] ?? null;
 
+        $cacheKey = sprintf(
+            'credit:search:%s:page:%d:limit:%d:user:%s',
+            md5($search ?: ''),
+            $page,
+            $limit,
+            $userId
+        );
+
+        $valkey = null;
+        try {
+            $valkey = ValkeyCache::getClient();
+            $cached = $valkey->get($cacheKey);
+            if ($cached !== false && $cached !== null) {
+                echo $cached;
+                return;
+            }
+        } catch (Exception $e) {
+            error_log('Valkey read error: ' . $e->getMessage());
+        }
+
         try {
             $result = $this->service->getCustomers($page, $limit, $search);
-            echo json_encode($result);
+            $json = json_encode($result);
+
+            if ($valkey) {
+                try {
+                    $valkey->setex($cacheKey, 300, $json);
+                } catch (Exception $e) {
+                    error_log('Valkey write error: ' . $e->getMessage());
+                }
+            }
+
+            echo $json;
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load customers: ' . $e->getMessage()]);

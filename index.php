@@ -1,6 +1,19 @@
 <?php
-
 declare(strict_types=1);
+
+// Load Composer autoloader (for Core\ classes)
+$autoloadPaths = [
+    __DIR__ . '/src/vendor/autoload.php',
+    __DIR__ . '/vendor/autoload.php',
+];
+foreach ($autoloadPaths as $path) {
+    if (file_exists($path)) {
+        require_once $path;
+        break;
+    }
+}
+
+$startTime = microtime(true);
 
 // Local bootstrapping for frontend session and settings
 ini_set('display_errors', '1');
@@ -104,4 +117,11 @@ echo '</div>';
 echo '</div>';
 
 require_once 'views/layouts/modals.php';
+
+$elapsed = number_format((microtime(true) - $startTime) * 1000, 2);
+$version = \Core\VersionHelper::getVersion();
+echo '<div style="text-align:center;padding:8px 0;font-size:0.75rem;color:var(--muted);border-top:1px solid var(--border);margin-top:1rem;">';
+echo "Page Rendered in {$elapsed} ms &middot; {$version}";
+echo '</div>';
+
 require_once 'views/layouts/footer.php';
