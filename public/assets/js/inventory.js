@@ -207,8 +207,9 @@ function calculateInventoryMath(calcMode = 'profit') {
     let sp = parseFloat(spInput.value) || 0;
     let profit = parseFloat(profitInput.value) || 0;
 
-    // Update Retail Base Price (Auto)
-    if (qty > 0 && retailBaseInput) {
+    // Update Retail Base Price (Auto) — only when retail column is visible
+    const retailCol = document.getElementById('retailColumn');
+    if (qty > 0 && retailBaseInput && retailCol && retailCol.style.display !== 'none') {
         retailBaseInput.value = (pp / qty).toFixed(2);
         calculateRetailMath('profit'); // Refresh retail math
     }
@@ -295,13 +296,27 @@ async function saveStock() {
         return alert('Please fill all required fields (Wholesale prices & Qty)');
     }
 
+    // Determine retail_price:
+    // - If retailSP is set (> 0), use it
+    // - If editing and retailSP is empty (wholesale-only edit), preserve original batch's retail_price
+    // - If new batch and retailSP is empty, fall back to per-unit wholesale price
+    let finalRetailPrice = retailSP;
+    if (!finalRetailPrice) {
+        if (window.currentEditingBatchId) {
+            const origBatch = window.batches.find(b => b.id === window.currentEditingBatchId);
+            finalRetailPrice = origBatch ? (origBatch.retail_price || 0) : (sp / qty);
+        } else {
+            finalRetailPrice = sp / qty;
+        }
+    }
+
     const payload = {
         product_id: pid,
         vendor_name: vname,
         batch_number: batchNo,
         purchase_price: pp,
         selling_price: sp,
-        retail_price: retailSP || (sp / qty),
+        retail_price: finalRetailPrice,
         quantity: qty,
         created_at: dateVal || null
     };
@@ -614,7 +629,7 @@ function renderInventory(stats = {}) {
             <td>${window.formatCurrency(b.purchase_price)}</td>
             <td>
               <div style="font-weight:600; color:var(--accent);">W: ${window.formatCurrency(b.selling_price)}</div>
-              <div style="font-size:0.8rem; color:var(--warn);">R: ${window.formatCurrency(b.retail_price || (b.selling_price / b.quantity))}</div>
+              <div style="font-size:0.8rem; color:var(--warn);">R: ${window.formatCurrency(b.retail_price)}</div>
               ${gstText}
             </td>
             <td><span style="font-weight:600; color:${b.quantity <= 20 ? 'var(--warn)' : 'inherit'}">${b.quantity}</span></td>
