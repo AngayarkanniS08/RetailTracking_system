@@ -1,62 +1,69 @@
-// Daily Sales Timeline — paginated by month
+// Daily Sales Timeline
 
 var _tlGroups = {};
-var _tlLoading = false;
-var _tlDone = false;
+var _tlPage = 1;
+var _tlTotalPages = 1;
+var _tlPerPage = 6;
 
 function initDayToDaySelling() {
     _tlGroups = {};
-    _tlLoading = false;
-    _tlDone = false;
-    loadOlder();
+    _tlPage = 1;
+    _tlTotalPages = 1;
+    var tbody = document.querySelector('#salesTimelineTable tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted);">Loading...</td></tr>';
+
+    window.apiRequest('/api/invoices?limit=5000').then(function(data) {
+        var invoices = data.invoices || data.data || data || [];
+        _tlGroups = groupInvoicesByDate(invoices);
+        renderSalesTimeline();
+        renderPagination();
+    }).catch(function(err) {
+        console.error('Sales Timeline error:', err);
+        var tbody = document.querySelector('#salesTimelineTable tbody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">Failed to load sales data</td></tr>';
+    });
 }
 
-function loadOlder() {
-    if (_tlLoading || _tlDone) return;
-    _tlLoading = true;
-
-    var toDate;
-    var allDates = Object.keys(_tlGroups).sort();
-    if (allDates.length === 0) {
-        toDate = new Date();
-    } else {
-        toDate = new Date(allDates[0] + 'T00:00:00');
-        toDate.setDate(toDate.getDate() - 1);
-    }
-
-    var fromDate = new Date(toDate.getFullYear(), toDate.getMonth() - 2, 1);
-    var pFrom = toDateStr(fromDate);
-    var pTo = toDateStr(toDate);
-
+function goToPage(page) {
+    var dates = Object.keys(_tlGroups).sort(function(a, b) { return b.localeCompare(a); });
+    _tlTotalPages = Math.max(1, Math.ceil(dates.length / _tlPerPage));
+    if (page < 1) page = 1;
+    if (page > _tlTotalPages) page = _tlTotalPages;
+    _tlPage = page;
     renderSalesTimeline();
-
-    window.apiRequest('/api/invoices?date_from=' + pFrom + '&date_to=' + pTo + '&limit=500')
-        .then(function(data) {
-            _tlLoading = false;
-            var invoices = data.invoices || data.data || data || [];
-            var completed = invoices.filter(function(inv) {
-                return inv.invoiceStatus === 'completed';
-            });
-            if (completed.length === 0) {
-                _tlDone = true;
-            } else {
-                var groups = groupInvoicesByDate(completed);
-                mergeGroups(groups);
-            }
-            renderSalesTimeline();
-        })
-        .catch(function(err) {
-            _tlLoading = false;
-            console.error('Failed to load:', err);
-            renderSalesTimeline();
-        });
+    renderPagination();
 }
 
-// ── pure helpers ──
+function renderPagination() {
+    var container = document.getElementById('salesTimelinePagination');
+    if (!container) return;
+
+    if (_tlTotalPages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    container.innerHTML = ''
+        + '<button class="pagination-btn" id="prevTimelineBtn"'
+            + (_tlPage <= 1 ? ' disabled' : '')
+        + '>\u2190 Previous</button>'
+        + '<span class="pagination-info">Page ' + _tlPage + ' of ' + _tlTotalPages + '</span>'
+        + '<button class="pagination-btn" id="nextTimelineBtn"'
+            + (_tlPage >= _tlTotalPages ? ' disabled' : '')
+        + '>Next \u2192</button>';
+
+    document.getElementById('prevTimelineBtn')?.addEventListener('click', function() {
+        if (_tlPage > 1) goToPage(_tlPage - 1);
+    });
+    document.getElementById('nextTimelineBtn')?.addEventListener('click', function() {
+        if (_tlPage < _tlTotalPages) goToPage(_tlPage + 1);
+    });
+}
 
 function groupInvoicesByDate(invoices) {
     var groups = {};
     (invoices || []).forEach(function(inv) {
+        if (inv.invoiceStatus !== 'completed') return;
         var raw = inv.billedAt || inv.createdAt;
         if (!raw) return;
         var d = new Date(raw);
@@ -70,34 +77,28 @@ function groupInvoicesByDate(invoices) {
     return groups;
 }
 
-function mergeGroups(source) {
-    Object.keys(source).forEach(function(key) {
-        if (_tlGroups[key]) {
-            _tlGroups[key].invoices = _tlGroups[key].invoices.concat(source[key].invoices);
-            _tlGroups[key].count += source[key].count;
-            _tlGroups[key].total += source[key].total;
-        } else {
-            _tlGroups[key] = source[key];
-        }
-    });
-}
-
 function renderSalesTimeline() {
     var tbody = document.querySelector('#salesTimelineTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     var dates = Object.keys(_tlGroups).sort(function(a, b) { return b.localeCompare(a); });
+    _tlTotalPages = Math.max(1, Math.ceil(dates.length / _tlPerPage));
 
-    if (dates.length === 0 && !_tlLoading) {
+    if (dates.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">No sales found</td></tr>';
         return;
     }
 
-    dates.forEach(function(dateStr, index) {
+    var start = (_tlPage - 1) * _tlPerPage;
+    var pageDates = dates.slice(start, start + _tlPerPage);
+    var globalIndex = start;
+
+    pageDates.forEach(function(dateStr) {
         var g = _tlGroups[dateStr];
         var avg = g.count > 0 ? Math.round(g.total / g.count) : 0;
-        var cls = 'bsg-' + index;
+        var cls = 'bsg-' + globalIndex;
+        globalIndex++;
 
         tbody.innerHTML += ''
             + '<tr onclick="toggleSalesBills(\'' + cls + '\')" style="cursor:pointer;">'
@@ -121,22 +122,7 @@ function renderSalesTimeline() {
                 + '</tr>';
         });
     });
-
-    if (_tlLoading) {
-        tbody.innerHTML += '<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--muted);">Loading older bills...</td></tr>';
-    } else if (!_tlDone) {
-        tbody.innerHTML += ''
-            + '<tr>'
-                + '<td colspan="5" style="text-align:center;padding:1rem;">'
-                    + '<button class="btn btn-outline btn-sm" onclick="loadOlder()" style="color:var(--muted);">Load Older</button>'
-                + '</td>'
-            + '</tr>';
-    } else {
-        tbody.innerHTML += '<tr><td colspan="5" style="text-align:center;padding:1rem;color:var(--muted);font-size:0.8rem;">\u2014 All bills loaded \u2014</td></tr>';
-    }
 }
-
-// ── interaction ──
 
 function toggleSalesBills(cls) {
     var rows = document.querySelectorAll('.' + cls);
@@ -172,15 +158,6 @@ function cancelInvoice(invoiceId) {
         .catch(function(err) { alert('Failed to delete: ' + err.message); });
 }
 
-// ── helpers ──
-
-function toDateStr(d) {
-    var y = d.getFullYear();
-    var m = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    return y + '-' + m + '-' + day;
-}
-
 function formatNumber(n) {
     return Number(n).toLocaleString('en-IN', { maximumFractionDigits: 2 });
 }
@@ -201,4 +178,4 @@ window.initDayToDaySelling = initDayToDaySelling;
 window.toggleSalesBills = toggleSalesBills;
 window.viewInvoiceReceipt = viewInvoiceReceipt;
 window.confirmDeleteInvoice = confirmDeleteInvoice;
-window.loadOlder = loadOlder;
+window.goToPage = goToPage;

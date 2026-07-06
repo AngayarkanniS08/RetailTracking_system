@@ -19,5 +19,6 @@
                 <tbody></tbody>
               </table>
             </div>
+            <div id="salesTimelinePagination" style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:1rem;"></div>
           </div>
         </section>
