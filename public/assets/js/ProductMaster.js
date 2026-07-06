@@ -1,48 +1,5 @@
 // ============================================
-// 1. Helper: API calls with JWT token
-// ============================================
-async function apiRequest(url, options = {}) {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-        console.warn('No auth token – redirecting to logout');
-        window.location.href = '/index.php?action=logout';
-        return null;
-    }
-    const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        ...options.headers
-    };
-
-    const apiBase = `${window.location.protocol}//${window.location.hostname}:8081`;
-    const fullUrl = url.startsWith('http') ? url : apiBase + url;
-    let response;
-    try {
-        response = await fetch(fullUrl, { ...options, headers });
-    } catch (networkErr) {
-        console.error('Network error calling', fullUrl, networkErr);
-        return null;
-    }
-
-    if (response.status === 401) {
-        localStorage.removeItem('auth_token');
-        window.location.href = '/index.php?action=logout';
-        return null;
-    }
-
-    // Safely parse JSON — catches PHP error pages / empty responses
-    const text = await response.text();
-    if (!text || !text.trim()) return null;
-    try {
-        return JSON.parse(text);
-    } catch (e) {
-        console.error('Non-JSON response from', url, '(status', response.status + '):', text.slice(0, 300));
-        return null;
-    }
-}
-
-// ============================================
-// 2. Global state
+// Global state
 // ============================================
 let categories = [];
 let products = [];
@@ -50,7 +7,7 @@ let activeCategoryFilter = 'all';
 
 
 // ============================================
-// 3. Fetch data from API (always re-fetches)
+// 2. Fetch data from API (always re-fetches)
 // ============================================
 async function loadCategories() {
     const data = await apiRequest('/api/categories');
@@ -123,7 +80,7 @@ function renderPaginationControls(pagination) {
     });
 }
 // ============================================
-// 4. Render UI
+// 3. Render UI
 // ============================================
 function renderCategoryTabs() {
     const container = document.getElementById('pmCatFilters');
@@ -501,7 +458,7 @@ async function loadSubcategoriesIntoProductModal(categoryId) {
 }
 
 // ============================================
-// 5. CRUD actions
+// 4. CRUD actions
 // ============================================
 window.setCategoryFilter = function (categoryId) {
     currentCategory = categoryId;
@@ -617,14 +574,14 @@ window.saveProduct = async function () {
 };
 
 // ============================================
-// 6. Render search filter
+// 5. Render search filter
 // ============================================
 window.renderProductMaster = function () {
     renderProductTable();
 };
 
 // ============================================
-// 7. HTML escape helper
+// 6. HTML escape helper
 // ============================================
 function escapeHtml(str) {
     if (!str) return '';
@@ -641,7 +598,7 @@ function escapeHtml(str) {
 }
 
 // ============================================
-// 8. Initialisation — always re-fetches fresh data
+// 7. Initialisation — always re-fetches fresh data
 // ============================================
 async function initProductMaster() {
     await loadCategories();

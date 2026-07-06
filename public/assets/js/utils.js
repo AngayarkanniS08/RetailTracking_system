@@ -6,43 +6,62 @@
 /**
  * Wrapper for fetch API to include JWT token and handle 401 Unauthorized
  */
+let _redirecting = false;
 async function apiRequest(path, options = {}) {
     const apiBase = `${window.location.protocol}//${window.location.hostname}:8081`;
     const fullPath = path.startsWith('http') ? path : apiBase + path;
 
     const token = localStorage.getItem('auth_token');
     if (!token && !path.includes('/api/login') && !path.includes('/api/register')) {
-        window.location.href = '/index.php?action=logout';
+        if (!_redirecting) {
+            _redirecting = true;
+            window.location.href = '/index.php?action=logout';
+        }
         throw new Error('Not authenticated');
     }
 
     const headers = {
         'Content-Type': 'application/json',
+        'Authorization': token ? 'Bearer ' + token : '',
         ...options.headers
     };
-    if (token) {
-        headers['Authorization'] = 'Bearer ' + token;
-    }
 
+    let response;
     try {
-        const res = await fetch(fullPath, { ...options, headers });
-        
-        if (res.status === 401) {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_user');
-            window.location.href = '/index.php?action=logout';
-            throw new Error('Session expired');
-        }
-
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || 'API request failed');
-        }
-        return data;
-    } catch (err) {
-        console.error(`API Error on ${path}:`, err);
-        throw err;
+        response = await fetch(fullPath, { ...options, headers });
+    } catch (networkErr) {
+        console.error('Network error calling', fullPath, networkErr);
+        throw networkErr;
     }
+
+    if (response.status === 401) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        if (!_redirecting) {
+            _redirecting = true;
+            window.location.href = '/index.php?action=logout';
+        }
+        throw new Error('Session expired');
+    }
+
+    const text = await response.text();
+    if (!text || !text.trim()) {
+        if (!response.ok) throw new Error('API request failed (empty response)');
+        return null;
+    }
+
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (e) {
+        console.error('Non-JSON response from', path, '(status', response.status + '):', text.slice(0, 300));
+        throw new Error('Invalid JSON response from API');
+    }
+
+    if (!response.ok) {
+        throw new Error(data.error || 'API request failed');
+    }
+    return data;
 }
 
 // ── Modal Handling ─────────────────────────────────────────────────────────
