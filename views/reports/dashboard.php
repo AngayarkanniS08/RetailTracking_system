@@ -66,10 +66,6 @@
             </div>
           </div>
 
-          <div class="stats-grid" id="reportsStats">
-            <!-- Rendered via JS -->
-          </div>
-
           <!-- Row 2: High Selling, Low Selling, Old Stock -->
           <div class="pos-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 1.5rem;">
             <div class="card-panel">

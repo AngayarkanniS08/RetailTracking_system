@@ -6,16 +6,11 @@ function initDashboard() {
 }
 
 function fetchDashboardStats() {
-    var statsGrid = document.getElementById('reportsStats');
-    if (statsGrid) statsGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:1rem;">Loading...</div>';
-
     window.apiRequest('/api/dashboard/stats').then(function(data) {
         populateTimeCards(data);
         populatePurchaseCards(data);
-        renderStatsGrid(data);
     }).catch(function(err) {
         console.error('Dashboard stats error:', err);
-        if (statsGrid) statsGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--danger);padding:1rem;">Failed to load stats</div>';
     });
 }
 
@@ -51,20 +46,6 @@ function populatePurchaseCards(data) {
     setText('pcMonthAmount', formatCurrency(data.purchase_month?.amount));
     setText('pcMonthPurchases', data.purchase_month?.count ?? 0);
     setText('pcMonthPaid', formatCurrency(data.purchase_month?.paid));
-}
-
-function renderStatsGrid(data) {
-    var container = document.getElementById('reportsStats');
-    if (!container) return;
-
-    var totalBills = data.total_bills ?? 0;
-    var outstanding = data.outstanding_credit ?? 0;
-    var stockValue = data.stock_value ?? 0;
-
-    container.innerHTML = ''
-        + '<div class="stat-card"><div class="stat-label">Bills Generated</div><div class="stat-value">' + totalBills + '</div></div>'
-        + '<div class="stat-card"><div class="stat-label">Customer Kadan</div><div class="stat-value" style="color:var(--danger)">' + formatCurrency(outstanding) + '</div></div>'
-        + '<div class="stat-card"><div class="stat-label">Current Stock Value</div><div class="stat-value" style="color:var(--info)">' + formatCurrency(stockValue) + '</div></div>';
 }
 
 function renderHighSelling(items) {
