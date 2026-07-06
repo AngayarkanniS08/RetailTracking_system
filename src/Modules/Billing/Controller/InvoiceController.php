@@ -49,8 +49,19 @@ class InvoiceController
             $filters['payment_status'] = $_GET['payment_status'];
         }
 
+        $searchTerm = $_GET['search'] ?? '';
+        $dateFrom = $_GET['date_from'] ?? '';
+        $dateTo = $_GET['date_to'] ?? '';
+        $invStatus = $_GET['invoice_status'] ?? '';
+        $payStatus = $_GET['payment_status'] ?? '';
+
         $cacheKey = sprintf(
-            'billing:invoices:list:page:%d:limit:%d:user:%s',
+            'billing:invoices:list:search:%s:df:%s:dt:%s:is:%s:ps:%s:page:%d:limit:%d:user:%s',
+            md5($searchTerm),
+            md5($dateFrom),
+            md5($dateTo),
+            $invStatus ?: 'all',
+            $payStatus ?: 'all',
             $page,
             $limit,
             $userId ?: 'guest'

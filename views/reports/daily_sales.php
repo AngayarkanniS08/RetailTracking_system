@@ -5,6 +5,9 @@
           <!-- Sales Timeline -->
           <div class="card-panel" style="margin-top: 1.5rem;">
             <div class="card-header">📋 Sales Timeline</div>
+            <div class="input-group" style="margin-bottom: 1rem;">
+              <input type="text" id="salesSearch" class="input-field" placeholder="Search by invoice number or customer name..." oninput="onSalesSearchInput()">
+            </div>
             <div class="table-container">
               <table class="data-table" style="font-size: 0.9rem;" id="salesTimelineTable">
                 <thead>

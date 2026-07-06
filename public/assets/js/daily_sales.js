@@ -4,6 +4,8 @@ var _tlGroups = {};
 var _tlPage = 1;
 var _tlTotalPages = 1;
 var _tlPerPage = 6;
+var _tlSearchTerm = '';
+var _tlSearchTimer = null;
 
 function initDayToDaySelling() {
     _tlGroups = {};
@@ -12,7 +14,10 @@ function initDayToDaySelling() {
     var tbody = document.querySelector('#salesTimelineTable tbody');
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted);">Loading...</td></tr>';
 
-    window.apiRequest('/api/invoices?limit=5000').then(function(data) {
+    var url = '/api/invoices?limit=5000';
+    if (_tlSearchTerm) url += '&search=' + encodeURIComponent(_tlSearchTerm);
+
+    window.apiRequest(url).then(function(data) {
         var invoices = data.invoices || data.data || data || [];
         _tlGroups = groupInvoicesByDate(invoices);
         renderSalesTimeline();
@@ -22,6 +27,18 @@ function initDayToDaySelling() {
         var tbody = document.querySelector('#salesTimelineTable tbody');
         if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">Failed to load sales data</td></tr>';
     });
+}
+
+function onSalesSearchInput() {
+    clearTimeout(_tlSearchTimer);
+    _tlSearchTimer = setTimeout(function() {
+        var input = document.getElementById('salesSearch');
+        var term = input ? input.value.trim() : '';
+        if (term === _tlSearchTerm) return;
+        _tlSearchTerm = term;
+        _tlPage = 1;
+        initDayToDaySelling();
+    }, 300);
 }
 
 function goToPage(page) {

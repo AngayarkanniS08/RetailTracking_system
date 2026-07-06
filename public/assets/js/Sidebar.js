@@ -38,6 +38,9 @@ function switchTab(sectionId, vendorId = null) {
     });
 
     // Call module‑specific initialisation when its section is shown
+    if (sectionId === 'dashboard') {
+        if (typeof initDashboard === 'function') initDashboard();
+    }
     if (sectionId === 'product_master') {
         if (typeof initProductMaster === 'function') initProductMaster();
     }

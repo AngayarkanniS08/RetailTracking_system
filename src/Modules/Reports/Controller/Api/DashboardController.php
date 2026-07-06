@@ -4,6 +4,7 @@ namespace Modules\Reports\Controller\Api;
 use Core\Middlewares\AuthMiddleware;
 use Modules\Reports\Service\DashboardService;
 use Modules\Reports\Service\StockIntelligenceService;
+use Modules\Reports\Repository\DashboardRepository;
 
 class DashboardController
 {
@@ -12,8 +13,9 @@ class DashboardController
 
     public function __construct()
     {
-        $this->dashboardService  = new DashboardService();
-        $this->stockIntelService = new StockIntelligenceService();
+        $repo = new DashboardRepository();
+        $this->dashboardService  = new DashboardService($repo);
+        $this->stockIntelService = new StockIntelligenceService($repo);
     }
 
     /**

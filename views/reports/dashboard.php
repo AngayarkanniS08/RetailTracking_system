@@ -12,7 +12,7 @@
             style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.75rem;">
             📊 Sales History Summary</div>
           <div class="time-cards">
-            <div class="time-card today" onclick="openSalesSummaryDetail('today')">
+            <div class="time-card today" onclick="switchTab('day_to_day_selling')">
               <div class="time-card-icon">📅</div>
               <div class="time-card-label">Today</div>
               <div class="time-card-revenue" id="tcTodayRev">₹0.00</div>
@@ -21,7 +21,7 @@
                 <span>📊 Avg: <strong id="tcTodayAvg">₹0</strong></span>
               </div>
             </div>
-            <div class="time-card week" onclick="openSalesSummaryDetail('week')">
+            <div class="time-card week" onclick="switchTab('day_to_day_selling')">
               <div class="time-card-icon">📊</div>
               <div class="time-card-label">This Week</div>
               <div class="time-card-revenue" id="tcWeekRev">₹0.00</div>
@@ -30,7 +30,7 @@
                 <span>📊 Avg: <strong id="tcWeekAvg">₹0</strong></span>
               </div>
             </div>
-            <div class="time-card month" onclick="openSalesSummaryDetail('month')">
+            <div class="time-card month" onclick="switchTab('day_to_day_selling')">
               <div class="time-card-icon">📆</div>
               <div class="time-card-label">This Month</div>
               <div class="time-card-revenue" id="tcMonthRev">₹0.00</div>
@@ -46,7 +46,7 @@
             style="font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.75rem; margin-top:1.5rem;">
             📊 Purchase Vendor Summary</div>
           <div class="time-cards" style="grid-template-columns: repeat(2, 1fr);">
-            <div class="time-card week" onclick="switchTab('stocklist')" style="cursor: pointer;">
+            <div class="time-card week" onclick="switchTab('vendorhistory')" style="cursor: pointer;">
               <div class="time-card-icon">📊</div>
               <div class="time-card-label">This Week</div>
               <div class="time-card-revenue" id="pcWeekAmount">₹0.00</div>
@@ -55,7 +55,7 @@
                 <span>💰 Paid: <strong id="pcWeekPaid">₹0</strong></span>
               </div>
             </div>
-            <div class="time-card month" onclick="switchTab('stocklist')" style="cursor: pointer;">
+            <div class="time-card month" onclick="switchTab('vendorhistory')" style="cursor: pointer;">
               <div class="time-card-icon">📆</div>
               <div class="time-card-label">This Month</div>
               <div class="time-card-revenue" id="pcMonthAmount">₹0.00</div>
@@ -73,11 +73,11 @@
           <!-- Row 2: High Selling, Low Selling, Old Stock -->
           <div class="pos-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 1.5rem;">
             <div class="card-panel">
-              <div class="card-header" style="color: var(--ok); cursor:pointer;" onclick="openStockIntel('high')">🔥
+              <div class="card-header" style="color: var(--ok);">🔥
                 High Selling <span
                   style="font-size:0.7rem; color:var(--muted); float:right; margin-top:4px; display:flex; gap:8px; align-items:center;"><span
                     onclick="event.stopPropagation(); openModal('lowStockAlertModal')"
-                    style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span> View all →</span>
+                    style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span></span>
               </div>
               <table class="data-table" style="font-size: 0.9rem;" id="highSellingTable">
                 <thead>
@@ -91,11 +91,11 @@
               </table>
             </div>
             <div class="card-panel">
-              <div class="card-header" style="color: var(--warn); cursor:pointer;" onclick="openStockIntel('low')">📉
+              <div class="card-header" style="color: var(--warn);">📉
                 Low Selling <span
                   style="font-size:0.7rem; color:var(--muted); float:right; margin-top:4px; display:flex; gap:8px; align-items:center;"><span
                     onclick="event.stopPropagation(); openModal('lowStockAlertModal')"
-                    style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span> View all →</span>
+                    style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span></span>
               </div>
               <table class="data-table" style="font-size: 0.9rem;" id="lowSellingTable">
                 <thead>
@@ -109,9 +109,8 @@
               </table>
             </div>
             <div class="card-panel">
-              <div class="card-header" style="color: var(--danger); cursor:pointer;" onclick="openStockIntel('old')">📦
-                Old Stock <span style="font-size:0.7rem; color:var(--muted); float:right; margin-top:4px;">View all
-                  →</span></div>
+              <div class="card-header" style="color: var(--danger);">📦
+                Old Stock</div>
               <table class="data-table" style="font-size: 0.9rem;" id="oldStockTable">
                 <thead>
                   <tr>

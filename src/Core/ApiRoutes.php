@@ -255,6 +255,17 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Customer\Controller\Api\CustomerController())->ledger($params['id']);
         });
-            
+
+        // ── Dashboard / Reports ──────────────────────────────────────────
+        $router->add('GET', '/api/dashboard/stats', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Reports\Controller\Api\DashboardController())->stats();
+        });
+
+        $router->add('GET', '/api/dashboard/stock-intel', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Reports\Controller\Api\DashboardController())->stockIntel();
+        });
+
     }
 }
