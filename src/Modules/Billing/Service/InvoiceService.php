@@ -475,7 +475,7 @@ class InvoiceService
     {
         try {
             $valkey = ValkeyCache::getClient();
-            foreach (['billing:invoices:*', 'reports:*'] as $pattern) {
+            foreach (['billing:invoices:*', 'credit:*', 'reports:*'] as $pattern) {
                 $keys = $valkey->keys($pattern);
                 if ($keys) {
                     $valkey->del($keys);
