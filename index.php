@@ -51,7 +51,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'set_session') {
     exit;
 }
 
-$action = $_GET['action'] ?? 'register';
+$action = $_GET['action'] ?? 'login';
 
 // ============================================
 // Determine if user is logged in
@@ -61,7 +61,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 if (!$isLoggedIn) {
     // Show auth forms (no dashboard layout)
     require_once 'views/layouts/header.php';
-    $action = $_GET['action'] ?? 'register';
+    $action = $_GET['action'] ?? 'login';
     if ($action === 'login') {
         require_once 'views/auth/login.php';
     } elseif ($action === 'forgot_password' || $action === 'ForgotPassword') {

@@ -79,11 +79,12 @@ function initSidebar() {
     });
 
     // Activate the default section (e.g., dashboard) if none is active
+    // Only do this on logged-in pages where dashboard sections exist.
     const activeExists = sections.some(id => {
         const sec = document.getElementById(id);
         return sec && sec.classList.contains('active');
     });
-    if (!activeExists) {
+    if (!activeExists && document.getElementById('dashboardView')) {
         switchTab('dashboard');
     }
 }
