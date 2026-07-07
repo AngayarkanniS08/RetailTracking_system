@@ -15,6 +15,32 @@ class ProductHistoryController
     }
 
     /**
+     * GET /api/products/with-stock
+     * Returns products that have inventory batches with remaining stock.
+     */
+    public function productsWithStock(): void
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+            return;
+        }
+
+        AuthMiddleware::authenticate();
+
+        try {
+            $data = $this->service->getProductsWithStock();
+            echo json_encode($data);
+        } catch (\Exception $e) {
+            error_log('ProductHistoryController::productsWithStock - ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load products with stock']);
+        }
+    }
+
+    /**
      * GET /api/products/{id}/history
      * Returns product analytics: sold, revenue, velocity, stock, margin, etc.
      */

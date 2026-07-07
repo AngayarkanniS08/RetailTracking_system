@@ -1,7 +1,7 @@
-// Product History Module
-
+// Product History Module — redesigned velocity analytics
 var _currentProductId = null;
 var _productList = [];
+var _productUnit = 'units';
 
 function initProductHistory() {
     if (_productList.length === 0) {
@@ -31,6 +31,7 @@ function fetchProductList() {
         .catch(function(err) {
             console.error('Product list error:', err);
             if (select) select.innerHTML = '<option value="">Failed to load products</option>';
+            showProductError('Could not load product list. Make sure the API server is running on port 8081.');
         });
 }
 
@@ -51,7 +52,7 @@ function showProductPrompt() {
     var card = document.getElementById('phProductCard');
     if (!card) return;
     card.innerHTML = '<div style="padding:3rem 2rem;text-align:center;color:var(--muted);">' +
-        '<div style="font-size:2.5rem;margin-bottom:0.75rem;">\u{1F50D}</div>' +
+        '<div style="font-size:2.5rem;margin-bottom:0.75rem;">🔍</div>' +
         '<div style="font-size:1.1rem;font-weight:600;margin-bottom:0.25rem;">Select a product</div>' +
         '<div style="font-size:0.9rem;">Choose a product from the dropdown above to view its analytics.</div>' +
         '</div>';
@@ -68,7 +69,7 @@ function openProductHistory(productId, productName) {
     ensureCardDOM();
 
     var subtitleEl = document.getElementById('phSubtitle');
-    if (subtitleEl) subtitleEl.textContent = 'Loading\u2026';
+    if (subtitleEl) subtitleEl.textContent = 'Loading…';
 
     var select = document.getElementById('phProductSelect');
     if (select) {
@@ -91,18 +92,32 @@ function fetchProductAnalytics(productId) {
         })
         .catch(function(err) {
             console.error('Product history error:', err);
-            var card = document.getElementById('phProductCard');
-            if (card) {
-                card.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--danger);">Failed to load: ' + escH(err.message) + '</div>';
-            }
+            var msg = friendlyError(err.message);
+            showProductError(msg + '<br><button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="fetchProductAnalytics(\'' + escHtmlAttr(productId) + '\')">Retry</button>');
         });
+}
+
+function showProductError(html) {
+    var card = document.getElementById('phProductCard');
+    if (card) {
+        card.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--danger);">' + html + '</div>';
+    }
+}
+
+function friendlyError(msg) {
+    if (!msg) return 'Unknown error';
+    if (msg.indexOf('original_quantity') !== -1) return 'Database schema missing column. Run: php Database/Migrate.php';
+    if (msg.indexOf('not found') !== -1 || msg.indexOf('404') !== -1) return 'Product data not available. It may have been deleted.';
+    if (msg.indexOf('Connection refused') !== -1 || msg.indexOf('Network') !== -1) return 'Cannot reach API server on port 8081. Is it running?';
+    if (msg.indexOf('Unauthorized') !== -1 || msg.indexOf('401') !== -1) return 'Session expired. Please log in again.';
+    return 'Something went wrong. Please try again.';
 }
 
 function ensureCardDOM() {
     var card = document.getElementById('phProductCard');
     if (!card) return;
-    var hasHeader = card.querySelector('.si-header');
-    if (hasHeader) return;
+    // If classification block already exists, DOM is intact
+    if (card.querySelector('.ph-class-block')) return;
 
     card.innerHTML =
         '<div class="si-header">' +
@@ -115,43 +130,65 @@ function ensureCardDOM() {
         '  </div>' +
         '  <div id="phBadges"></div>' +
         '</div>' +
-        '<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted-strong);margin:0.75rem 0 0.25rem;padding:0 0.25rem;">Sales Performance</div>' +
-        '<div class="si-metrics">' +
-        '  <div class="si-metric"><div class="si-metric-label">Sold (7d)</div><div class="si-metric-value" id="phSold7d">0</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Sold (30d)</div><div class="si-metric-value" style="color:var(--ok)" id="phSold30d">0</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Sold (90d)</div><div class="si-metric-value" id="phSold90d">0</div></div>' +
+        '<div class="ph-class-block" id="phClassBlock">' +
+        '  <div class="ph-class-title">Classification — based on velocity</div>' +
+        '  <div class="ph-class-pills" id="phClassPills"></div>' +
+        '  <div class="ph-class-reason" id="phClassReason"></div>' +
         '</div>' +
-        '<div class="si-metrics">' +
-        '  <div class="si-metric"><div class="si-metric-label">Avg Daily (7d)</div><div class="si-metric-value" id="phAvgDaily7d">0</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Avg Daily (30d)</div><div class="si-metric-value" style="color:var(--info)" id="phAvgDaily30d">0</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Avg Daily (90d)</div><div class="si-metric-value" id="phAvgDaily90d">0</div></div>' +
+        '<div class="ph-hero-row">' +
+        '  <div class="ph-hero-card accent">' +
+        '    <div class="ph-hero-badge" id="phHeroBadge"></div>' +
+        '    <div class="ph-hero-lbl">Daily velocity (30d avg)</div>' +
+        '    <div class="ph-hero-val" style="color:var(--info)" id="phHeroVelocity">--</div>' +
+        '    <div class="ph-hero-sub" id="phHeroVelUnit">units per day</div>' +
+        '  </div>' +
+        '  <div class="ph-hero-card">' +
+        '    <div class="ph-hero-lbl">Days of supply left</div>' +
+        '    <div class="ph-hero-val" id="phHeroDos">&infin;</div>' +
+        '    <div class="ph-hero-sub">days before reorder needed</div>' +
+        '  </div>' +
+        '  <div class="ph-hero-card">' +
+        '    <div class="ph-hero-lbl">Revenue (30d)</div>' +
+        '    <div class="ph-hero-val" id="phHeroRevenue">₹0</div>' +
+        '    <div class="ph-hero-sub">from <span id="phHeroSoldUnits">0</span> units sold</div>' +
+        '  </div>' +
         '</div>' +
-        '<div class="si-metrics">' +
-        '  <div class="si-metric"><div class="si-metric-label">Revenue (30d)</div><div class="si-metric-value" id="phRevenue">&#x20b9;0</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Velocity</div><div class="si-metric-value" style="color:var(--info)" id="phVelocity">0 /day</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Trend</div><div class="si-metric-value" id="phTrend">--</div></div>' +
+        '<div class="ph-vel-block">' +
+        '  <div class="ph-vel-title">Velocity detail — how fast is it selling?</div>' +
+        '  <div class="ph-vel-row">' +
+        '    <div class="ph-vel-cell">' +
+        '      <div class="ph-vel-lbl">Last 7 days</div>' +
+        '      <div class="ph-vel-val" style="color:var(--ok)" id="phVel7">-- /day</div>' +
+        '      <div class="ph-vel-desc"><span id="phVel7Sold">0</span> units sold</div>' +
+        '    </div>' +
+        '    <div class="ph-vel-cell">' +
+        '      <div class="ph-vel-lbl">Last 30 days</div>' +
+        '      <div class="ph-vel-val" style="color:var(--info)" id="phVel30">-- /day</div>' +
+        '      <div class="ph-vel-desc"><span id="phVel30Sold">0</span> units sold</div>' +
+        '    </div>' +
+        '    <div class="ph-vel-cell">' +
+        '      <div class="ph-vel-lbl">Catalog average</div>' +
+        '      <div class="ph-vel-val" style="color:var(--muted-strong)" id="phVelCat">-- /day</div>' +
+        '      <div class="ph-vel-desc">all products avg</div>' +
+        '    </div>' +
+        '  </div>' +
+        '  <div class="ph-trend-row">' +
+        '    <span style="flex-shrink:0">Trend last 4 weeks:</span>' +
+        '    <div class="ph-trend-bar" id="phTrendBar"></div>' +
+        '    <span id="phTrendLabel" style="flex-shrink:0; font-weight:600">--</span>' +
+        '  </div>' +
         '</div>' +
-        '<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted-strong);margin:1rem 0 0.25rem;padding:0 0.25rem;">Stock &amp; Supply</div>' +
-        '<div class="si-metrics">' +
-        '  <div class="si-metric"><div class="si-metric-label">Stock Left</div><div class="si-metric-value" id="phStockLeft">0</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Days of Supply</div><div class="si-metric-value" id="phDaysOfSupply">&#x221e;</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Batches</div><div class="si-metric-value" id="phBatchCount">0</div></div>' +
-        '</div>' +
-        '<div class="si-metrics">' +
-        '  <div class="si-metric"><div class="si-metric-label">Stock Value</div><div class="si-metric-value" id="phStockValue">&#x20b9;0</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Margin</div><div class="si-metric-value" id="phMargin">0%</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Oldest Batch</div><div class="si-metric-value" id="phMaxBatchAge">0d</div></div>' +
-        '</div>' +
-        '<div class="si-metrics">' +
-        '  <div class="si-metric"><div class="si-metric-label">Last Sale</div><div class="si-metric-value" id="phLastSale">--</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">First Sale</div><div class="si-metric-value" id="phFirstSale">--</div></div>' +
-        '  <div class="si-metric"><div class="si-metric-label">Reorder</div><div class="si-metric-value" id="phReorderStatus">--</div></div>' +
-        '</div>' +
-        '<div class="si-stock-bar">' +
-        '  <div class="si-stock-label"><span>Stock level</span><span id="phStockPct" style="color:var(--ok)">100%</span></div>' +
-        '  <div class="si-bar-track"><div class="si-bar-fill" id="phStockBar" style="width:100%; background:var(--ok)"></div></div>' +
-        '</div>' +
-        '<div id="phAlert"></div>';
+        '<div class="ph-stock-block">' +
+        '  <div class="ph-stock-title">Stock status</div>' +
+        '  <div class="ph-stock-row">' +
+        '    <div class="ph-sc"><div class="ph-sc-lbl">Stock left</div><div class="ph-sc-val" id="phStockLeftVal">--</div></div>' +
+        '    <div class="ph-sc"><div class="ph-sc-lbl">Oldest batch</div><div class="ph-sc-val" id="phOldestBatchVal">--</div></div>' +
+        '    <div class="ph-sc"><div class="ph-sc-lbl">Margin</div><div class="ph-sc-val" id="phMarginVal">--</div></div>' +
+        '  </div>' +
+        '  <div class="ph-bar-track"><div class="ph-bar-fill" id="phStockBarFill" style="width:100%"></div></div>' +
+        '  <div class="ph-bar-meta"><span id="phStockRemaining">--</span><span id="phStockPctLabel">--</span></div>' +
+        '  <div class="ph-alert-box" id="phAlertBox"></div>' +
+        '</div>';
 }
 
 function renderProductAnalytics(data) {
@@ -160,102 +197,236 @@ function renderProductAnalytics(data) {
     var badges = data.badges || [];
     var alert = data.alert || {};
     var unit = p.unit || 'units';
+    _productUnit = unit;
 
     // Header
-    setText('phTitle', p.name || 'Product');
-    setText('phSubtitle', (p.id || '') + ' &middot; ' + (p.category || '') + ' &middot; ' + unit);
     setText('phProductName', p.name || '-');
     setText('phProductMeta', (p.id || '') + ' &middot; ' + (p.category || ''));
+    setText('phSubtitle', (p.name || '') + ' &middot; ' + unit);
 
     var icon = document.getElementById('phIcon');
     if (icon) icon.textContent = (p.name || '??').slice(0, 2).toUpperCase();
 
-    // Badges
+    // Badges — line of small tags
     var badgeHtml = '';
     badges.forEach(function(tag) {
-        if (tag === 'high')    badgeHtml += '<span class="si-badge high">High selling</span> ';
-        if (tag === 'low')     badgeHtml += '<span class="si-badge low">Low selling</span> ';
-        if (tag === 'old')     badgeHtml += '<span class="si-badge old">Old stock</span> ';
-        if (tag === 'dead')    badgeHtml += '<span class="si-badge" style="background:var(--danger);color:#fff;">No sales</span> ';
+        if (tag === 'high')    badgeHtml += '<span class="si-badge high">🔥 High selling</span> ';
+        if (tag === 'low')     badgeHtml += '<span class="si-badge low">📉 Low selling</span> ';
+        if (tag === 'old')     badgeHtml += '<span class="si-badge old">📦 Old stock</span> ';
+        if (tag === 'dead')    badgeHtml += '<span class="si-badge" style="background:var(--danger-subtle);color:var(--danger);border:1px solid var(--danger);">💀 No sales</span> ';
+        if (tag === 'new')     badgeHtml += '<span class="si-badge" style="background:color-mix(in srgb, var(--info) 15%, transparent);color:var(--info);border:1px solid var(--info);">🆕 New</span> ';
         if (tag === 'out')     badgeHtml += '<span class="si-badge" style="background:#333;color:#fff;">Out of stock</span> ';
-        if (tag === 'reorder') badgeHtml += '<span class="si-badge" style="background:var(--warn);color:#fff;">Reorder</span> ';
+        if (tag === 'reorder') badgeHtml += '<span class="si-badge" style="background:var(--warn-subtle);color:var(--warn);border:1px solid var(--warn);">Reorder</span> ';
     });
-    document.getElementById('phBadges').innerHTML = badgeHtml || '<span style="color:var(--muted);font-size:0.85rem;">Normal</span>';
+    document.getElementById('phBadges').innerHTML = badgeHtml || '<span style="color:var(--muted);font-size:0.85rem;">→ Normal</span>';
 
-    // Sales metrics
-    setText('phSold7d', a.sold_7d + ' ' + unit);
-    setText('phSold30d', a.sold_30d + ' ' + unit);
-    setText('phSold90d', a.sold_90d + ' ' + unit);
-    setText('phAvgDaily7d', a.avg_daily_7d + ' ' + unit + '/d');
-    setText('phAvgDaily30d', a.avg_daily_30d + ' ' + unit + '/d');
-    setText('phAvgDaily90d', a.avg_daily_90d + ' ' + unit + '/d');
-    setText('phRevenue', window.formatCurrency(a.revenue_30d || 0));
-    setText('phVelocity', (a.velocity || 0) + ' ' + unit + '/day');
+    // --- Classification pill (top priority) ---
+    renderClassification(badges, a, unit);
 
-    // Trend
-    var trendEl = document.getElementById('phTrend');
-    if (trendEl) {
-        if (a.trend_pct != null) {
-            var arrow = a.trend_pct >= 0 ? '&#x2191;' : '&#x2193;';
-            var color = a.trend_pct >= 0 ? 'var(--ok)' : 'var(--danger)';
-            trendEl.innerHTML = '<span style="color:' + color + ';font-weight:700;">' + arrow + ' ' + Math.abs(a.trend_pct) + '%</span>';
-        } else {
-            trendEl.textContent = '--';
-            trendEl.style.color = 'var(--muted)';
-        }
-    }
+    // --- Hero row ---
+    var vel = a.velocity || 0;
+    setText('phHeroVelocity', formatNum(vel));
+    setText('phHeroVelUnit', unit + ' per day');
 
-    // Stock metrics
-    setText('phStockLeft', a.stock_left + ' ' + unit);
-    setText('phDaysOfSupply', a.days_of_supply != null ? a.days_of_supply + ' days' : '\u221e');
-    setText('phBatchCount', a.batch_count || 0);
-    setText('phStockValue', window.formatCurrency(a.stock_value || 0));
-    setText('phMargin', (a.margin_pct || 0) + '%');
-    setText('phMaxBatchAge', (a.max_batch_age_days || 0) + 'd');
+    var dos = a.days_of_supply;
+    var dosEl = document.getElementById('phHeroDos');
+    if (dosEl) dosEl.textContent = dos != null ? String(dos) : '∞';
 
-    // Dates
-    setText('phLastSale', a.last_sale_date ? fmtDate(a.last_sale_date) : '--');
-    setText('phFirstSale', a.first_sale_date ? fmtDate(a.first_sale_date) : '--');
+    setText('phHeroRevenue', window.formatCurrency(a.revenue_30d || 0));
+    setText('phHeroSoldUnits', a.sold_30d || 0);
 
-    // Reorder status
-    var rsEl = document.getElementById('phReorderStatus');
-    if (rsEl) {
-        var rs = a.reorder_status || 'ok';
-        var rsLabels = {
-            'ok':           { text: 'OK', color: 'var(--ok)' },
-            'reorder_soon': { text: 'Reorder soon', color: 'var(--warn)' },
-            'reorder_now':  { text: 'Reorder NOW', color: 'var(--danger)' },
-            'emergency':    { text: 'EMERGENCY', color: 'var(--danger)' },
-            'out_of_stock': { text: 'OUT OF STOCK', color: '#333' }
+    // Hero badge (trend)
+    var trend = a.trend_text || 'steady';
+    var heroBadgeEl = document.getElementById('phHeroBadge');
+    if (heroBadgeEl) {
+        var hbMap = {
+            'up':     { text: '↑ trending up', cls: 'up' },
+            'down':   { text: '↓ slowing down', cls: 'down' },
+            'steady': { text: '→ steady', cls: 'flat' }
         };
-        var rl = rsLabels[rs] || { text: rs, color: 'var(--muted)' };
-        rsEl.innerHTML = '<span style="color:' + rl.color + ';font-weight:700;">' + rl.text + '</span>';
+        var hb = hbMap[trend] || hbMap['steady'];
+        heroBadgeEl.textContent = hb.text;
+        heroBadgeEl.className = 'ph-hero-badge ' + hb.cls;
     }
 
-    // Stock bar
+    // --- Velocity detail ---
+    var vel7 = a.avg_daily_7d || 0;
+    var vel30 = a.avg_daily_30d || 0;
+    var catAvg = a.avg_velocity || 0;
+    var sold7 = a.sold_7d || 0;
+    var sold30 = a.sold_30d || 0;
+
+    setText('phVel7', formatNum(vel7) + ' /day');
+    setText('phVel30', formatNum(vel30) + ' /day');
+    setText('phVelCat', formatNum(catAvg) + ' /day');
+    setText('phVel7Sold', sold7);
+    setText('phVel30Sold', sold30);
+
+    // Trend bar — 4 weekly segments estimated from 7d and 30d
+    renderTrendBar(trend, vel7, vel30);
+
+    // --- Stock status ---
+    var stockLeft = a.stock_left || 0;
+    var maxAge = a.max_batch_age_days || 0;
+    var marginPct = a.margin_pct || 0;
     var stockPct = a.stock_pct != null ? a.stock_pct : 100;
+
+    setText('phStockLeftVal', formatNum(stockLeft) + ' ' + unit);
+    setText('phOldestBatchVal', maxAge + 'd');
+    setText('phMarginVal', marginPct + '%');
+
+    // Stock remaining bar
     var barColor = stockPct <= 10 ? 'var(--danger)' : (stockPct <= 30 ? 'var(--warn)' : 'var(--ok)');
-    var pctEl = document.getElementById('phStockPct');
-    if (pctEl) {
-        pctEl.textContent = stockPct + '%';
-        pctEl.style.color = barColor;
-    }
-    var barEl = document.getElementById('phStockBar');
+    var barEl = document.getElementById('phStockBarFill');
     if (barEl) {
         barEl.style.width = stockPct + '%';
         barEl.style.background = barColor;
     }
 
+    setText('phStockRemaining', formatNum(stockLeft) + ' ' + unit + ' remaining');
+    var pctLabelEl = document.getElementById('phStockPctLabel');
+    if (pctLabelEl) {
+        pctLabelEl.textContent = stockPct + '% of original stock';
+        pctLabelEl.style.color = barColor;
+    }
+
     // Alert
     var alertHtml = '';
-    if (alert.type === 'critical') {
-        alertHtml = '<div class="si-alert critical"><span style="margin-right:6px;">&#x2699;&#xfe0f;</span>' + escH(alert.message) + '</div>';
-    } else if (alert.type === 'warning') {
-        alertHtml = '<div class="si-alert warning"><span style="margin-right:6px;">&#x26a0;&#xfe0f;</span>' + escH(alert.message) + '</div>';
+    if (alert.type === 'critical' || alert.type === 'warning') {
+        var isWarn = alert.type === 'warning';
+        alertHtml = '<div class="ph-alert-box ' + (isWarn ? 'ph-alert-warn' : 'ph-alert-warn') + '">⚠ ' + escH(alert.message) + '</div>';
     } else if (alert.type === 'good') {
-        alertHtml = '<div class="si-alert good"><span style="margin-right:6px;">&#x2705;</span>' + escH(alert.message) + '</div>';
+        alertHtml = '<div class="ph-alert-box ph-alert-ok">✅ ' + escH(alert.message) + '</div>';
+    } else {
+        // Generate reorder alert from data
+        var dos = a.days_of_supply;
+        if (dos != null && dos <= 14 && dos > 0 && stockLeft > 0) {
+            alertHtml = '<div class="ph-alert-box ph-alert-warn">⚠ At ' + formatNum(vel) + ' ' + unit + '/day — stock runs out in ' + dos + ' days.</div>';
+        } else if (stockLeft <= 0) {
+            alertHtml = '<div class="ph-alert-box" style="background:var(--danger-subtle);color:var(--danger);">⛔ Out of stock</div>';
+        } else {
+            alertHtml = '<div class="ph-alert-box ph-alert-ok">✅ Stock is sufficient. ' + formatNum(dos != null ? dos : '∞') + ' days of supply remaining.</div>';
+        }
     }
-    document.getElementById('phAlert').innerHTML = alertHtml;
+    document.getElementById('phAlertBox').innerHTML = alertHtml;
+}
+
+function renderClassification(badges, a, unit) {
+    // Priority: dead > old > high > low > new > normal
+    var priority = ['dead', 'old', 'high', 'low', 'new'];
+    var mainTag = 'normal';
+    for (var i = 0; i < priority.length; i++) {
+        if (badges.indexOf(priority[i]) !== -1) {
+            mainTag = priority[i];
+            break;
+        }
+    }
+
+    var vel = a.velocity || 0;
+    var catAvg = a.avg_velocity || 0;
+    var ratio = catAvg > 0 ? (vel / catAvg) : 0;
+    var age = a.max_batch_age_days || 0;
+    var stockPct = a.stock_pct != null ? a.stock_pct : 100;
+
+    var pillHtml = '';
+    var reason = '';
+
+    switch (mainTag) {
+        case 'high':
+            pillHtml = '<span class="ph-cpill high">🔥 High Selling</span>';
+            reason = 'Selling <strong>' + formatNum(vel) + '</strong> ' + unit + '/day — <strong>' + formatNum(ratio) + '×</strong> ' + (ratio >= 1 ? 'faster' : 'slower') + ' than your catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day. Consistently above average for last 30 days.';
+            break;
+        case 'low':
+            pillHtml = '<span class="ph-cpill low">📉 Low Selling</span>';
+            reason = 'Selling <strong>' + formatNum(vel) + '</strong> ' + unit + '/day — significantly below your catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day. Consider promotion or bundling.';
+            break;
+        case 'dead':
+            pillHtml = '<span class="ph-cpill dead">💀 No Sales</span>';
+            reason = 'No sales recorded in the last 30 days and the batch is <strong>' + age + ' days</strong> old. Consider discounting or removal.';
+            break;
+        case 'old':
+            pillHtml = '<span class="ph-cpill old">📦 Old Stock</span>';
+            reason = 'Batch is <strong>' + age + ' days</strong> old with <strong>' + stockPct + '%</strong> stock remaining. Only <strong>' + formatNum(vel) + '</strong> ' + unit + '/day selling — well below catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day.';
+            break;
+        case 'new':
+            pillHtml = '<span class="ph-cpill new">🆕 New Product</span>';
+            reason = 'New product — only <strong>' + age + ' days</strong> since first sale. Still gathering data to classify.';
+            break;
+        default:
+            pillHtml = '<span class="ph-cpill normal">⚖️ Normal</span>';
+            reason = 'Selling <strong>' + formatNum(vel) + '</strong> ' + unit + '/day — at or near your catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day.';
+    }
+
+    document.getElementById('phClassPills').innerHTML = pillHtml;
+    document.getElementById('phClassReason').innerHTML = reason;
+
+    // Color the class block border to match
+    var block = document.getElementById('phClassBlock');
+    if (block) {
+        var borderMap = {
+            'high': 'var(--ok)',
+            'low': 'var(--warn)',
+            'dead': 'var(--danger)',
+            'old': 'var(--border-strong)',
+            'new': 'var(--info)'
+        };
+        block.style.borderColor = borderMap[mainTag] || 'var(--accent-2-muted)';
+    }
+}
+
+function renderTrendBar(trend, vel7, vel30) {
+    var bar = document.getElementById('phTrendBar');
+    if (!bar) return;
+
+    // Estimate 4 weekly velocities proportional to 7d and 30d averages
+    // w4 (most recent) ≈ vel7. w1-3 interpolated so avg = vel30
+    var total30 = vel30 * 30;
+    var w4 = vel7 * 7;
+    var remaining = total30 - w4;
+    var w1 = remaining / 23; // rough average of days 1-23
+
+    // Create gentle progression based on trend
+    var segs;
+    if (trend === 'up') {
+        segs = [w1 * 0.6, w1 * 0.8, w1 * 1.0, vel7 * 1.0];
+    } else if (trend === 'down') {
+        segs = [w1 * 1.4, w1 * 1.2, w1 * 1.0, vel7 * 0.8];
+    } else {
+        segs = [w1, w1, w1, vel7];
+    }
+
+    var total = segs.reduce(function(s, v) { return s + Math.max(v, 0.01); }, 0);
+    var colors = [
+        'var(--border-strong)',
+        'var(--border-hover)',
+        'var(--muted-strong)',
+        trend === 'up' ? 'var(--ok)' : (trend === 'down' ? 'var(--danger)' : 'var(--muted-strong)')
+    ];
+
+    var html = '';
+    for (var i = 0; i < segs.length; i++) {
+        var pct = Math.max(segs[i], 0.01) / total * 100;
+        html += '<div class="ph-tb-seg" style="width:' + pct.toFixed(1) + '%;background:' + colors[i] + '"></div>';
+    }
+    bar.innerHTML = html;
+
+    // Trend label
+    var label = document.getElementById('phTrendLabel');
+    if (label) {
+        var trendMap = {
+            'up':     { text: '↑ accelerating', color: 'var(--ok)' },
+            'down':   { text: '↓ decelerating', color: 'var(--danger)' },
+            'steady': { text: '→ steady', color: 'var(--muted-strong)' }
+        };
+        var tl = trendMap[trend] || trendMap['steady'];
+        label.textContent = tl.text;
+        label.style.color = tl.color;
+    }
+}
+
+function formatNum(n) {
+    if (n == null || isNaN(n)) return '0';
+    return Number(n).toFixed(1).replace(/\.0$/, '');
 }
 
 function fmtDate(dateStr) {

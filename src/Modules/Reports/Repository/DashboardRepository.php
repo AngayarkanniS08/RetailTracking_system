@@ -63,31 +63,73 @@ class DashboardRepository implements DashboardRepositoryInterface
         );
     }
 
-    public function getHighSelling(int $limit = 5): array
+    public function getCatalogAvgVelocity(): float
     {
         try {
             $stmt = $this->db->prepare("
-                SELECT
-                    ii.product_name_snapshot AS name,
-                    COALESCE(SUM(ii.quantity), 0)::int         AS qty_sold,
-                    COALESCE(SUM(ii.line_total), 0)            AS revenue
-                FROM invoice_items ii
-                JOIN invoices i ON i.id = ii.invoice_id
-                WHERE i.user_id = current_setting('app.current_user_id')::uuid
-                  AND i.invoice_status = 'completed'
-                  AND i.billed_at >= DATE_TRUNC('month', NOW())
-                GROUP BY ii.product_name_snapshot
-                ORDER BY qty_sold DESC
+                SELECT COALESCE(AVG(velocity), 0) FROM (
+                    SELECT
+                        SUM(ii.quantity)::float / 30.0 AS velocity
+                    FROM products p
+                    JOIN invoice_items ii ON ii.product_id = p.id
+                    JOIN invoices i ON i.id = ii.invoice_id
+                        AND i.invoice_status = 'completed'
+                        AND i.billed_at >= NOW() - INTERVAL '30 days'
+                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    GROUP BY p.id
+                    HAVING SUM(ii.quantity) > 0
+                ) vel
+            ");
+            $stmt->execute();
+            return (float) $stmt->fetchColumn();
+        } catch (\Exception $e) {
+            error_log('DashboardRepository::getCatalogAvgVelocity - ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getHighSelling(int $limit = 5): array
+    {
+        try {
+            $avgVel = $this->getCatalogAvgVelocity();
+            $threshold = $avgVel * 1.5;
+
+            $stmt = $this->db->prepare("
+                WITH product_sales AS (
+                    SELECT
+                        p.id,
+                        p.name,
+                        COALESCE(SUM(ii.quantity), 0)::int AS qty_sold,
+                        COALESCE(SUM(ii.line_total), 0)    AS revenue,
+                        CASE WHEN SUM(ii.quantity) > 0
+                            THEN SUM(ii.quantity)::float / 30.0
+                            ELSE 0
+                        END AS velocity
+                    FROM products p
+                    LEFT JOIN invoice_items ii ON ii.product_id = p.id
+                    LEFT JOIN invoices i ON i.id = ii.invoice_id
+                        AND i.invoice_status = 'completed'
+                        AND i.billed_at >= NOW() - INTERVAL '30 days'
+                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    GROUP BY p.id, p.name
+                )
+                SELECT id, name, qty_sold, revenue, velocity
+                FROM product_sales
+                WHERE velocity >= :threshold
+                ORDER BY velocity DESC
                 LIMIT :limit
             ");
+            $stmt->bindValue(':threshold', $threshold, PDO::PARAM_STR);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(fn($r) => new TopProduct(
-                name:    $r['name'],
-                qtySold: (int) $r['qty_sold'],
-                revenue: (float) $r['revenue']
+                productId: $r['id'],
+                name:      $r['name'],
+                qtySold:   (int) $r['qty_sold'],
+                revenue:   (float) $r['revenue'],
+                velocity:  (float) $r['velocity']
             ), $rows);
         } catch (\Exception $e) {
             error_log('DashboardRepository::getHighSelling - ' . $e->getMessage());
@@ -98,28 +140,45 @@ class DashboardRepository implements DashboardRepositoryInterface
     public function getLowSelling(int $limit = 5): array
     {
         try {
+            $avgVel = $this->getCatalogAvgVelocity();
+            $threshold = $avgVel * 0.5;
+
             $stmt = $this->db->prepare("
-                SELECT
-                    ii.product_name_snapshot AS name,
-                    COALESCE(SUM(ii.quantity), 0)::int         AS qty_sold,
-                    COALESCE(SUM(ii.line_total), 0)            AS revenue
-                FROM invoice_items ii
-                JOIN invoices i ON i.id = ii.invoice_id
-                WHERE i.user_id = current_setting('app.current_user_id')::uuid
-                  AND i.invoice_status = 'completed'
-                  AND i.billed_at >= DATE_TRUNC('month', NOW())
-                GROUP BY ii.product_name_snapshot
-                ORDER BY qty_sold ASC
+                WITH product_sales AS (
+                    SELECT
+                        p.id,
+                        p.name,
+                        COALESCE(SUM(ii.quantity), 0)::int AS qty_sold,
+                        COALESCE(SUM(ii.line_total), 0)    AS revenue,
+                        CASE WHEN SUM(ii.quantity) > 0
+                            THEN SUM(ii.quantity)::float / 30.0
+                            ELSE 0
+                        END AS velocity
+                    FROM products p
+                    LEFT JOIN invoice_items ii ON ii.product_id = p.id
+                    LEFT JOIN invoices i ON i.id = ii.invoice_id
+                        AND i.invoice_status = 'completed'
+                        AND i.billed_at >= NOW() - INTERVAL '30 days'
+                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    GROUP BY p.id, p.name
+                )
+                SELECT id, name, qty_sold, revenue, velocity
+                FROM product_sales
+                WHERE velocity > 0 AND velocity < :threshold
+                ORDER BY velocity ASC
                 LIMIT :limit
             ");
+            $stmt->bindValue(':threshold', $threshold, PDO::PARAM_STR);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(fn($r) => new TopProduct(
-                name:    $r['name'],
-                qtySold: (int) $r['qty_sold'],
-                revenue: (float) $r['revenue']
+                productId: $r['id'],
+                name:      $r['name'],
+                qtySold:   (int) $r['qty_sold'],
+                revenue:   (float) $r['revenue'],
+                velocity:  (float) $r['velocity']
             ), $rows);
         } catch (\Exception $e) {
             error_log('DashboardRepository::getLowSelling - ' . $e->getMessage());
@@ -130,29 +189,72 @@ class DashboardRepository implements DashboardRepositoryInterface
     public function getOldStock(int $limit = 5): array
     {
         try {
+            $avgVel = $this->getCatalogAvgVelocity();
+            $velThreshold = $avgVel * 0.3;
+
             $stmt = $this->db->prepare("
+                WITH batch_stock AS (
+                    SELECT
+                        p.id        AS product_id,
+                        p.name,
+                        ib.batch_number AS batch,
+                        EXTRACT(DAY FROM NOW() - ib.created_at)::int AS age_days,
+                        ib.remaining_qty::int  AS qty,
+                        ib.original_quantity::int AS original_qty,
+                        CASE WHEN ib.original_quantity > 0
+                            THEN ROUND((ib.remaining_qty::float / ib.original_quantity) * 100, 1)
+                            ELSE 100
+                        END AS remaining_pct
+                    FROM inventory_batches ib
+                    JOIN products p ON p.id = ib.product_id
+                    WHERE ib.user_id = current_setting('app.current_user_id')::uuid
+                      AND ib.remaining_qty > 0
+                ),
+                product_velocity AS (
+                    SELECT
+                        ii.product_id,
+                        CASE WHEN SUM(ii.quantity) > 0
+                            THEN SUM(ii.quantity)::float / 30.0
+                            ELSE 0
+                        END AS velocity
+                    FROM invoice_items ii
+                    JOIN invoices i ON i.id = ii.invoice_id
+                        AND i.invoice_status = 'completed'
+                        AND i.billed_at >= NOW() - INTERVAL '30 days'
+                    WHERE ii.product_id IN (SELECT product_id FROM batch_stock)
+                    GROUP BY ii.product_id
+                )
                 SELECT
-                    p.name,
-                    ib.batch_number                          AS batch,
-                    EXTRACT(DAY FROM NOW() - ib.created_at)::int AS age_days,
-                    ib.remaining_qty::int                    AS qty
-                FROM inventory_batches ib
-                JOIN products p ON p.id = ib.product_id
-                WHERE ib.user_id = current_setting('app.current_user_id')::uuid
-                  AND ib.remaining_qty > 0
-                  AND ib.created_at < NOW() - INTERVAL '30 days'
-                ORDER BY age_days DESC
+                    bs.product_id,
+                    bs.name,
+                    bs.batch,
+                    bs.age_days,
+                    bs.qty,
+                    bs.original_qty,
+                    bs.remaining_pct,
+                    COALESCE(pv.velocity, 0) AS velocity
+                FROM batch_stock bs
+                LEFT JOIN product_velocity pv ON pv.product_id = bs.product_id
+                WHERE bs.age_days >= 30
+                  AND bs.remaining_pct >= 50
+                  AND COALESCE(pv.velocity, 0) < :velThreshold
+                ORDER BY bs.age_days DESC, bs.remaining_pct DESC
                 LIMIT :limit
             ");
+            $stmt->bindValue(':velThreshold', $velThreshold, PDO::PARAM_STR);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(fn($r) => new OldStockItem(
-                name:    $r['name'],
-                batch:   $r['batch'],
-                ageDays: (int) $r['age_days'],
-                qty:     (int) $r['qty']
+                productId:    $r['product_id'],
+                name:         $r['name'],
+                batch:        $r['batch'],
+                ageDays:      (int) $r['age_days'],
+                qty:          (int) $r['qty'],
+                originalQty:  (int) $r['original_qty'],
+                remainingPct: (float) $r['remaining_pct'],
+                velocity:     (float) $r['velocity']
             ), $rows);
         } catch (\Exception $e) {
             error_log('DashboardRepository::getOldStock - ' . $e->getMessage());

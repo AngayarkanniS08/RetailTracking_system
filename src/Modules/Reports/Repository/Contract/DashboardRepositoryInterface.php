@@ -16,4 +16,5 @@ interface DashboardRepositoryInterface
     public function getTotalBills(): int;
     public function getOutstandingCredit(): float;
     public function getStockValue(): float;
+    public function getCatalogAvgVelocity(): float;
 }

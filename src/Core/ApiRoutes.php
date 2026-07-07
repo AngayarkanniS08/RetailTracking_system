@@ -268,6 +268,11 @@ class ApiRoutes
         });
 
         // ── Product History / Analytics ─────────────────────────────
+        $router->add('GET', '/api/products/with-stock', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Reports\Controller\Api\ProductHistoryController())->productsWithStock();
+        });
+
         $router->add('GET', '/api/products/{id}/history', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\ProductHistoryController())->show($params['id']);

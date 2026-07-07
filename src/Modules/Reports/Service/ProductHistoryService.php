@@ -15,6 +15,25 @@ class ProductHistoryService
     public function getProductAnalytics(string $productId): array
     {
         $a = $this->repo->getProductAnalytics($productId);
+        $avgVelocity = $this->repo->getCatalogAvgVelocity();
+
+        // Trend: weekSpeed vs monthSpeed
+        $weekSpeed  = $a->avgDaily7d;
+        $monthSpeed = $a->avgDaily30d;
+        if ($monthSpeed > 0 && $weekSpeed > 0) {
+            if ($weekSpeed > $monthSpeed * 1.1) {
+                $trendText = 'up';
+            } elseif ($weekSpeed < $monthSpeed * 0.9) {
+                $trendText = 'down';
+            } else {
+                $trendText = 'steady';
+            }
+        } elseif ($weekSpeed > 0 && $monthSpeed === 0) {
+            $trendText = 'up';
+        } else {
+            $trendText = 'steady';
+        }
+
         return [
             'product' => [
                 'id'          => $a->productId,
@@ -36,7 +55,6 @@ class ProductHistoryService
                 'velocity'          => $a->velocity,
                 'last_sale_date'    => $a->lastSaleDate,
                 'first_sale_date'   => $a->firstSaleDate,
-                'trend_pct'         => $a->trendPct,
                 'stock_left'        => $a->stockLeft,
                 'days_of_supply'    => $a->daysOfSupply,
                 'batch_count'       => $a->batchCount,
@@ -47,6 +65,8 @@ class ProductHistoryService
                 'reorder_point'     => $a->reorderPoint,
                 'emergency_stock'   => $a->emergencyStock,
                 'reorder_status'    => $a->reorderStatus,
+                'avg_velocity'      => $avgVelocity,
+                'trend_text'        => $trendText,
             ],
             'badges' => $a->badges,
             'alert'  => $a->alert,

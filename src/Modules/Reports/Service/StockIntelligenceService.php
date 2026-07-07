@@ -14,27 +14,34 @@ class StockIntelligenceService
 
     public function getStockIntel(): array
     {
-        $highSelling = $this->repo->getHighSelling(5);
-        $lowSelling  = $this->repo->getLowSelling(5);
-        $oldStock    = $this->repo->getOldStock(5);
+        $highSelling = $this->repo->getHighSelling(10);
+        $lowSelling  = $this->repo->getLowSelling(10);
+        $oldStock    = $this->repo->getOldStock(10);
+        $avgVelocity = $this->repo->getCatalogAvgVelocity();
 
         $map = fn($items) => array_map(fn($m) => [
-            'name'    => $m->name,
-            'qty_sold' => $m->qtySold,
-            'revenue' => $m->revenue,
+            'product_id' => $m->productId,
+            'name'       => $m->name,
+            'qty_sold'   => $m->qtySold,
+            'revenue'    => $m->revenue,
+            'velocity'   => $m->velocity,
         ], $items);
 
         $mapOld = fn($items) => array_map(fn($m) => [
-            'name'     => $m->name,
-            'batch'    => $m->batch,
-            'age_days' => $m->ageDays,
-            'qty'      => $m->qty,
+            'product_id'  => $m->productId,
+            'name'        => $m->name,
+            'batch'       => $m->batch,
+            'age_days'    => $m->ageDays,
+            'qty'         => $m->qty,
+            'remaining_pct' => $m->remainingPct,
+            'velocity'    => $m->velocity,
         ], $items);
 
         return [
-            'high_selling' => $map($highSelling),
-            'low_selling'  => $map($lowSelling),
-            'old_stock'    => $mapOld($oldStock),
+            'high_selling'  => $map($highSelling),
+            'low_selling'   => $map($lowSelling),
+            'old_stock'     => $mapOld($oldStock),
+            'avg_velocity'  => $avgVelocity,
         ];
     }
 }

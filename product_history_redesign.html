@@ -1,0 +1,331 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { padding: 1rem 0; font-size: 13px; }
+.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 16px; }
+.tab { font-size: 12px; font-weight: 500; padding: 7px 14px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.sec { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin: 16px 0 8px; }
+.sec:first-child { margin-top: 0; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; margin-bottom: 8px; }
+.ch { display: flex; align-items: flex-start; gap: 10px; }
+.ci { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+.cb { flex: 1; }
+.ct { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+.cd { font-size: 12px; color: var(--color-text-secondary); line-height: 1.55; }
+.code { font-size: 10px; font-family: var(--font-mono); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 4px; padding: 5px 8px; margin-top: 6px; white-space: pre-wrap; display: block; color: var(--color-text-secondary); }
+.tag { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; white-space: nowrap; }
+.t-fix  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.t-ok   { background: var(--color-background-success); color: var(--color-text-success); }
+.t-warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+.t-info { background: var(--color-background-info);    color: var(--color-text-info); }
+.note { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 12px; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-tertiary); margin-top: 8px; }
+
+/* MOCKUP STYLES */
+.mock-page { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); overflow: hidden; }
+.mock-header { padding: 12px 14px; background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; gap: 10px; }
+.mock-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.mock-select { font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-primary); min-width: 160px; }
+.mock-body { padding: 14px; }
+
+/* Single number — the hero */
+.hero-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.hero-card { flex: 1; background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; text-align: center; position: relative; overflow: hidden; }
+.hero-card.accent { border-color: var(--color-border-info); }
+.hero-lbl { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+.hero-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.hero-sub { font-size: 10px; color: var(--color-text-secondary); margin-top: 3px; }
+.hero-badge { position: absolute; top: 8px; right: 8px; font-size: 9px; font-weight: 500; padding: 2px 6px; border-radius: 4px; }
+.hb-up   { background: var(--color-background-success); color: var(--color-text-success); }
+.hb-down { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.hb-flat { background: var(--color-background-warning); color: var(--color-text-warning); }
+
+/* Velocity clarity section */
+.vel-block { background: var(--color-background-primary); border: 0.5px solid var(--color-border-info); border-radius: var(--border-radius-lg); padding: 12px 14px; margin-bottom: 10px; }
+.vel-title { font-size: 11px; font-weight: 500; color: var(--color-text-info); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.vel-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+.vel-cell { text-align: center; }
+.vel-lbl { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 3px; }
+.vel-val { font-size: 16px; font-weight: 500; }
+.vel-desc { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+.trend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--color-text-secondary); padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); }
+.trend-bar { flex: 1; height: 6px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; display: flex; }
+.tb-seg { height: 100%; }
+
+/* Stock section */
+.stock-block { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; margin-bottom: 10px; }
+.stock-title { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stock-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.sc { text-align: center; }
+.sc-lbl { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 3px; }
+.sc-val { font-size: 14px; font-weight: 500; }
+.bar-track { height: 6px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; margin: 6px 0; }
+.bar-fill { height: 100%; border-radius: 3px; }
+.bar-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--color-text-secondary); }
+.alert-box { border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 12px; font-weight: 500; margin-top: 8px; }
+.alert-warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+.alert-ok   { background: var(--color-background-success); color: var(--color-text-success); }
+
+/* Classification pill — the key output */
+.class-block { background: var(--color-background-primary); border-radius: var(--border-radius-lg); padding: 12px 14px; margin-bottom: 10px; border: 1.5px solid var(--color-border-tertiary); }
+.class-title { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.class-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.cpill { font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 20px; }
+.cp-high { background: color-mix(in srgb, var(--color-background-success) 60%, transparent); color: var(--color-text-success); border: 1.5px solid var(--color-border-success); }
+.cp-low  { background: color-mix(in srgb, var(--color-background-warning) 60%, transparent); color: var(--color-text-warning); border: 1.5px solid var(--color-border-warning); }
+.cp-dead { background: color-mix(in srgb, var(--color-background-danger) 60%, transparent); color: var(--color-text-danger); border: 1.5px solid var(--color-border-danger); }
+.cp-old  { background: var(--color-background-secondary); color: var(--color-text-secondary); border: 1.5px solid var(--color-border-secondary); }
+.class-reason { font-size: 11px; color: var(--color-text-secondary); margin-top: 8px; line-height: 1.5; }
+</style>
+
+<div class="wrap">
+<div class="tabs">
+  <div class="tab active" onclick="sw('problems')">What's inconsistent</div>
+  <div class="tab" onclick="sw('mockup')">Redesigned page</div>
+  <div class="tab" onclick="sw('logic')">Velocity → classification</div>
+</div>
+
+<div id="problems" class="tab-panel active">
+  <div class="sec">The 4 inconsistencies in your current page</div>
+
+  <div class="card">
+    <div class="ch">
+      <i class="ti ti-copy ci" style="color:var(--color-text-danger)" aria-hidden="true"></i>
+      <div class="cb">
+        <div class="ct">3 separate rows for one idea — Sold 7d, 30d, 90d + Avg Daily 7d, 30d, 90d</div>
+        <div class="cd">You have 6 metrics across 2 rows showing the same concept (how much sold, how fast) across 3 time periods. A shop owner doesn't think in "7d vs 30d vs 90d" — they think "is this selling well or not?" The 90d column is especially useless for a new shop with only weeks of data. Two full rows of 6 numbers creates noise, not clarity.</div>
+        <code class="code">Current: Sold(7d) | Sold(30d) | Sold(90d)   ← row 1
+         AvgDaily(7d) | AvgDaily(30d) | AvgDaily(90d) ← row 2
+         
+Problem: 6 numbers saying the same thing in different windows.
+Owner reads none of them — too many choices, zero decision.</code>
+      </div>
+      <span class="tag t-fix">Remove 4 of these 6</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <i class="ti ti-question-mark ci" style="color:var(--color-text-danger)" aria-hidden="true"></i>
+      <div class="cb">
+        <div class="ct">"Trend" field shows "--" — never populated</div>
+        <div class="cd">You have a Trend metric in Row 3 with id="phTrend" but your openProductHistory() function is not yet built — the whole page is HTML only with no JS wiring. So Trend shows "--" always. Either remove it or build it. A half-built metric confuses owners ("why does this say --?").</div>
+      </div>
+      <span class="tag t-fix">Build or remove</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <i class="ti ti-list ci" style="color:var(--color-text-warning)" aria-hidden="true"></i>
+      <div class="cb">
+        <div class="ct">Stock section and Sales section are equally weighted — wrong priority</div>
+        <div class="cd">You show Stock Value, Margin, Oldest Batch as a row alongside Sold quantities. These are very different levels of importance. A shop owner's first question is "how is this selling?" — not "what is the stock value?" The layout treats accounting metrics (Stock Value, Margin) at the same visual weight as operational metrics (Velocity, Days of Supply). Hierarchy is missing.</div>
+      </div>
+      <span class="tag t-warn">Reorganise</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <i class="ti ti-alert-triangle ci" style="color:var(--color-text-warning)" aria-hidden="true"></i>
+      <div class="cb">
+        <div class="ct">No classification output — page doesn't answer the key question</div>
+        <div class="cd">After showing 15 metrics, your page never answers: "So is this product high selling, low selling, or old stock?" There's no summary verdict. The owner has to interpret all 15 numbers themselves and decide. The page should end with a clear classification pill — "This product is: 🔥 High Selling" — derived from velocity. This is also the bridge to your dashboard categorisation plan.</div>
+      </div>
+      <span class="tag t-warn">Add verdict</span>
+    </div>
+  </div>
+
+  <div class="note"><strong style="color:var(--color-text-primary)">Your plan is correct</strong> — using velocity from this page to drive high/low/old classification on dashboard is the right architecture. This page computes velocity per product, dashboard reads those classifications. The page just needs to be cleaned up and the classification verdict added visibly.</div>
+</div>
+
+<div id="mockup" class="tab-panel">
+  <div class="mock-page">
+    <div class="mock-header">
+      <button style="font-size:11px;padding:4px 10px;border-radius:4px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer">← Back</button>
+      <div class="mock-title">Product Analysis</div>
+      <select class="mock-select"><option>Cotton Fabric (P001)</option></select>
+    </div>
+    <div class="mock-body">
+
+      <!-- CLASSIFICATION VERDICT — first, most prominent -->
+      <div class="class-block" style="border-color:var(--color-border-success)">
+        <div class="class-title">Classification — based on velocity</div>
+        <div class="class-pills">
+          <span class="cpill cp-high">🔥 High Selling</span>
+        </div>
+        <div class="class-reason">Selling 6.7 units/day — 2.1× faster than your catalog average of 3.2 units/day. Consistently above average for last 30 days.</div>
+      </div>
+
+      <!-- HERO: The one number that matters most -->
+      <div class="hero-row">
+        <div class="hero-card accent">
+          <div class="hero-badge hb-up">↑ trending up</div>
+          <div class="hero-lbl">Daily velocity (30d avg)</div>
+          <div class="hero-val" style="color:var(--color-text-info)">6.7</div>
+          <div class="hero-sub">units per day</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-lbl">Days of supply left</div>
+          <div class="hero-val" style="color:var(--color-text-warning)">18</div>
+          <div class="hero-sub">days before reorder needed</div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-lbl">Revenue (30d)</div>
+          <div class="hero-val">₹24,180</div>
+          <div class="hero-sub">from 201 units sold</div>
+        </div>
+      </div>
+
+      <!-- VELOCITY DETAIL — the one section that drives everything -->
+      <div class="vel-block">
+        <div class="vel-title">Velocity detail — how fast is it selling?</div>
+        <div class="vel-row">
+          <div class="vel-cell">
+            <div class="vel-lbl">Last 7 days</div>
+            <div class="vel-val" style="color:var(--color-text-success)">8.4 /day</div>
+            <div class="vel-desc">59 units sold</div>
+          </div>
+          <div class="vel-cell">
+            <div class="vel-lbl">Last 30 days</div>
+            <div class="vel-val" style="color:var(--color-text-info)">6.7 /day</div>
+            <div class="vel-desc">201 units sold</div>
+          </div>
+          <div class="vel-cell">
+            <div class="vel-lbl">Catalog average</div>
+            <div class="vel-val" style="color:var(--color-text-secondary)">3.2 /day</div>
+            <div class="vel-desc">all products avg</div>
+          </div>
+        </div>
+        <div class="trend-row">
+          <span style="flex-shrink:0">Trend last 4 weeks:</span>
+          <div class="trend-bar">
+            <div class="tb-seg" style="width:15%; background:var(--color-border-tertiary)"></div>
+            <div class="tb-seg" style="width:20%; background:var(--color-text-warning)"></div>
+            <div class="tb-seg" style="width:28%; background:var(--color-text-info)"></div>
+            <div class="tb-seg" style="width:37%; background:var(--color-text-success)"></div>
+          </div>
+          <span style="flex-shrink:0; color:var(--color-text-success); font-weight:500">↑ accelerating</span>
+        </div>
+      </div>
+
+      <!-- STOCK — compact, not equal to velocity -->
+      <div class="stock-block">
+        <div class="stock-title">Stock status</div>
+        <div class="stock-row">
+          <div class="sc"><div class="sc-lbl">Stock left</div><div class="sc-val">120 mtr</div></div>
+          <div class="sc"><div class="sc-lbl">Oldest batch</div><div class="sc-val" style="color:var(--color-text-warning)">12 days</div></div>
+          <div class="sc"><div class="sc-lbl">Margin</div><div class="sc-val" style="color:var(--color-text-success)">41%</div></div>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:42%; background:var(--color-text-warning)"></div></div>
+        <div class="bar-meta"><span>120 mtr remaining</span><span style="color:var(--color-text-warning)">42% of original stock</span></div>
+        <div class="alert-box alert-warn">⚠ At 6.7 units/day — stock runs out in 18 days. Last purchase from Erode Textile Market.</div>
+      </div>
+
+    </div>
+  </div>
+  <div style="font-size:11px; color:var(--color-text-secondary); margin-top:10px; padding: 0 2px">
+    Key changes: Classification verdict moved to top. Velocity section is the hero — 3 numbers (7d, 30d, catalog avg) instead of 6. Trend shown as visual bar not text. Stock section compact — 3 numbers only. Revenue consolidated into hero row alongside velocity and days of supply.
+  </div>
+</div>
+
+<div id="logic" class="tab-panel">
+  <div class="sec">How this page feeds your dashboard classification</div>
+
+  <div class="card">
+    <div class="ch">
+      <div class="cb">
+        <div class="ct">Step 1 — compute velocity for every product in one pass</div>
+        <div class="cd">Build one shared function that both this page and the dashboard call. No duplication. Currently your renderStockIntel() and renderVendorProductAnalytics() both recompute velocity independently — that's the same logic written twice.</div>
+        <code class="code">// One shared function — call from both dashboard and this page
+function buildProductAnalytics(periodDays = 30) {
+  const now = Date.now();
+  const periodMs = periodDays * 86400000;
+
+  return products.map(p => {
+    const recentSales = sale_items.filter(i =>
+      (i.product_id === p.id || i.product_name === p.name) &&
+      (now - new Date(i.created_at).getTime()) <= periodMs
+    );
+    const soldUnits = recentSales.reduce((s, i) => s + i.qty, 0);
+    const velocity  = soldUnits / periodDays;  // units per day
+    const stockLeft = batches
+      .filter(b => b.product_id === p.id)
+      .reduce((s, b) => s + b.quantity, 0);
+    const daysOfSupply = velocity > 0 ? Math.round(stockLeft / velocity) : 999;
+    const maxBatchAge  = Math.max(...batches
+      .filter(b => b.product_id === p.id && b.created_at)
+      .map(b => Math.floor((now - new Date(b.created_at).getTime()) / 86400000)), 0);
+
+    return { product: p, velocity, soldUnits, stockLeft, daysOfSupply, maxBatchAge };
+  });
+}</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div class="cb">
+        <div class="ct">Step 2 — classify using relative thresholds, not fixed numbers</div>
+        <div class="cd">After building analytics, compute catalog average velocity, then classify each product relative to that average. This auto-adjusts to your shop size — no hardcoded cutoffs.</div>
+        <code class="code">function classifyProducts(analytics) {
+  const velocities = analytics.map(a => a.velocity).filter(v => v > 0);
+  const avgVelocity = velocities.reduce((s, v) => s + v, 0) / (velocities.length || 1);
+
+  return analytics.map(a => {
+    let tag;
+    if      (a.velocity >= avgVelocity * 1.5)  tag = 'high';   // 1.5× avg = fast
+    else if (a.velocity >= avgVelocity * 0.5)  tag = 'normal'; // 0.5–1.5× avg
+    else if (a.velocity > 0)                   tag = 'low';    // below half avg
+    else if (a.maxBatchAge >= 30)              tag = 'dead';   // no sales + old
+    else                                        tag = 'new';    // no sales yet, recent
+
+    // Old stock: aged batch + majority unsold (need original_qty stored)
+    const isOldStock = a.maxBatchAge >= 30 && a.stockLeft > 0 && a.velocity < avgVelocity * 0.3;
+
+    return { ...a, tag, isOldStock };
+  });
+}</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <div class="cb">
+        <div class="ct">Step 3 — dashboard reads classifications, doesn't recompute</div>
+        <div class="cd">Dashboard just filters the already-classified array. Simple, fast, single source of truth.</div>
+        <code class="code">// On dashboard render:
+const analytics   = buildProductAnalytics(30);
+const classified  = classifyProducts(analytics);
+
+const highSelling = classified.filter(a => a.tag === 'high');
+const lowSelling  = classified.filter(a => a.tag === 'low' || a.tag === 'dead');
+const oldStock    = classified.filter(a => a.isOldStock);
+
+// Product history page — same data, just one product:
+function openProductHistory(productId) {
+  const analytics  = buildProductAnalytics(30);
+  const classified = classifyProducts(analytics);
+  const thisProduct = classified.find(a => a.product.id === productId);
+  // render the page using thisProduct data
+}</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="note"><strong style="color:var(--color-text-primary)">One thing to add to your batch data model:</strong> store <code>original_quantity</code> when a batch is created. Right now you only have <code>quantity</code> (current remaining). Without original_quantity you can't compute "what % of this batch is unsold" — which is needed for old stock detection. One field, added at purchase time, unlocks the full classification.</div>
+</div>
+</div>
+
+<script>
+function sw(id) {
+  const ids = ['problems','mockup','logic'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===id));
+}
+</script>

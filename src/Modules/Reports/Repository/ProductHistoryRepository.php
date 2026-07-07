@@ -14,9 +14,47 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         $this->db = \Config\Database::getConnection();
     }
 
+    public function getProductsWithStock(): array
+    {
+        $uid = "current_setting('app.current_user_id')::uuid";
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT p.id, p.name, c.name AS category
+            FROM products p
+            JOIN categories c ON c.id = p.category_id
+            JOIN inventory_batches ib ON ib.product_id = p.id
+                AND ib.remaining_qty > 0
+                AND ib.user_id = {$uid}
+            WHERE p.user_id = {$uid}
+            ORDER BY p.name ASC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getCatalogAvgVelocity(): float
+    {
+        $stmt = $this->db->prepare("
+            SELECT COALESCE(AVG(velocity), 0) FROM (
+                SELECT
+                    SUM(ii.quantity)::float / 30.0 AS velocity
+                FROM products p
+                JOIN invoice_items ii ON ii.product_id = p.id
+                JOIN invoices i ON i.id = ii.invoice_id
+                    AND i.invoice_status = 'completed'
+                    AND i.billed_at >= NOW() - INTERVAL '30 days'
+                WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                GROUP BY p.id
+                HAVING SUM(ii.quantity) > 0
+            ) vel
+        ");
+        $stmt->execute();
+        return (float) $stmt->fetchColumn();
+    }
+
     public function getProductAnalytics(string $productId): ProductHistoryAnalytics
     {
         $uid = "current_setting('app.current_user_id')::uuid";
+        $avgVelocity = $this->getCatalogAvgVelocity();
 
         // Product base info + reorder config
         $stmt = $this->db->prepare("
@@ -50,7 +88,6 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
                 COALESCE(SUM(ii.quantity) FILTER (WHERE i.billed_at >= NOW() - INTERVAL '7 days'), 0)    AS sold_7d,
                 COALESCE(SUM(ii.quantity) FILTER (WHERE i.billed_at >= NOW() - INTERVAL '30 days'), 0)   AS sold_30d,
                 COALESCE(SUM(ii.quantity) FILTER (WHERE i.billed_at >= NOW() - INTERVAL '90 days'), 0)   AS sold_90d,
-                COALESCE(SUM(ii.quantity) FILTER (WHERE i.billed_at >= NOW() - INTERVAL '60 days' AND i.billed_at < NOW() - INTERVAL '30 days'), 0) AS sold_60_30d,
                 COALESCE(SUM(ii.line_total) FILTER (WHERE i.billed_at >= NOW() - INTERVAL '30 days'), 0) AS revenue_30d,
                 MAX(i.billed_at) FILTER (WHERE i.invoice_status = 'completed') AS last_sale,
                 MIN(i.billed_at) FILTER (WHERE i.invoice_status = 'completed') AS first_sale
@@ -66,7 +103,6 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         $sold7d       = (int) $sales['sold_7d'];
         $sold30d      = (int) $sales['sold_30d'];
         $sold90d      = (int) $sales['sold_90d'];
-        $sold60_30d   = (int) $sales['sold_60_30d'];
         $revenue30d   = (float) $sales['revenue_30d'];
         $lastSaleDate = $sales['last_sale'];
         $firstSaleDate = $sales['first_sale'];
@@ -79,25 +115,35 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         // Velocity uses 30d average
         $velocity = $avgDaily30d;
 
-        // Trend: compare last 30d vs the 30d before that
-        $trendPct = null;
-        if ($sold60_30d > 0) {
-            $trendPct = round((($sold30d - $sold60_30d) / $sold60_30d) * 100, 1);
-        } elseif ($sold30d > 0 && $sold60_30d === 0) {
-            $trendPct = 100.0; // new sales where there were none
+        // Trend: weekSpeed vs monthSpeed (spec: 1.1x / 0.9x thresholds)
+        $weekSpeed  = $avgDaily7d;
+        $monthSpeed = $avgDaily30d;
+        if ($monthSpeed > 0 && $weekSpeed > 0) {
+            if ($weekSpeed > $monthSpeed * 1.1) {
+                $trendText = 'up';
+            } elseif ($weekSpeed < $monthSpeed * 0.9) {
+                $trendText = 'down';
+            } else {
+                $trendText = 'steady';
+            }
+        } elseif ($weekSpeed > 0 && $monthSpeed === 0) {
+            $trendText = 'up'; // new sales momentum
+        } else {
+            $trendText = 'steady';
         }
 
-        // Stock from batches
+        // Stock from batches (now with original_quantity for remainingPct)
         $stmt = $this->db->prepare("
             SELECT
                 COUNT(*)                                                        AS batch_count,
                 COALESCE(SUM(remaining_qty), 0)                                AS stock_left,
                 COALESCE(SUM(cost_price * remaining_qty), 0)                   AS cost_value,
                 COALESCE(SUM(selling_price * remaining_qty), 0)                AS sell_value,
-                COALESCE(SUM(selling_price - cost_price), 0)                   AS unit_margin_sum,
-                COUNT(*) FILTER (WHERE remaining_qty > 0)                      AS active_batches,
                 COALESCE(MAX(EXTRACT(DAY FROM NOW() - created_at)), 0)::int    AS max_age,
-                COALESCE(AVG(selling_price - cost_price), 0)                   AS avg_unit_margin
+                COALESCE(AVG(selling_price - cost_price), 0)                   AS avg_unit_margin,
+                COALESCE(SUM(original_quantity), 0)                            AS total_original,
+                COALESCE(SUM(remaining_qty), 0)::float /
+                    NULLIF(SUM(original_quantity), 0) * 100                     AS remaining_pct
             FROM inventory_batches
             WHERE product_id = ?
               AND user_id = {$uid}
@@ -106,50 +152,63 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         $stmt->execute([$productId]);
         $stock = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stockLeft   = (int) $stock['stock_left'];
-        $batchCount  = (int) $stock['active_batches'];
-        $stockValue  = (float) $stock['cost_value'];
-        $maxBatchAge = (int) $stock['max_age'];
+        $stockLeft     = (int) $stock['stock_left'];
+        $batchCount    = (int) $stock['batch_count'];
+        $stockValue    = (float) $stock['cost_value'];
+        $maxBatchAge   = (int) $stock['max_age'];
+        $remainingPct  = $stock['remaining_pct'] !== null ? round((float) $stock['remaining_pct'], 1) : 100;
 
-        // Margin: use avg unit margin (stable, not scaled by stock quantity)
-        $avgUnitMargin = (float) $stock['avg_unit_margin'];
-        $avgSellPrice = $batchCount > 0 ? $stockValue / $stockLeft : 0;
-        // Actually let's compute avg cost price per unit from batches
-        $avgCostPrice = $stockLeft > 0 ? $stockValue / $stockLeft : 0;
-        // Avg selling price per unit
+        // Margin: per-unit avg (sell - cost) / cost
+        $avgCostPrice  = $stockLeft > 0 ? $stockValue / $stockLeft : 0;
         $totalSellValue = (float) $stock['sell_value'];
-        $avgSellPrice = $stockLeft > 0 ? $totalSellValue / $stockLeft : 0;
-
-        $marginPct = $avgCostPrice > 0 ? round((($avgSellPrice - $avgCostPrice) / $avgCostPrice) * 100, 1) : 0;
+        $avgSellPrice  = $stockLeft > 0 ? $totalSellValue / $stockLeft : 0;
+        $marginPct     = $avgCostPrice > 0 ? round((($avgSellPrice - $avgCostPrice) / $avgCostPrice) * 100, 1) : 0;
 
         // Days of supply
         $daysOfSupply = $avgDaily30d > 0 ? (int) round($stockLeft / $avgDaily30d) : null;
-
-        // Stock percentage (stock vs 30d total demand)
-        $totalDemand = $stockLeft + $sold30d;
-        $stockPct    = $totalDemand > 0 ? (int) round(($stockLeft / $totalDemand) * 100) : 100;
-        $stockPct    = min(100, max(0, $stockPct));
 
         // Reorder config from product
         $rop            = $prod['rop'] ? (int) $prod['rop'] : null;
         $emergencyStock = $prod['emergency_stock'] ? (int) $prod['emergency_stock'] : null;
         $leadTime       = $prod['lead_time'] ? (int) $prod['lead_time'] : null;
-        $dailySales     = $prod['daily_sales'] ? (int) $prod['daily_sales'] : null;
 
-        // Reorder status
         $reorderStatus = $this->calcReorderStatus($stockLeft, $rop, $emergencyStock, $avgDaily30d, $leadTime);
 
-        // Badges
+        // ── Badges — using spec classification rules ──────────────────
         $badges = [];
-        if ($sold30d > 10) $badges[] = 'high';
-        if ($sold30d <= 2 && $sold30d > 0) $badges[] = 'low';
-        if ($sold30d === 0 && $stockLeft > 0) $badges[] = 'dead';
-        if ($maxBatchAge >= 5) $badges[] = 'old';
-        if ($stockLeft === 0) $badges[] = 'out';
-        if ($reorderStatus === 'reorder_now') $badges[] = 'reorder';
+        // 🔥 High Selling: velocity >= avgVelocity × 1.5
+        if ($velocity >= $avgVelocity * 1.5) {
+            $badges[] = 'high';
+        }
+        // 😐 Normal: between 0.5x and 1.5x — no badge needed
+        // 📉 Low Selling: velocity > 0 AND velocity < avgVelocity × 0.5
+        if ($velocity > 0 && $velocity < $avgVelocity * 0.5) {
+            $badges[] = 'low';
+        }
+        // 💀 Dead Stock: velocity = 0 AND stockLeft > 0 AND last sale > 30d ago
+        if ($velocity === 0 && $stockLeft > 0 && $lastSaleDate !== null) {
+            $lastSaleTs = strtotime($lastSaleDate);
+            if ($lastSaleTs !== false && $lastSaleTs < strtotime('-30 days')) {
+                $badges[] = 'dead';
+            }
+        }
+        // 📦 Old Stock: maxBatchAge >= 30 AND remainingPct >= 50% AND velocity < avgVelocity × 0.3
+        if ($maxBatchAge >= 30 && $remainingPct >= 50 && $velocity < $avgVelocity * 0.3) {
+            $badges[] = 'old';
+        }
+        // 🆕 New Product: velocity = 0 AND maxBatchAge < 30d
+        if ($velocity === 0 && $maxBatchAge < 30) {
+            $badges[] = 'new';
+        }
+        if ($stockLeft === 0) {
+            $badges[] = 'out';
+        }
+        if ($reorderStatus === 'reorder_now' || $reorderStatus === 'emergency') {
+            $badges[] = 'reorder';
+        }
 
         // Alert
-        $alert = $this->buildAlert($stockLeft, $avgDaily30d, $daysOfSupply, $stockPct, $sold30d, $badges, $reorderStatus, $rop);
+        $alert = $this->buildAlert($stockLeft, $avgDaily30d, $daysOfSupply, $remainingPct, $badges, $reorderStatus, $rop);
 
         return new ProductHistoryAnalytics(
             productId:       $prod['id'],
@@ -169,13 +228,13 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
             velocity:        $velocity,
             lastSaleDate:    $lastSaleDate,
             firstSaleDate:   $firstSaleDate,
-            trendPct:        $trendPct,
+            trendPct:        null, // not used; trendText replaces it
             stockLeft:       $stockLeft,
             daysOfSupply:    $daysOfSupply,
             batchCount:      $batchCount,
             stockValue:      $stockValue,
             marginPct:       $marginPct,
-            stockPct:        $stockPct,
+            stockPct:        (int) $remainingPct,
             maxBatchAgeDays: $maxBatchAge,
             reorderPoint:    $rop,
             emergencyStock:  $emergencyStock,
@@ -234,23 +293,22 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
             $effectiveRop = (int) ceil($avgDaily * $leadTime);
         }
         if ($effectiveRop === null) {
-            $effectiveRop = 10; // sensible default
+            $effectiveRop = 10;
         }
 
         if ($stockLeft <= ($emergencyStock ?? 0)) return 'emergency';
         if ($stockLeft <= $effectiveRop) return 'reorder_now';
         if ($stockLeft <= $effectiveRop * 1.5) return 'reorder_soon';
-
         return 'ok';
     }
 
-    private function buildAlert(int $stockLeft, float $avgDaily, ?int $daysOfSupply, int $stockPct, int $sold30d, array $badges, string $reorderStatus, ?int $rop): array
+    private function buildAlert(int $stockLeft, float $avgDaily, ?int $daysOfSupply, float $remainingPct, array $badges, string $reorderStatus, ?int $rop): array
     {
         if ($stockLeft === 0) {
             return ['type' => 'critical', 'message' => 'OUT OF STOCK — Reorder immediately.'];
         }
         if ($reorderStatus === 'emergency') {
-            return ['type' => 'critical', 'message' => "EMERGENCY — Stock at {$stockLeft} units. Below emergency stock level. Reorder NOW."];
+            return ['type' => 'critical', 'message' => "EMERGENCY — Stock at {$stockLeft} units. Below emergency level. Reorder NOW."];
         }
         if ($reorderStatus === 'reorder_now') {
             $atRop = $rop !== null ? " (ROP: {$rop})" : '';
@@ -262,10 +320,13 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         if (in_array('dead', $badges)) {
             return ['type' => 'warning', 'message' => 'No sales in 30 days. Review pricing or consider discontinuing.'];
         }
+        if (in_array('old', $badges)) {
+            return ['type' => 'warning', 'message' => "Old stock — {$remainingPct}% unsold for {$stockLeft} units. Consider discounting."];
+        }
         if (in_array('high', $badges) && $stockLeft > 5) {
             return ['type' => 'good', 'message' => 'Strong seller with healthy stock levels.'];
         }
-        if ($stockPct <= 30 && $avgDaily > 0) {
+        if ($remainingPct < 30 && $avgDaily > 0) {
             return ['type' => 'warning', 'message' => "Stock running low — {$stockLeft} units ({$daysOfSupply} days). Consider reordering."];
         }
         return ['type' => 'info', 'message' => 'OK'];

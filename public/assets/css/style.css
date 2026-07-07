@@ -1617,6 +1617,238 @@ tr:hover td {
     color: var(--ok);
 }
 
+/* PRODUCT HISTORY REDESIGN — velocity analytics */
+.ph-class-block {
+    background: var(--card);
+    border-radius: var(--radius-xl);
+    padding: 18px 22px;
+    margin-bottom: 14px;
+    border: 2px solid var(--border);
+}
+.ph-class-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+}
+.ph-class-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.ph-cpill {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 7px 18px;
+    border-radius: 999px;
+}
+.ph-cpill.high  { background: color-mix(in srgb, var(--ok-subtle) 100%, transparent); color: var(--ok); border: 2px solid var(--ok); }
+.ph-cpill.low   { background: color-mix(in srgb, var(--warn-subtle) 100%, transparent); color: var(--warn); border: 2px solid var(--warn); }
+.ph-cpill.dead  { background: color-mix(in srgb, var(--danger-subtle) 100%, transparent); color: var(--danger); border: 2px solid var(--danger); }
+.ph-cpill.old   { background: var(--bg-muted); color: var(--text-strong); border: 2px solid var(--border-strong); }
+.ph-cpill.new   { background: color-mix(in srgb, var(--info) 15%, transparent); color: var(--info); border: 2px solid var(--info); }
+.ph-cpill.normal { background: color-mix(in srgb, var(--accent-2) 18%, transparent); color: var(--accent-2); border: 2px solid var(--accent-2); }
+.ph-class-reason {
+    font-size: 13px;
+    color: var(--text);
+    margin-top: 10px;
+    line-height: 1.6;
+}
+.ph-class-reason strong {
+    color: var(--text-strong);
+}
+
+/* Hero row — single numbers */
+.ph-hero-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.ph-hero-card {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 18px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.ph-hero-card.accent {
+    border-color: var(--info);
+    border-width: 2px;
+}
+.ph-hero-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 6px;
+}
+.ph-hero-badge.up   { background: var(--ok-subtle); color: var(--ok); }
+.ph-hero-badge.down { background: var(--danger-subtle); color: var(--danger); }
+.ph-hero-badge.flat { background: var(--warn-subtle); color: var(--warn); }
+.ph-hero-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.ph-hero-val {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-strong);
+}
+.ph-hero-sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+/* Velocity detail — the core section */
+.ph-vel-block {
+    background: var(--card);
+    border: 2px solid var(--info);
+    border-radius: var(--radius-xl);
+    padding: 18px 22px;
+    margin-bottom: 14px;
+}
+.ph-vel-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--info);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.ph-vel-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.ph-vel-cell {
+    text-align: center;
+}
+.ph-vel-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ph-vel-val {
+    font-size: 20px;
+    font-weight: 700;
+}
+.ph-vel-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+}
+.ph-trend-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.ph-trend-bar {
+    flex: 1;
+    height: 10px;
+    background: var(--bg-muted);
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+}
+.ph-tb-seg {
+    height: 100%;
+}
+
+/* Stock status — compact */
+.ph-stock-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 18px 22px;
+    margin-bottom: 14px;
+}
+.ph-stock-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted-strong);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.ph-stock-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.ph-sc {
+    text-align: center;
+}
+.ph-sc-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.ph-sc-val {
+    font-size: 16px;
+    font-weight: 700;
+}
+.ph-bar-track {
+    height: 8px;
+    background: var(--bg-muted);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0 6px;
+}
+.ph-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+.ph-bar-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+}
+.ph-alert-box {
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 12px;
+    line-height: 1.5;
+}
+.ph-alert-warn {
+    background: var(--warn-subtle);
+    color: var(--warn);
+}
+.ph-alert-ok {
+    background: var(--ok-subtle);
+    color: var(--ok);
+}
+
 /* LOW STOCK ALERT BANNER */
 .low-stock-banner {
     background: rgba(220, 38, 38, 0.08);

@@ -60,7 +60,7 @@ function renderHighSelling(items) {
     tbody.innerHTML = '';
     items.forEach(function(p) {
         tbody.innerHTML += ''
-            + '<tr>'
+            + '<tr onclick="openProductHistory(\'' + escHtmlAttr(p.product_id) + '\', \'' + escHtmlAttr(p.name) + '\')" style="cursor:pointer;">'
                 + '<td style="font-weight:500;color:var(--text-strong)">' + escHtml(p.name) + '</td>'
                 + '<td style="font-weight:600;color:var(--ok)">' + (p.qty_sold ?? 0) + '</td>'
                 + '<td>' + formatCurrency(p.revenue ?? 0) + '</td>'
@@ -80,7 +80,7 @@ function renderLowSelling(items) {
     tbody.innerHTML = '';
     items.forEach(function(p) {
         tbody.innerHTML += ''
-            + '<tr>'
+            + '<tr onclick="openProductHistory(\'' + escHtmlAttr(p.product_id) + '\', \'' + escHtmlAttr(p.name) + '\')" style="cursor:pointer;">'
                 + '<td style="font-weight:500;color:var(--text-strong)">' + escHtml(p.name) + '</td>'
                 + '<td style="font-weight:600;color:var(--warn)">' + (p.qty_sold ?? 0) + '</td>'
                 + '<td>' + formatCurrency(p.revenue ?? 0) + '</td>'
@@ -101,7 +101,7 @@ function renderOldStock(items) {
     items.forEach(function(b) {
         var ageColor = b.age_days > 15 ? 'var(--danger)' : 'var(--warn)';
         tbody.innerHTML += ''
-            + '<tr>'
+            + '<tr onclick="openProductHistory(\'' + escHtmlAttr(b.product_id) + '\', \'' + escHtmlAttr(b.name) + '\')" style="cursor:pointer;">'
                 + '<td style="font-weight:500">' + escHtml(b.name) + '</td>'
                 + '<td style="color:var(--muted)">' + escHtml(b.batch) + '</td>'
                 + '<td style="font-weight:700;color:' + ageColor + '">' + (b.age_days ?? 0) + 'd</td>'
@@ -122,6 +122,11 @@ function escHtml(str) {
     var d = document.createElement('div');
     d.textContent = String(str);
     return d.innerHTML;
+}
+
+function escHtmlAttr(str) {
+    if (str == null) return '';
+    return String(str).replace(/'/g, '\\\'').replace(/"/g, '&quot;');
 }
 
 // ── Exports ────────────────────────────────────────────────────────────────

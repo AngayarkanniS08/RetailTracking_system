@@ -20,6 +20,8 @@
 
           <!-- Product Analytics Card -->
           <div class="si-card" id="phProductCard">
+
+            <!-- Header: icon + name + badges -->
             <div class="si-header">
               <div class="si-product">
                 <div class="si-icon" style="background: var(--accent-subtle);" id="phIcon"></div>
@@ -31,120 +33,81 @@
               <div id="phBadges"></div>
             </div>
 
-            <!-- Section label: Sales -->
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted-strong); margin:0.75rem 0 0.25rem; padding:0 0.25rem;">Sales Performance</div>
+            <!-- CLASSIFICATION VERDICT — first, most prominent -->
+            <div class="ph-class-block" id="phClassBlock">
+              <div class="ph-class-title">Classification — based on velocity</div>
+              <div class="ph-class-pills" id="phClassPills"></div>
+              <div class="ph-class-reason" id="phClassReason"></div>
+            </div>
 
-            <!-- Row 1: Sold qty across periods -->
-            <div class="si-metrics">
-              <div class="si-metric">
-                <div class="si-metric-label">Sold (7d)</div>
-                <div class="si-metric-value" id="phSold7d">0</div>
+            <!-- HERO: The one number that matters most -->
+            <div class="ph-hero-row">
+              <div class="ph-hero-card accent">
+                <div class="ph-hero-badge" id="phHeroBadge"></div>
+                <div class="ph-hero-lbl">Daily velocity (30d avg)</div>
+                <div class="ph-hero-val" style="color:var(--info)" id="phHeroVelocity">--</div>
+                <div class="ph-hero-sub" id="phHeroVelUnit">units per day</div>
               </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Sold (30d)</div>
-                <div class="si-metric-value" style="color:var(--ok)" id="phSold30d">0</div>
+              <div class="ph-hero-card">
+                <div class="ph-hero-lbl">Days of supply left</div>
+                <div class="ph-hero-val" id="phHeroDos">&infin;</div>
+                <div class="ph-hero-sub">days before reorder needed</div>
               </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Sold (90d)</div>
-                <div class="si-metric-value" id="phSold90d">0</div>
+              <div class="ph-hero-card">
+                <div class="ph-hero-lbl">Revenue (30d)</div>
+                <div class="ph-hero-val" id="phHeroRevenue">&#x20b9;0</div>
+                <div class="ph-hero-sub">from <span id="phHeroSoldUnits">0</span> units sold</div>
               </div>
             </div>
 
-            <!-- Row 2: Avg daily across periods -->
-            <div class="si-metrics">
-              <div class="si-metric">
-                <div class="si-metric-label">Avg Daily (7d)</div>
-                <div class="si-metric-value" id="phAvgDaily7d">0</div>
+            <!-- VELOCITY DETAIL — drives everything -->
+            <div class="ph-vel-block">
+              <div class="ph-vel-title">Velocity detail — how fast is it selling?</div>
+              <div class="ph-vel-row">
+                <div class="ph-vel-cell">
+                  <div class="ph-vel-lbl">Last 7 days</div>
+                  <div class="ph-vel-val" style="color:var(--ok)" id="phVel7">-- /day</div>
+                  <div class="ph-vel-desc"><span id="phVel7Sold">0</span> units sold</div>
+                </div>
+                <div class="ph-vel-cell">
+                  <div class="ph-vel-lbl">Last 30 days</div>
+                  <div class="ph-vel-val" style="color:var(--info)" id="phVel30">-- /day</div>
+                  <div class="ph-vel-desc"><span id="phVel30Sold">0</span> units sold</div>
+                </div>
+                <div class="ph-vel-cell">
+                  <div class="ph-vel-lbl">Catalog average</div>
+                  <div class="ph-vel-val" style="color:var(--muted-strong)" id="phVelCat">-- /day</div>
+                  <div class="ph-vel-desc">all products avg</div>
+                </div>
               </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Avg Daily (30d)</div>
-                <div class="si-metric-value" style="color:var(--info)" id="phAvgDaily30d">0</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Avg Daily (90d)</div>
-                <div class="si-metric-value" id="phAvgDaily90d">0</div>
-              </div>
-            </div>
-
-            <!-- Row 3: Revenue, velocity, trend -->
-            <div class="si-metrics">
-              <div class="si-metric">
-                <div class="si-metric-label">Revenue (30d)</div>
-                <div class="si-metric-value" id="phRevenue">&#x20b9;0</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Velocity</div>
-                <div class="si-metric-value" style="color:var(--info)" id="phVelocity">0 /day</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Trend</div>
-                <div class="si-metric-value" id="phTrend">--</div>
+              <div class="ph-trend-row">
+                <span style="flex-shrink:0">Trend last 4 weeks:</span>
+                <div class="ph-trend-bar" id="phTrendBar"></div>
+                <span id="phTrendLabel" style="flex-shrink:0; font-weight:600">--</span>
               </div>
             </div>
 
-            <!-- Section label: Stock -->
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted-strong); margin:1rem 0 0.25rem; padding:0 0.25rem;">Stock &amp; Supply</div>
-
-            <!-- Row 4: Stock basics -->
-            <div class="si-metrics">
-              <div class="si-metric">
-                <div class="si-metric-label">Stock Left</div>
-                <div class="si-metric-value" id="phStockLeft">0</div>
+            <!-- STOCK — compact -->
+            <div class="ph-stock-block">
+              <div class="ph-stock-title">Stock status</div>
+              <div class="ph-stock-row">
+                <div class="ph-sc">
+                  <div class="ph-sc-lbl">Stock left</div>
+                  <div class="ph-sc-val" id="phStockLeftVal">--</div>
+                </div>
+                <div class="ph-sc">
+                  <div class="ph-sc-lbl">Oldest batch</div>
+                  <div class="ph-sc-val" id="phOldestBatchVal">--</div>
+                </div>
+                <div class="ph-sc">
+                  <div class="ph-sc-lbl">Margin</div>
+                  <div class="ph-sc-val" id="phMarginVal">--</div>
+                </div>
               </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Days of Supply</div>
-                <div class="si-metric-value" id="phDaysOfSupply">&infin;</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Batches</div>
-                <div class="si-metric-value" id="phBatchCount">0</div>
-              </div>
+              <div class="ph-bar-track"><div class="ph-bar-fill" id="phStockBarFill" style="width:100%"></div></div>
+              <div class="ph-bar-meta"><span id="phStockRemaining">--</span><span id="phStockPctLabel">--</span></div>
+              <div class="ph-alert-box" id="phAlertBox"></div>
             </div>
 
-            <!-- Row 5: Stock value, margin, age -->
-            <div class="si-metrics">
-              <div class="si-metric">
-                <div class="si-metric-label">Stock Value</div>
-                <div class="si-metric-value" id="phStockValue">&#x20b9;0</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Margin</div>
-                <div class="si-metric-value" id="phMargin">0%</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Oldest Batch</div>
-                <div class="si-metric-value" id="phMaxBatchAge">0d</div>
-              </div>
-            </div>
-
-            <!-- Row 6: Dates and reorder -->
-            <div class="si-metrics">
-              <div class="si-metric">
-                <div class="si-metric-label">Last Sale</div>
-                <div class="si-metric-value" id="phLastSale">--</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">First Sale</div>
-                <div class="si-metric-value" id="phFirstSale">--</div>
-              </div>
-              <div class="si-metric">
-                <div class="si-metric-label">Reorder</div>
-                <div class="si-metric-value" id="phReorderStatus">--</div>
-              </div>
-            </div>
-
-            <!-- Stock Level Bar -->
-            <div class="si-stock-bar">
-              <div class="si-stock-label">
-                <span>Stock level</span>
-                <span id="phStockPct" style="color:var(--ok)">100%</span>
-              </div>
-              <div class="si-bar-track">
-                <div class="si-bar-fill" id="phStockBar" style="width:100%; background:var(--ok)"></div>
-              </div>
-            </div>
-
-            <!-- Alert -->
-            <div id="phAlert"></div>
           </div>
         </section>
