@@ -12,6 +12,8 @@ interface DashboardRepositoryInterface
     public function getPurchaseSummary(string $period, \DateTimeImmutable $startDate): PurchasePeriodSummary;
     public function getHighSelling(int $limit = 5): array;
     public function getLowSelling(int $limit = 5): array;
+    public function getNormalSelling(int $limit = 5): array;
+    public function getNewProducts(int $limit = 5): array;
     public function getOldStock(int $limit = 5): array;
     public function getTotalBills(): int;
     public function getOutstandingCredit(): float;

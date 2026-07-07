@@ -66,7 +66,7 @@
             </div>
           </div>
 
-          <!-- Row 2: High Selling, Low Selling, Old Stock -->
+          <!-- Row 2: High Selling, Normal Selling, Low Selling -->
           <div class="pos-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 1.5rem;">
             <div class="card-panel">
               <div class="card-header" style="color: var(--ok);">🔥
@@ -76,6 +76,20 @@
                     style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span></span>
               </div>
               <table class="data-table" style="font-size: 0.9rem;" id="highSellingTable">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Qty Sold</th>
+                    <th>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="card-panel">
+              <div class="card-header" style="color: var(--accent-2);">⚖️
+                Normal Selling</div>
+              <table class="data-table" style="font-size: 0.9rem;" id="normalSellingTable">
                 <thead>
                   <tr>
                     <th>Product</th>
@@ -104,6 +118,10 @@
                 <tbody></tbody>
               </table>
             </div>
+          </div>
+
+          <!-- Row 3: Old Stock, New Products -->
+          <div class="pos-grid" style="grid-template-columns: 1fr 1fr; margin-top: 1.5rem;">
             <div class="card-panel">
               <div class="card-header" style="color: var(--danger);">📦
                 Old Stock</div>
@@ -114,6 +132,20 @@
                     <th>Batch</th>
                     <th>Age (days)</th>
                     <th>Qty</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="card-panel">
+              <div class="card-header" style="color: var(--info);">🆕
+                New Products</div>
+              <table class="data-table" style="font-size: 0.9rem;" id="newProductsTable">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Batch Age</th>
+                    <th>Stock</th>
                   </tr>
                 </thead>
                 <tbody></tbody>

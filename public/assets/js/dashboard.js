@@ -17,8 +17,10 @@ function fetchDashboardStats() {
 function fetchStockIntel() {
     window.apiRequest('/api/dashboard/stock-intel').then(function(data) {
         renderHighSelling(data.high_selling || []);
+        renderNormalSelling(data.normal_selling || []);
         renderLowSelling(data.low_selling || []);
         renderOldStock(data.old_stock || []);
+        renderNewProducts(data.new_products || []);
     }).catch(function(err) {
         console.error('Stock intel error:', err);
     });
@@ -68,6 +70,26 @@ function renderHighSelling(items) {
     });
 }
 
+function renderNormalSelling(items) {
+    var tbody = document.querySelector('#normalSellingTable tbody');
+    if (!tbody) return;
+
+    if (!items || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center">No normal selling data</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    items.forEach(function(p) {
+        tbody.innerHTML += ''
+            + '<tr onclick="openProductHistory(\'' + escHtmlAttr(p.product_id) + '\', \'' + escHtmlAttr(p.name) + '\')" style="cursor:pointer;">'
+                + '<td style="font-weight:500;color:var(--text-strong)">' + escHtml(p.name) + '</td>'
+                + '<td style="font-weight:600;color:var(--accent-2)">' + (p.qty_sold ?? 0) + '</td>'
+                + '<td>' + formatCurrency(p.revenue ?? 0) + '</td>'
+            + '</tr>';
+    });
+}
+
 function renderLowSelling(items) {
     var tbody = document.querySelector('#lowSellingTable tbody');
     if (!tbody) return;
@@ -106,6 +128,26 @@ function renderOldStock(items) {
                 + '<td style="color:var(--muted)">' + escHtml(b.batch) + '</td>'
                 + '<td style="font-weight:700;color:' + ageColor + '">' + (b.age_days ?? 0) + 'd</td>'
                 + '<td>' + (b.qty ?? 0) + '</td>'
+            + '</tr>';
+    });
+}
+
+function renderNewProducts(items) {
+    var tbody = document.querySelector('#newProductsTable tbody');
+    if (!tbody) return;
+
+    if (!items || items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center">No new products</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    items.forEach(function(p) {
+        tbody.innerHTML += ''
+            + '<tr onclick="openProductHistory(\'' + escHtmlAttr(p.product_id) + '\', \'' + escHtmlAttr(p.name) + '\')" style="cursor:pointer;">'
+                + '<td style="font-weight:500;color:var(--text-strong)">' + escHtml(p.name) + '</td>'
+                + '<td style="color:var(--info)">New</td>'
+                + '<td>' + (p.qty_sold ?? 0) + '</td>'
             + '</tr>';
     });
 }

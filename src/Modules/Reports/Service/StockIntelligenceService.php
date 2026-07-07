@@ -16,6 +16,8 @@ class StockIntelligenceService
     {
         $highSelling = $this->repo->getHighSelling(10);
         $lowSelling  = $this->repo->getLowSelling(10);
+        $normalSelling = $this->repo->getNormalSelling(10);
+        $newProducts = $this->repo->getNewProducts(10);
         $oldStock    = $this->repo->getOldStock(10);
         $avgVelocity = $this->repo->getCatalogAvgVelocity();
 
@@ -40,6 +42,8 @@ class StockIntelligenceService
         return [
             'high_selling'  => $map($highSelling),
             'low_selling'   => $map($lowSelling),
+            'normal_selling' => $map($normalSelling),
+            'new_products'  => $map($newProducts),
             'old_stock'     => $mapOld($oldStock),
             'avg_velocity'  => $avgVelocity,
         ];

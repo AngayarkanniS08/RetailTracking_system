@@ -15,8 +15,10 @@
           <div class="cat-filters" id="siFilters">
             <button class="cat-btn active" onclick="setStockIntelFilter('all')">All</button>
             <button class="cat-btn" onclick="setStockIntelFilter('high')">🔥 High Selling</button>
+            <button class="cat-btn" onclick="setStockIntelFilter('normal')">⚖️ Normal</button>
             <button class="cat-btn" onclick="setStockIntelFilter('low')">📉 Low Selling</button>
             <button class="cat-btn" onclick="setStockIntelFilter('old')">📦 Old Stock</button>
+            <button class="cat-btn" onclick="setStockIntelFilter('new')">🆕 New</button>
             <button class="cat-btn" onclick="setStockIntelFilter('critical')">🚨 Critical</button>
           </div>
           <div id="siCardsContainer">

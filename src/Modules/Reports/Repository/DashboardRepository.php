@@ -186,6 +186,114 @@ class DashboardRepository implements DashboardRepositoryInterface
         }
     }
 
+    public function getNormalSelling(int $limit = 5): array
+    {
+        try {
+            $avgVel = $this->getCatalogAvgVelocity();
+            $lower = $avgVel * 0.5;
+            $upper = $avgVel * 1.5;
+
+            $stmt = $this->db->prepare("
+                WITH product_sales AS (
+                    SELECT
+                        p.id,
+                        p.name,
+                        COALESCE(SUM(ii.quantity), 0)::int AS qty_sold,
+                        COALESCE(SUM(ii.line_total), 0)    AS revenue,
+                        CASE WHEN SUM(ii.quantity) > 0
+                            THEN SUM(ii.quantity)::float / 30.0
+                            ELSE 0
+                        END AS velocity
+                    FROM products p
+                    LEFT JOIN invoice_items ii ON ii.product_id = p.id
+                    LEFT JOIN invoices i ON i.id = ii.invoice_id
+                        AND i.invoice_status = 'completed'
+                        AND i.billed_at >= NOW() - INTERVAL '30 days'
+                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    GROUP BY p.id, p.name
+                )
+                SELECT id, name, qty_sold, revenue, velocity
+                FROM product_sales
+                WHERE velocity >= :lower AND velocity < :upper
+                ORDER BY velocity DESC
+                LIMIT :limit
+            ");
+            $stmt->bindValue(':lower', $lower, PDO::PARAM_STR);
+            $stmt->bindValue(':upper', $upper, PDO::PARAM_STR);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return array_map(fn($r) => new TopProduct(
+                productId: $r['id'],
+                name:      $r['name'],
+                qtySold:   (int) $r['qty_sold'],
+                revenue:   (float) $r['revenue'],
+                velocity:  (float) $r['velocity']
+            ), $rows);
+        } catch (\Exception $e) {
+            error_log('DashboardRepository::getNormalSelling - ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getNewProducts(int $limit = 5): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                WITH product_batches AS (
+                    SELECT
+                        p.id,
+                        p.name,
+                        MAX(EXTRACT(DAY FROM NOW() - ib.created_at))::int AS max_batch_age
+                    FROM products p
+                    JOIN inventory_batches ib ON ib.product_id = p.id
+                        AND ib.remaining_qty > 0
+                        AND ib.user_id = current_setting('app.current_user_id')::uuid
+                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    GROUP BY p.id, p.name
+                ),
+                product_sales AS (
+                    SELECT
+                        ii.product_id,
+                        COALESCE(SUM(ii.quantity), 0)::int AS qty_sold
+                    FROM invoice_items ii
+                    JOIN invoices i ON i.id = ii.invoice_id
+                        AND i.invoice_status = 'completed'
+                        AND i.billed_at >= NOW() - INTERVAL '30 days'
+                    WHERE ii.product_id IN (SELECT id FROM product_batches)
+                    GROUP BY ii.product_id
+                )
+                SELECT
+                    pb.id,
+                    pb.name,
+                    0 AS qty_sold,
+                    0 AS revenue,
+                    0 AS velocity
+                FROM product_batches pb
+                LEFT JOIN product_sales ps ON ps.product_id = pb.id
+                WHERE (ps.qty_sold IS NULL OR ps.qty_sold = 0)
+                  AND pb.max_batch_age < 30
+                ORDER BY pb.max_batch_age ASC
+                LIMIT :limit
+            ");
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return array_map(fn($r) => new TopProduct(
+                productId: $r['id'],
+                name:      $r['name'],
+                qtySold:   (int) $r['qty_sold'],
+                revenue:   (float) $r['revenue'],
+                velocity:  (float) $r['velocity']
+            ), $rows);
+        } catch (\Exception $e) {
+            error_log('DashboardRepository::getNewProducts - ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function getOldStock(int $limit = 5): array
     {
         try {
