@@ -221,12 +221,12 @@ function renderProductAnalytics(data) {
 
     // --- Hero row ---
     var vel = a.velocity || 0;
-    setText('phHeroVelocity', formatNum(vel));
-    setText('phHeroVelUnit', unit + ' per day');
+    setText('phHeroVelocity', formatVelocityValue(vel, unit));
+    setText('phHeroVelUnit', formatVelocityUnit(vel, unit));
 
     var dos = a.days_of_supply;
     var dosEl = document.getElementById('phHeroDos');
-    if (dosEl) dosEl.textContent = dos != null ? String(dos) : '∞';
+    if (dosEl) dosEl.textContent = formatDaysOfSupply(dos);
 
     setText('phHeroRevenue', window.formatCurrency(a.revenue_30d || 0));
     setText('phHeroSoldUnits', a.sold_30d || 0);
@@ -252,9 +252,9 @@ function renderProductAnalytics(data) {
     var sold7 = a.sold_7d || 0;
     var sold30 = a.sold_30d || 0;
 
-    setText('phVel7', formatNum(vel7) + ' /day');
-    setText('phVel30', formatNum(vel30) + ' /day');
-    setText('phVelCat', formatNum(catAvg) + ' /day');
+    setText('phVel7', formatVelocity(vel7, unit));
+    setText('phVel30', formatVelocity(vel30, unit));
+    setText('phVelCat', formatVelocity(catAvg, unit));
     setText('phVel7Sold', sold7);
     setText('phVel30Sold', sold30);
 
@@ -294,11 +294,11 @@ function renderProductAnalytics(data) {
         // Generate reorder alert from data
         var dos = a.days_of_supply;
         if (dos != null && dos <= 14 && dos > 0 && stockLeft > 0) {
-            alertHtml = '<div class="ph-alert-box ph-alert-warn">⚠ At ' + formatNum(vel) + ' ' + unit + '/day — stock runs out in ' + dos + ' days.</div>';
+            alertHtml = '<div class="ph-alert-box ph-alert-warn">⚠ At ' + formatVelocity(vel, unit) + ' — stock runs out in ' + formatDaysOfSupply(dos) + '.</div>';
         } else if (stockLeft <= 0) {
             alertHtml = '<div class="ph-alert-box" style="background:var(--danger-subtle);color:var(--danger);">⛔ Out of stock</div>';
         } else {
-            alertHtml = '<div class="ph-alert-box ph-alert-ok">✅ Stock is sufficient. ' + formatNum(dos != null ? dos : '∞') + ' days of supply remaining.</div>';
+            alertHtml = '<div class="ph-alert-box ph-alert-ok">✅ Stock is sufficient. ' + formatDaysOfSupply(dos) + ' of supply remaining.</div>';
         }
     }
     document.getElementById('phAlertBox').innerHTML = alertHtml;
@@ -324,14 +324,16 @@ function renderClassification(badges, a, unit) {
     var pillHtml = '';
     var reason = '';
 
+    function velText(v, u) { return '<strong>' + formatVelocityValue(v, u) + '</strong> ' + formatVelocityUnit(v, u); }
+
     switch (mainTag) {
         case 'high':
             pillHtml = '<span class="ph-cpill high">🔥 High Selling</span>';
-            reason = 'Selling <strong>' + formatNum(vel) + '</strong> ' + unit + '/day — <strong>' + formatNum(ratio) + '×</strong> ' + (ratio >= 1 ? 'faster' : 'slower') + ' than your catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day. Consistently above average for last 30 days.';
+            reason = 'Selling ' + velText(vel, unit) + ' — <strong>' + formatNum(ratio) + '×</strong> ' + (ratio >= 1 ? 'faster' : 'slower') + ' than your catalog average of ' + velText(catAvg, unit) + '. Consistently above average for last 30 days.';
             break;
         case 'low':
             pillHtml = '<span class="ph-cpill low">📉 Low Selling</span>';
-            reason = 'Selling <strong>' + formatNum(vel) + '</strong> ' + unit + '/day — significantly below your catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day. Consider promotion or bundling.';
+            reason = 'Selling ' + velText(vel, unit) + ' — significantly below your catalog average of ' + velText(catAvg, unit) + '. Consider promotion or bundling.';
             break;
         case 'dead':
             pillHtml = '<span class="ph-cpill dead">💀 No Sales</span>';
@@ -339,7 +341,7 @@ function renderClassification(badges, a, unit) {
             break;
         case 'old':
             pillHtml = '<span class="ph-cpill old">📦 Old Stock</span>';
-            reason = 'Batch is <strong>' + age + ' days</strong> old with <strong>' + stockPct + '%</strong> stock remaining. Only <strong>' + formatNum(vel) + '</strong> ' + unit + '/day selling — well below catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day.';
+            reason = 'Batch is <strong>' + age + ' days</strong> old with <strong>' + stockPct + '%</strong> stock remaining. Only ' + velText(vel, unit) + ' — well below catalog average of ' + velText(catAvg, unit) + '.';
             break;
         case 'new':
             pillHtml = '<span class="ph-cpill new">🆕 New Product</span>';
@@ -347,7 +349,7 @@ function renderClassification(badges, a, unit) {
             break;
         default:
             pillHtml = '<span class="ph-cpill normal">⚖️ Normal</span>';
-            reason = 'Selling <strong>' + formatNum(vel) + '</strong> ' + unit + '/day — at or near your catalog average of <strong>' + formatNum(catAvg) + '</strong> ' + unit + '/day.';
+            reason = 'Selling ' + velText(vel, unit) + ' — at or near your catalog average of ' + velText(catAvg, unit) + '.';
     }
 
     document.getElementById('phClassPills').innerHTML = pillHtml;
@@ -365,6 +367,70 @@ function renderClassification(badges, a, unit) {
         };
         block.style.borderColor = borderMap[mainTag] || 'var(--accent-2-muted)';
     }
+}
+
+var WHOLE_UNITS = ['pcs', 'pieces', 'nos', 'box', 'packet', 'bottle', 'pair', 'set'];
+
+function isWholeUnit(unit) {
+    return WHOLE_UNITS.indexOf((unit || '').toLowerCase()) !== -1;
+}
+
+function formatVelocity(velocity, unit) {
+    if (velocity == null || isNaN(velocity)) return '0 ' + (unit || 'units') + '/day';
+    var v = Number(velocity);
+    var u = unit || 'units';
+
+    if (isWholeUnit(u)) {
+        if (v < 1) {
+            var perWeek = Math.round(v * 7);
+            if (perWeek === 0) return 'Less than 1/week';
+            return '~' + perWeek + ' ' + u + '/week';
+        }
+        return Math.round(v) + ' ' + u + '/day';
+    }
+
+    return v.toFixed(1) + ' ' + u + '/day';
+}
+
+function formatVelocityValue(velocity, unit) {
+    if (velocity == null || isNaN(velocity)) return '0';
+    var v = Number(velocity);
+    if (v === 0) return '0';
+
+    if (isWholeUnit(unit)) {
+        if (v < 1) {
+            var perWeek = Math.round(v * 7);
+            if (perWeek === 0) return 'Less than 1';
+            return '~' + perWeek;
+        }
+        return Math.round(v) + '';
+    }
+
+    return v.toFixed(1).replace(/\.0$/, '');
+}
+
+function formatVelocityUnit(velocity, unit) {
+    if (velocity == null || isNaN(velocity)) return (unit || 'units') + '/day';
+    var v = Number(velocity);
+    var u = unit || 'units';
+
+    if (v === 0) return u + '/day';
+
+    if (isWholeUnit(u) && v < 1) {
+        var perWeek = Math.round(v * 7);
+        if (perWeek === 0) return '';
+        return u + '/week';
+    }
+
+    return u + '/day';
+}
+
+function formatDaysOfSupply(days) {
+    if (days == null || days === 999 || !isFinite(days)) return '∞';
+    var d = Number(days);
+    if (d >= 90) return '90+';
+    if (d >= 30) return '~' + Math.round(d / 7) + ' wk';
+    return Math.round(d) + '';
 }
 
 function formatNum(n) {
