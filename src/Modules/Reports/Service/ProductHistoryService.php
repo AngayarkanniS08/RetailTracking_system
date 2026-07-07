@@ -73,6 +73,11 @@ class ProductHistoryService
         ];
     }
 
+    public function getProductsWithStock(): array
+    {
+        return $this->repo->getProductsWithStock();
+    }
+
     public function getDailySales(string $productId): array
     {
         return $this->repo->getDailySales($productId);

@@ -20,7 +20,7 @@ function fetchProductList() {
     var select = document.getElementById('phProductSelect');
     if (select) select.innerHTML = '<option value="">Loading products...</option>';
 
-    window.apiRequest('/api/products')
+    window.apiRequest('/api/products/with-stock')
         .then(function(data) {
             _productList = Array.isArray(data) ? data : (data.data || []);
             populateProductSelect(_productList);
@@ -172,11 +172,7 @@ function ensureCardDOM() {
         '      <div class="ph-vel-desc">all products avg</div>' +
         '    </div>' +
         '  </div>' +
-        '  <div class="ph-trend-row">' +
-        '    <span style="flex-shrink:0">Trend last 4 weeks:</span>' +
-        '    <div class="ph-trend-bar" id="phTrendBar"></div>' +
-        '    <span id="phTrendLabel" style="flex-shrink:0; font-weight:600">--</span>' +
-        '  </div>' +
+
         '</div>' +
         '<div class="ph-stock-block">' +
         '  <div class="ph-stock-title">Stock status</div>' +
@@ -261,9 +257,6 @@ function renderProductAnalytics(data) {
     setText('phVelCat', formatNum(catAvg) + ' /day');
     setText('phVel7Sold', sold7);
     setText('phVel30Sold', sold30);
-
-    // Trend bar — 4 weekly segments estimated from 7d and 30d
-    renderTrendBar(trend, vel7, vel30);
 
     // --- Stock status ---
     var stockLeft = a.stock_left || 0;
@@ -371,56 +364,6 @@ function renderClassification(badges, a, unit) {
             'new': 'var(--info)'
         };
         block.style.borderColor = borderMap[mainTag] || 'var(--accent-2-muted)';
-    }
-}
-
-function renderTrendBar(trend, vel7, vel30) {
-    var bar = document.getElementById('phTrendBar');
-    if (!bar) return;
-
-    // Estimate 4 weekly velocities proportional to 7d and 30d averages
-    // w4 (most recent) ≈ vel7. w1-3 interpolated so avg = vel30
-    var total30 = vel30 * 30;
-    var w4 = vel7 * 7;
-    var remaining = total30 - w4;
-    var w1 = remaining / 23; // rough average of days 1-23
-
-    // Create gentle progression based on trend
-    var segs;
-    if (trend === 'up') {
-        segs = [w1 * 0.6, w1 * 0.8, w1 * 1.0, vel7 * 1.0];
-    } else if (trend === 'down') {
-        segs = [w1 * 1.4, w1 * 1.2, w1 * 1.0, vel7 * 0.8];
-    } else {
-        segs = [w1, w1, w1, vel7];
-    }
-
-    var total = segs.reduce(function(s, v) { return s + Math.max(v, 0.01); }, 0);
-    var colors = [
-        'var(--border-strong)',
-        'var(--border-hover)',
-        'var(--muted-strong)',
-        trend === 'up' ? 'var(--ok)' : (trend === 'down' ? 'var(--danger)' : 'var(--muted-strong)')
-    ];
-
-    var html = '';
-    for (var i = 0; i < segs.length; i++) {
-        var pct = Math.max(segs[i], 0.01) / total * 100;
-        html += '<div class="ph-tb-seg" style="width:' + pct.toFixed(1) + '%;background:' + colors[i] + '"></div>';
-    }
-    bar.innerHTML = html;
-
-    // Trend label
-    var label = document.getElementById('phTrendLabel');
-    if (label) {
-        var trendMap = {
-            'up':     { text: '↑ accelerating', color: 'var(--ok)' },
-            'down':   { text: '↓ decelerating', color: 'var(--danger)' },
-            'steady': { text: '→ steady', color: 'var(--muted-strong)' }
-        };
-        var tl = trendMap[trend] || trendMap['steady'];
-        label.textContent = tl.text;
-        label.style.color = tl.color;
     }
 }
 

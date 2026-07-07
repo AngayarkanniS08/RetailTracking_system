@@ -1754,28 +1754,6 @@ tr:hover td {
     color: var(--muted);
     margin-top: 3px;
 }
-.ph-trend-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-}
-.ph-trend-bar {
-    flex: 1;
-    height: 10px;
-    background: var(--bg-muted);
-    border-radius: 5px;
-    overflow: hidden;
-    display: flex;
-}
-.ph-tb-seg {
-    height: 100%;
-}
-
 /* Stock status — compact */
 .ph-stock-block {
     background: var(--card);

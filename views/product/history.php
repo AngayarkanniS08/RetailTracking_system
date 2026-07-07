@@ -80,11 +80,7 @@
                   <div class="ph-vel-desc">all products avg</div>
                 </div>
               </div>
-              <div class="ph-trend-row">
-                <span style="flex-shrink:0">Trend last 4 weeks:</span>
-                <div class="ph-trend-bar" id="phTrendBar"></div>
-                <span id="phTrendLabel" style="flex-shrink:0; font-weight:600">--</span>
-              </div>
+
             </div>
 
             <!-- STOCK — compact -->
