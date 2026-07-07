@@ -267,5 +267,26 @@ class ApiRoutes
             (new \Modules\Reports\Controller\Api\DashboardController())->stockIntel();
         });
 
+        // ── Product History / Analytics ─────────────────────────────
+        $router->add('GET', '/api/products/{id}/history', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Reports\Controller\Api\ProductHistoryController())->show($params['id']);
+        });
+
+        $router->add('GET', '/api/products/{id}/daily-sales', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Reports\Controller\Api\ProductHistoryController())->dailySales($params['id']);
+        });
+
+        $router->add('POST', '/api/products/{id}/daily-sales', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Reports\Controller\Api\ProductHistoryController())->storeDailySale($params['id']);
+        });
+
+        $router->add('DELETE', '/api/products/daily-sales/{saleId}', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Reports\Controller\Api\ProductHistoryController())->destroyDailySale($params['saleId']);
+        });
+
     }
 }

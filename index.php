@@ -111,6 +111,7 @@ require_once 'views/inventory/index.php';
 require_once 'views/vendor/index.php';
 require_once 'views/vendor/history.php';
 require_once 'views/reports/stockintel.php';
+require_once 'views/product/history.php';
 
 echo '</main>';
 echo '</div>';

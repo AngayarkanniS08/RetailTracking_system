@@ -12,7 +12,8 @@ const sections = [
     'inventory',
     'vendor_list',
     'vendorhistory',
-    'stockintel'
+    'stockintel',
+    'product_history'
 ];
 
 // Switch to a specific section by ID

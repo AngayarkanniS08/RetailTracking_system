@@ -1,0 +1,683 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1rem 0; }
+.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 16px; }
+.tab { font-size: 12px; font-weight: 500; padding: 7px 14px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.sec { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin: 18px 0 10px; }
+.sec:first-child { margin-top: 0; }
+
+.mc { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 8px; overflow: hidden; }
+.mc-head { display: flex; }
+.mc-num { width: 38px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); flex-shrink: 0; color: var(--color-text-secondary); }
+.mc-body { flex: 1; padding: 11px 14px; }
+.mc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.mc-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.mc-q { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.tag { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; white-space: nowrap; }
+.t-s { background: var(--color-background-success); color: var(--color-text-success); }
+.t-st { background: var(--color-background-info);    color: var(--color-text-info); }
+.t-m { background: var(--color-background-warning); color: var(--color-text-warning); }
+.t-c { background: #f3e8ff; color: #7c3aed; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.box { border-radius: var(--border-radius-md); padding: 9px 11px; background: var(--color-background-secondary); }
+.box-dashed { border: 0.5px dashed var(--color-border-secondary); }
+.box-lbl { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); margin-bottom: 5px; }
+.box-text { font-size: 12px; color: var(--color-text-primary); line-height: 1.6; }
+.box-code { font-size: 11px; font-family: var(--font-mono); color: var(--color-text-secondary); line-height: 1.7; }
+.eg { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--color-text-secondary); padding-top: 8px; border-top: 0.5px solid var(--color-border-tertiary); flex-wrap: wrap; }
+.eg-val { font-family: var(--font-mono); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-secondary); border-radius: 3px; padding: 1px 7px; color: var(--color-text-primary); font-size: 11px; }
+.eg-res { font-weight: 500; color: var(--color-text-primary); }
+.arr { color: var(--color-text-secondary); }
+
+/* classify table */
+.ctbl { width: 100%; border-collapse: collapse; }
+.ctbl th { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); padding: 7px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); text-align: left; }
+.ctbl td { padding: 10px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: top; }
+.ctbl tr:last-child td { border-bottom: none; }
+.c-label { font-size: 13px; font-weight: 500; color: var(--color-text-primary); display: block; margin-bottom: 3px; }
+.c-q { font-size: 11px; color: var(--color-text-secondary); }
+.pill { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 4px; }
+.p-h { background: var(--color-background-success); color: var(--color-text-success); }
+.p-l { background: var(--color-background-warning); color: var(--color-text-warning); }
+.p-d { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.p-o { background: var(--color-background-secondary); color: var(--color-text-secondary); border: 0.5px solid var(--color-border-secondary); }
+.p-n { background: var(--color-background-info); color: var(--color-text-info); }
+.cond { font-size: 11px; font-family: var(--font-mono); background: var(--color-background-secondary); padding: 3px 7px; border-radius: 3px; display: block; margin-bottom: 4px; line-height: 1.6; }
+.why { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+.action { font-size: 12px; color: var(--color-text-primary); line-height: 1.5; }
+
+/* bug cards */
+.bug { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 8px; overflow: hidden; }
+.bug-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); }
+.bug-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.bi-bad { background: var(--color-background-danger); color: var(--color-text-danger); }
+.bi-ok  { background: var(--color-background-success); color: var(--color-text-success); }
+.bug-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.bug-body { padding: 11px 14px; }
+.bug-body .two-col .box-text { font-size: 12px; }
+.note { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 12px; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-tertiary); margin-top: 10px; line-height: 1.6; }
+</style>
+
+<div class="wrap">
+<div class="tabs">
+  <div class="tab active" onclick="sw('metrics')">All metrics</div>
+  <div class="tab" onclick="sw('classify')">Classification rules</div>
+  <div class="tab" onclick="sw('bugfix')">Bugs + exact fixes</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 1 — METRICS
+══════════════════════════════════════════ -->
+<div id="metrics" class="tab-panel active">
+
+<div class="sec">Sales metrics</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">1</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Daily Velocity</div>
+          <div class="mc-q">How many pieces do we sell per day?</div>
+        </div>
+        <span class="tag t-s">Sales</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">On average, how many units of this product sell every day. Based on last 30 days only. This is the most important number — all classifications come from this.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">velocity
+ = units sold in last 30 days
+   ÷ 30</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>Sold 201 meters in 30 days</span>
+        <span class="arr">→</span>
+        <span class="eg-val">201 ÷ 30</span>
+        <span class="arr">=</span>
+        <span class="eg-res">6.7 meters per day</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">2</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Days of Supply</div>
+          <div class="mc-q">How many more days will current stock last?</div>
+        </div>
+        <span class="tag t-st">Stock</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">If we keep selling at today's speed, stock will run out after this many days. Owner must reorder before this number reaches zero.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">daysOfSupply
+ = stockLeft ÷ velocity
+
+If velocity = 0 → show ∞
+(not selling = no urgency)</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>120 meters left, selling 6.7/day</span>
+        <span class="arr">→</span>
+        <span class="eg-val">120 ÷ 6.7</span>
+        <span class="arr">=</span>
+        <span class="eg-res">18 days of stock left</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">3</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Sold (7d) and Sold (30d)</div>
+          <div class="mc-q">This week sales vs this month sales</div>
+        </div>
+        <span class="tag t-s">Sales</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">Total units sold in last 7 days and last 30 days. Compare these two to see if sales are going up or down. No need for 90 days — too old to be useful for a small shop.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">sold7d  = sum of qty
+  where sale date >= today - 7
+
+sold30d = sum of qty
+  where sale date >= today - 30</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>7d: 59 units (8.4/day) &nbsp;·&nbsp; 30d: 201 units (6.7/day)</span>
+        <span class="arr">→</span>
+        <span class="eg-res">This week faster than month → selling more now</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">4</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Trend</div>
+          <div class="mc-q">Is this product selling faster or slower than before?</div>
+        </div>
+        <span class="tag t-s">Sales</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">Compare this week's daily speed vs this month's daily speed. If this week is faster — Trending Up. If slower — Slowing Down. If about the same — Steady.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">weekSpeed  = sold7d  ÷ 7
+monthSpeed = sold30d ÷ 30
+
+weekSpeed > monthSpeed × 1.1
+  → "↑ Trending Up"
+weekSpeed < monthSpeed × 0.9
+  → "↓ Slowing Down"
+else
+  → "→ Steady"</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>Week: 8.4/day &nbsp;·&nbsp; Month: 6.7/day &nbsp;·&nbsp; 8.4 > 7.37 (6.7×1.1)</span>
+        <span class="arr">→</span>
+        <span class="eg-res">↑ Trending Up</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">5</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Revenue (30d)</div>
+          <div class="mc-q">How much money came in from selling this product this month?</div>
+        </div>
+        <span class="tag t-m">Money</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">Total money collected from selling this product in last 30 days. This is not profit — it is the full selling amount before costs.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">revenue
+ = sum of (qty × selling_price)
+   for each sale
+   in last 30 days</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>201 meters × ₹120 per meter</span>
+        <span class="arr">→</span>
+        <span class="eg-res">₹24,120 revenue this month</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">Stock metrics</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">6</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Stock Left</div>
+          <div class="mc-q">How much is sitting in the shop right now?</div>
+        </div>
+        <span class="tag t-st">Stock</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">Total quantity remaining across all batches of this product. Every time a bill is made, this number goes down.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">stockLeft
+ = sum of batch.quantity
+   for all batches
+   of this product</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>Batch 1: 80 mtr &nbsp;·&nbsp; Batch 2: 40 mtr</span>
+        <span class="arr">→</span>
+        <span class="eg-res">120 meters total stock left</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">7</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Stock Remaining %</div>
+          <div class="mc-q">Out of what we bought, how much is still unsold?</div>
+        </div>
+        <span class="tag t-st">Stock</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">If we bought 200 meters and 120 is still here — 60% is unsold. High % + old batch = problem. Low % = good, almost sold out.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">remainingPct
+ = stockLeft
+   ÷ original_quantity × 100
+
+⚠ Must store
+  original_quantity
+  at purchase time</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>Bought 200 mtr, 120 still here</span>
+        <span class="arr">→</span>
+        <span class="eg-res">60% remaining — 40% sold so far</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">8</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Oldest Batch Age</div>
+          <div class="mc-q">How old is the oldest unsold stock?</div>
+        </div>
+        <span class="tag t-st">Stock</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">Number of days since the oldest batch was purchased. 30+ days with a lot still unsold = money sitting idle. Used together with remaining % to detect old stock.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">maxBatchAge
+ = max of (today - created_at)
+   in days
+   for batches where qty > 0</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>Batch A: 5 days old &nbsp;·&nbsp; Batch B: 12 days old</span>
+        <span class="arr">→</span>
+        <span class="eg-res">Oldest batch = 12 days</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec">Money metrics</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">9</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Margin %</div>
+          <div class="mc-q">How much profit do we make on each unit?</div>
+        </div>
+        <span class="tag t-m">Money</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">Bought at ₹85, sell at ₹120 — what % profit is that? Higher is better. Below 15% is a warning. Use per-unit prices, not batch totals.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">margin
+ = (sellPrice - buyPrice)
+   ÷ buyPrice × 100</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>Buy ₹85, Sell ₹120 → (120 - 85) ÷ 85 × 100</span>
+        <span class="arr">=</span>
+        <span class="eg-res">41% margin ✓ Healthy</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc">
+  <div class="mc-head">
+    <div class="mc-num">10</div>
+    <div class="mc-body">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">Catalog Average Velocity</div>
+          <div class="mc-q">What is the normal selling speed for our shop?</div>
+        </div>
+        <span class="tag t-c">Used for classification</span>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">What it means</div>
+          <div class="box-text">Average selling speed of all products in the shop. This is the baseline. A product is "fast" or "slow" only compared to this number — not against any fixed number.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Formula</div>
+          <div class="box-code">avgVelocity
+ = sum of velocity
+   of all products
+   (only products with
+    at least 1 sale)
+   ÷ count of those products</div>
+        </div>
+      </div>
+      <div class="eg">
+        <span>5 products: 6.7 + 3.2 + 1.1 + 4.5 + 0.8 = 16.3</span>
+        <span class="arr">→</span>
+        <span class="eg-res">avgVelocity = 16.3 ÷ 5 = 3.26/day</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 2 — CLASSIFICATION
+══════════════════════════════════════════ -->
+<div id="classify" class="tab-panel">
+
+  <div class="note" style="margin-bottom:14px; margin-top:0">
+    <strong style="color:var(--color-text-primary)">One rule to remember:</strong> Never use fixed numbers like "sold more than 10" or "older than 5 days". Always compare against <strong>avgVelocity</strong> — the shop's own average. A small shop and a big shop will have different averages, and the system adjusts automatically.
+  </div>
+
+  <table class="ctbl">
+    <thead>
+      <tr>
+        <th style="width:22%">Label</th>
+        <th style="width:38%">When to show it</th>
+        <th style="width:40%">What owner should do</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <span class="c-label">🔥 High Selling</span>
+          <span class="c-q">Selling fast</span>
+          <span class="pill p-h">Fast Moving</span>
+        </td>
+        <td>
+          <code class="cond">velocity >= avgVelocity × 1.5</code>
+          <div class="why">This product sells 1.5 times faster than the shop average. Example: avg is 3.2/day, this product is 6.7/day — 6.7 is more than 4.8 (3.2×1.5) so it is High Selling.</div>
+        </td>
+        <td class="action">Buy more stock. Do not let it run out. Check if reorder point alert is set.</td>
+      </tr>
+      <tr>
+        <td>
+          <span class="c-label">😐 Normal</span>
+          <span class="c-q">Selling at average pace</span>
+          <span class="pill p-o">Steady</span>
+        </td>
+        <td>
+          <code class="cond">velocity between
+  avgVelocity × 0.5
+  and avgVelocity × 1.5</code>
+          <div class="why">Between half and 1.5 times the shop average. No problem. Most products should be here.</div>
+        </td>
+        <td class="action">No action needed. Keep watching.</td>
+      </tr>
+      <tr>
+        <td>
+          <span class="c-label">📉 Low Selling</span>
+          <span class="c-q">Selling slowly</span>
+          <span class="pill p-l">Slow Moving</span>
+        </td>
+        <td>
+          <code class="cond">velocity > 0
+AND velocity < avgVelocity × 0.5</code>
+          <div class="why">Some sales happening but very slowly — less than half the shop average. Money is moving slowly through this product.</div>
+        </td>
+        <td class="action">Try a small discount. Do not buy more stock. Check if display position helps.</td>
+      </tr>
+      <tr>
+        <td>
+          <span class="c-label">💀 Dead Stock</span>
+          <span class="c-q">Not selling at all</span>
+          <span class="pill p-d">Non-Moving</span>
+        </td>
+        <td>
+          <code class="cond">velocity = 0
+AND stockLeft > 0
+AND last sale > 30 days ago</code>
+          <div class="why">Zero sales for 30+ days but stock is still sitting. Money is locked and not moving at all.</div>
+        </td>
+        <td class="action">Reduce price immediately. Bundle with fast product. Talk to vendor about return.</td>
+      </tr>
+      <tr>
+        <td>
+          <span class="c-label">📦 Old Stock</span>
+          <span class="c-q">Old batch, mostly unsold</span>
+          <span class="pill p-o">Aged Inventory</span>
+        </td>
+        <td>
+          <code class="cond">maxBatchAge >= 30 days
+AND remainingPct >= 50%
+AND velocity < avgVelocity × 0.3</code>
+          <div class="why">Batch is 30+ days old AND more than half is still unsold AND selling very slowly. All three must be true together.</div>
+        </td>
+        <td class="action">Give festival offer or bulk discount. Do not reorder this product yet.</td>
+      </tr>
+      <tr>
+        <td>
+          <span class="c-label">🆕 New Product</span>
+          <span class="c-q">Just added, no sales yet</span>
+          <span class="pill p-n">New</span>
+        </td>
+        <td>
+          <code class="cond">velocity = 0
+AND maxBatchAge < 30 days</code>
+          <div class="why">No sales yet but batch is less than 30 days old. This is not dead stock — it is just new. Give it time.</div>
+        </td>
+        <td class="action">Wait 30 days. Put it in a visible spot. Tell customers about it.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong style="color:var(--color-text-danger)">Important:</strong> Old Stock needs <code>original_quantity</code> stored in each batch. Without it you cannot calculate remaining %. Add this one field when saving a purchase: <code>original_quantity: qty</code> alongside the normal <code>quantity: qty</code>.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB 3 — BUGS + FIXES
+══════════════════════════════════════════ -->
+<div id="bugfix" class="tab-panel">
+
+  <div class="bug">
+    <div class="bug-head">
+      <div class="bug-icon bi-bad">✗</div>
+      <div class="bug-title">Bug 1 — High Selling always picks top 3 products</div>
+    </div>
+    <div class="bug-body">
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">Problem</div>
+          <div class="box-text">If your shop has only 4 products, 3 of them will always show as "High Selling" even if none of them sold well. Top 3 is just a rank — not a real classification.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Fix</div>
+          <div class="box-code">// Remove this:
+sortedProducts.slice(0, 3)
+
+// Use this instead:
+analytics.filter(a =>
+  a.velocity >= avgVelocity * 1.5
+)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bug">
+    <div class="bug-head">
+      <div class="bug-icon bi-bad">✗</div>
+      <div class="bug-title">Bug 2 — Low Selling checks units sold, not speed</div>
+    </div>
+    <div class="bug-body">
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">Problem</div>
+          <div class="box-text">Current check: qty sold ≤ 10. But 9 units in 2 days is fast. 9 units in 30 days is slow. The number alone means nothing without knowing the time.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Fix</div>
+          <div class="box-code">// Remove this:
+p.qty <= 10
+
+// Use this instead:
+a.velocity > 0 &&
+a.velocity < avgVelocity * 0.5</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bug">
+    <div class="bug-head">
+      <div class="bug-icon bi-bad">✗</div>
+      <div class="bug-title">Bug 3 — Old Stock flags batches after just 5 days</div>
+    </div>
+    <div class="bug-body">
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">Problem</div>
+          <div class="box-text">Bought on Monday — by Saturday it shows as "Old Stock". That is not old stock. 5 days is normal business. Need at least 30 days + mostly unsold + selling very slowly.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Fix</div>
+          <div class="box-code">// Remove this:
+ageDays >= 5
+
+// Use this instead:
+ageDays >= 30 &&
+remainingPct >= 50 &&
+velocity < avgVelocity * 0.3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bug">
+    <div class="bug-head">
+      <div class="bug-icon bi-bad">✗</div>
+      <div class="bug-title">Bug 4 — Velocity uses all-time sales, not last 30 days</div>
+    </div>
+    <div class="bug-body">
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">Problem</div>
+          <div class="box-text">Current code takes total sales of all time and divides by 30. If a product sold 200 units 6 months ago but nothing this month — it still shows a high velocity. That is wrong.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Fix</div>
+          <div class="box-code">// Remove this:
+const soldUnits = salesData.qty;
+const velocity  = soldUnits / 30;
+
+// Use this instead:
+const cutoff = Date.now()
+               - 30 * 86400000;
+const soldUnits = sale_items
+  .filter(i =>
+    i.product_id === p.id &&
+    new Date(i.created_at) >= cutoff
+  )
+  .reduce((s,i) => s + i.qty, 0);
+const velocity = soldUnits / 30;</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bug">
+    <div class="bug-head">
+      <div class="bug-icon bi-ok">✓</div>
+      <div class="bug-title">Add original_quantity when saving a purchase batch</div>
+    </div>
+    <div class="bug-body">
+      <div class="two-col">
+        <div class="box">
+          <div class="box-lbl">Why</div>
+          <div class="box-text">Right now you only store current quantity (goes down as you sell). You need the original amount bought to calculate how much % is still unsold. One extra field fixes this.</div>
+        </div>
+        <div class="box box-dashed">
+          <div class="box-lbl">Add in saveStockEntry()</div>
+          <div class="box-code">batches.push({
+  id: batchId,
+  product_id: productId,
+  quantity: qty,
+  original_quantity: qty, // ← ADD
+  purchase_price: price,
+  created_at: new Date()
+});</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function sw(id) {
+  const ids = ['metrics','classify','bugfix'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===id));
+}
+</script>
