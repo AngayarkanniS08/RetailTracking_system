@@ -172,7 +172,7 @@ function ensureCardDOM() {
         '      <div class="ph-vel-desc">all products avg</div>' +
         '    </div>' +
         '  </div>' +
-
+        '' +
         '</div>' +
         '<div class="ph-stock-block">' +
         '  <div class="ph-stock-title">Stock status</div>' +

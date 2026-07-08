@@ -36,7 +36,9 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT COALESCE(AVG(velocity), 0) FROM (
                 SELECT
-                    SUM(ii.quantity)::float / 30.0 AS velocity
+                    SUM(ii.quantity)::float
+                        / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
+                    AS velocity
                 FROM products p
                 JOIN invoice_items ii ON ii.product_id = p.id
                 JOIN invoices i ON i.id = ii.invoice_id
@@ -107,12 +109,18 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         $lastSaleDate = $sales['last_sale'];
         $firstSaleDate = $sales['first_sale'];
 
-        // Averages
+        // Averages — use actual selling days as divisor, capped at window size
         $avgDaily7d  = $sold7d > 0 ? round($sold7d / 7, 1) : 0;
-        $avgDaily30d = $sold30d > 0 ? round($sold30d / 30, 1) : 0;
+        $firstSaleTs = $firstSaleDate ? strtotime($firstSaleDate) : null;
+        $denom30 = 30;
+        if ($firstSaleTs) {
+            $daysSinceFirstSale = floor((time() - $firstSaleTs) / 86400);
+            $denom30 = max(1, min(30, $daysSinceFirstSale));
+        }
+        $avgDaily30d = $sold30d > 0 ? round($sold30d / $denom30, 1) : 0;
         $avgDaily90d = $sold90d > 0 ? round($sold90d / 90, 1) : 0;
 
-        // Velocity uses 30d average
+        // Velocity uses 30d average (actual-days-adjusted)
         $velocity = $avgDaily30d;
 
         // Trend: weekSpeed vs monthSpeed (spec: 1.1x / 0.9x thresholds)
@@ -174,13 +182,14 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
 
         $reorderStatus = $this->calcReorderStatus($stockLeft, $rop, $emergencyStock, $avgDaily30d, $leadTime);
 
-        // ── Badges — using spec classification rules ──────────────────
+        // ── Badges — classification rules per spec ────────────────────────
         $badges = [];
+
         // 🔥 High Selling: velocity >= avgVelocity × 1.5
-        if ($velocity >= $avgVelocity * 1.5) {
+        if ($velocity > 0 && $velocity >= $avgVelocity * 1.5) {
             $badges[] = 'high';
         }
-        // 😐 Normal: between 0.5x and 1.5x — no badge needed
+        // 😐 Normal: velocity between avgVelocity × 0.5 and avgVelocity × 1.5 — no badge
         // 📉 Low Selling: velocity > 0 AND velocity < avgVelocity × 0.5
         if ($velocity > 0 && $velocity < $avgVelocity * 0.5) {
             $badges[] = 'low';
@@ -196,7 +205,7 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         if ($maxBatchAge >= 30 && $remainingPct >= 50 && $velocity < $avgVelocity * 0.3) {
             $badges[] = 'old';
         }
-        // 🆕 New Product: velocity = 0 AND maxBatchAge < 30d
+        // 🆕 New Product: velocity = 0 AND maxBatchAge < 30
         if ($velocity === 0 && $maxBatchAge < 30) {
             $badges[] = 'new';
         }

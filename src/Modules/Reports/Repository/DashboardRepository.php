@@ -69,7 +69,9 @@ class DashboardRepository implements DashboardRepositoryInterface
             $stmt = $this->db->prepare("
                 SELECT COALESCE(AVG(velocity), 0) FROM (
                     SELECT
-                        SUM(ii.quantity)::float / 30.0 AS velocity
+                        SUM(ii.quantity)::float
+                            / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
+                        AS velocity
                     FROM products p
                     JOIN invoice_items ii ON ii.product_id = p.id
                     JOIN invoices i ON i.id = ii.invoice_id
@@ -102,7 +104,8 @@ class DashboardRepository implements DashboardRepositoryInterface
                         COALESCE(SUM(ii.quantity), 0)::int AS qty_sold,
                         COALESCE(SUM(ii.line_total), 0)    AS revenue,
                         CASE WHEN SUM(ii.quantity) > 0
-                            THEN SUM(ii.quantity)::float / 30.0
+                            THEN SUM(ii.quantity)::float
+                                / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
                             ELSE 0
                         END AS velocity
                     FROM products p
@@ -115,7 +118,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                 )
                 SELECT id, name, qty_sold, revenue, velocity
                 FROM product_sales
-                WHERE velocity >= :threshold
+                WHERE velocity > 0 AND velocity >= :threshold
                 ORDER BY velocity DESC
                 LIMIT :limit
             ");
@@ -151,7 +154,8 @@ class DashboardRepository implements DashboardRepositoryInterface
                         COALESCE(SUM(ii.quantity), 0)::int AS qty_sold,
                         COALESCE(SUM(ii.line_total), 0)    AS revenue,
                         CASE WHEN SUM(ii.quantity) > 0
-                            THEN SUM(ii.quantity)::float / 30.0
+                            THEN SUM(ii.quantity)::float
+                                / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
                             ELSE 0
                         END AS velocity
                     FROM products p
@@ -201,7 +205,8 @@ class DashboardRepository implements DashboardRepositoryInterface
                         COALESCE(SUM(ii.quantity), 0)::int AS qty_sold,
                         COALESCE(SUM(ii.line_total), 0)    AS revenue,
                         CASE WHEN SUM(ii.quantity) > 0
-                            THEN SUM(ii.quantity)::float / 30.0
+                            THEN SUM(ii.quantity)::float
+                                / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
                             ELSE 0
                         END AS velocity
                     FROM products p
@@ -214,7 +219,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                 )
                 SELECT id, name, qty_sold, revenue, velocity
                 FROM product_sales
-                WHERE velocity >= :lower AND velocity < :upper
+                WHERE velocity > 0 AND velocity >= :lower AND velocity < :upper
                 ORDER BY velocity DESC
                 LIMIT :limit
             ");
@@ -252,11 +257,18 @@ class DashboardRepository implements DashboardRepositoryInterface
                         AND ib.user_id = current_setting('app.current_user_id')::uuid
                     WHERE p.user_id = current_setting('app.current_user_id')::uuid
                     GROUP BY p.id, p.name
+                    HAVING MAX(EXTRACT(DAY FROM NOW() - ib.created_at)) < 30
                 ),
                 product_sales AS (
                     SELECT
                         ii.product_id,
-                        COALESCE(SUM(ii.quantity), 0)::int AS qty_sold
+                        COALESCE(SUM(ii.quantity), 0)::int AS qty_sold,
+                        COALESCE(SUM(ii.line_total), 0)    AS revenue,
+                        CASE WHEN SUM(ii.quantity) > 0
+                            THEN SUM(ii.quantity)::float
+                                / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
+                            ELSE 0
+                        END AS velocity
                     FROM invoice_items ii
                     JOIN invoices i ON i.id = ii.invoice_id
                         AND i.invoice_status = 'completed'
@@ -267,13 +279,12 @@ class DashboardRepository implements DashboardRepositoryInterface
                 SELECT
                     pb.id,
                     pb.name,
-                    0 AS qty_sold,
-                    0 AS revenue,
-                    0 AS velocity
+                    COALESCE(ps.qty_sold, 0) AS qty_sold,
+                    COALESCE(ps.revenue, 0)  AS revenue,
+                    COALESCE(ps.velocity, 0) AS velocity
                 FROM product_batches pb
                 LEFT JOIN product_sales ps ON ps.product_id = pb.id
-                WHERE (ps.qty_sold IS NULL OR ps.qty_sold = 0)
-                  AND pb.max_batch_age < 30
+                WHERE COALESCE(ps.velocity, 0) = 0
                 ORDER BY pb.max_batch_age ASC
                 LIMIT :limit
             ");
@@ -322,7 +333,8 @@ class DashboardRepository implements DashboardRepositoryInterface
                     SELECT
                         ii.product_id,
                         CASE WHEN SUM(ii.quantity) > 0
-                            THEN SUM(ii.quantity)::float / 30.0
+                            THEN SUM(ii.quantity)::float
+                                / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
                             ELSE 0
                         END AS velocity
                     FROM invoice_items ii
