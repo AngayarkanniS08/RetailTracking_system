@@ -102,6 +102,67 @@ services:
         timeout: 5s
         retries: 5
 
+  # -------------------- Backup Worker --------------------
+  backup-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: retail_backup_worker
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: retail_pos
+      DB_USER: admin
+      DB_PASSWORD: admin123
+      VALKEY_HOST: valkey
+      VALKEY_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-super_secret_key_of_retail_pos_system_2026_jwt_auth}
+    volumes:
+      - ./src:/var/www/html/src
+      - ./config:/var/www/html/config
+      - ./Database:/var/www/html/Database
+      - ./tmp:/var/www/html/tmp
+      - ./scripts:/var/www/html/scripts
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: unless-stopped
+
+  # -------------------- Backup Scheduler --------------------
+  backup-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: retail_backup_scheduler
+    command: sh -c "while true; do php /var/www/html/scripts/check_schedule.php; sleep 60; done"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: retail_pos
+      DB_USER: admin
+      DB_PASSWORD: admin123
+      VALKEY_HOST: valkey
+      VALKEY_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-super_secret_key_of_retail_pos_system_2026_jwt_auth}
+    volumes:
+      - ./src:/var/www/html/src
+      - ./config:/var/www/html/config
+      - ./Database:/var/www/html/Database
+      - ./tmp:/var/www/html/tmp
+      - ./scripts:/var/www/html/scripts
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    networks:
+      - internal
+    restart: unless-stopped
+
 volumes:
   pgdata:
   valkey-data:

@@ -14,6 +14,8 @@ use Modules\Product\Controller\Api\SubcategoryController;
 use Modules\Product\Controller\Api\ProductController;
 use Modules\Product\Controller\Api\UnitController;
 use Modules\Inventory\Controller\Api\BatchController;
+use Modules\Backup\Controller\BackupController;
+use Modules\Backup\Controller\BackupConfigController;
 
 class ApiRoutes
 {
@@ -291,6 +293,40 @@ class ApiRoutes
         $router->add('DELETE', '/api/products/daily-sales/{saleId}', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Reports\Controller\Api\ProductHistoryController())->destroyDailySale($params['saleId']);
+        });
+
+        // ── Backup / Restore ─────────────────────────────────────────
+        $router->add('GET', '/api/backup/config', function (): void {
+            AuthMiddleware::authenticate();
+            (new BackupConfigController())->get();
+        });
+        $router->add('PUT', '/api/backup/config', function (): void {
+            AuthMiddleware::authenticate();
+            (new BackupConfigController())->update();
+        });
+        $router->add('POST', '/api/backup/start', function (): void {
+            AuthMiddleware::authenticate();
+            (new BackupController())->start();
+        });
+        $router->add('GET', '/api/backup/status/{id}', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new BackupController())->status($params['id']);
+        });
+        $router->add('GET', '/api/backup/files', function (): void {
+            AuthMiddleware::authenticate();
+            (new BackupController())->files();
+        });
+        $router->add('POST', '/api/backup/restore', function (): void {
+            AuthMiddleware::authenticate();
+            (new BackupController())->restore();
+        });
+        $router->add('GET', '/api/backup/auth-url', function (): void {
+            AuthMiddleware::authenticate();
+            (new BackupConfigController())->authUrl();
+        });
+        $router->add('POST', '/api/backup/auth-code', function (): void {
+            AuthMiddleware::authenticate();
+            (new BackupConfigController())->exchangeCode();
         });
 
     }

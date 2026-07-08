@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     git \
     unzip \
+    postgresql-client \
     && docker-php-ext-install pdo pdo_pgsql pgsql
 
 # Enable Apache mod_rewrite

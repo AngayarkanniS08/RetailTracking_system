@@ -13,7 +13,8 @@ const sections = [
     'vendor_list',
     'vendorhistory',
     'stockintel',
-    'product_history'
+    'product_history',
+    'backup'
 ];
 
 // Switch to a specific section by ID
@@ -62,6 +63,10 @@ function switchTab(sectionId, vendorId = null) {
 
     if (sectionId === 'billing_pos') {
         if (posProducts.length === 0) loadPOSData();
+    }
+
+    if (sectionId === 'backup') {
+        if (typeof loadBackupPage === 'function') loadBackupPage();
     }
 
 }

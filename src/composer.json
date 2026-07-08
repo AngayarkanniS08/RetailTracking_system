@@ -1,7 +1,9 @@
 {
     "require": {
         "firebase/php-jwt": "^7.0",
-        "phpmailer/phpmailer": "^7.1"
+        "phpmailer/phpmailer": "^7.1",
+        "google/apiclient": "^2.19",
+        "google/apiclient-services": "^0.449"
     },
     "autoload": {
         "psr-4": {

@@ -1,0 +1,24 @@
+FROM php:8.2-cli
+
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    git \
+    unzip \
+    postgresql-client \
+    && docker-php-ext-install pdo pdo_pgsql pgsql
+
+RUN pecl install redis && docker-php-ext-enable redis
+
+RUN mkdir -p /var/www/html/tmp && chmod 755 /var/www/html/tmp
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY src/composer.json src/composer.lock src/
+RUN cd src && composer install --no-dev --no-interaction --no-progress 2>/dev/null || true
+
+COPY scripts/backup_worker.php /var/www/html/scripts/backup_worker.php
+COPY scripts/check_schedule.php /var/www/html/scripts/check_schedule.php
+
+CMD ["php", "/var/www/html/scripts/backup_worker.php"]

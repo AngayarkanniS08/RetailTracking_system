@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><title>Redirecting...</title></head>
+<body>
+<script>
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    var code = params.get('code');
+    if (code && window.opener && typeof window.opener.handleAuthCode === 'function') {
+        window.opener.handleAuthCode(code);
+    }
+    window.close();
+})();
+</script>
+</body>
+</html>

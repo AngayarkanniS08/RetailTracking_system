@@ -2426,5 +2426,13 @@ input[type=number] {
         .badge-pending { background: var(--danger-subtle); color: var(--danger); }
         .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
         .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
+        .backup-step { padding: 0.6rem 0.8rem; margin-bottom: 0.3rem; border-radius: 6px; background: var(--bg-100); color: var(--muted); font-size: 0.9rem; transition: all 0.2s; }
+        .backup-step.active { background: rgba(59, 130, 246, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
+        .backup-step.done { background: rgba(34, 197, 94, 0.1); color: var(--ok); border-left: 3px solid var(--ok); }
+        .backup-step.failed { background: rgba(220, 38, 38, 0.1); color: var(--danger); border-left: 3px solid var(--danger); }
+        .backup-step .step-icon { margin-right: 8px; }
+        .backup-file-row { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem; border-bottom: 1px solid var(--border); }
+        .backup-file-row:hover { background: var(--bg-100); }
+        .backup-file-row:last-child { border-bottom: none; }
 
 
