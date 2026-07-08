@@ -514,6 +514,11 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             AND remaining_qty >= ?
         ");
         $stmt->execute([$qty, $batchId, $qty]);
+        if ($stmt->rowCount() === 0) {
+            throw new \RuntimeException(
+                "Failed to decrement batch stock: batch {$batchId} has insufficient stock or not found"
+            );
+        }
     }
 
     public function incrementBatchStock(string $batchId, float $qty): void
@@ -536,6 +541,13 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             WHERE product_id = ? AND user_id = current_setting('app.current_user_id')::uuid
         ");
         $stmt->execute([$qty, $productId]);
+        if ($stmt->rowCount() === 0) {
+            $this->db->prepare("
+                INSERT INTO stock_list (id, user_id, product_id, quantity, created_at, updated_at)
+                VALUES (gen_random_uuid(), current_setting('app.current_user_id')::uuid, ?, 0, now(), now())
+            ")->execute([$productId]);
+            $stmt->execute([$qty, $productId]);
+        }
     }
 
     public function incrementStockList(string $productId, float $qty): void
