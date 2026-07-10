@@ -23,6 +23,11 @@ class GoogleDriveService
         $this->client->setScopes(self::SCOPES);
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
+        $http = new \GuzzleHttp\Client([
+            'connect_timeout' => 10,
+            'timeout'         => 120,
+        ]);
+        $this->client->setHttpClient($http);
     }
 
     public function setAuthConfig(array $config): void
@@ -46,6 +51,12 @@ class GoogleDriveService
 
     public function authenticateWithRefreshToken(string $refreshToken): void
     {
+        $clientConfigPath = __DIR__ . '/../../../../config/google_client.json';
+        if (!file_exists($clientConfigPath)) {
+            throw new \RuntimeException("Google client config not found at {$clientConfigPath}");
+        }
+        $this->client->setAuthConfig(json_decode(file_get_contents($clientConfigPath), true));
+
         $this->client->setAccessToken([
             'refresh_token' => $refreshToken,
             'access_token' => '',

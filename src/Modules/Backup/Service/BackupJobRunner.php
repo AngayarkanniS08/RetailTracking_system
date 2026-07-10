@@ -23,6 +23,8 @@ class BackupJobRunner
         if (!$job) return;
         if ($job->status !== 'pending') return;
 
+        \Config\Database::setCurrentUser($job->userId);
+
         $dbHost = getenv('DB_HOST') ?: 'db';
         $dbName = getenv('DB_NAME') ?: 'retail_pos';
         $dbUser = getenv('DB_USER') ?: 'admin';
@@ -59,12 +61,14 @@ class BackupJobRunner
         $this->queue->setProgress($jobId, 'Cleaning up old backups...');
         $this->service->enforceRetention($userId);
         $this->service->cleanupLocalFiles();
+        $this->service->cleanupBackupFolder();
 
+        $fileSize = file_exists($filePath) ? filesize($filePath) : null;
         @unlink($filePath);
 
         $this->repo->updateJob($jobId, [
             'status' => 'completed',
-            'file_size' => filesize($filePath) ?: null,
+            'file_size' => $fileSize,
             'error_message' => null
         ]);
         $this->queue->setStatus($jobId, 'completed');
@@ -88,6 +92,13 @@ class BackupJobRunner
 
         $this->queue->setProgress($jobId, 'Verifying restored data...');
         $verification = $this->service->verifyRestore();
+
+        $this->queue->setProgress($jobId, 'Flushing cache...');
+        try {
+            \Core\Cache\ValkeyCache::getClient()->flushAll();
+        } catch (\Exception $e) {
+            // Non-critical
+        }
 
         @unlink($filePath);
 

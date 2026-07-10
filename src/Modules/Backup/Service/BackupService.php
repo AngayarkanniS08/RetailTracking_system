@@ -43,7 +43,7 @@ class BackupService
         $this->repo->updateJob($jobId, ['status' => 'dump', 'file_name' => $fileName]);
 
         $command = sprintf(
-            'PGPASSWORD=%s pg_dump -h %s -U %s -d %s --no-owner --no-acl 2>/dev/null | gzip > %s',
+            'PGPASSWORD=%s timeout 300 pg_dump -h %s -U %s -d %s --no-owner --no-acl 2>&1 | gzip > %s',
             escapeshellarg($dbPass),
             escapeshellarg($dbHost),
             escapeshellarg($dbUser),
@@ -61,6 +61,11 @@ class BackupService
             throw new \RuntimeException($error);
         }
 
+        $backupDir = '/var/www/html/backup';
+        if (is_dir($backupDir)) {
+            copy($filePath, "$backupDir/$fileName");
+        }
+
         return $filePath;
     }
 
@@ -71,9 +76,9 @@ class BackupService
             throw new \RuntimeException("Google Drive not authenticated");
         }
 
+        $this->driveService->authenticateWithRefreshToken($config->gdriveRefreshToken);
         $folderId = $config->gdriveBackupFolderId;
-        $driveFileId = $this->driveService->uploadFile($filePath, $folderId);
-        return $driveFileId;
+        return $this->driveService->uploadFile($filePath, $folderId);
     }
 
     public function listBackupFiles(string $userId): array
@@ -82,6 +87,7 @@ class BackupService
         if (!$config || !$config->gdriveRefreshToken) {
             return [];
         }
+        $this->driveService->authenticateWithRefreshToken($config->gdriveRefreshToken);
         return $this->driveService->listBackupFiles($config->gdriveBackupFolderId);
     }
 
@@ -92,6 +98,7 @@ class BackupService
             throw new \RuntimeException("Google Drive not authenticated");
         }
 
+        $this->driveService->authenticateWithRefreshToken($config->gdriveRefreshToken);
         $destPath = "/tmp/restore_{$driveFileId}.sql.gz";
         $this->driveService->downloadFile($driveFileId, $destPath);
         return $destPath;
@@ -108,7 +115,7 @@ class BackupService
         }
 
         $command = sprintf(
-            'gunzip -c %s 2>/dev/null | PGPASSWORD=%s psql -h %s -U %s -d %s 2>/dev/null',
+            "(echo 'SET session_replication_role = replica;'; gunzip -c %s 2>/dev/null; echo 'SET session_replication_role = default;') | PGPASSWORD=%s psql -h %s -U %s -d %s",
             escapeshellarg($filePath),
             escapeshellarg($dbPass),
             escapeshellarg($dbHost),
@@ -152,6 +159,19 @@ class BackupService
             $config->retentionWeekly,
             $config->retentionMonthly
         );
+    }
+
+    public function cleanupBackupFolder(int $keepCount = 30): void
+    {
+        $dir = '/var/www/html/backup';
+        if (!is_dir($dir)) return;
+        $files = glob("{$dir}/backup_*.sql.gz");
+        if (!$files) return;
+        usort($files, fn($a, $b) => filemtime($b) - filemtime($a));
+        $toDelete = array_slice($files, $keepCount);
+        foreach ($toDelete as $f) {
+            @unlink($f);
+        }
     }
 
     public function cleanupLocalFiles(string $dir = '/tmp', string $prefix = 'backup_', int $keepCount = 3): void

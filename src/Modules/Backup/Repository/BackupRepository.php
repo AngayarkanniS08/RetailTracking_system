@@ -115,7 +115,6 @@ class BackupRepository implements BackupRepositoryInterface
             $params[] = $val;
         }
         if (empty($sets)) return;
-        $params[] = $jobId;
         $stmt = $this->db->prepare("
             UPDATE backup_jobs SET " . implode(', ', $sets) . ", completed_at = CASE WHEN ? IN ('completed','failed') THEN now() ELSE completed_at END
             WHERE id = ?

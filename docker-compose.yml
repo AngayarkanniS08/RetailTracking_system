@@ -123,6 +123,7 @@ services:
       - ./Database:/var/www/html/Database
       - ./tmp:/var/www/html/tmp
       - ./scripts:/var/www/html/scripts
+      - ./backup:/var/www/html/backup
     depends_on:
       db:
         condition: service_healthy

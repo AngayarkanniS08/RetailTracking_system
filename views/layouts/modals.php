@@ -672,7 +672,7 @@
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
         <div class="modal-title">Restore in Progress</div>
-        <button class="close-btn" id="restoreCloseBtn" style="display:none;" onclick="closeModal('restoreProgressModal')">&times;</button>
+        <button class="close-btn" id="restoreCloseBtn" onclick="closeModal('restoreProgressModal')">&times;</button>
       </div>
       <div id="restoreStatusContent" style="margin: 1rem 0;">
         <div id="restoreStepDisplay">

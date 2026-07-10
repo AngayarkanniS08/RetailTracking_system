@@ -6,6 +6,18 @@ let _restorePollTimer = null;
 function loadBackupPage() {
     loadBackupConfig();
     checkLastJob();
+    attachCloseHandlers();
+}
+
+function attachCloseHandlers() {
+    document.getElementById('backupCloseBtn')?.addEventListener('click', () => stopPolling('backup'));
+    document.getElementById('restoreCloseBtn')?.addEventListener('click', () => stopPolling('restore'));
+    document.querySelector('#backupProgressModal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) stopPolling('backup');
+    });
+    document.querySelector('#restoreProgressModal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) stopPolling('restore');
+    });
 }
 
 async function loadBackupConfig() {
@@ -55,6 +67,7 @@ async function startBackup() {
     try {
         const result = await apiRequest('/api/backup/start', { method: 'POST' });
         if (result.success && result.job_id) {
+            document.getElementById('backupCloseBtn').style.display = 'block';
             openModal('backupProgressModal');
             pollBackupStatus(result.job_id);
         }
@@ -209,6 +222,7 @@ async function executeRestore() {
         closeModal('restoreConfirmModal');
 
         if (result.success && result.job_id) {
+            document.getElementById('restoreCloseBtn').style.display = 'block';
             openModal('restoreProgressModal');
             pollRestoreStatus(result.job_id);
         }

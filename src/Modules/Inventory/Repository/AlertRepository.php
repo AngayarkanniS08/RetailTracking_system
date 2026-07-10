@@ -41,7 +41,7 @@ class AlertRepository implements AlertRepositoryInterface
             LEFT JOIN public.inventory_batches b ON b.product_id = p.id
             WHERE p.user_id = current_setting('app.current_user_id')::uuid
               AND p.rop > 0
-            GROUP BY p.id
+            GROUP BY p.id, p.name, p.unit, p.daily_sales, p.lead_time, p.emergency_stock, p.rop, p.alert_triggered
             HAVING COALESCE(SUM(b.remaining_qty), 0) <= p.rop
         ");
         $stmt->execute();
