@@ -531,6 +531,11 @@ window.saveSubcategory = async function () {
         const prodCat = document.getElementById('pmProductCategory');
         if (prodCat && prodCat.value === categoryId) {
             loadSubcategoriesIntoProductModal(categoryId);
+            // Also refresh the combobox (clears its cache)
+            if (typeof subcategoryCombobox !== 'undefined' && subcategoryCombobox) {
+                delete subcategoryCombobox.cache[categoryId];
+                subcategoryCombobox.loadForCategory(categoryId);
+            }
         }
         // Keep manage modal open so user can add more
     } else {
