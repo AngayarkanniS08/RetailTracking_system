@@ -100,15 +100,40 @@ async function toggleBills(className, custId) {
     }
     if (!customerRow) return;
 
-    let ledgerHtml = '';
+    // Group ledger entries by invoice_id to merge invoice + its payment into one row
+    const grouped = {};
     entries.forEach(entry => {
+        const key = entry.invoice_id || entry.id;
+        if (!grouped[key]) {
+            grouped[key] = {
+                invoice_id: entry.invoice_id,
+                entry_type: entry.entry_type,
+                debit: 0,
+                credit: 0,
+                balance: entry.balance,
+                created_at: entry.created_at,
+                notes: entry.notes,
+                invoice_status: entry.invoice_status,
+                id: entry.id,
+                _isPay: entry.invoice_id ? false : (entry.entry_type === 'payment' || (entry.debit === 0 && entry.credit > 0))
+            };
+        }
+        grouped[key].debit += entry.debit || 0;
+        grouped[key].credit += entry.credit || 0;
+    });
+
+    const mergedEntries = Object.values(grouped);
+    mergedEntries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    let ledgerHtml = '';
+    mergedEntries.forEach(entry => {
         const dateStr = entry.created_at
             ? new Date(entry.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
             : '-';
         const timeStr = entry.created_at
             ? new Date(entry.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
             : '';
-        const isPay = entry.entry_type === 'payment' || (entry.debit === 0 && entry.credit > 0);
+        const isPay = entry._isPay && !entry.invoice_id;
         const isDeleted = entry.invoice_status === 'deleted';
         const delBadge = isDeleted ? ' <span style="color:var(--danger);font-size:0.65rem;">(Deleted)</span>' : '';
         const typeLabel = isPay
@@ -132,7 +157,7 @@ async function toggleBills(className, custId) {
             <td style="font-size:0.85rem;">${typeLabel}</td>
             <td></td>
             <td style="font-size:0.85rem;">${isPay ? '-' : formatCurrency(entry.debit)}</td>
-            <td style="font-size:0.85rem; color:var(--ok);">${formatCurrency(entry.credit)}</td>
+            <td style="font-size:0.85rem; color:var(--ok);">${entry.credit > 0 ? formatCurrency(entry.credit) : '-'}</td>
             <td style="font-size:0.85rem;">${balBadge}</td>
             <td></td>
             <td>${viewBtn}</td>

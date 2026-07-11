@@ -71,9 +71,9 @@ class Database {
      * Every query in this request is then automatically filtered to $userId's rows.
      */
     public static function setCurrentUser(string $userId): void {
-        // set_config(key, value, is_local=true) → transaction-scoped (SET LOCAL)
+        // set_config(key, value, is_local=false) → session-scoped for the whole request
         self::getConnection()
-            ->prepare("SELECT set_config('app.current_user_id', ?, true)")
+            ->prepare("SELECT set_config('app.current_user_id', ?, false)")
             ->execute([$userId]);
     }
 
