@@ -3,17 +3,29 @@
 window.creditCustomers = [];
 window.creditLedgerCache = {};
 let _creditSearchTimer = null;
+let _creditPage = 1;
+let _creditTotalPages = 1;
+const _creditPerPage = 10;
+let _creditSearchTerm = '';
 
-async function loadCreditPage(search) {
+async function loadCreditPage(search, page) {
     const section = document.getElementById('credit_kadan');
     if (!section || !section.classList.contains('active')) return;
 
+    page = page || _creditPage;
+    _creditPage = page;
+    _creditSearchTerm = search || '';
+
     try {
-        let url = '/api/customers?limit=100';
+        let url = `/api/customers?page=${page}&limit=${_creditPerPage}`;
         if (search) url += '&search=' + encodeURIComponent(search);
         const data = await window.apiRequest(url);
-        window.creditCustomers = Array.isArray(data) ? data : (data.data || []);
-        renderCreditTable();
+        if (data && !data.error) {
+            window.creditCustomers = Array.isArray(data) ? data : (data.data || []);
+            _creditTotalPages = data.pagination?.total_pages || 1;
+            renderCreditTable();
+            renderCreditPagination(data.pagination);
+        }
     } catch (e) {
         console.error('Failed to load credit page:', e);
     }
@@ -24,7 +36,7 @@ function onCreditSearchInput() {
     const input = document.getElementById('creditSearch');
     const term = input ? input.value.trim() : '';
     _creditSearchTimer = setTimeout(function() {
-        loadCreditPage(term || null);
+        loadCreditPage(term || null, 1);
     }, 300);
 }
 
@@ -66,6 +78,29 @@ function renderCreditTable() {
             </td>
           </tr>
         `;
+    });
+}
+
+function renderCreditPagination(pagination) {
+    const container = document.getElementById('creditPaginationControls');
+    if (!container) return;
+
+    if (!pagination || pagination.total_pages <= 1) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    container.innerHTML = `
+        <button class="pagination-btn" id="creditPrevPageBtn" ${!pagination.has_prev ? 'disabled' : ''}>← Previous</button>
+        <span class="pagination-info">Page ${pagination.current_page} of ${pagination.total_pages}</span>
+        <button class="pagination-btn" id="creditNextPageBtn" ${!pagination.has_next ? 'disabled' : ''}>Next →</button>
+    `;
+
+    document.getElementById('creditPrevPageBtn')?.addEventListener('click', () => {
+        if (pagination.has_prev) loadCreditPage(_creditSearchTerm, pagination.current_page - 1);
+    });
+    document.getElementById('creditNextPageBtn')?.addEventListener('click', () => {
+        if (pagination.has_next) loadCreditPage(_creditSearchTerm, pagination.current_page + 1);
     });
 }
 
@@ -239,7 +274,7 @@ function saveCustomer() {
             const custInput = document.getElementById('customerSearchInput');
             if (custInput) custInput.value = data.customer.name;
         }
-        loadCreditPage();
+        loadCreditPage(null, 1);
     }).catch(err => {
         alert('Failed to add customer: ' + err.message);
     });

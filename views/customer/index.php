@@ -35,4 +35,5 @@
               </table>
             </div>
           </div>
+          <div id="creditPaginationControls" class="pagination" style="display:none;"></div>
         </section>

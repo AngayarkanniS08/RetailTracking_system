@@ -135,9 +135,7 @@ class CustomerService
 
         return [
             'data' => $dataWithSummaries,
-            'total' => $result['total'],
-            'page' => $page,
-            'limit' => $limit
+            'pagination' => \App\Common\Helpers\ArrayHelper::getPaginationMeta($page, $limit, $result['total'])
         ];
     }
 
