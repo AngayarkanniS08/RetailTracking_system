@@ -1270,10 +1270,12 @@ tr:hover td {
     outline: none;
     box-shadow: 0 0 0 3px var(--focus);
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 .input-wrapper input[type="number"]::-webkit-inner-spin-button,
 .input-wrapper input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
+    appearance: none;
 }
 .input-wrapper input[type="number"]:focus {
     border-color: var(--accent);
@@ -2058,13 +2060,7 @@ tr:hover td {
 
 /* FULL PAGE */
 
-body{
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-    background: #050816;
-    color: white;
-}
+
 
 /* PAGE WRAPPER */
 
@@ -2345,11 +2341,13 @@ input:checked+.mode-slider:before {
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
     -webkit-appearance: none;
+    appearance: none;
     margin: 0;
 }
 
 input[type=number] {
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 /* Vendor History specific styles */

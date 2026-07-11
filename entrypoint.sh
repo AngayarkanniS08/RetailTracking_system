@@ -16,7 +16,10 @@ fi
 
 # Run database migrations
 echo "Running database migrations..."
-php Database/Migrate.php
+if ! php Database/Migrate.php; then
+    echo "ERROR: Migration failed."
+    exit 1
+fi
 
 # Start Apache in foreground
 echo "Starting web server..."

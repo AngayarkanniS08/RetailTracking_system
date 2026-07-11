@@ -6,6 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pudheera Retail Tracking System</title>
   <link rel="stylesheet" href="public/assets/css/style.css?v=<?= time(); ?>">
+  <script>
+    function setTheme(mode) {
+      document.documentElement.setAttribute('data-theme-mode', mode);
+      localStorage.setItem('theme', mode);
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.querySelector(`.theme-btn[onclick="setTheme('${mode}')"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme-mode', savedTheme);
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      const mode = localStorage.getItem('theme') || 'dark';
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.querySelector(`.theme-btn[onclick="setTheme('${mode}')"]`);
+      if (activeBtn) activeBtn.classList.add('active');
+    });
+  </script>
 </head>
 
 <body>
