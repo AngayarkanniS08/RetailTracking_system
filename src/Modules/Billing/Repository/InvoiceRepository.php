@@ -532,33 +532,9 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $stmt->execute([$qty, $batchId]);
     }
 
-    public function decrementStockList(string $productId, float $qty): void
+    public function refreshStockList(): void
     {
-        $stmt = $this->db->prepare("
-            UPDATE stock_list
-            SET quantity = quantity - ?,
-                updated_at = now()
-            WHERE product_id = ? AND user_id = current_setting('app.current_user_id')::uuid
-        ");
-        $stmt->execute([$qty, $productId]);
-        if ($stmt->rowCount() === 0) {
-            $this->db->prepare("
-                INSERT INTO stock_list (id, user_id, product_id, quantity, created_at, updated_at)
-                VALUES (gen_random_uuid(), current_setting('app.current_user_id')::uuid, ?, 0, now(), now())
-            ")->execute([$productId]);
-            $stmt->execute([$qty, $productId]);
-        }
-    }
-
-    public function incrementStockList(string $productId, float $qty): void
-    {
-        $stmt = $this->db->prepare("
-            UPDATE stock_list
-            SET quantity = quantity + ?,
-                updated_at = now()
-            WHERE product_id = ? AND user_id = current_setting('app.current_user_id')::uuid
-        ");
-        $stmt->execute([$qty, $productId]);
+        $this->db->exec("REFRESH MATERIALIZED VIEW CONCURRENTLY public.stock_list");
     }
 
     // ── Stock movements ────────────────────────────────────

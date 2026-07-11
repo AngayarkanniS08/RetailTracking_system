@@ -204,7 +204,6 @@ class InvoiceService
 
             foreach ($itemModels as $itemModel) {
                 $this->repo->decrementBatchStock($itemModel->batchId, $itemModel->quantity);
-                $this->repo->decrementStockList($itemModel->productId, $itemModel->quantity);
 
                 $this->repo->createStockMovement(new StockMovement(
                     id: null,
@@ -218,6 +217,8 @@ class InvoiceService
                     createdAt: null
                 ));
             }
+
+            $this->repo->refreshStockList();
 
             if ($dto->customerId) {
                 $currentBalance = $this->repo->getCustomerBalance($dto->customerId);
@@ -288,7 +289,6 @@ class InvoiceService
                     if ($item->batchId) {
                         $this->repo->incrementBatchStock($item->batchId, $item->quantity);
                     }
-                    $this->repo->incrementStockList($item->productId, $item->quantity);
 
                     $this->repo->createStockMovement(new StockMovement(
                         id: null,
@@ -303,6 +303,8 @@ class InvoiceService
                     ));
                 }
             }
+
+            $this->repo->refreshStockList();
 
             if ($invoice->balanceDue > 0 && $invoice->customerId) {
                 $currentBalance = $this->repo->getCustomerBalance($invoice->customerId);
@@ -395,7 +397,6 @@ class InvoiceService
             if ($invoiceItem->batchId) {
                 $this->repo->incrementBatchStock($invoiceItem->batchId, $qtyReturned);
             }
-            $this->repo->incrementStockList($invoiceItem->productId, $qtyReturned);
 
             $this->repo->createStockMovement(new StockMovement(
                 id: null,
@@ -408,6 +409,8 @@ class InvoiceService
                 referenceId: $invoiceId,
                 createdAt: null
             ));
+
+            $this->repo->refreshStockList();
 
             if ($refundAmount > 0 && $invoice->customerId) {
                 $currentBalance = $this->repo->getCustomerBalance($invoice->customerId);

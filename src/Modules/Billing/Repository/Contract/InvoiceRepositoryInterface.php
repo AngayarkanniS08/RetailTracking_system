@@ -42,8 +42,7 @@ interface InvoiceRepositoryInterface {
     // ── Stock ──────────────────────────────────────────────
     public function decrementBatchStock(string $batchId, float $qty): void;
     public function incrementBatchStock(string $batchId, float $qty): void;
-    public function decrementStockList(string $productId, float $qty): void;
-    public function incrementStockList(string $productId, float $qty): void;
+    public function refreshStockList(): void;
     public function createStockMovement(StockMovement $movement): void;
 
     // ── Customer ledger ────────────────────────────────────
