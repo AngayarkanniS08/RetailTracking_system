@@ -1,2 +1,1 @@
 ALTER TABLE vendor_purchase_items ADD COLUMN IF NOT EXISTS gst_rate DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (gst_rate >= 0);
-₹0.00
