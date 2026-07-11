@@ -37,7 +37,7 @@ services:
       - ./config:/var/www/html/config:ro
       - ./index.php:/var/www/html/index.php:ro
       - ./.htaccess:/var/www/html/.htaccess:ro
-      - ./tmp:/var/www/html/tmp
+      - tmpdata:/var/www/html/tmp
       # Shadow backend API/Database directories to keep them physically empty
       - /var/www/html/src/Modules/Auth/Controller/Api
       - /var/www/html/src/Modules/Product/Controller/Api
@@ -71,7 +71,7 @@ services:
       - ./src:/var/www/html/src
       - ./Database:/var/www/html/Database
       - ./config:/var/www/html/config
-      - ./tmp:/var/www/html/tmp
+      - tmpdata:/var/www/html/tmp
       - ./src/index.php:/var/www/html/index.php
       - ./src/.htaccess:/var/www/html/.htaccess
       - ./views:/var/www/html/views:ro
@@ -121,7 +121,7 @@ services:
       - ./src:/var/www/html/src
       - ./config:/var/www/html/config
       - ./Database:/var/www/html/Database
-      - ./tmp:/var/www/html/tmp
+      - tmpdata:/var/www/html/tmp
       - ./scripts:/var/www/html/scripts
       - ./backup:/var/www/html/backup
     depends_on:
@@ -153,7 +153,7 @@ services:
       - ./src:/var/www/html/src
       - ./config:/var/www/html/config
       - ./Database:/var/www/html/Database
-      - ./tmp:/var/www/html/tmp
+      - tmpdata:/var/www/html/tmp
       - ./scripts:/var/www/html/scripts
     depends_on:
       db:
@@ -167,6 +167,7 @@ services:
 volumes:
   pgdata:
   valkey-data:
+  tmpdata:
 
 networks:
   internal:

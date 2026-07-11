@@ -3,8 +3,10 @@ set -e
 
 # Create session directory (volume may hide build-time directory)
 mkdir -p /var/www/html/tmp/sessions
-chown -R www-data:www-data /var/www/html/tmp
-chmod 755 /var/www/html/tmp/sessions
+# Attempt to fix ownership; ignore failure (Docker Desktop VM sharing may block chown)
+chown -R www-data:www-data /var/www/html/tmp 2>/dev/null || true
+# Ensure the sessions directory is writable
+chmod 777 /var/www/html/tmp/sessions 2>/dev/null || true
 
 # Run composer install if vendor directory doesn't exist
 if [ ! -d "src/vendor" ]; then
