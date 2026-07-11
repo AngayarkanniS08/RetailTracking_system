@@ -664,7 +664,8 @@ async function onCustomerSearchKeyup(e) {
         const res = await window.apiRequest(url);
         const customers = Array.isArray(res) ? res : (res.data || []);
         if (!customers.length) { dropdown.classList.remove('is-open'); return; }
-        renderCustomerDropdown(dropdown, customers, res.total || 0, res.page || 1);
+        const pagination = res.pagination || {};
+        renderCustomerDropdown(dropdown, customers, pagination.total || 0, pagination.current_page || 1);
         dropdown.classList.add('is-open');
         wrap.classList.add('is-open');
 

@@ -3,7 +3,6 @@
 // ============================================
 let categories = [];
 let products = [];
-let activeCategoryFilter = 'all';
 
 
 // ============================================
@@ -13,23 +12,18 @@ async function loadCategories() {
     const data = await apiRequest('/api/categories');
     if (data && !data.error) {
         categories = data;
-        renderCategoryTabs();
         populateCategoryDropdowns();    // product-add modal
         populateSubcategoryDropdown();  // sub-category section in manage modal
         updateStats();
     }
 }
 let currentPage = 1;
-let currentCategory = 'all';
 let currentSearch = '';
 let totalPages = 1;
 
 async function loadProducts(page = 1) {
     currentPage = page;
     let url = `/api/products?page=${page}&limit=4`;
-    if (currentCategory !== 'all') {
-        url += `&category_id=${currentCategory}`;
-    }
     if (currentSearch) {
         url += `&search=${encodeURIComponent(currentSearch)}`;
     }
@@ -82,51 +76,6 @@ function renderPaginationControls(pagination) {
 // ============================================
 // 3. Render UI
 // ============================================
-function renderCategoryTabs() {
-    const container = document.getElementById('pmCatFilters');
-    if (!container) return;
-
-    // Clear existing filters securely
-    container.innerHTML = '';
-
-    // Calculate total product count from all categories
-    const totalAllCount = categories.reduce((sum, cat) => sum + parseInt(cat.product_count || 0), 0);
-
-    // Create "All" filter button
-    const allBtn = document.createElement('button');
-    allBtn.className = `cat-btn ${activeCategoryFilter === 'all' ? 'active' : ''}`;
-    allBtn.addEventListener('click', () => setCategoryFilter('all'));
-
-    const allText = document.createTextNode('All ');
-    allBtn.appendChild(allText);
-
-    const allSpan = document.createElement('span');
-    allSpan.className = 'product-count';
-    allSpan.textContent = totalAllCount;
-    allBtn.appendChild(allSpan);
-
-    container.appendChild(allBtn);
-
-    // Create a filter button for each category
-    categories.forEach(cat => {
-        const count = cat.product_count !== undefined ? parseInt(cat.product_count) : 0;
-
-        const catBtn = document.createElement('button');
-        catBtn.className = `cat-btn ${activeCategoryFilter === cat.id ? 'active' : ''}`;
-        catBtn.addEventListener('click', () => setCategoryFilter(cat.id));
-
-        const catText = document.createTextNode(cat.name + ' ');
-        catBtn.appendChild(catText);
-
-        const catSpan = document.createElement('span');
-        catSpan.className = 'product-count';
-        catSpan.textContent = count;
-        catBtn.appendChild(catSpan);
-
-        container.appendChild(catBtn);
-    });
-}
-
 let collapsedCategoriesState = {};
 
 function getSubcategoryColor(name) {
@@ -460,14 +409,6 @@ async function loadSubcategoriesIntoProductModal(categoryId) {
 // ============================================
 // 4. CRUD actions
 // ============================================
-window.setCategoryFilter = function (categoryId) {
-    currentCategory = categoryId;
-    currentPage = 1;
-    activeCategoryFilter = categoryId;
-    renderCategoryTabs();          // update active button highlight immediately
-    loadProducts(1);               // server filters by category; re-renders on response
-};
-// Inside the search input event listener (DOMContentLoaded or existing)
 const pmSearch = document.getElementById('pmSearch');
 if (pmSearch) {
     pmSearch.addEventListener('input', (e) => {
@@ -498,8 +439,8 @@ window.saveCategory = async function () {
     });
     if (data && data.success) {
         document.getElementById('pmCategoryName').value = '';
-        await loadCategories();  // refreshes tabs + both dropdowns
-        await loadProducts();    // update per-category counts in tabs
+        await loadCategories();  // refreshes both dropdowns
+        await loadProducts();
         closeModal('addCategoryModal');
     } else {
         alert(data?.error || 'Failed to add category');

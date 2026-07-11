@@ -14,13 +14,9 @@
             </div>
           </div>
 
-          <!-- Search and Category Tabs -->
+          <!-- Search Bar -->
           <div class="input-group" style="margin-bottom: 1rem;">
             <input type="text" id="pmSearch" class="input-field" placeholder="Search products by name or ID..." oninput="renderProductMaster()">
-          </div>
-
-          <div class="cat-filters" id="pmCatFilters">
-            <!-- Rendered by JS -->
           </div>
 
           <!-- Stats -->

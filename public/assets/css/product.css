@@ -8,35 +8,6 @@
     margin-bottom: 2rem;
 }
 
-/* Category Filters specific styling */
-.cat-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 1.5rem;
-}
-
-.cat-filters .cat-btn {
-    background: var(--bg-hover);
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 0.4rem 0.8rem;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-}
-
-.cat-filters .cat-btn:hover {
-    background: var(--border);
-}
-
-.cat-filters .cat-btn.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-}
-
 /* Collapsible Accordion Styles */
 .category-accordion {
     background: var(--card-bg);
