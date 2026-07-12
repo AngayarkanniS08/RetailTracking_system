@@ -30,7 +30,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT id, name, phone, gstin, address, status
             FROM customers
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -44,7 +44,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT id, name, hsn_code, unit, gst_rate
             FROM products
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -59,7 +59,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             SELECT id, product_id, batch_number, selling_price, cost_price,
                    remaining_qty, initial_qty
             FROM inventory_batches
-            WHERE product_id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE product_id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
               AND remaining_qty > 0
             ORDER BY created_at ASC
             LIMIT 1
@@ -82,7 +82,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
                 notes, billed_at, created_at, updated_at
             ) VALUES (
                 gen_random_uuid(),
-                current_setting('app.current_user_id')::uuid, ?, ?,
+                current_setting('app.current_user_id', true)::uuid, ?, ?,
                 ?, ?, ?,
                 ?, ?, ?, ?, ?,
                 ?, ?, ?, ?,
@@ -147,7 +147,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
                    amount_paid, balance_due, invoice_status, payment_status,
                    notes, billed_at, created_at, updated_at
             FROM invoices
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -250,7 +250,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
 
         $countStmt = $this->db->prepare("
             SELECT COUNT(*) FROM invoices
-            WHERE user_id = current_setting('app.current_user_id')::uuid
+            WHERE user_id = current_setting('app.current_user_id', true)::uuid
             $whereSql
         ");
         $countStmt->execute($params);
@@ -268,7 +268,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
                    amount_paid, balance_due, invoice_status, payment_status,
                    billed_at, created_at
             FROM invoices
-            WHERE user_id = current_setting('app.current_user_id')::uuid
+            WHERE user_id = current_setting('app.current_user_id', true)::uuid
             $whereSql
             ORDER BY billed_at DESC
             LIMIT ? OFFSET ?
@@ -308,7 +308,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $stmt = $this->db->prepare("
             UPDATE invoices
             SET invoice_status = ?, updated_at = now()
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$status, $id]);
         return $stmt->rowCount() > 0;
@@ -324,13 +324,13 @@ class InvoiceRepository implements InvoiceRepositoryInterface
                 product_name_snapshot, hsn_code_snapshot, unit_snapshot,
                 quantity, unit_price, cost_price_snapshot,
                 gst_rate_snapshot, gst_amount, discount_amount, line_total,
-                created_at
+                created_at, user_id
             ) VALUES (
                 gen_random_uuid(), ?, ?, ?,
                 ?, ?, ?,
                 ?, ?, ?,
                 ?, ?, ?, ?,
-                now()
+                now(), current_setting('app.current_user_id', true)::uuid
             )
         ");
 
@@ -419,10 +419,10 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $stmt = $this->db->prepare("
             INSERT INTO invoice_returns (
                 id, invoice_id, invoice_item_id, product_id, batch_id,
-                qty_returned, refund_amount, restock_qty, reason, created_at
+                qty_returned, refund_amount, restock_qty, reason, created_at, user_id
             ) VALUES (
                 gen_random_uuid(), ?, ?, ?, ?,
-                ?, ?, ?, ?, now()
+                ?, ?, ?, ?, now(), current_setting('app.current_user_id', true)::uuid
             )
             RETURNING id, invoice_id, invoice_item_id, product_id, batch_id,
                       qty_returned, refund_amount, restock_qty, reason, created_at
@@ -497,7 +497,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             SELECT id, product_id, batch_number, selling_price, cost_price,
                    remaining_qty, initial_qty
             FROM inventory_batches
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -510,7 +510,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             UPDATE inventory_batches
             SET remaining_qty = remaining_qty - ?,
                 updated_at = now()
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
             AND remaining_qty >= ?
         ");
         $stmt->execute([$qty, $batchId, $qty]);
@@ -527,7 +527,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             UPDATE inventory_batches
             SET remaining_qty = remaining_qty + ?,
                 updated_at = now()
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$qty, $batchId]);
     }
@@ -547,7 +547,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
                 reference_type, reference_id, movement_type, qty, created_at
             ) VALUES (
                 gen_random_uuid(),
-                current_setting('app.current_user_id')::uuid, ?, ?,
+                current_setting('app.current_user_id', true)::uuid, ?, ?,
                 ?, ?, ?, ?, now()
             )
         ");
@@ -571,7 +571,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
                 entry_type, debit, credit, balance, notes, created_at
             ) VALUES (
                 gen_random_uuid(),
-                current_setting('app.current_user_id')::uuid, ?, ?,
+                current_setting('app.current_user_id', true)::uuid, ?, ?,
                 ?, ?, ?, ?, ?, clock_timestamp()
             )
             RETURNING id, user_id, customer_id, invoice_id,
@@ -606,7 +606,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT balance FROM customer_ledger
-            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
             ORDER BY created_at DESC
             LIMIT 1
         ");
@@ -621,7 +621,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             SELECT id, user_id, customer_id, invoice_id,
                    entry_type, debit, credit, balance, notes, created_at
             FROM customer_ledger
-            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
             ORDER BY created_at DESC
             LIMIT ?
         ");
