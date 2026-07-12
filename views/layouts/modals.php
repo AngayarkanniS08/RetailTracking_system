@@ -380,7 +380,12 @@
       <div class="d-flex" style="gap:10px;">
         <div class="input-group" style="flex:1;">
           <label class="input-label">Category</label>
-          <select id="pmProductCategory" class="input-field" onchange="onCategoryChange(this.value)"></select>
+          <div class="combobox" id="categoryCombobox">
+            <input type="text" id="pmProductCategoryInput" class="input-field" 
+                  placeholder="Type to search category..." autocomplete="off">
+            <input type="hidden" id="pmProductCategoryId" value="">
+            <div id="categoryDropdown" class="combobox-dropdown"></div>
+          </div>
         </div>
         <div class="input-group" style="flex:1;">
           <label class="input-label">Subcategory</label>
