@@ -424,7 +424,7 @@
         <div class="input-group">
           <input type="text" id="pmCategoryName" class="input-field" placeholder="e.g. Lace Work">
         </div>
-        <button class="btn btn-primary btn-sm" onclick="saveCategory()">Save Category</button>
+        <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
       </div>
 
       <div>
@@ -438,7 +438,7 @@
           <label class="input-label">Subcategory Name</label>
           <input type="text" id="pmSubCategoryName" class="input-field" placeholder="e.g. Fancy Lace">
         </div>
-        <button class="btn btn-primary btn-sm" onclick="saveSubcategory()">Save Subcategory</button>
+        <button class="btn btn-primary" onclick="saveSubcategory()">Save Subcategory</button>
       </div>
     </div>
   </div>
