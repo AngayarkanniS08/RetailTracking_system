@@ -62,6 +62,14 @@ class SubcategoryController {
         } catch (ValidationException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                http_response_code(422);
+                echo json_encode(['error' => 'This subcategory already exists in this category.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Database error']);
+            }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Internal server error']);
@@ -90,6 +98,14 @@ class SubcategoryController {
         } catch (ValidationException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                http_response_code(422);
+                echo json_encode(['error' => 'This subcategory already exists in this category.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Database error']);
+            }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Internal server error']);

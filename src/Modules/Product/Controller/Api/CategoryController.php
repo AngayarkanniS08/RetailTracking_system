@@ -51,6 +51,14 @@ class CategoryController {
         } catch (ValidationException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                http_response_code(422);
+                echo json_encode(['error' => 'This category already exists.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Database error']);
+            }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Internal server error']);
@@ -77,6 +85,14 @@ class CategoryController {
         } catch (ValidationException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23505') {
+                http_response_code(422);
+                echo json_encode(['error' => 'This category already exists.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Database error']);
+            }
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Internal server error']);

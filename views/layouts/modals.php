@@ -619,7 +619,7 @@
         </div>
         <div class="modal-body" id="deleteProductModalBody">
             <p>Are you sure you want to delete the product <strong id="deleteProductName"></strong>?</p>
-            <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone. All batches and sale records linked to this product will also be affected.</p>
+            <p class="text-muted" style="font-size: 0.85rem;">Inventory records (stock list, batches) will be permanently deleted. Invoice and purchase history will be preserved.</p>
         </div>
         <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
             <button class="btn btn-outline" onclick="closeModal('deleteProductModal')">Cancel</button>
