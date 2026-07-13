@@ -37,6 +37,7 @@ class ProductHistoryService
         return [
             'product' => [
                 'id'          => $a->productId,
+                'display_id'  => $a->displayId,
                 'name'        => $a->productName,
                 'category'    => $a->category,
                 'subcategory' => $a->subcategory,

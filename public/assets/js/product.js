@@ -101,6 +101,7 @@
         if (query) {
             filtered = filtered.filter(p => 
                 p.name.toLowerCase().includes(query) || 
+                (p.display_id && String(p.display_id).includes(query)) || 
                 (p.id && p.id.toLowerCase().includes(query))
             );
         }
@@ -123,7 +124,7 @@
 
             // Product ID (slice of first 8 characters)
             const tdId = document.createElement('td');
-            tdId.textContent = p.id ? p.id.slice(0, 8) : '';
+            tdId.textContent = p.display_id ? '#' + p.display_id : (p.id ? p.id.slice(0, 8) : '');
             tr.appendChild(tdId);
 
             // Product Name

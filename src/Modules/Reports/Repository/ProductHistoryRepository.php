@@ -18,7 +18,7 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
     {
         $uid = "current_setting('app.current_user_id')::uuid";
         $stmt = $this->db->prepare("
-            SELECT DISTINCT p.id, p.name, c.name AS category
+            SELECT DISTINCT p.id, p.display_id, p.name, c.name AS category
             FROM products p
             JOIN categories c ON c.id = p.category_id
             JOIN inventory_batches ib ON ib.product_id = p.id
@@ -62,6 +62,7 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT
                 p.id,
+                p.display_id,
                 p.name,
                 c.name AS category,
                 sc.name AS subcategory,
@@ -221,6 +222,7 @@ class ProductHistoryRepository implements ProductHistoryRepositoryInterface
 
         return new ProductHistoryAnalytics(
             productId:       $prod['id'],
+            displayId:       $prod['display_id'] ? (int) $prod['display_id'] : null,
             productName:     $prod['name'],
             category:        $prod['category'],
             subcategory:     $prod['subcategory'],

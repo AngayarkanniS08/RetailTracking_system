@@ -197,7 +197,7 @@ function renderProductAnalytics(data) {
 
     // Header
     setText('phProductName', p.name || '-');
-    setText('phProductMeta', (p.id || '') + ' &middot; ' + (p.category || ''));
+    setText('phProductMeta', (p.display_id ? '#' + p.display_id : p.id || '') + ' &middot; ' + (p.category || ''));
     setText('phSubtitle', (p.name || '') + ' &middot; ' + unit);
 
     var icon = document.getElementById('phIcon');

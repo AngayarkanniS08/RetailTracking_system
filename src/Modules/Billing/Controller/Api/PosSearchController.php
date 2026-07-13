@@ -49,8 +49,8 @@ class PosSearchController
 
             $where = "b.user_id = current_setting('app.current_user_id')::uuid AND b.remaining_qty > 0";
             if ($likeTerm !== null) {
-                $where .= " AND (p.name ILIKE ? OR b.batch_number ILIKE ? OR b.id::text ILIKE ?)";
-                $params = [$likeTerm, $likeTerm, $likeTerm];
+                $where .= " AND (p.name ILIKE ? OR p.display_id::text ILIKE ? OR b.batch_number ILIKE ? OR b.id::text ILIKE ?)";
+                $params = [$likeTerm, $likeTerm, $likeTerm, $likeTerm];
             }
 
             $countStmt = $db->prepare("SELECT COUNT(*) FROM public.inventory_batches b
@@ -59,7 +59,7 @@ class PosSearchController
             $total = (int)$countStmt->fetchColumn();
 
             $dataSql = "SELECT b.id AS batch_id, b.batch_number, b.product_id,
-                p.name AS product_name, p.hsn_code, p.unit, p.gst_rate,
+                p.display_id, p.name AS product_name, p.hsn_code, p.unit, p.gst_rate,
                 b.selling_price, b.retail_price, b.remaining_qty AS quantity,
                 b.vendor_name
                 FROM public.inventory_batches b

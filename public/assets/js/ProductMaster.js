@@ -258,7 +258,7 @@ function renderProductTable() {
                 const tr = document.createElement('tr');
 
                 const tdId = document.createElement('td');
-                tdId.textContent = p.id ? p.id.slice(0, 8) : '';
+                tdId.textContent = p.display_id ? '#' + p.display_id : (p.id ? p.id.slice(0, 8) : '');
                 tr.appendChild(tdId);
 
                 const tdName = document.createElement('td');

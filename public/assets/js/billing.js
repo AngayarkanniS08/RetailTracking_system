@@ -424,7 +424,7 @@ function renderPOSItems() {
         const catName = posCategoryMap[p.category_id] || '';
         if (activePosCategory && catName !== activePosCategory) return;
 
-        const searchStr = `${p.name} ${b.batch_number} ${b.vendor_name || ''} ${catName}`.toLowerCase();
+        const searchStr = `${p.display_id ? '#' + p.display_id : ''} ${p.name} ${b.batch_number} ${b.vendor_name || ''} ${catName}`.toLowerCase();
         if (term && !searchStr.includes(term)) return;
 
         const stock = b.quantity;

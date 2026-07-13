@@ -84,7 +84,7 @@ class ProductRepository implements ProductRepositoryInterface {
         // 2. Fetch all products belonging to these categories
         $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
         $productSql = "
-            SELECT p.id, p.name, p.category_id, c.name AS category_name,
+            SELECT p.id, p.display_id, p.name, p.category_id, c.name AS category_name,
                    p.subcategory_id, s.name AS subcategory_name,
                    p.unit, p.hsn_code, p.gst_rate, p.created_at,
                    p.daily_sales, p.lead_time, p.emergency_stock, p.rop, p.alert_triggered
@@ -129,7 +129,7 @@ class ProductRepository implements ProductRepositoryInterface {
     }
 
     public function findAll(): array {
-        $sql = "SELECT p.id, p.name, p.category_id, c.name AS category_name,
+        $sql = "SELECT p.id, p.display_id, p.name, p.category_id, c.name AS category_name,
                        p.subcategory_id, s.name AS subcategory_name,
                        p.unit, p.hsn_code, p.gst_rate, p.created_at,
                        p.daily_sales, p.lead_time, p.emergency_stock, p.rop, p.alert_triggered
@@ -145,7 +145,7 @@ class ProductRepository implements ProductRepositoryInterface {
     }
 
     public function findById(string $id): ?array {
-        $sql = "SELECT p.id, p.name, p.category_id, c.name AS category_name,
+        $sql = "SELECT p.id, p.display_id, p.name, p.category_id, c.name AS category_name,
                        p.subcategory_id, s.name AS subcategory_name,
                        p.unit, p.hsn_code, p.gst_rate, p.created_at,
                        p.daily_sales, p.lead_time, p.emergency_stock, p.rop, p.alert_triggered

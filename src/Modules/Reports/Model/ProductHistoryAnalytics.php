@@ -5,6 +5,7 @@ class ProductHistoryAnalytics
 {
     public function __construct(
         public string  $productId,
+        public ?int    $displayId,
         public string  $productName,
         public string  $category,
         public ?string $subcategory,
