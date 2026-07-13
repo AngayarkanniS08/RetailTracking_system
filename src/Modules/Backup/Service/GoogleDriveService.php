@@ -3,7 +3,6 @@ namespace Modules\Backup\Service;
 
 use Google\Client as GoogleClient;
 use Google\Service\Drive;
-use Modules\Backup\Repository\Contract\BackupRepositoryInterface;
 use Modules\Backup\Model\BackupFileInfo;
 
 class GoogleDriveService
@@ -11,13 +10,12 @@ class GoogleDriveService
     private const APP_NAME = 'RetailTrackingBackup';
     private const SCOPES = [Drive::DRIVE_FILE];
     private const MIME_TYPE_GZIP = 'application/gzip';
+    private const TOKENS_PATH = __DIR__ . '/../../../../config/gdrive_tokens.json';
 
     private GoogleClient $client;
-    private BackupRepositoryInterface $repo;
 
-    public function __construct(BackupRepositoryInterface $repo)
+    public function __construct()
     {
-        $this->repo = $repo;
         $this->client = new GoogleClient();
         $this->client->setApplicationName(self::APP_NAME);
         $this->client->setScopes(self::SCOPES);
@@ -28,6 +26,50 @@ class GoogleDriveService
             'timeout'         => 120,
         ]);
         $this->client->setHttpClient($http);
+    }
+
+    public function loadTokens(): array
+    {
+        if (!file_exists(self::TOKENS_PATH)) {
+            return [];
+        }
+        return json_decode(file_get_contents(self::TOKENS_PATH), true) ?: [];
+    }
+
+    public function saveTokens(array $data): void
+    {
+        $existing = $this->loadTokens();
+        $merged = array_merge($existing, $data);
+        file_put_contents(self::TOKENS_PATH, json_encode($merged, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    }
+
+    public function authenticate(): void
+    {
+        $clientConfigPath = __DIR__ . '/../../../../config/google_client.json';
+        if (!file_exists($clientConfigPath)) {
+            throw new \RuntimeException("Google client config not found at {$clientConfigPath}");
+        }
+
+        $tokens = $this->loadTokens();
+        if (empty($tokens['refresh_token'])) {
+            throw new \RuntimeException("Google Drive not authenticated");
+        }
+
+        $this->client->setAuthConfig(json_decode(file_get_contents($clientConfigPath), true));
+        $this->client->setAccessToken([
+            'refresh_token' => $tokens['refresh_token'],
+            'access_token' => '',
+            'expires_in' => 3600
+        ]);
+        if ($this->client->isAccessTokenExpired()) {
+            $this->client->fetchAccessTokenWithRefreshToken();
+        }
+    }
+
+    public function getFolderId(): ?string
+    {
+        $tokens = $this->loadTokens();
+        return $tokens['folder_id'] ?? null;
     }
 
     public function setAuthConfig(array $config): void
@@ -47,29 +89,6 @@ class GoogleDriveService
             throw new \RuntimeException("Failed to exchange auth code: " . ($token['error_description'] ?? $token['error']));
         }
         return $token;
-    }
-
-    public function authenticateWithRefreshToken(string $refreshToken): void
-    {
-        $clientConfigPath = __DIR__ . '/../../../../config/google_client.json';
-        if (!file_exists($clientConfigPath)) {
-            throw new \RuntimeException("Google client config not found at {$clientConfigPath}");
-        }
-        $this->client->setAuthConfig(json_decode(file_get_contents($clientConfigPath), true));
-
-        $this->client->setAccessToken([
-            'refresh_token' => $refreshToken,
-            'access_token' => '',
-            'expires_in' => 3600
-        ]);
-        if ($this->client->isAccessTokenExpired()) {
-            $this->client->fetchAccessTokenWithRefreshToken();
-        }
-    }
-
-    public function authenticateWithToken(array $token): void
-    {
-        $this->client->setAccessToken($token);
     }
 
     private function getDriveService(): Drive

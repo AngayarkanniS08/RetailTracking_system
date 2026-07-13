@@ -18,7 +18,7 @@ class BackupConfigController
     public function __construct()
     {
         $this->repo = new BackupRepository();
-        $this->driveService = new GoogleDriveService($this->repo);
+        $this->driveService = new GoogleDriveService();
         $this->service = new BackupService($this->repo, $this->driveService);
     }
 
@@ -28,18 +28,47 @@ class BackupConfigController
         $user = AuthMiddleware::authenticate();
         $userId = $user->data->user_id ?? '';
 
-        $config = $this->repo->getConfig($userId);
-        if (!$config) {
-            echo json_encode([
-                'gdrive_connected' => false,
-                'schedule_enabled' => false,
-                'schedule_time' => '22:00',
-                'retention_daily' => 7,
-                'retention_weekly' => 4,
-                'retention_monthly' => 12,
-                'last_backup_at' => null,
-                'last_backup_status' => 'never'
+        // Default response when DB tables are missing
+        $defaultResponse = [
+            'gdrive_connected' => false,
+            'gdrive_auth_email' => null,
+            'gdrive_backup_folder_id' => null,
+            'schedule_enabled' => false,
+            'schedule_time' => '22:00',
+            'retention_daily' => 7,
+            'retention_weekly' => 4,
+            'retention_monthly' => 12,
+            'last_backup_at' => null,
+            'last_backup_status' => 'never'
+        ];
+
+        // Check file tokens even if DB is wiped
+        $fileTokens = $this->driveService->loadTokens();
+        if (!empty($fileTokens['refresh_token'])) {
+            $defaultResponse['gdrive_connected'] = true;
+            $defaultResponse['gdrive_auth_email'] = $fileTokens['auth_email'] ?? null;
+            $defaultResponse['gdrive_backup_folder_id'] = $fileTokens['folder_id'] ?? null;
+        }
+
+        try {
+            $config = $this->repo->getConfig($userId);
+        } catch (\PDOException $e) {
+            // backup_config table doesn't exist (DB wiped) — return defaults with file tokens
+            echo json_encode($defaultResponse);
+            return;
+        }
+
+        // Migrate existing DB tokens to file (one-time, so Drive works after DB wipe)
+        if ($config && empty($fileTokens['refresh_token']) && !empty($config->gdriveRefreshToken)) {
+            $this->driveService->saveTokens([
+                'refresh_token' => $config->gdriveRefreshToken,
+                'folder_id' => $config->gdriveBackupFolderId,
+                'auth_email' => $config->gdriveAuthEmail,
             ]);
+        }
+
+        if (!$config) {
+            echo json_encode($defaultResponse);
             return;
         }
 
@@ -66,29 +95,43 @@ class BackupConfigController
 
         $dto = BackupConfigDTO::fromArray($input);
 
-        $config = $this->repo->getConfig($userId);
-        $currentGdriveToken = $config ? $config->gdriveRefreshToken : null;
-        $currentAuthEmail = $config ? $config->gdriveAuthEmail : null;
-        $currentFolderId = $config ? $config->gdriveBackupFolderId : null;
+        // Sync folder_id to file (survives DB wipe)
+        $newFolderId = $dto->gdriveBackupFolderId;
+        if (!$newFolderId) {
+            $fileTokens = $this->driveService->loadTokens();
+            $newFolderId = $fileTokens['folder_id'] ?? null;
+        }
+        if ($newFolderId) {
+            $this->driveService->saveTokens(['folder_id' => $newFolderId]);
+        }
 
-        $updated = new BackupConfig(
-            id: $config?->id,
-            userId: $userId,
-            gdriveRefreshToken: $currentGdriveToken,
-            gdriveBackupFolderId: $dto->gdriveBackupFolderId ?: $currentFolderId,
-            gdriveAuthEmail: $currentAuthEmail,
-            scheduleEnabled: $dto->scheduleEnabled,
-            scheduleTime: $dto->scheduleTime,
-            retentionDaily: $dto->retentionDaily,
-            retentionWeekly: $dto->retentionWeekly,
-            retentionMonthly: $dto->retentionMonthly,
-            lastBackupAt: $config?->lastBackupAt,
-            lastBackupStatus: $config?->lastBackupStatus ?? 'never',
-            createdAt: $config?->createdAt,
-            updatedAt: null
-        );
+        // Save to DB for backward compat with schedule/retention
+        try {
+            $config = $this->repo->getConfig($userId);
+            $currentGdriveToken = $config ? $config->gdriveRefreshToken : null;
+            $currentAuthEmail = $config ? $config->gdriveAuthEmail : null;
 
-        $this->repo->saveConfig($updated);
+            $updated = new BackupConfig(
+                id: $config?->id,
+                userId: $userId,
+                gdriveRefreshToken: $currentGdriveToken,
+                gdriveBackupFolderId: $newFolderId,
+                gdriveAuthEmail: $currentAuthEmail,
+                scheduleEnabled: $dto->scheduleEnabled,
+                scheduleTime: $dto->scheduleTime,
+                retentionDaily: $dto->retentionDaily,
+                retentionWeekly: $dto->retentionWeekly,
+                retentionMonthly: $dto->retentionMonthly,
+                lastBackupAt: $config?->lastBackupAt,
+                lastBackupStatus: $config?->lastBackupStatus ?? 'never',
+                createdAt: $config?->createdAt,
+                updatedAt: null
+            );
+            $this->repo->saveConfig($updated);
+        } catch (\PDOException $e) {
+            // backup_config table may not exist (DB wiped) — file save is sufficient
+        }
+
         echo json_encode(['success' => true]);
     }
 
@@ -137,24 +180,35 @@ class BackupConfigController
             $this->driveService->setAuthConfig(json_decode(file_get_contents($clientConfigPath), true));
             $token = $this->driveService->exchangeAuthCode($code);
 
-            $config = $this->repo->getConfig($userId);
-            $updated = new BackupConfig(
-                id: $config?->id,
-                userId: $userId,
-                gdriveRefreshToken: $token['refresh_token'] ?? null,
-                gdriveBackupFolderId: $config?->gdriveBackupFolderId,
-                gdriveAuthEmail: $token['email'] ?? null,
-                scheduleEnabled: $config?->scheduleEnabled ?? false,
-                scheduleTime: $config?->scheduleTime ?? '22:00',
-                retentionDaily: $config?->retentionDaily ?? 7,
-                retentionWeekly: $config?->retentionWeekly ?? 4,
-                retentionMonthly: $config?->retentionMonthly ?? 12,
-                lastBackupAt: $config?->lastBackupAt,
-                lastBackupStatus: $config?->lastBackupStatus ?? 'never',
-                createdAt: $config?->createdAt,
-                updatedAt: null
-            );
-            $this->repo->saveConfig($updated);
+            // Save tokens to file (survives DB wipe)
+            $this->driveService->saveTokens([
+                'refresh_token' => $token['refresh_token'] ?? null,
+                'auth_email' => $token['email'] ?? null,
+            ]);
+
+            // Also save to DB for backward compat with schedule/retention
+            try {
+                $config = $this->repo->getConfig($userId);
+                $updated = new BackupConfig(
+                    id: $config?->id,
+                    userId: $userId,
+                    gdriveRefreshToken: $token['refresh_token'] ?? null,
+                    gdriveBackupFolderId: $config?->gdriveBackupFolderId,
+                    gdriveAuthEmail: $token['email'] ?? null,
+                    scheduleEnabled: $config?->scheduleEnabled ?? false,
+                    scheduleTime: $config?->scheduleTime ?? '22:00',
+                    retentionDaily: $config?->retentionDaily ?? 7,
+                    retentionWeekly: $config?->retentionWeekly ?? 4,
+                    retentionMonthly: $config?->retentionMonthly ?? 12,
+                    lastBackupAt: $config?->lastBackupAt,
+                    lastBackupStatus: $config?->lastBackupStatus ?? 'never',
+                    createdAt: $config?->createdAt,
+                    updatedAt: null
+                );
+                $this->repo->saveConfig($updated);
+            } catch (\PDOException $e) {
+                // backup_config table may not exist (DB wiped) — file save is sufficient
+            }
 
             echo json_encode(['success' => true]);
         } catch (\Exception $e) {

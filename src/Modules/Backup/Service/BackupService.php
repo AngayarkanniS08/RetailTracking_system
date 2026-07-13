@@ -15,7 +15,7 @@ class BackupService
         ?GoogleDriveService $driveService = null
     ) {
         $this->repo = $repo;
-        $this->driveService = $driveService ?: new GoogleDriveService($repo);
+        $this->driveService = $driveService ?: new GoogleDriveService();
     }
 
     public function startBackup(string $userId): BackupJob
@@ -69,36 +69,27 @@ class BackupService
         return $filePath;
     }
 
-    public function uploadToDrive(string $filePath, string $userId): string
+    public function uploadToDrive(string $filePath): string
     {
-        $config = $this->repo->getConfig($userId);
-        if (!$config || !$config->gdriveRefreshToken) {
-            throw new \RuntimeException("Google Drive not authenticated");
-        }
-
-        $this->driveService->authenticateWithRefreshToken($config->gdriveRefreshToken);
-        $folderId = $config->gdriveBackupFolderId;
+        $this->driveService->authenticate();
+        $folderId = $this->driveService->getFolderId();
         return $this->driveService->uploadFile($filePath, $folderId);
     }
 
-    public function listBackupFiles(string $userId): array
+    public function listBackupFiles(): array
     {
-        $config = $this->repo->getConfig($userId);
-        if (!$config || !$config->gdriveRefreshToken) {
+        try {
+            $this->driveService->authenticate();
+        } catch (\RuntimeException $e) {
             return [];
         }
-        $this->driveService->authenticateWithRefreshToken($config->gdriveRefreshToken);
-        return $this->driveService->listBackupFiles($config->gdriveBackupFolderId);
+        $folderId = $this->driveService->getFolderId();
+        return $this->driveService->listBackupFiles($folderId);
     }
 
-    public function downloadFromDrive(string $driveFileId, string $userId): string
+    public function downloadFromDrive(string $driveFileId): string
     {
-        $config = $this->repo->getConfig($userId);
-        if (!$config || !$config->gdriveRefreshToken) {
-            throw new \RuntimeException("Google Drive not authenticated");
-        }
-
-        $this->driveService->authenticateWithRefreshToken($config->gdriveRefreshToken);
+        $this->driveService->authenticate();
         $destPath = "/tmp/restore_{$driveFileId}.sql.gz";
         $this->driveService->downloadFile($driveFileId, $destPath);
         return $destPath;
@@ -148,16 +139,34 @@ class BackupService
         return $results;
     }
 
-    public function enforceRetention(string $userId): void
+    public function enforceRetention(): void
     {
-        $config = $this->repo->getConfig($userId);
-        if (!$config || !$config->gdriveRefreshToken) return;
+        $folderId = $this->driveService->getFolderId();
+        if (!$folderId) return;
+
+        // Read retention settings from DB (with fallback defaults)
+        $retentionDaily = 7;
+        $retentionWeekly = 4;
+        $retentionMonthly = 12;
+        try {
+            $stmt = \Config\Database::getConnection()->query(
+                "SELECT retention_daily, retention_weekly, retention_monthly FROM backup_config LIMIT 1"
+            );
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row) {
+                $retentionDaily = (int)$row['retention_daily'];
+                $retentionWeekly = (int)$row['retention_weekly'];
+                $retentionMonthly = (int)$row['retention_monthly'];
+            }
+        } catch (\Exception $e) {
+            // backup_config table may not exist (DB wiped) — use defaults
+        }
 
         $this->driveService->enforceRetention(
-            $config->gdriveBackupFolderId,
-            $config->retentionDaily,
-            $config->retentionWeekly,
-            $config->retentionMonthly
+            $folderId,
+            $retentionDaily,
+            $retentionWeekly,
+            $retentionMonthly
         );
     }
 

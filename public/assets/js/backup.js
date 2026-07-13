@@ -198,13 +198,7 @@ function openRestoreConfirm(file) {
 }
 
 async function executeRestore() {
-    const password = document.getElementById('restorePassword').value;
     const fileId = document.getElementById('restoreFileInfo').dataset.fileId;
-
-    if (!password) {
-        alert('Please enter your admin password to confirm restore.');
-        return;
-    }
 
     const btn = document.getElementById('executeRestoreBtn');
     btn.disabled = true;
@@ -213,18 +207,20 @@ async function executeRestore() {
     try {
         const result = await apiRequest('/api/backup/restore', {
             method: 'POST',
-            body: JSON.stringify({
-                drive_file_id: fileId,
-                confirm_password: password
-            })
+            body: JSON.stringify({ drive_file_id: fileId })
         });
 
         closeModal('restoreConfirmModal');
 
-        if (result.success && result.job_id) {
-            document.getElementById('restoreCloseBtn').style.display = 'block';
+        if (result.success) {
             openModal('restoreProgressModal');
-            pollRestoreStatus(result.job_id);
+            document.getElementById('restoreStepDisplay').style.display = 'none';
+            document.getElementById('restoreCloseBtn').style.display = 'block';
+            const msg = document.getElementById('restoreResultMessage');
+            msg.style.display = 'block';
+            msg.style.background = 'rgba(34,197,94,0.1)';
+            msg.style.color = 'var(--ok)';
+            msg.textContent = '✓ Restore completed successfully. Data has been restored.';
         }
     } catch (e) {
         alert('Restore failed: ' + e.message);

@@ -47,7 +47,6 @@ class BackupController
     public function status(string $jobId): void
     {
         header('Content-Type: application/json');
-        AuthMiddleware::authenticate();
 
         $status = $this->queue->getStatus($jobId);
         $progress = $this->queue->getProgress($jobId);
@@ -68,11 +67,9 @@ class BackupController
     public function files(): void
     {
         header('Content-Type: application/json');
-        $user = AuthMiddleware::authenticate();
-        $userId = $user->data->user_id ?? '';
 
         try {
-            $files = $this->service->listBackupFiles($userId);
+            $files = $this->service->listBackupFiles();
             echo json_encode(['success' => true, 'files' => $files]);
         } catch (\Exception $e) {
             http_response_code(500);
@@ -90,12 +87,8 @@ class BackupController
             return;
         }
 
-        $user = AuthMiddleware::authenticate();
-        $userId = $user->data->user_id ?? '';
         $input = json_decode(file_get_contents('php://input'), true);
-
         $driveFileId = $input['drive_file_id'] ?? '';
-        $confirmPassword = $input['confirm_password'] ?? '';
 
         if (empty($driveFileId)) {
             http_response_code(422);
@@ -103,29 +96,27 @@ class BackupController
             return;
         }
 
-        $stmt = \Config\Database::getConnection()->prepare("SELECT password_hash FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $userRow = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        if (!$userRow || !password_verify($confirmPassword, $userRow['password_hash'])) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Invalid admin password. Restore denied.']);
-            return;
-        }
+        $dbHost = getenv('DB_HOST') ?: 'db';
+        $dbName = getenv('DB_NAME') ?: 'retail_pos';
+        $dbUser = getenv('DB_USER') ?: 'admin';
+        $dbPass = getenv('DB_PASSWORD') ?: 'admin123';
 
         try {
-            $job = $this->service->startRestore($userId);
-            $this->repo->updateJob($job->id, ['file_name' => $driveFileId]);
-            $this->queue->enqueue($job->id);
-            $this->queue->setStatus($job->id, 'pending');
-            $this->queue->setProgress($job->id, 'Restore queued');
+            // Download backup from Drive
+            $filePath = $this->service->downloadFromDrive($driveFileId);
 
-            http_response_code(201);
+            // Run restore synchronously
+            $this->service->runRestore($filePath, $dbHost, $dbName, $dbUser, $dbPass);
+
+            // Verify restored data
+            $verification = $this->service->verifyRestore();
+
+            @unlink($filePath);
+
             echo json_encode([
                 'success' => true,
-                'job_id' => $job->id,
-                'status' => 'pending',
-                'message' => 'Restore started. This will replace all current data.'
+                'message' => 'Restore completed successfully',
+                'verification' => $verification
             ]);
         } catch (\Exception $e) {
             http_response_code(500);

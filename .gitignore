@@ -9,3 +9,9 @@ Thumbs.db
 # Environment Config
 .env
 
+# Backup files
+backup/
+
+# Google Drive tokens (contains secrets)
+config/gdrive_tokens.json
+

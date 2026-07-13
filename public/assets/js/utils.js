@@ -12,7 +12,7 @@ async function apiRequest(path, options = {}) {
     const fullPath = path.startsWith('http') ? path : apiBase + path;
 
     const token = localStorage.getItem('auth_token');
-    if (!token && !path.includes('/api/login') && !path.includes('/api/register')) {
+    if (!token && !path.includes('/api/login') && !path.includes('/api/register') && !path.includes('/api/backup/files') && !path.includes('/api/backup/restore')) {
         if (!_redirecting) {
             _redirecting = true;
             window.location.href = '/index.php?action=logout';

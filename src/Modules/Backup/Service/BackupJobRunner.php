@@ -56,10 +56,10 @@ class BackupJobRunner
         $this->queue->setStatus($jobId, 'uploading');
         $this->queue->setProgress($jobId, 'Uploading to Google Drive...');
 
-        $driveFileId = $this->service->uploadToDrive($filePath, $userId);
+        $driveFileId = $this->service->uploadToDrive($filePath);
 
         $this->queue->setProgress($jobId, 'Cleaning up old backups...');
-        $this->service->enforceRetention($userId);
+        $this->service->enforceRetention();
         $this->service->cleanupLocalFiles();
         $this->service->cleanupBackupFolder();
 
@@ -83,7 +83,7 @@ class BackupJobRunner
         $this->queue->setStatus($jobId, 'downloading');
         $this->queue->setProgress($jobId, 'Downloading backup from Google Drive...');
 
-        $filePath = $this->service->downloadFromDrive($driveFileId, $userId);
+        $filePath = $this->service->downloadFromDrive($driveFileId);
 
         $this->queue->setStatus($jobId, 'restoring');
         $this->queue->setProgress($jobId, 'Restoring database...');
