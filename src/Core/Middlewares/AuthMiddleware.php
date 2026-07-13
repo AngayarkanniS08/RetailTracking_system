@@ -12,8 +12,27 @@ class AuthMiddleware
     private const DEFAULT_MAX_TOKEN_AGE = 86400;
     public static function authenticate(?int $maxAge = null): ?object
     {
+        // ── Extract Authorization header from multiple sources ──
+        // Source 1: getallheaders() with case-insensitive key lookup
+        // (Apache may return 'authorization' instead of 'Authorization')
         $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? '';
+        $authHeader = '';
+        foreach ($headers as $key => $value) {
+            if (strtolower($key) === 'authorization') {
+                $authHeader = $value;
+                break;
+            }
+        }
+
+        // Source 2: $_SERVER['HTTP_AUTHORIZATION'] (more reliable in Apache)
+        if (empty($authHeader) && !empty($_SERVER['HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['HTTP_AUTHORIZATION'];
+        }
+
+        // Source 3: REDIRECT_HTTP_AUTHORIZATION (passed through mod_rewrite)
+        if (empty($authHeader) && !empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
 
         // Fallback: accept token via query param (for window.open etc.)
         if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
