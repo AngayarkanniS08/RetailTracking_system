@@ -418,17 +418,19 @@ window.saveCategory = async function () {
         alert('Please enter a category name');
         return;
     }
-    const data = await apiRequest('/api/categories', {
-        method: 'POST',
-        body: JSON.stringify({ name })
-    });
-    if (data && data.success) {
-        document.getElementById('pmCategoryName').value = '';
-        await loadCategories();  // refreshes both dropdowns
-        await loadProducts();
-        closeModal('addCategoryModal');
-    } else {
-        alert(data?.error || 'Failed to add category');
+    try {
+        const data = await apiRequest('/api/categories', {
+            method: 'POST',
+            body: JSON.stringify({ name })
+        });
+        if (data && data.success) {
+            document.getElementById('pmCategoryName').value = '';
+            await loadCategories();  // refreshes both dropdowns
+            await loadProducts();
+            closeModal('addCategoryModal');
+        }
+    } catch (e) {
+        alert(e.message || 'Failed to add category');
     }
 };
 
@@ -445,27 +447,29 @@ window.saveSubcategory = async function () {
         return;
     }
 
-    const data = await apiRequest('/api/subcategories', {
-        method: 'POST',
-        body: JSON.stringify({ category_id: categoryId, name: subName })
-    });
+    try {
+        const data = await apiRequest('/api/subcategories', {
+            method: 'POST',
+            body: JSON.stringify({ category_id: categoryId, name: subName })
+        });
 
-    if (data && data.success) {
-        document.getElementById('pmSubCategoryName').value = '';
-        alert('Subcategory added successfully');
-        // Refresh subcategory list in product modal if matching category is selected
-        const prodCat = document.getElementById('pmProductCategory');
-        if (prodCat && prodCat.value === categoryId) {
-            loadSubcategoriesIntoProductModal(categoryId);
-            // Also refresh the combobox (clears its cache)
-            if (typeof subcategoryCombobox !== 'undefined' && subcategoryCombobox) {
-                delete subcategoryCombobox.cache[categoryId];
-                subcategoryCombobox.loadForCategory(categoryId);
+        if (data && data.success) {
+            document.getElementById('pmSubCategoryName').value = '';
+            alert('Subcategory added successfully');
+            // Refresh subcategory list in product modal if matching category is selected
+            const prodCat = document.getElementById('pmProductCategory');
+            if (prodCat && prodCat.value === categoryId) {
+                loadSubcategoriesIntoProductModal(categoryId);
+                // Also refresh the combobox (clears its cache)
+                if (typeof subcategoryCombobox !== 'undefined' && subcategoryCombobox) {
+                    delete subcategoryCombobox.cache[categoryId];
+                    subcategoryCombobox.loadForCategory(categoryId);
+                }
             }
+            // Keep manage modal open so user can add more
         }
-        // Keep manage modal open so user can add more
-    } else {
-        alert(data?.error || 'Failed to add subcategory');
+    } catch (e) {
+        alert(e.message || 'Failed to add subcategory');
     }
 };
 
@@ -578,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const modalBody = document.getElementById('deleteProductModalBody');
                     modalBody.innerHTML = `
                     <p>Are you sure you want to delete the product <strong id="deleteProductName"></strong>?</p>
-                    <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone. All batches and sale records linked to this product will also be affected.</p>
+                    <p class="text-muted" style="font-size: 0.85rem;">Inventory records (stock list, batches) will be permanently deleted. Invoice and purchase history will be preserved.</p>
                 `;
                 } else {
                     const errorMsg = data?.error || 'Failed to delete product';
@@ -587,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="color: var(--danger); margin-bottom: 1rem;">
                         <strong>Error:</strong> ${escapeHtml(errorMsg)}
                     </div>
-                    <p>Please remove all associated batches before deleting this product.</p>
+                    <p>Some records are still linked to this product. Please contact support.</p>
                 `;
                     const modalFooter = deleteModal.querySelector('.modal-footer');
                     if (modalFooter) {
@@ -787,7 +791,10 @@ class CategoryCombobox {
                 const div = document.createElement('div');
                 div.className = `combobox-item ${idx === this.selectedIndex ? 'selected' : ''}`;
                 div.textContent = item.name;
-                div.addEventListener('click', () => this.selectItem(item.id, item.name));
+                div.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.selectItem(item.id, item.name);
+                });
                 div.addEventListener('mouseenter', () => this.setSelectedIndex(idx));
                 this.dropdown.appendChild(div);
             });
@@ -979,7 +986,10 @@ class SubcategoryCombobox {
                 const div = document.createElement('div');
                 div.className = `combobox-item ${idx === this.selectedIndex ? 'selected' : ''}`;
                 div.textContent = item.name;
-                div.addEventListener('click', () => this.selectItem(item.id, item.name));
+                div.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.selectItem(item.id, item.name);
+                });
                 div.addEventListener('mouseenter', () => this.setSelectedIndex(idx));
                 this.dropdown.appendChild(div);
             });

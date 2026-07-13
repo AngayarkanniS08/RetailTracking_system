@@ -306,7 +306,7 @@
                 alert(data?.error || 'Failed to add category');
             }
         } catch (e) {
-            alert('Error adding category');
+            alert(e.message || 'Error adding category');
         }
     };
 
@@ -341,7 +341,7 @@
                 alert(data?.error || 'Failed to add subcategory');
             }
         } catch (e) {
-            alert('Error adding subcategory');
+            alert(e.message || 'Error adding subcategory');
         }
     };
 
