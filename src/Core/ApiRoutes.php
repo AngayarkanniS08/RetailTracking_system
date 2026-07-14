@@ -297,11 +297,9 @@ class ApiRoutes
 
         // ── Backup / Restore ─────────────────────────────────────────
         $router->add('GET', '/api/backup/config', function (): void {
-            AuthMiddleware::authenticate();
             (new BackupConfigController())->get();
         });
         $router->add('PUT', '/api/backup/config', function (): void {
-            AuthMiddleware::authenticate();
             (new BackupConfigController())->update();
         });
         $router->add('POST', '/api/backup/start', function (): void {
@@ -319,11 +317,9 @@ class ApiRoutes
             (new BackupController())->restore();
         });
         $router->add('GET', '/api/backup/auth-url', function (): void {
-            AuthMiddleware::authenticate();
             (new BackupConfigController())->authUrl();
         });
         $router->add('POST', '/api/backup/auth-code', function (): void {
-            AuthMiddleware::authenticate();
             (new BackupConfigController())->exchangeCode();
         });
 

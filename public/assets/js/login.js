@@ -67,7 +67,7 @@
                 }
                 showMessage('success', 'Login successful! Redirecting...');
                 setTimeout(() => {
-                    window.location.href = '/index.php';
+                    window.location.href = '/dashboard';
                 }, 1000);
             } else {
                 showMessage('error', data.error || 'Invalid credentials. Please try again.');

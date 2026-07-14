@@ -25,8 +25,6 @@ class BackupConfigController
     public function get(): void
     {
         header('Content-Type: application/json');
-        $user = AuthMiddleware::authenticate();
-        $userId = $user->data->user_id ?? '';
 
         // Default response when DB tables are missing
         $defaultResponse = [
@@ -51,7 +49,7 @@ class BackupConfigController
         }
 
         try {
-            $config = $this->repo->getConfig($userId);
+            $config = $this->repo->getConfig('');
         } catch (\PDOException $e) {
             // backup_config table doesn't exist (DB wiped) — return defaults with file tokens
             echo json_encode($defaultResponse);
@@ -187,8 +185,8 @@ class BackupConfigController
             ]);
 
             // Also save to DB for backward compat with schedule/retention
-            try {
-                $config = $this->repo->getConfig($userId);
+        try {
+            $config = $this->repo->getConfig('');
                 $updated = new BackupConfig(
                     id: $config?->id,
                     userId: $userId,

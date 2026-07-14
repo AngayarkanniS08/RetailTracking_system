@@ -38,7 +38,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . __DIR__);
 
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_destroy();
-    header('Location: index.php');
+    header('Location: /login');
     exit;
 }
 
@@ -51,25 +51,72 @@ if (isset($_GET['action']) && $_GET['action'] === 'set_session') {
     exit;
 }
 
-$action = $_GET['action'] ?? 'login';
+// ============================================
+// Route mapping
+// ============================================
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$basePath = dirname($_SERVER['SCRIPT_NAME']);
+$routePath = $basePath === '/' ? $requestUri : substr($requestUri, strlen($basePath));
+$routePath = $routePath ?: '/';
+
+$routeMap = [
+    '/'               => null,
+    '/login'          => 'login',
+    '/register'       => 'register',
+    '/dashboard'      => 'dashboard',
+    '/billing'        => 'billing_pos',
+    '/customers'      => 'credit_kadan',
+    '/daily-sales'    => 'day_to_day_selling',
+    '/products'       => 'product_master',
+    '/inventory'      => 'inventory',
+    '/vendors'        => 'vendor_list',
+    '/vendor-history' => 'vendorhistory',
+    '/stock-intel'    => 'stockintel',
+    '/product-history'=> 'product_history',
+    '/backup'         => 'backup',
+];
+
+$initialSection = $routeMap[$routePath] ?? null;
 
 // ============================================
 // Determine if user is logged in
 // ============================================
 $isLoggedIn = isset($_SESSION['user_id']);
 
+$publicPages = ['backup'];
+
 if (!$isLoggedIn) {
+    if ($initialSection && in_array($initialSection, $publicPages)) {
+        // Public page — show full SPA layout without requiring session
+        require_once 'views/layouts/header.php';
+        echo '<div class="dashboard" id="dashboardView">';
+        require_once 'views/layouts/topbar.php';
+        echo '<div class="main-container">';
+        require_once 'views/layouts/sidebar.php';
+        echo '<main class="content-area">';
+        require_once 'views/settings/backup.php';
+        echo '</main>';
+        echo '</div>';
+        echo '</div>';
+        require_once 'views/layouts/modals.php';
+        require_once 'views/layouts/footer.php';
+        echo "<script>document.addEventListener('DOMContentLoaded', function() { switchTab('{$initialSection}'); });</script>";
+        exit;
+    }
+
     // Show auth forms (no dashboard layout)
     require_once 'views/layouts/header.php';
-    $action = $_GET['action'] ?? 'login';
+    $action = $initialSection ?? 'login';
     if ($action === 'login') {
         require_once 'views/auth/login.php';
     } elseif ($action === 'forgot_password' || $action === 'ForgotPassword') {
         require_once 'views/auth/ForgotPassword.php';
     } elseif ($action === 'reset_password') {
         require_once 'views/auth/ResetPassword.php';
-    } else {
+    } elseif ($action === 'register') {
         require_once 'views/auth/register.php';
+    } else {
+        require_once 'views/auth/login.php';
     }
     require_once 'views/layouts/footer.php';
     exit;
@@ -127,3 +174,8 @@ echo "Page Rendered in {$elapsed} ms &middot; {$version}";
 echo '</div>';
 
 require_once 'views/layouts/footer.php';
+
+// Set initial section via JS
+if ($initialSection && $initialSection !== 'login') {
+    echo "<script>document.addEventListener('DOMContentLoaded', function() { switchTab('{$initialSection}'); });</script>";
+}

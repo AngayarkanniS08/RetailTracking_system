@@ -17,6 +17,21 @@ const sections = [
     'backup'
 ];
 
+// Map section IDs to URL paths
+const sectionUrlMap = {
+    'dashboard': '/dashboard',
+    'billing_pos': '/billing',
+    'credit_kadan': '/customers',
+    'day_to_day_selling': '/daily-sales',
+    'product_master': '/products',
+    'inventory': '/inventory',
+    'vendor_list': '/vendors',
+    'vendorhistory': '/vendor-history',
+    'stockintel': '/stock-intel',
+    'product_history': '/product-history',
+    'backup': '/backup'
+};
+
 // Switch to a specific section by ID
 function switchTab(sectionId, vendorId = null) {
     // Hide all sections
@@ -38,6 +53,12 @@ function switchTab(sectionId, vendorId = null) {
             item.classList.remove('active');
         }
     });
+
+    // Update browser URL
+    const url = sectionUrlMap[sectionId] || '/dashboard';
+    if (window.location.pathname !== url) {
+        history.pushState({ section: sectionId }, '', url);
+    }
 
     // Call module‑specific initialisation when its section is shown
     if (sectionId === 'dashboard') {
@@ -71,6 +92,12 @@ function switchTab(sectionId, vendorId = null) {
 
 }
 
+// Handle browser back/forward
+window.addEventListener('popstate', function(e) {
+    if (e.state && e.state.section) {
+        switchTab(e.state.section);
+    }
+});
 
 // Initialise sidebar click handlers
 function initSidebar() {
