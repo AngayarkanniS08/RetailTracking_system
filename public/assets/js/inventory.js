@@ -207,13 +207,6 @@ function calculateInventoryMath(calcMode = 'profit') {
     let sp = parseFloat(spInput.value) || 0;
     let profit = parseFloat(profitInput.value) || 0;
 
-    // Update Retail Base Price (Auto) — only when retail column is visible
-    const retailCol = document.getElementById('retailColumn');
-    if (qty > 0 && retailBaseInput && retailCol && retailCol.style.display !== 'none') {
-        retailBaseInput.value = (pp / qty).toFixed(2);
-        calculateRetailMath('profit'); // Refresh retail math
-    }
-
     // Bidirectional calculation
     if (calcMode === 'profit') {
         profit = sp > 0 ? (sp - pp) : 0;
@@ -296,18 +289,10 @@ async function saveStock() {
         return alert('Please fill all required fields (Wholesale prices & Qty)');
     }
 
-    // Determine retail_price:
-    // - If retailSP is set (> 0), use it
-    // - If editing and retailSP is empty (wholesale-only edit), preserve original batch's retail_price
-    // - If new batch and retailSP is empty, fall back to per-unit wholesale price
     let finalRetailPrice = retailSP;
-    if (!finalRetailPrice) {
-        if (window.currentEditingBatchId) {
-            const origBatch = window.batches.find(b => b.id === window.currentEditingBatchId);
-            finalRetailPrice = origBatch ? (origBatch.retail_price || 0) : (sp / qty);
-        } else {
-            finalRetailPrice = sp / qty;
-        }
+    if (!finalRetailPrice && window.currentEditingBatchId) {
+        const origBatch = window.batches.find(b => b.id === window.currentEditingBatchId);
+        finalRetailPrice = origBatch ? (origBatch.retail_price || 0) : 0;
     }
 
     const payload = {
