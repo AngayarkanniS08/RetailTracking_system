@@ -379,6 +379,16 @@ document.addEventListener('keydown', function(e) {
     });
 })();
 
+/* Track manual edits to amountPaidInput so calculateCart doesn't overwrite it */
+document.addEventListener('DOMContentLoaded', function() {
+    const paidInput = document.getElementById('amountPaidInput');
+    if (paidInput) {
+        paidInput.addEventListener('input', function() {
+            this.dataset.userEdited = 'true';
+        });
+    }
+});
+
 async function loadPOSData() {
     try {
         const [productsRes, batchesRes, categories] = await Promise.all([
@@ -659,6 +669,11 @@ function calculateCart() {
     document.getElementById('cartGst').textContent = '₹' + totalGst.toFixed(2);
     document.getElementById('cartTotal').textContent = '₹' + grandTotal.toFixed(2);
 
+    const paidInput = document.getElementById('amountPaidInput');
+    if (paidInput && !paidInput.dataset.userEdited) {
+        paidInput.value = grandTotal.toFixed(2);
+    }
+
     window._posCalc = { subtotal, totalGst, billDiscount, totalDiscount, roundOff, grandTotal, applyGst };
     saveCart();
 }
@@ -811,7 +826,9 @@ async function processCheckout() {
 
             sessionStorage.removeItem('posCart');
             renderCart();
-            document.getElementById('amountPaidInput').value = '';
+            const paidInput = document.getElementById('amountPaidInput');
+            paidInput.value = '';
+            delete paidInput.dataset.userEdited;
             document.getElementById('cartDiscountInput').value = '';
             document.getElementById('customerSearchInput').value = '';
             document.getElementById('billCustomerId').value = '';
