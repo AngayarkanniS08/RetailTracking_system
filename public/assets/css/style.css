@@ -514,6 +514,16 @@ select.input-field {
       color: #fff;
     }
 
+    .row-price-mode {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--accent);
+      vertical-align: super;
+    }
+    .row-price-val {
+      font-weight: 600;
+    }
+
     /* ===== BILLING BOTTOM BAR (cart moved below) ===== */
     .billing-bottom-bar {
       display: flex;

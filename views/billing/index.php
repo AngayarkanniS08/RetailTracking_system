@@ -25,7 +25,7 @@
                   <th style="width:100px;">Batch No</th>
                   <th style="width:160px;">Particulars</th>
                   <th style="width:80px; text-align:right;">
-                    Price <span id="priceModeLabel" class="price-mode-badge">W</span>
+                    Price
                   </th>
                   <th style="width:70px; text-align:right;">Discount</th>
                   <th style="width:60px;">Unit</th>

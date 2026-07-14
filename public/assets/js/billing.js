@@ -153,7 +153,7 @@ function selectPOSProduct(batchId) {
     targetRow.setAttribute('data-batch-id', batchId);
     cells[0].textContent = batch.batch_number || batch.id;    // Batch No
     cells[1].textContent = product.name;                      // Particulars
-    cells[2].textContent = price.toFixed(2);                  // Price
+    cells[2].innerHTML = `<span class="row-price-val">${price.toFixed(2)}</span> <span class="row-price-mode">${priceMode === 'wholesale' ? 'W' : 'R'}</span>`;
     cells[3].textContent = '0.00';                            // Discount
     cells[4].textContent = product.unit || 'Nos';             // Unit
     cells[5].textContent = qty.toFixed(2);                    // Qty
@@ -239,7 +239,32 @@ function togglePriceMode(force) {
     if (changed) calculateCart();
 }
 
-/* Keyboard shortcut: w/r only when focused inside a Price cell */
+/* Toggle price mode for a single row */
+function toggleRowPriceMode(tr, mode) {
+    const bid = tr.getAttribute('data-batch-id');
+    if (!bid) return;
+    const batch = posBatches.find(b => b.id === bid);
+    if (!batch) return;
+    const cells = tr.querySelectorAll('td');
+    const qty = parseFloat(cells[5].textContent) || 0;
+    if (qty === 0) return;
+
+    const newPrice = mode === 'wholesale'
+        ? (parseFloat(batch.selling_price) || 0)
+        : (parseFloat(batch.retail_price) || parseFloat(batch.selling_price) * 1.2 || 0);
+    const newAmount = qty * newPrice;
+
+    cells[2].innerHTML = `<span class="row-price-val">${newPrice.toFixed(2)}</span> <span class="row-price-mode">${mode === 'wholesale' ? 'W' : 'R'}</span>`;
+    cells[7].textContent = newAmount.toFixed(2);
+
+    const item = cart.find(function(c) { return c.batchId === bid; });
+    if (item) {
+        item.sellingPrice = newPrice;
+    }
+    calculateCart();
+}
+
+/* Keyboard shortcut: w/r toggles active row between wholesale and retail price */
 document.addEventListener('keydown', function(e) {
     const key = (e.key || '').toLowerCase();
     if (key !== 'w' && key !== 'r') return;
@@ -249,7 +274,7 @@ document.addEventListener('keydown', function(e) {
     if (!tr) return;
     if (tr.closest('#billingGrid') && Array.from(tr.cells).indexOf(td) === 2) {
         e.preventDefault();
-        togglePriceMode(key === 'w' ? 'wholesale' : 'retail');
+        toggleRowPriceMode(tr, key === 'w' ? 'wholesale' : 'retail');
     }
 });
 
