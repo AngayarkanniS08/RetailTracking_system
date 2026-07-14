@@ -134,7 +134,7 @@ function renderSalesTimeline() {
                     + '<td>' + escHtml(inv.customerNameSnapshot || inv.customerName || 'Walk-in') + '</td>'
                     + '<td style="color:var(--ok)">\u20b9' + formatNumber(inv.grandTotal) + '</td>'
                     + '<td style="text-align:right">'
-+ '<button class="btn btn-sm" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')">View</button>'
++ '<button class="btn btn-sm" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')" style="background:var(--primary);color:#fff;border:none;font-size:0.7rem;padding:2px 8px;">View</button>'
 + (isCompletable ? '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openReturnModal(\'' + inv.id + '\')" style="margin-left:6px;color:var(--accent);border-color:rgba(99,102,241,0.3);font-size:0.7rem;padding:2px 8px;">Return</button>' : '')
 + '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();confirmDeleteInvoice(\'' + inv.id + '\')" style="margin-left:6px;color:var(--danger);border-color:rgba(239,68,68,0.3);font-size:0.7rem;padding:2px 8px;">Delete</button>'
                     + '</td>'
