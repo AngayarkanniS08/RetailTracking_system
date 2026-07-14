@@ -22,6 +22,7 @@
     --muted: #838387;
     --muted-strong: #75757d;
     --muted-foreground: #838387;
+    --muted-subtle: rgba(131, 131, 135, 0.12);
     --border: #1e2028;
     --border-strong: #2e3040;
     --border-hover: #3e4050;
@@ -103,6 +104,7 @@
     --muted: #6e6e73;
     --muted-strong: #545458;
     --muted-foreground: #6e6e73;
+    --muted-subtle: rgba(110, 110, 115, 0.12);
     --border: #e5e5ea;
     --border-strong: #d1d1d6;
     --border-hover: #aeaeb2;
@@ -905,6 +907,11 @@ tr:hover td {
 .badge-danger {
     background: var(--danger-subtle);
     color: var(--danger);
+}
+
+.badge-muted {
+    background: var(--muted-subtle);
+    color: var(--muted);
 }
 
 /* POS / BILLING GRID */

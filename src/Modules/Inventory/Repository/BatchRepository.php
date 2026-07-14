@@ -254,7 +254,7 @@ class BatchRepository implements BatchRepositoryInterface
             SELECT 
                 COALESCE(SUM(b.remaining_qty * b.cost_price), 0) AS total_stock_value,
                 COUNT(b.id) AS total_batches,
-                COUNT(CASE WHEN b.remaining_qty <= 20 THEN 1 END) AS low_stock_count
+                COUNT(CASE WHEN p.rop > 0 AND b.remaining_qty <= p.rop THEN 1 END) AS low_stock_count
             " . $sql;
 
         $stmt = $this->db->prepare($selectSql);
