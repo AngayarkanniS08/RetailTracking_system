@@ -780,6 +780,7 @@ async function processCheckout() {
     const calc = window._posCalc;
 
     if (!cart.length) { alert('Cart is empty'); return; }
+    if (amountPaid > calc.grandTotal) { alert('Amount paid is higher than total'); return; }
     if (amountPaid <= 0 && !customerId) { alert('Enter amount paid or select a credit customer'); return; }
 
     const items = cart.map(c => ({
