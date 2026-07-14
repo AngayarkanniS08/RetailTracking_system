@@ -156,14 +156,20 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $items = [];
         if ($withItems) {
             $itemStmt = $this->db->prepare("
-                SELECT id, invoice_id, product_id, batch_id,
-                       product_name_snapshot, hsn_code_snapshot, unit_snapshot,
-                       quantity, unit_price, cost_price_snapshot,
-                       gst_rate_snapshot, gst_amount, discount_amount, line_total,
-                       created_at
-                FROM invoice_items
-                WHERE invoice_id = ?
-                ORDER BY created_at ASC
+                SELECT ii.id, ii.invoice_id, ii.product_id, ii.batch_id,
+                       ii.product_name_snapshot, ii.hsn_code_snapshot, ii.unit_snapshot,
+                       ii.quantity, ii.unit_price, ii.cost_price_snapshot,
+                       ii.gst_rate_snapshot, ii.gst_amount, ii.discount_amount, ii.line_total,
+                       ii.created_at,
+                       COALESCE(ret.total_returned, 0) AS already_returned
+                FROM invoice_items ii
+                LEFT JOIN (
+                    SELECT invoice_item_id, SUM(qty_returned) AS total_returned
+                    FROM invoice_returns
+                    GROUP BY invoice_item_id
+                ) ret ON ret.invoice_item_id = ii.id
+                WHERE ii.invoice_id = ?
+                ORDER BY ii.created_at ASC
             ");
             $itemStmt->execute([$id]);
             $itemRows = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -183,7 +189,8 @@ class InvoiceRepository implements InvoiceRepositoryInterface
                     gstAmount: (float)$itemRow['gst_amount'],
                     discountAmount: (float)$itemRow['discount_amount'],
                     lineTotal: (float)$itemRow['line_total'],
-                    createdAt: $itemRow['created_at']
+                    createdAt: $itemRow['created_at'],
+                    alreadyReturned: (float)$itemRow['already_returned']
                 );
             }
         }
@@ -489,6 +496,32 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         ), $rows);
     }
 
+    public function lockInvoiceRow(string $id): void
+    {
+        $stmt = $this->db->prepare("
+            SELECT id FROM invoices
+            WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
+            FOR UPDATE
+        ");
+        $stmt->execute([$id]);
+    }
+
+    public function areAllItemsReturned(string $invoiceId): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) = 0 FROM invoice_items ii
+            LEFT JOIN (
+                SELECT invoice_item_id, SUM(qty_returned) AS total_ret
+                FROM invoice_returns
+                GROUP BY invoice_item_id
+            ) ret ON ret.invoice_item_id = ii.id
+            WHERE ii.invoice_id = ?
+              AND ii.quantity > COALESCE(ret.total_ret, 0)
+        ");
+        $stmt->execute([$invoiceId]);
+        return (bool)$stmt->fetchColumn();
+    }
+
     // ── Stock ──────────────────────────────────────────────
 
     public function findBatchById(string $id): ?array
@@ -526,6 +559,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $stmt = $this->db->prepare("
             UPDATE inventory_batches
             SET remaining_qty = remaining_qty + ?,
+                status = 'active',
                 updated_at = now()
             WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");

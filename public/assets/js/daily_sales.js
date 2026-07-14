@@ -127,6 +127,7 @@ function renderSalesTimeline() {
             + '</tr>';
 
         g.invoices.forEach(function(inv) {
+            var isCompletable = inv.invoiceStatus === 'completed';
             tbody.innerHTML += ''
                 + '<tr class="bill-row ' + cls + '" style="display:none;background:var(--bg-hover);">'
                     + '<td style="padding-left:20px;font-weight:600;color:var(--accent);">\uD83D\uDCC4 ' + escHtml(inv.invoiceNumber || '-') + '</td>'
@@ -134,6 +135,7 @@ function renderSalesTimeline() {
                     + '<td style="color:var(--ok)">\u20b9' + formatNumber(inv.grandTotal) + '</td>'
                     + '<td style="text-align:right">'
 + '<button class="btn btn-sm" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')">View</button>'
++ (isCompletable ? '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openReturnModal(\'' + inv.id + '\')" style="margin-left:6px;color:var(--accent);border-color:rgba(99,102,241,0.3);font-size:0.7rem;padding:2px 8px;">Return</button>' : '')
 + '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();confirmDeleteInvoice(\'' + inv.id + '\')" style="margin-left:6px;color:var(--danger);border-color:rgba(239,68,68,0.3);font-size:0.7rem;padding:2px 8px;">Delete</button>'
                     + '</td>'
                 + '</tr>';
@@ -191,8 +193,141 @@ function escHtml(str) {
     return d.innerHTML;
 }
 
+// ── Return Items ────────────────────────────────────────
+
+function openReturnModal(invoiceId) {
+    window.apiRequest('/api/invoices/' + invoiceId)
+        .then(function(inv) {
+            document.getElementById('returnInvoiceId').value = inv.id;
+            document.getElementById('returnInvoiceNumber').textContent = inv.invoiceNumber || '-';
+            document.getElementById('returnCustomerName').textContent = inv.customerNameSnapshot || inv.customerName || 'Walk-in';
+            document.getElementById('returnDate').textContent = inv.billedAt ? new Date(inv.billedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+            var tbody = document.getElementById('returnItemsBody');
+            tbody.innerHTML = '';
+            (inv.items || []).forEach(function(item) {
+                var returnable = Number(item.quantity) - Number(item.alreadyReturned || 0);
+                if (returnable < 0) returnable = 0;
+                var alreadyRet = Number(item.alreadyReturned || 0);
+                var tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                tr.innerHTML = ''
+                    + '<td style="padding:8px 4px;font-weight:500;">' + escHtml(item.productNameSnapshot) + '</td>'
+                    + '<td style="text-align:center;padding:8px 4px;">' + formatNumber(item.quantity) + '</td>'
+                    + '<td style="text-align:center;padding:8px 4px;color:var(--muted);">' + (alreadyRet > 0 ? formatNumber(alreadyRet) : '-') + '</td>'
+                    + '<td style="text-align:center;padding:8px 4px;">'
+                        + (returnable > 0
+                            ? '<input type="number" class="return-qty" data-item-id="' + item.id + '" data-unit-price="' + item.unitPrice + '" data-max="' + returnable + '" value="0" min="0" max="' + returnable + '" style="width:60px;padding:4px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);" oninput="returnCalcRefund(this)">'
+                            : '<span style="color:var(--muted);font-size:0.75rem;">Fully Returned</span>')
+                    + '</td>'
+                    + '<td style="text-align:right;padding:8px 4px;">'
+                        + '<input type="number" class="return-refund" data-item-id="' + item.id + '" value="0" min="0" style="width:90px;padding:4px;text-align:right;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);" oninput="returnCalcQty(this)">'
+                    + '</td>'
+                    + '<td style="text-align:center;padding:8px 4px;font-size:0.7rem;color:var(--muted);">'
+                        + escHtml(item.unitSnapshot || '') + ' × ₹' + formatNumber(item.unitPrice)
+                    + '</td>';
+                tbody.appendChild(tr);
+
+                var refundInput = tr.querySelector('.return-refund');
+                if (refundInput) {
+                    var qtyInput = tr.querySelector('.return-qty');
+                    refundInput.value = qtyInput ? (parseFloat(qtyInput.value || 0) * item.unitPrice).toFixed(2) : '0.00';
+                }
+            });
+
+            document.getElementById('returnReason').value = '';
+            openModal('returnItemsModal');
+        })
+        .catch(function(err) {
+            alert('Failed to load invoice: ' + err.message);
+        });
+}
+
+function returnCalcRefund(el) {
+    var qty = parseFloat(el.value) || 0;
+    var maxQty = parseFloat(el.dataset.max) || 0;
+    if (qty > maxQty) { qty = maxQty; el.value = maxQty; }
+    var unitPrice = parseFloat(el.dataset.unitPrice) || 0;
+    var refundInput = el.closest('tr').querySelector('.return-refund');
+    if (refundInput) refundInput.value = (qty * unitPrice).toFixed(2);
+}
+
+function returnCalcQty(el) {
+    var tr = el.closest('tr');
+    var qtyInput = tr.querySelector('.return-qty');
+    if (!qtyInput) return;
+    var refund = parseFloat(el.value) || 0;
+    var unitPrice = parseFloat(qtyInput.dataset.unitPrice) || 0;
+    if (unitPrice > 0) {
+        var qty = Math.round(refund / unitPrice);
+        var maxQty = parseFloat(qtyInput.dataset.max) || 0;
+        if (qty > maxQty) qty = maxQty;
+        qtyInput.value = qty;
+    }
+}
+
+function submitReturn() {
+    var invoiceId = document.getElementById('returnInvoiceId').value;
+    var reason = document.getElementById('returnReason').value.trim();
+
+    if (!reason || reason.length < 3) {
+        alert('Please enter a return reason (min 3 characters)');
+        return;
+    }
+
+    var qtyInputs = document.querySelectorAll('#returnItemsBody .return-qty');
+    var items = [];
+
+    qtyInputs.forEach(function(qtyInput) {
+        var qty = parseFloat(qtyInput.value) || 0;
+        if (qty <= 0) return;
+        var itemId = qtyInput.dataset.itemId;
+        var tr = qtyInput.closest('tr');
+        var refundInput = tr ? tr.querySelector('.return-refund') : null;
+        var refund = refundInput ? (parseFloat(refundInput.value) || 0) : 0;
+        items.push({
+            invoice_item_id: itemId,
+            qty_returned: qty,
+            refund_amount: refund
+        });
+    });
+
+    if (items.length === 0) {
+        alert('No items selected for return');
+        return;
+    }
+
+    var modal = document.getElementById('returnItemsModal');
+    var submitBtn = modal ? modal.querySelector('.btn-primary') : null;
+    var closeBtn = modal ? modal.querySelector('.close-btn, .btn-close, [data-close]') : null;
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Processing...'; }
+    if (closeBtn) closeBtn.style.pointerEvents = 'none';
+    if (modal) modal.style.pointerEvents = 'none';
+
+    window.apiRequest('/api/invoices/' + invoiceId + '/return', {
+        method: 'POST',
+        body: JSON.stringify({ items: items, reason: reason })
+    })
+    .then(function(data) {
+        closeModal('returnItemsModal');
+        if (data && data.warning) alert(data.warning);
+        if (data && data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
+        initDayToDaySelling();
+    })
+    .catch(function(err) {
+        alert('Return failed: ' + err.message);
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Return'; }
+        if (closeBtn) closeBtn.style.pointerEvents = '';
+        if (modal) modal.style.pointerEvents = '';
+    });
+}
+
 window.initDayToDaySelling = initDayToDaySelling;
 window.toggleSalesBills = toggleSalesBills;
 window.viewInvoiceReceipt = viewInvoiceReceipt;
 window.confirmDeleteInvoice = confirmDeleteInvoice;
 window.goToPage = goToPage;
+window.openReturnModal = openReturnModal;
+window.submitReturn = submitReturn;
+window.returnCalcRefund = returnCalcRefund;
+window.returnCalcQty = returnCalcQty;

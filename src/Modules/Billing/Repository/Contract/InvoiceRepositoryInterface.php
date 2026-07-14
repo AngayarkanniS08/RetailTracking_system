@@ -38,6 +38,8 @@ interface InvoiceRepositoryInterface {
     public function createReturn(InvoiceReturn $return): InvoiceReturn;
     public function findReturnsByInvoice(string $invoiceId): array;
     public function getTotalReturnedQty(string $invoiceItemId): float;
+    public function lockInvoiceRow(string $id): void;
+    public function areAllItemsReturned(string $invoiceId): bool;
 
     // ── Stock ──────────────────────────────────────────────
     public function decrementBatchStock(string $batchId, float $qty): void;

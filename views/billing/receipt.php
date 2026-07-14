@@ -177,7 +177,42 @@ hr{border:none;border-top:1px dashed #000;margin:4px 0}
 
 </div>
 
-<div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:999;">
+<div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:999; display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+    <button onclick="toggleReturnSection()" style="padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">
+        ↩️ Return Items
+    </button>
+    <div id="receiptReturnSection" style="display:none; width:360px; background:#1a1d27; border:1px solid #2a2d3a; border-radius:8px; padding:12px; max-height:420px; overflow-y:auto; font-size:12px; color:#e4e4e7;">
+        <div style="font-weight:700; margin-bottom:8px; color:#818cf8;">Return Items</div>
+        <div id="receiptReturnItems">
+            <?php $anyReturnable = false; ?>
+            <?php foreach ($items as $item):
+                $ret = $item->quantity - ($item->alreadyReturned ?? 0);
+                if ($ret <= 0) continue;
+                $anyReturnable = true;
+            ?>
+            <div class="receipt-ret-row" style="display:flex; gap:6px; align-items:center; margin-bottom:6px; padding:6px; background:#13151d; border-radius:4px;" data-item-id="<?= $item->id ?>" data-unit-price="<?= $item->unitPrice ?>" data-max="<?= $ret ?>">
+                <div style="flex:1; min-width:0;">
+                    <div style="font-weight:500; font-size:11px;"><?= htmlspecialchars($item->productNameSnapshot ?: 'Item') ?></div>
+                    <div style="font-size:10px; color:#a0a0a8;">Sold: <?= number_format($item->quantity, 0) ?> × ₹<?= number_format($item->unitPrice, 2) ?></div>
+                </div>
+                <input type="number" class="rr-qty" value="0" min="0" max="<?= $ret ?>" placeholder="Qty" style="width:55px; padding:3px 4px; border:1px solid #3a3d4a; border-radius:3px; background:#0e1015; color:#e4e4e7; font-size:11px; text-align:center;">
+                <input type="number" class="rr-refund" value="0" min="0" placeholder="₹" style="width:65px; padding:3px 4px; border:1px solid #3a3d4a; border-radius:3px; background:#0e1015; color:#e4e4e7; font-size:11px; text-align:right;">
+            </div>
+            <?php endforeach; ?>
+            <?php if (!$anyReturnable): ?>
+            <div style="color:#a0a0a8; text-align:center; padding:12px;">No returnable items</div>
+            <?php endif; ?>
+        </div>
+        <div style="display:flex; gap:3px; flex-wrap:wrap; margin-top:6px;">
+          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Wrong size'">Wrong size</button>
+          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Damaged'">Damaged</button>
+          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Quality issue'">Quality</button>
+          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Wrong item'">Wrong item</button>
+          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Changed mind'">Changed mind</button>
+        </div>
+        <input type="text" id="receiptRetReason" placeholder="Reason (min 3 chars)" style="width:100%; padding:4px 6px; border:1px solid #3a3d4a; border-radius:3px; background:#0e1015; color:#e4e4e7; font-size:11px; margin-top:4px;">
+        <button onclick="submitReceiptReturn('<?= $invoice->id ?>')" style="width:100%; margin-top:6px; padding:6px; background:#6366f1; color:#fff; border:none; border-radius:4px; font-size:12px; cursor:pointer;">Process Return</button>
+    </div>
     <button onclick="window.print()" style="padding:10px 24px;background:#1a3a5a;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">
         🖨️ Print
     </button>
@@ -185,6 +220,74 @@ hr{border:none;border-top:1px dashed #000;margin:4px 0}
 
 <script>
 setTimeout(function(){window.print()},300);
+
+document.getElementById('receiptReturnItems').addEventListener('input', function(e) {
+    var row = e.target.closest('.receipt-ret-row');
+    if (!row) return;
+    var unitPrice = parseFloat(row.dataset.unitPrice) || 0;
+    var maxQty = parseFloat(row.dataset.max) || 0;
+
+    if (e.target.classList.contains('rr-qty')) {
+        var qty = parseFloat(e.target.value) || 0;
+        if (qty > maxQty) { qty = maxQty; e.target.value = maxQty; }
+        row.querySelector('.rr-refund').value = (qty * unitPrice).toFixed(2);
+    } else if (e.target.classList.contains('rr-refund')) {
+        var refund = parseFloat(e.target.value) || 0;
+        var qty = unitPrice > 0 ? Math.round(refund / unitPrice) : 0;
+        if (qty > maxQty) qty = maxQty;
+        row.querySelector('.rr-qty').value = qty;
+    }
+});
+
+function toggleReturnSection() {
+    var el = document.getElementById('receiptReturnSection');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function submitReceiptReturn(invoiceId) {
+    var reason = document.getElementById('receiptRetReason').value.trim();
+    if (!reason || reason.length < 3) {
+        alert('Please enter a return reason (min 3 characters)');
+        return;
+    }
+
+    var rows = document.querySelectorAll('#receiptReturnItems .receipt-ret-row');
+    var items = [];
+    var token = localStorage.getItem('auth_token');
+
+    rows.forEach(function(row) {
+        var qty = parseFloat(row.querySelector('.rr-qty').value) || 0;
+        if (qty <= 0) return;
+        items.push({
+            invoice_item_id: row.dataset.itemId,
+            qty_returned: qty,
+            refund_amount: parseFloat(row.querySelector('.rr-refund').value) || 0
+        });
+    });
+
+    if (items.length === 0) { alert('No items selected'); return; }
+
+    var btn = document.querySelector('#receiptReturnSection button');
+    if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+
+    fetch('/api/invoices/' + invoiceId + '/return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token || '') },
+        body: JSON.stringify({ items: items, reason: reason })
+    }).then(function(r) {
+        if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Return failed'); });
+        return r.json();
+    }).then(function(data) {
+        if (data.warning) alert(data.warning);
+        if (data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
+        alert('Return processed successfully');
+        document.getElementById('receiptReturnSection').style.display = 'none';
+        if (btn) { btn.disabled = false; btn.textContent = 'Process Return'; }
+    }).catch(function(err) {
+        alert(err.message || 'Return failed');
+        if (btn) { btn.disabled = false; btn.textContent = 'Process Return'; }
+    });
+}
 </script>
 
 </body>

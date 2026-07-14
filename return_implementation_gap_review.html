@@ -1,0 +1,284 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1rem 0; }
+.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 16px; }
+.tab { font-size: 12px; font-weight: 500; padding: 7px 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.sec { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin: 16px 0 9px; }
+.sec:first-child { margin-top: 0; }
+
+.score-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 18px; }
+.score-card { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 12px; text-align: center; border: 0.5px solid var(--color-border-tertiary); }
+.score-num { font-size: 26px; font-weight: 500; margin-bottom: 3px; }
+.score-lbl { font-size: 11px; color: var(--color-text-secondary); }
+.g { color: var(--color-text-success); }
+.w { color: var(--color-text-warning); }
+.r { color: var(--color-text-danger); }
+.b { color: var(--color-text-info); }
+
+.item { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 12px 14px; margin-bottom: 8px; }
+.item-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.item-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.item-body { flex: 1; }
+.item-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+.item-sub { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+.tag { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+.t-ok   { background: var(--color-background-success); color: var(--color-text-success); }
+.t-gap  { background: var(--color-background-warning); color: var(--color-text-warning); }
+.t-fix  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.t-info { background: var(--color-background-info);    color: var(--color-text-info); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.box { border-radius: var(--border-radius-md); padding: 8px 10px; background: var(--color-background-secondary); }
+.box-lbl { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); margin-bottom: 4px; }
+.box-text { font-size: 12px; color: var(--color-text-primary); line-height: 1.6; }
+.code { font-size: 10px; font-family: var(--font-mono); background: var(--color-background-secondary); border: 0.5px dashed var(--color-border-secondary); border-radius: 4px; padding: 6px 9px; margin-top: 8px; white-space: pre-wrap; color: var(--color-text-secondary); line-height: 1.7; display: block; }
+.note { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 12px; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-tertiary); margin-top: 10px; line-height: 1.6; }
+.ok-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.ok-row:last-child { border-bottom: none; }
+.ok-icon { font-size: 14px; flex-shrink: 0; }
+.ok-text { font-size: 12px; color: var(--color-text-primary); flex: 1; }
+.ok-detail { font-size: 11px; color: var(--color-text-secondary); }
+</style>
+
+<div class="wrap">
+<div class="tabs">
+  <div class="tab active" onclick="sw('score')">Scorecard</div>
+  <div class="tab" onclick="sw('gaps')">3 gaps found</div>
+  <div class="tab" onclick="sw('strong')">What's strong</div>
+  <div class="tab" onclick="sw('next')">What to do next</div>
+</div>
+
+<!-- SCORECARD -->
+<div id="score" class="tab-panel active">
+  <div class="score-row">
+    <div class="score-card">
+      <div class="score-num g">10/10</div>
+      <div class="score-lbl">Test cases covered</div>
+    </div>
+    <div class="score-card">
+      <div class="score-num g">9/10</div>
+      <div class="score-lbl">Implementation quality</div>
+    </div>
+    <div class="score-card">
+      <div class="score-num w">3</div>
+      <div class="score-lbl">Gaps found in impl</div>
+    </div>
+    <div class="score-card">
+      <div class="score-num g">0</div>
+      <div class="score-lbl">Critical bugs</div>
+    </div>
+  </div>
+
+  <div class="note">
+    All 10 test cases are correctly implemented. The architecture is solid — single transaction, FOR UPDATE lock, all-or-nothing. The 3 gaps found are not in the test cases — they are in the space <em>between</em> the test cases. None are critical but one (EC-6) is a functional gap that will cause real confusion in production.
+  </div>
+</div>
+
+<!-- GAPS -->
+<div id="gaps" class="tab-panel">
+  <div class="sec">Gap 1 — EC-6 was never answered — zero refund return is unhandled</div>
+  <div class="item">
+    <div class="item-head">
+      <i class="ti ti-alert-triangle item-icon r" aria-hidden="true"></i>
+      <div class="item-body">
+        <div class="item-title">EC-6: refund = 0 case not covered in your summary</div>
+        <div class="item-sub">Your implementation summary covers 10 items — but EC-6 (return item, give no refund) was in the original test cases and is not mentioned anywhere in your implementation. This means it either was handled silently or was missed.</div>
+      </div>
+      <span class="tag t-fix">Verify now</span>
+    </div>
+    <div class="two-col">
+      <div class="box">
+        <div class="box-lbl">The risk</div>
+        <div class="box-text">If refundAmount = 0 and your ledger insert runs unconditionally — you create a ₹0 credit row in customer_ledger. This shows as a blank "Item Return" row in the customer credit page. Confusing and looks like a bug to the shop owner.</div>
+      </div>
+      <div class="box">
+        <div class="box-lbl">What to check in InvoiceService.php</div>
+        <div class="box-text">Find the customer_ledger insert. Is it inside an <code>if ($refundAmount > 0)</code> block? If not — add it. Restock should always happen. Ledger entry only when refund > 0.</div>
+      </div>
+    </div>
+    <code class="code">// What it should look like in InvoiceService::returnItems():
+// ✅ Always restock — regardless of refund amount:
+$this->repo->incrementBatchStock($item->batchId, $qty);
+
+// ✅ Only create ledger entry if money is involved:
+if ($refundAmount > 0 && $customer) {
+    $this->repo->insertLedgerCredit($customer->id, $refundAmount, ...);
+}</code>
+  </div>
+
+  <div class="sec">Gap 2 — areAllItemsReturned() runs AFTER the transaction commits</div>
+  <div class="item">
+    <div class="item-head">
+      <i class="ti ti-alert-circle item-icon w" aria-hidden="true"></i>
+      <div class="item-body">
+        <div class="item-title">Status update is outside the transaction — tiny window of inconsistency</div>
+        <div class="item-sub">Your HP-5 description says: "After committing the return transaction, areAllItemsReturned() checks..." — the word "after committing" means the status update runs as a separate query outside the transaction. This creates a small window where the return is committed but the invoice still shows 'completed'.</div>
+      </div>
+      <span class="tag t-gap">Minor gap</span>
+    </div>
+    <div class="two-col">
+      <div class="box">
+        <div class="box-lbl">Practical risk</div>
+        <div class="box-text">Very unlikely to cause real problems — it is a millisecond window. But if the server crashes between the COMMIT and the status UPDATE, invoice is permanently in wrong state. For a retail shop app this is acceptable, but worth knowing.</div>
+      </div>
+      <div class="box">
+        <div class="box-lbl">Ideal fix</div>
+        <div class="box-text">Move the status check and update inside the same transaction before COMMIT. The FOR UPDATE lock is already held — you can safely run the check and update inside the same transaction block.</div>
+      </div>
+    </div>
+    <code class="code">// Current (status update outside transaction):
+DB::transaction(function() {
+    // ... all return logic ...
+}); // ← COMMIT here
+// ← gap here — server could crash
+$this->updateStatusIfFullyReturned($invoiceId); // ← outside
+
+// Better (status update inside transaction):
+DB::transaction(function() use ($invoiceId, ...) {
+    // ... all return logic ...
+    if ($this->repo->areAllItemsReturned($invoiceId)) {
+        $this->repo->updateInvoiceStatus($invoiceId, 'returned');
+    }
+}); // ← COMMIT with status update included</code>
+  </div>
+
+  <div class="sec">Gap 3 — Missing batch graceful handling shows no warning to owner</div>
+  <div class="item">
+    <div class="item-head">
+      <i class="ti ti-info-circle item-icon b" aria-hidden="true"></i>
+      <div class="item-body">
+        <div class="item-title">EC-5: "Owner sees no error" — but they should see something</div>
+        <div class="item-sub">Your EC-5 implementation says: "The owner sees no error; stock can be manually adjusted." Silent skip is better than a crash, but the owner has no idea the physical restock did not happen. They will wonder why inventory numbers are off later.</div>
+      </div>
+      <span class="tag t-gap">UX gap</span>
+    </div>
+    <div class="two-col">
+      <div class="box">
+        <div class="box-lbl">What happens now</div>
+        <div class="box-text">Return succeeds. Ledger updated. But batch was missing — stock not restocked. Owner sees success message. Days later notices inventory is wrong. Cannot trace why.</div>
+      </div>
+      <div class="box">
+        <div class="box-lbl">Simple fix</div>
+        <div class="box-text">Same as excess refund warning — return a <code>stock_warning</code> field in the API response when a batch was not found. Frontend shows it alongside the success message. Owner knows to manually check.</div>
+      </div>
+    </div>
+    <code class="code">// In InvoiceService — track skipped restocks:
+$stockWarnings = [];
+if (!$batch) {
+    $stockWarnings[] = "{$item->productName}: batch not found, restock skipped";
+}
+
+// In API response alongside existing warning:
+return [
+    'success' => true,
+    'warning' => $excessRefundWarning ?? null,
+    'stock_warning' => !empty($stockWarnings)
+        ? implode('; ', $stockWarnings)
+        : null
+];
+
+// Frontend — show if present:
+if (data.stock_warning) {
+    showWarning('⚠ Stock note: ' + data.stock_warning
+      + ' — please adjust inventory manually.');
+}</code>
+  </div>
+</div>
+
+<!-- STRONG -->
+<div id="strong" class="tab-panel">
+  <div class="sec">What is genuinely well done</div>
+
+  <div class="item">
+    <div class="ok-row">
+      <i class="ti ti-lock ok-icon g" aria-hidden="true"></i>
+      <div class="ok-text">FOR UPDATE inside transaction — correct placement</div>
+      <div class="ok-detail">Race condition fully closed. PostgreSQL queues concurrent requests correctly.</div>
+    </div>
+    <div class="ok-row">
+      <i class="ti ti-arrows-transfer-down ok-icon g" aria-hidden="true"></i>
+      <div class="ok-text">Single POST with items array — best possible architecture</div>
+      <div class="ok-detail">All-or-nothing. Eliminates partial failure, double-click, and race condition in one change.</div>
+    </div>
+    <div class="ok-row">
+      <i class="ti ti-database ok-icon g" aria-hidden="true"></i>
+      <div class="ok-text">Batch reactivation with status = 'active'</div>
+      <div class="ok-detail">Prevents ghost stock. Returned items are always visible and sellable.</div>
+    </div>
+    <div class="ok-row">
+      <i class="ti ti-coin ok-icon g" aria-hidden="true"></i>
+      <div class="ok-text">Excess refund warning returned from backend — not just frontend</div>
+      <div class="ok-detail">Backend calculates the excess, frontend displays it. Correct separation — frontend cannot be trusted to calculate this.</div>
+    </div>
+    <div class="ok-row">
+      <i class="ti ti-pointer ok-icon g" aria-hidden="true"></i>
+      <div class="ok-text">pointerEvents = 'none' on modal during processing</div>
+      <div class="ok-detail">Cleaner than disabled attribute — works on overlay click too, not just the button.</div>
+    </div>
+    <div class="ok-row">
+      <i class="ti ti-list-check ok-icon g" aria-hidden="true"></i>
+      <div class="ok-text">Quick-pick reason buttons</div>
+      <div class="ok-detail">Reduces friction for shop owners. Every return gets a reason. Audit trail is complete.</div>
+    </div>
+    <div class="ok-row">
+      <i class="ti ti-git-branch ok-icon g" aria-hidden="true"></i>
+      <div class="ok-text">Interface + Repository separation (lockInvoiceRow, areAllItemsReturned)</div>
+      <div class="ok-detail">Clean architecture. These methods are testable independently. Easy to mock in unit tests.</div>
+    </div>
+  </div>
+</div>
+
+<!-- NEXT -->
+<div id="next" class="tab-panel">
+  <div class="sec">Do these 3 things to close the remaining gaps</div>
+
+  <div class="item">
+    <div class="item-head">
+      <i class="ti ti-circle-number-1 item-icon r" aria-hidden="true"></i>
+      <div class="item-body">
+        <div class="item-title">Check EC-6 in InvoiceService.php right now</div>
+        <div class="item-sub">Open InvoiceService.php. Find the customer_ledger insert. Confirm it is inside <code>if ($refundAmount > 0)</code>. If it is not — add the condition. 2 minute fix, prevents blank ₹0 ledger rows.</div>
+      </div>
+      <span class="tag t-fix">Do now — 2 min</span>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <i class="ti ti-circle-number-2 item-icon w" aria-hidden="true"></i>
+      <div class="item-body">
+        <div class="item-title">Move areAllItemsReturned() inside the transaction</div>
+        <div class="item-sub">Cut the status check from after the transaction and paste it inside, just before the closing brace of <code>DB::transaction()</code>. The FOR UPDATE lock is already held — this is safe. Eliminates the tiny inconsistency window.</div>
+      </div>
+      <span class="tag t-gap">Do today — 10 min</span>
+    </div>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <i class="ti ti-circle-number-3 item-icon b" aria-hidden="true"></i>
+      <div class="item-body">
+        <div class="item-title">Add stock_warning to API response when batch missing</div>
+        <div class="item-sub">Same pattern as your existing excess refund warning — already proven to work. Add <code>stock_warning</code> field, populate when batch not found, show in frontend alongside success toast. Owner always knows when manual inventory adjustment is needed.</div>
+      </div>
+      <span class="tag t-info">Do this week — 20 min</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong style="color:var(--color-text-primary)">Overall verdict:</strong> This is production-ready code for a retail shop application. The architecture decisions — single transaction, FOR UPDATE, items array, interface separation — are the right calls. The 3 gaps are small and the fixes are each under 20 minutes. Once EC-6 is confirmed and the status update is moved inside the transaction, this feature is complete with no known issues.
+  </div>
+</div>
+
+</div>
+<script>
+function sw(id) {
+  const ids = ['score','gaps','strong','next'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===id));
+}
+</script>

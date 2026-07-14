@@ -524,6 +524,54 @@
     </div>
   </div>
 
+  <!-- Return Items Modal -->
+  <div class="modal-overlay" id="returnItemsModal">
+    <div class="modal-content" style="max-width:700px; width:95%; max-height:90vh; overflow:hidden; display:flex; flex-direction:column;">
+      <div class="modal-header">
+        <div class="modal-title">Return Items — <span id="returnInvoiceNumber">-</span></div>
+        <button class="close-btn" onclick="closeModal('returnItemsModal')">&times;</button>
+      </div>
+      <div style="padding:0 2rem 1rem 2rem; border-bottom:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem;">
+          <span style="color:var(--muted);">Customer: <strong id="returnCustomerName" style="color:var(--text-strong);">-</strong></span>
+          <span style="color:var(--muted);">Date: <strong id="returnDate" style="color:var(--text-strong);">-</strong></span>
+        </div>
+      </div>
+      <input type="hidden" id="returnInvoiceId">
+      <div style="overflow-y:auto; flex:1; padding:1rem 2rem;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border);">
+              <th style="text-align:left; padding:6px 4px;">Product</th>
+              <th style="text-align:center; padding:6px 4px;">Sold</th>
+              <th style="text-align:center; padding:6px 4px;">Returned</th>
+              <th style="text-align:center; padding:6px 4px;">Return Qty</th>
+              <th style="text-align:right; padding:6px 4px;">Refund (₹)</th>
+              <th style="text-align:center; padding:6px 4px; width:30px;"></th>
+            </tr>
+          </thead>
+          <tbody id="returnItemsBody">
+          </tbody>
+        </table>
+        <div class="input-group" style="margin-top:1rem;">
+          <label class="input-label">Reason <span style="color:var(--danger);">*</span></label>
+          <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;">
+            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong size'">Wrong size</button>
+            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Damaged'">Damaged</button>
+            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Quality issue'">Quality issue</button>
+            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong item'">Wrong item</button>
+            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Changed mind'">Changed mind</button>
+          </div>
+          <input type="text" id="returnReason" class="input-field" placeholder="e.g. Damaged / Wrong size" required>
+        </div>
+      </div>
+      <div style="padding:1.5rem 2rem; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeModal('returnItemsModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitReturn()">Process Return</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Delete Bill Confirmation Modal -->
   <div class="modal-overlay" id="deleteBillModal">
     <div class="modal-content" style="max-width:420px; text-align:center;">

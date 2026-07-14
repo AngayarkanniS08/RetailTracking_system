@@ -1,0 +1,639 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1rem 0; }
+.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 16px; flex-wrap: wrap; }
+.tab { font-size: 12px; font-weight: 500; padding: 7px 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.sec { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin: 16px 0 9px; }
+.sec:first-child { margin-top: 0; }
+
+.tc { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 8px; overflow: hidden; }
+.tc-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); cursor: pointer; }
+.tc-num { font-size: 11px; font-weight: 600; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.n-ok   { background: var(--color-background-success); color: var(--color-text-success); }
+.n-warn { background: var(--color-background-warning); color: var(--color-text-warning); }
+.n-crit { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.n-info { background: var(--color-background-info);    color: var(--color-text-info); }
+.tc-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.tag { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+.t-happy  { background: var(--color-background-success); color: var(--color-text-success); }
+.t-edge   { background: var(--color-background-warning); color: var(--color-text-warning); }
+.t-crit   { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.t-sec    { background: #f3e8ff; color: #7c3aed; }
+.t-ui     { background: var(--color-background-info);    color: var(--color-text-info); }
+
+.tc-body { padding: 11px 14px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.box { border-radius: var(--border-radius-md); padding: 9px 11px; background: var(--color-background-secondary); }
+.box-lbl { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); margin-bottom: 5px; }
+.box-text { font-size: 12px; color: var(--color-text-primary); line-height: 1.6; }
+.code { font-size: 10px; font-family: var(--font-mono); background: var(--color-background-secondary); border: 0.5px dashed var(--color-border-secondary); border-radius: 4px; padding: 6px 9px; margin-top: 6px; white-space: pre-wrap; display: block; color: var(--color-text-secondary); line-height: 1.7; }
+.expect { font-size: 11px; color: var(--color-text-secondary); padding-top: 7px; border-top: 0.5px solid var(--color-border-tertiary); display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; }
+.expect-lbl { font-size: 10px; font-weight: 500; background: var(--color-background-success); color: var(--color-text-success); padding: 1px 6px; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+.expect-lbl-f { background: var(--color-background-danger); color: var(--color-text-danger); }
+
+.note { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 12px; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-tertiary); margin-top: 10px; line-height: 1.6; }
+
+.priority-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.pg { border-radius: var(--border-radius-lg); padding: 12px; border: 0.5px solid var(--color-border-tertiary); }
+.pg-title { font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+.pg-item { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 5px; display: flex; gap: 6px; line-height: 1.4; }
+.dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+</style>
+
+<div class="wrap">
+<div class="tabs">
+  <div class="tab active" onclick="sw('happy')">Happy path</div>
+  <div class="tab" onclick="sw('edge')">Edge cases</div>
+  <div class="tab" onclick="sw('crit')">Critical bugs</div>
+  <div class="tab" onclick="sw('sec')">Security</div>
+  <div class="tab" onclick="sw('ui')">UI / UX</div>
+  <div class="tab" onclick="sw('priority')">Test priority</div>
+</div>
+
+<!-- ═══ HAPPY PATH ═══ -->
+<div id="happy" class="tab-panel active">
+<div class="sec">Normal flow — must all pass</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-ok">1</div>
+    <div class="tc-title">Single item full return — walk-in customer</div>
+    <span class="tag t-happy">Happy path</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Setup</div><div class="box-text">Invoice INV-001, 1 item: Cotton Fabric 10 mtr × ₹120 = ₹1200. Walk-in customer (no credit). Invoice status = completed.</div></div>
+      <div class="box"><div class="box-lbl">Action</div><div class="box-text">Return all 10 meters. Refund = ₹1200. Reason = "Wrong colour".</div></div>
+    </div>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> invoice_return row created. batch.remaining_qty += 10. Invoice status → 'returned'. No customer_ledger entry (walk-in). No crash.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-ok">2</div>
+    <div class="tc-title">Partial return on multi-item invoice — registered customer</div>
+    <span class="tag t-happy">Happy path</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Setup</div><div class="box-text">Invoice with 3 items. Customer has credit balance ₹500 from previous bills. Return only item 2 (5 out of 10 meters).</div></div>
+      <div class="box"><div class="box-lbl">Action</div><div class="box-text">Return 5 meters of item 2. Refund = ₹600.</div></div>
+    </div>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Invoice status stays 'completed' (not all items returned). Batch qty += 5. customer_ledger gets credit ₹600. Customer balance reduces by ₹600. Other items unaffected.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-ok">3</div>
+    <div class="tc-title">Two separate partial returns on same invoice</div>
+    <span class="tag t-happy">Happy path</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Setup</div><div class="box-text">Invoice: 10 meters Cotton Fabric. First return: 3 meters. Later second return: 4 more meters.</div></div>
+      <div class="box"><div class="box-lbl">Action</div><div class="box-text">Do first return (3 mtr). Close modal. Open same invoice again. Do second return (4 mtr).</div></div>
+    </div>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> After first return: already_returned = 3, returnable = 7. After second return: already_returned = 7, returnable = 3. Total restocked = 7 meters. Two separate ledger credit entries.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-ok">4</div>
+    <div class="tc-title">Return with manually adjusted refund amount</div>
+    <span class="tag t-happy">Happy path</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Setup</div><div class="box-text">Sold 10 mtr × ₹120 = ₹1200. Return 10 mtr but shop gives only ₹1000 refund (₹200 handling charge).</div></div>
+      <div class="box"><div class="box-lbl">Action</div><div class="box-text">Set return qty = 10. Auto-fill refund = ₹1200. Manually change to ₹1000. Submit.</div></div>
+    </div>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> invoice_return.refund_amount = 1000 (not 1200). Batch qty += 10 (full physical restock regardless of refund amount). Ledger credit = 1000.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-ok">5</div>
+    <div class="tc-title">Full return — all items — invoice status changes</div>
+    <span class="tag t-happy">Happy path</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Setup</div><div class="box-text">Invoice with 2 items, both with qty 5. Return all 5 of item 1 and all 5 of item 2 in the same return action.</div></div>
+      <div class="box"><div class="box-lbl">Action</div><div class="box-text">Return qty = 5 for both items. Submit via Promise.all (2 API calls).</div></div>
+    </div>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Both batches restocked. Invoice status = 'returned'. Both ledger credits created. If Promise.all fails halfway — see edge case 3.</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ EDGE CASES ═══ -->
+<div id="edge" class="tab-panel">
+<div class="sec">Edge cases — tricky but must handle correctly</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-warn">1</div>
+    <div class="tc-title">Return qty = 0 for all items — user submits empty return</div>
+    <span class="tag t-edge">Edge case</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">User opens return modal, does not change any qty (all defaulted to 0), and clicks Submit.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Promise.all fires 0 API calls — or fires calls with qty=0 which creates empty invoice_return rows and confuses ledger.</div></div>
+    </div>
+    <code class="code">// Frontend fix — filter before sending:
+const itemsToReturn = returnItems.filter(i => i.returnQty > 0);
+if (itemsToReturn.length === 0) {
+  showError('Please enter return qty for at least one item.');
+  return;
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Show validation error. No API call made. No empty rows in invoice_returns table.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-warn">2</div>
+    <div class="tc-title">Return qty input manually typed beyond returnable qty</div>
+    <span class="tag t-edge">Edge case</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Sold 10 mtr. Already returned 7. Returnable = 3. User types 5 in the input box (ignoring the cap).</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">HTML max attribute can be bypassed via DevTools or mobile browsers. Backend must re-validate independently of frontend cap.</div></div>
+    </div>
+    <code class="code">// Backend validation (InvoiceService::returnItems):
+$alreadyReturned = DB::query(
+  'SELECT COALESCE(SUM(qty),0) FROM invoice_returns
+   WHERE invoice_id=? AND item_id=?', [$invoiceId, $itemId]
+);
+$returnable = $item->qty - $alreadyReturned;
+if ($returnQty > $returnable) {
+  throw new ValidationException(
+    "Cannot return {$returnQty}. Only {$returnable} returnable."
+  );
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> API returns 422 error. No row inserted. No batch qty change. Frontend shows error message clearly.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-warn">3</div>
+    <div class="tc-title">Promise.all — one item return succeeds, second fails midway</div>
+    <span class="tag t-edge">Edge case</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">2-item return. First API call succeeds (batch restocked, ledger updated). Second API call fails (network timeout or server error).</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Item 1 is restocked and refunded. Item 2 is not. Invoice shows partial state. Customer is confused. Data is inconsistent.</div></div>
+    </div>
+    <code class="code">// Option A — Single API call with array (best):
+POST /api/invoices/{id}/return
+Body: { items: [ {item_id, qty, refund}, {item_id, qty, refund} ] }
+→ One transaction, all-or-nothing
+
+// Option B — If keeping per-item calls, use Promise.allSettled:
+const results = await Promise.allSettled(returnCalls);
+const failed = results.filter(r => r.status === 'rejected');
+if (failed.length > 0) {
+  showError(`${failed.length} items failed. Please retry.`);
+  // Show which items succeeded vs failed
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Either all items return successfully or none do. Never a half-returned state in the database.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-warn">4</div>
+    <div class="tc-title">Customer balance goes negative after return credit</div>
+    <span class="tag t-edge">Edge case</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Customer owes ₹300 (credit balance). Return refund = ₹500. newBalance = 300 - 500 = -200.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Your code does max(newBalance, 0) — clamps to 0. But ₹200 excess refund is lost silently. Shop owner overpaid the customer without knowing.</div></div>
+    </div>
+    <code class="code">// Current — silently loses ₹200:
+$newBalance = max($currentBalance - $refundAmount, 0);
+
+// Better — track excess and show warning:
+$newBalance = $currentBalance - $refundAmount;
+if ($newBalance < 0) {
+  $excessRefund = abs($newBalance);
+  $newBalance = 0;
+  // Return this to frontend:
+  // "₹200 excess refund given. Customer balance cleared."
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Balance never goes below 0. But show a warning to the owner: "Refund ₹200 more than balance. ₹200 cash to be returned to customer."</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-warn">5</div>
+    <div class="tc-title">Batch deleted or qty changed after original sale</div>
+    <span class="tag t-edge">Edge case</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Invoice created from Batch B001. Later, admin deletes or edits Batch B001 in inventory. Now a return tries to restock B001 — it no longer exists.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Restock fails with a DB error or silently does nothing. Stock is not actually returned to inventory.</div></div>
+    </div>
+    <code class="code">// Backend check before restocking:
+$batch = DB::find('batches', $item->batch_id);
+if (!$batch) {
+  // Do not crash — log the issue
+  // Still create invoice_return record
+  // Still update customer ledger
+  // But flag: "Batch not found — stock not restocked"
+  // Show warning in return confirmation screen
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Return is still recorded financially. Stock restock is skipped with a visible warning. Owner knows to manually adjust inventory.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-warn">6</div>
+    <div class="tc-title">Refund amount = 0 entered manually</div>
+    <span class="tag t-edge">Edge case</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Owner accepts returned item but gives no money back (exchange only or damaged goods). Manually sets refund = 0.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">System may skip customer_ledger entry entirely when refund = 0. But stock should still be restocked. These are two independent actions.</div></div>
+    </div>
+    <code class="code">// Separate the two operations:
+// 1. Restock always happens when returnQty > 0
+// 2. Ledger credit only happens when refundAmount > 0
+if ($returnQty > 0) {
+  // Always restock batch
+  $batch->remaining_qty += $returnQty;
+}
+if ($refundAmount > 0 && $customer) {
+  // Only create ledger entry if there is actual money
+  insertLedgerCredit($customer, $refundAmount);
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Item physically restocked even with ₹0 refund. No ledger row created. No crash. Return record still saved with refund_amount = 0.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-warn">7</div>
+    <div class="tc-title">Return on invoice that was already fully returned</div>
+    <span class="tag t-edge">Edge case</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Invoice status = 'returned' (all items already returned). User opens invoice from daily sales and clicks Return again.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Modal opens but all returnable qty = 0. User may still click submit with qty = 0 and create empty rows.</div></div>
+    </div>
+    <code class="code">// Frontend — hide Return button when status = 'returned':
+if (invoice.status === 'returned') {
+  returnBtn.disabled = true;
+  returnBtn.textContent = 'Fully Returned';
+}
+
+// Backend — validate at entry:
+if ($invoice->status === 'returned') {
+  throw new ValidationException('Invoice fully returned already.');
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Return button disabled on fully returned invoices. Backend also rejects with clear error if somehow called.</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ CRITICAL BUGS ═══ -->
+<div id="crit" class="tab-panel">
+<div class="sec">Critical — these will cause real financial damage if not handled</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-crit">1</div>
+    <div class="tc-title">Race condition — same invoice returned twice simultaneously</div>
+    <span class="tag t-crit">Critical</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Two staff open the same invoice return modal at the same time (two tabs, two devices). Both read returnable = 10. Both submit return qty = 10. Both pass validation. Both restock 10 meters.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">20 meters restocked from a 10-meter sale. 2× ledger credit given. Inventory inflated. Customer gets double refund. This is a real money loss.</div></div>
+    </div>
+    <code class="code">// Fix — use DB-level locking in transaction:
+BEGIN TRANSACTION;
+
+-- Lock the invoice row for this transaction only:
+SELECT * FROM invoices WHERE id = ? FOR UPDATE;
+
+-- Now re-check returnable qty INSIDE the transaction:
+SELECT COALESCE(SUM(qty), 0)
+FROM invoice_returns
+WHERE invoice_id = ? AND item_id = ?;
+
+-- Only proceed if still returnable
+-- Other concurrent request will wait until this commits
+COMMIT;</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> First request succeeds. Second request gets 422 — "Already returned" because qty was rechecked inside locked transaction.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-crit">2</div>
+    <div class="tc-title">Return on invoice whose batch stock was sold again after original sale</div>
+    <span class="tag t-crit">Critical</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Batch B001 originally had 20 mtr. Sold 10 mtr (INV-001). Batch now has 10 mtr remaining. Then sold another 10 mtr from same batch (INV-002). Batch = 0. Now return from INV-001 — restock 10 mtr → batch goes to 10 mtr. Correct. But what if batch = 0 and someone already closed or deleted the batch?</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">If batch was closed/archived when it hit 0, restocking tries to update a closed batch. Stock goes into a "ghost" batch state — counted in totals but not visible in active batch list.</div></div>
+    </div>
+    <code class="code">// Fix — always reactivate batch on restock:
+UPDATE batches
+SET remaining_qty = remaining_qty + ?,
+    status = 'active'   -- reopen if it was closed at 0
+WHERE id = ?;</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Batch is always visible and active after a restock return. Never ghost stock.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-crit">3</div>
+    <div class="tc-title">Negative refund amount entered manually</div>
+    <span class="tag t-crit">Critical</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Refund field is editable. User types -500. Backend receives refund_amount = -500.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Ledger credit = -500 means a DEBIT is created. Customer balance increases by 500 instead of decreasing. Owner unknowingly gives customer extra credit.</div></div>
+    </div>
+    <code class="code">// Frontend:
+refundInput.min = 0;
+
+// Backend — always validate:
+if ($refundAmount < 0) {
+  throw new ValidationException('Refund cannot be negative.');
+}
+// Also cap at original invoice line value:
+$maxRefund = $item->qty * $item->unit_price;
+if ($refundAmount > $maxRefund * 1.1) {
+  // Allow 10% tolerance for rounding, block beyond that
+  throw new ValidationException('Refund exceeds item value.');
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Both frontend and backend reject negative refund. Backend also rejects refund far above item value.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-crit">4</div>
+    <div class="tc-title">total_purchases and total_paid calculation after return</div>
+    <span class="tag t-crit">Critical</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Customer total_purchases = ₹5000, total_paid = ₹3000, balance = ₹2000. Return ₹800 refund. Your spec says: total_purchases subtracts return credits from invoice debits.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">If the subtraction logic runs twice (once in ledger insert, once in summary calculation) — balance shows wrong. If it runs zero times — balance never updates. Must verify the math end-to-end.</div></div>
+    </div>
+    <code class="code">// After return of ₹800:
+// total_purchases = 5000 - 800 = 4200
+// total_paid      = 3000 - 800 = 2200
+// balance         = 4200 - 2200 = 2000 ← same balance! Correct.
+
+// Test: does balance stay at ₹2000 after return?
+// Verify: customer_ledger running balance column shows correct value
+// at each row — not just the final row.
+
+// Common bug: balance column recalculated from scratch on every
+// render but return rows are excluded from the sum accidentally.</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Balance = ₹2000 before and after return (return reduces both sides equally). Running balance in ledger view is correct at every row.</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SECURITY ═══ -->
+<div id="sec" class="tab-panel">
+<div class="sec">Security — must validate on server, never trust frontend</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-info">1</div>
+    <div class="tc-title">Return on invoice belonging to different shop/tenant</div>
+    <span class="tag t-sec">Security</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Attacker sends POST /api/invoices/999/return where invoice 999 belongs to a different shop. API only checks if invoice exists — not if it belongs to the current logged-in shop.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Cross-tenant data manipulation. One shop can corrupt another shop's inventory and ledger.</div></div>
+    </div>
+    <code class="code">// Always scope invoice lookup to current shop:
+$invoice = Invoice::where('id', $id)
+  ->where('shop_id', auth()->user()->shop_id)  // ← MUST
+  ->firstOrFail();</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> 404 returned for invoices from other shops. Never 200 or 403 (which reveals the invoice exists).</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-info">2</div>
+    <div class="tc-title">item_id in request does not belong to the invoice_id</div>
+    <span class="tag t-sec">Security</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">POST /api/invoices/5/return with item_id = 99 — but item 99 is from invoice 12, not invoice 5. If not validated, you restock a batch from a different invoice.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Inventory manipulation. A malicious user returns an item from invoice A using invoice B's endpoint.</div></div>
+    </div>
+    <code class="code">// Always verify item belongs to invoice:
+$item = InvoiceItem::where('id', $itemId)
+  ->where('invoice_id', $invoiceId)  // ← MUST
+  ->firstOrFail();</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> 404 if item_id does not belong to invoice_id. No partial processing.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-info">3</div>
+    <div class="tc-title">Unauthenticated return API call</div>
+    <span class="tag t-sec">Security</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">POST /api/invoices/{id}/return called with no auth token or expired token.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Anonymous user can return items and get ledger credits without logging in.</div></div>
+    </div>
+    <code class="code">// Route must be behind auth middleware:
+Route::middleware('auth:sanctum')->group(function () {
+  Route::post('/invoices/{id}/return', [ReturnController::class, 'store']);
+});</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> 401 Unauthorized. No DB changes. Test with Postman — no token should get 401, not 200.</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ UI/UX ═══ -->
+<div id="ui" class="tab-panel">
+<div class="sec">UI and UX — what shop owners will actually hit</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-info">1</div>
+    <div class="tc-title">Double click on Submit — two return API calls fired</div>
+    <span class="tag t-ui">UI/UX</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">Shop owner clicks Submit twice quickly (slow internet, impatient). Two identical return requests fire. First one succeeds. Second one may also succeed before DB lock kicks in.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Duplicate invoice_return rows. Double restock. Double ledger credit.</div></div>
+    </div>
+    <code class="code">// Disable button immediately on first click:
+submitBtn.disabled = true;
+submitBtn.textContent = 'Processing...';
+try {
+  await Promise.all(returnCalls);
+  showSuccess('Return completed');
+} catch(err) {
+  showError(err.message);
+  submitBtn.disabled = false; // re-enable only on error
+  submitBtn.textContent = 'Submit Return';
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Button disabled after first click. Re-enabled only if error occurs. Prevents all duplicate submissions.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-info">2</div>
+    <div class="tc-title">Modal closed mid-return — user thinks return failed</div>
+    <span class="tag t-ui">UI/UX</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">User submits return. API is slow (2–3 seconds). User clicks X to close modal thinking nothing happened. API call completes after modal closes.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Return actually succeeded but user does not know. They open the modal again and try to return the same items → second return fails with "already returned" error and user is confused.</div></div>
+    </div>
+    <code class="code">// Prevent modal close during processing:
+closeBtn.disabled = isProcessing;
+overlay.onclick = isProcessing ? null : closeModal;
+
+// Show clear in-modal loading state:
+modalBody.innerHTML = `
+  &lt;div class="loading-state"&gt;
+    Processing return — please wait...
+  &lt;/div&gt;`;
+// Never let user dismiss while API is running</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Close button and overlay click disabled while API is in flight. Clear loading message shown.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-info">3</div>
+    <div class="tc-title">Return button visible on invoices with status = 'cancelled'</div>
+    <span class="tag t-ui">UI/UX</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">An invoice was cancelled (not completed — maybe created by mistake and voided). Return button still shows on the daily sales row.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Owner tries to return items from a cancelled invoice. Stock was never actually sold — restocking would create ghost stock.</div></div>
+    </div>
+    <code class="code">// Only show Return for completed invoices:
+const showReturn = invoice.status === 'completed';
+// Not 'cancelled', not 'returned', not 'draft'
+
+// Backend also validates:
+if ($invoice->status !== 'completed') {
+  throw new ValidationException(
+    'Can only return completed invoices.'
+  );
+}</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Return button hidden for cancelled/draft/returned invoices. Backend double-validates status.</div>
+  </div>
+</div>
+
+<div class="tc">
+  <div class="tc-head" onclick="tog(this)">
+    <div class="tc-num n-info">4</div>
+    <div class="tc-title">Empty reason field — no text entered</div>
+    <span class="tag t-ui">UI/UX</span>
+  </div>
+  <div class="tc-body">
+    <div class="two-col">
+      <div class="box"><div class="box-lbl">Scenario</div><div class="box-text">User leaves reason blank and submits return. Backend stores reason = null or empty string.</div></div>
+      <div class="box"><div class="box-lbl">Risk</div><div class="box-text">Return history shows blank reason. Shop owner cannot later explain why return happened. Auditing becomes impossible.</div></div>
+    </div>
+    <code class="code">// Make reason required with minimum length:
+if (!reason || reason.trim().length < 3) {
+  showError('Please enter a return reason (min 3 characters)');
+  return;
+}
+// Suggested quick-pick buttons:
+// [ Wrong item ] [ Damaged ] [ Customer changed mind ] [ Quality issue ]
+// One tap fills the reason field — reduces friction</code>
+    <div class="expect"><span class="expect-lbl">EXPECT</span> Reason is required. Quick-pick reason buttons speed up the flow. No blank reason rows in invoice_returns.</div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ PRIORITY ═══ -->
+<div id="priority" class="tab-panel">
+<div class="sec">Test in this order — most critical first</div>
+
+<div class="priority-grid">
+  <div class="pg" style="border-color:var(--color-border-danger); background:color-mix(in srgb, var(--color-background-danger) 10%, transparent)">
+    <div class="pg-title" style="color:var(--color-text-danger)">P0 — Test first</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Race condition with DB lock</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Return qty > returnable (backend)</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Negative refund amount</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Promise.all partial failure</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Balance math after return</div>
+  </div>
+  <div class="pg" style="border-color:var(--color-border-warning); background:color-mix(in srgb, var(--color-background-warning) 10%, transparent)">
+    <div class="pg-title" style="color:var(--color-text-warning)">P1 — Test next</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Full return → status = returned</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Two partial returns same invoice</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Return with refund = 0</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Batch deleted/archived edge case</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>tenant scoping (shop_id check)</div>
+  </div>
+  <div class="pg" style="border-color:var(--color-border-secondary)">
+    <div class="pg-title" style="color:var(--color-text-secondary)">P2 — Test last</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Empty return qty submit</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Double click submit</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Return button on cancelled invoice</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Modal close during processing</div>
+    <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Empty reason field</div>
+  </div>
+</div>
+
+<div class="note">
+  <strong style="color:var(--color-text-primary)">Most important single fix:</strong> Change your <code>Promise.all</code> (one API call per item) to a single <code>POST /api/invoices/{id}/return</code> with an array of all items in one request body. One DB transaction, all-or-nothing, no partial state possible. This fixes the race condition, the partial failure, and the double-click problem all at once. Everything else is secondary to this architectural change.
+</div>
+</div>
+</div>
+
+<script>
+function sw(id) {
+  const ids = ['happy','edge','crit','sec','ui','priority'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===id));
+}
+function tog(h) {
+  const b = h.nextElementSibling;
+  b.style.display = b.style.display === 'none' ? 'block' : 'block';
+}
+</script>

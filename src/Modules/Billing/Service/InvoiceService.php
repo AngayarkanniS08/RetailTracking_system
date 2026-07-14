@@ -340,11 +340,13 @@ class InvoiceService
      */
     public function returnItems(
         string $invoiceId,
-        string $invoiceItemId,
-        float $qtyReturned,
-        float $refundAmount,
+        array $items,
         ?string $reason = null
-    ): InvoiceReturn {
+    ): array {
+        if (empty($items)) {
+            throw new ValidationException("No return items provided");
+        }
+
         $invoice = $this->repo->findInvoiceById($invoiceId, true);
         if (!$invoice) {
             throw new ValidationException("Invoice not found");
@@ -353,68 +355,92 @@ class InvoiceService
             throw new ValidationException("Cannot return items from a {$invoice->invoiceStatus} invoice");
         }
 
-        $invoiceItem = null;
-        foreach ($invoice->items ?? [] as $item) {
-            if ($item->id === $invoiceItemId) {
-                $invoiceItem = $item;
-                break;
-            }
-        }
-        if (!$invoiceItem) {
-            throw new ValidationException("Invoice item not found");
-        }
-
-        $alreadyReturned = $this->repo->getTotalReturnedQty($invoiceItemId);
-        $returnableQty = $invoiceItem->quantity - $alreadyReturned;
-        if ($qtyReturned > $returnableQty) {
-            throw new ValidationException(
-                "Cannot return {$qtyReturned} items. Only {$returnableQty} remaining to return"
-            );
-        }
-        if ($qtyReturned <= 0) {
-            throw new ValidationException("Return quantity must be positive");
-        }
-        if ($refundAmount < 0) {
-            throw new ValidationException("Refund amount cannot be negative");
-        }
-
         $this->repo->beginTransaction();
         try {
-            $invoiceReturn = new InvoiceReturn(
-                id: null,
-                invoiceId: $invoiceId,
-                productId: $invoiceItem->productId,
-                qtyReturned: $qtyReturned,
-                refundAmount: $refundAmount,
-                invoiceItemId: $invoiceItemId,
-                batchId: $invoiceItem->batchId,
-                restockQty: $qtyReturned,
-                reason: $reason,
-                createdAt: null
-            );
-            $saved = $this->repo->createReturn($invoiceReturn);
+            $this->repo->lockInvoiceRow($invoiceId);
 
-            if ($invoiceItem->batchId) {
-                $this->repo->incrementBatchStock($invoiceItem->batchId, $qtyReturned);
+            $savedReturns = [];
+            $totalRefund = 0;
+            $stockWarnings = [];
+
+            foreach ($items as $itemData) {
+                $invoiceItemId = $itemData['invoice_item_id'];
+                $qtyReturned = (float)$itemData['qty_returned'];
+                $refundAmount = (float)$itemData['refund_amount'];
+
+                $invoiceItem = null;
+                foreach ($invoice->items ?? [] as $item) {
+                    if ($item->id === $invoiceItemId) {
+                        $invoiceItem = $item;
+                        break;
+                    }
+                }
+                if (!$invoiceItem) {
+                    throw new ValidationException("Invoice item {$invoiceItemId} not found");
+                }
+
+                $alreadyReturned = $this->repo->getTotalReturnedQty($invoiceItemId);
+                $returnableQty = $invoiceItem->quantity - $alreadyReturned;
+                if ($qtyReturned > $returnableQty) {
+                    throw new ValidationException(
+                        "Cannot return {$qtyReturned} items. Only {$returnableQty} remaining to return"
+                    );
+                }
+                if ($qtyReturned <= 0) {
+                    throw new ValidationException("Return quantity must be positive");
+                }
+                if ($refundAmount < 0) {
+                    throw new ValidationException("Refund amount cannot be negative");
+                }
+
+                $invoiceReturn = new InvoiceReturn(
+                    id: null,
+                    invoiceId: $invoiceId,
+                    productId: $invoiceItem->productId,
+                    qtyReturned: $qtyReturned,
+                    refundAmount: $refundAmount,
+                    invoiceItemId: $invoiceItemId,
+                    batchId: $invoiceItem->batchId,
+                    restockQty: $qtyReturned,
+                    reason: $reason,
+                    createdAt: null
+                );
+                $saved = $this->repo->createReturn($invoiceReturn);
+                $savedReturns[] = $saved;
+
+                if ($invoiceItem->batchId) {
+                    $batch = $this->repo->findBatchById($invoiceItem->batchId);
+                    if ($batch) {
+                        $this->repo->incrementBatchStock($invoiceItem->batchId, $qtyReturned);
+                    } else {
+                        $stockWarnings[] = "{$invoiceItem->productNameSnapshot}: batch not found, stock not restocked";
+                    }
+                }
+
+                $this->repo->createStockMovement(new StockMovement(
+                    id: null,
+                    userId: $invoice->userId,
+                    productId: $invoiceItem->productId,
+                    referenceType: 'RETURN',
+                    movementType: 'IN',
+                    qty: $qtyReturned,
+                    batchId: $invoiceItem->batchId,
+                    referenceId: $invoiceId,
+                    createdAt: null
+                ));
+
+                $totalRefund += $refundAmount;
             }
-
-            $this->repo->createStockMovement(new StockMovement(
-                id: null,
-                userId: $invoice->userId,
-                productId: $invoiceItem->productId,
-                referenceType: 'RETURN',
-                movementType: 'IN',
-                qty: $qtyReturned,
-                batchId: $invoiceItem->batchId,
-                referenceId: $invoiceId,
-                createdAt: null
-            ));
 
             $this->repo->refreshStockList();
 
-            if ($refundAmount > 0 && $invoice->customerId) {
+            $excessRefund = 0;
+            if ($totalRefund > 0 && $invoice->customerId) {
                 $currentBalance = $this->repo->getCustomerBalance($invoice->customerId);
-                $newBalance = $currentBalance - $refundAmount;
+                $newBalance = $currentBalance - $totalRefund;
+                if ($newBalance < 0) {
+                    $excessRefund = abs($newBalance);
+                }
 
                 $this->repo->addLedgerEntry(new CustomerLedger(
                     id: null,
@@ -422,12 +448,16 @@ class InvoiceService
                     customerId: $invoice->customerId,
                     entryType: 'return',
                     debit: 0,
-                    credit: $refundAmount,
+                    credit: $totalRefund,
                     balance: max($newBalance, 0),
                     invoiceId: $invoiceId,
                     notes: "Return on invoice {$invoice->invoiceNumber}: {$reason}",
                     createdAt: null
                 ));
+            }
+
+            if ($this->repo->areAllItemsReturned($invoiceId)) {
+                $this->repo->updateInvoiceStatus($invoiceId, 'returned');
             }
 
             $this->repo->commit();
@@ -437,7 +467,13 @@ class InvoiceService
             throw $e;
         }
 
-        return $saved;
+        return [
+            'returns' => $savedReturns,
+            'excess_refund' => $excessRefund,
+            'stock_warning' => !empty($stockWarnings)
+                ? implode('; ', $stockWarnings)
+                : null
+        ];
     }
 
     /**

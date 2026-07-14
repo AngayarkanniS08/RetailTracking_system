@@ -19,6 +19,7 @@ class InvoiceItem
         public float   $gstAmount = 0,
         public float   $discountAmount = 0,
         public float   $lineTotal = 0,
-        public ?string $createdAt = null
+        public ?string $createdAt = null,
+        public ?float  $alreadyReturned = null
     ) {}
 }

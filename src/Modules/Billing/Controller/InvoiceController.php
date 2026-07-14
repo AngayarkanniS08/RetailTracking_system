@@ -231,24 +231,29 @@ class InvoiceController
         AuthMiddleware::authenticate();
         $input = json_decode(file_get_contents('php://input'), true);
 
-        $invoiceItemId = $input['invoice_item_id'] ?? '';
-        $qtyReturned = (float)($input['qty_returned'] ?? 0);
-        $refundAmount = (float)($input['refund_amount'] ?? 0);
+        $items = $input['items'] ?? [];
         $reason = $input['reason'] ?? null;
 
-        if (empty($invoiceItemId)) {
+        if (empty($items)) {
             http_response_code(422);
-            echo json_encode(['error' => 'Invoice item ID is required']);
+            echo json_encode(['error' => 'No return items provided']);
             return;
         }
 
         try {
-            $return = $this->service->returnItems($id, $invoiceItemId, $qtyReturned, $refundAmount, $reason);
-            echo json_encode([
+            $result = $this->service->returnItems($id, $items, $reason);
+            $response = [
                 'success' => true,
                 'message' => 'Return processed successfully',
-                'return' => $return
-            ]);
+                'returns' => $result['returns']
+            ];
+            if (!empty($result['excess_refund'])) {
+                $response['warning'] = "Refund ₹" . number_format($result['excess_refund'], 2) . " more than outstanding balance. ₹" . number_format($result['excess_refund'], 2) . " cash to be returned to customer.";
+            }
+            if (!empty($result['stock_warning'])) {
+                $response['stock_warning'] = $result['stock_warning'];
+            }
+            echo json_encode($response);
         } catch (ValidationException $e) {
             http_response_code(422);
             echo json_encode(['error' => $e->getMessage()]);

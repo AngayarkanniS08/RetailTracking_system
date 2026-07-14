@@ -135,10 +135,11 @@ async function toggleBills(className, custId) {
     }
     if (!customerRow) return;
 
-    // Group ledger entries by invoice_id to merge invoice + its payment into one row
+    // Group ledger entries — invoice + its payment share one row; returns, credit notes, standalone payments each get their own row
     const grouped = {};
     entries.forEach(entry => {
-        const key = entry.invoice_id || entry.id;
+        const isStandalone = entry.entry_type === 'return' || entry.entry_type === 'credit_note';
+        const key = isStandalone ? entry.id : (entry.invoice_id || entry.id);
         if (!grouped[key]) {
             grouped[key] = {
                 invoice_id: entry.invoice_id,
@@ -171,9 +172,26 @@ async function toggleBills(className, custId) {
         const isPay = entry._isPay && !entry.invoice_id;
         const isDeleted = entry.invoice_status === 'deleted';
         const delBadge = isDeleted ? ' <span style="color:var(--danger);font-size:0.65rem;">(Deleted)</span>' : '';
-        const typeLabel = isPay
-            ? '<span style="color:var(--ok); font-weight:600;">Payment</span>'
-            : `<span style="color:var(--accent);">${entry.entry_type === 'opening' ? 'Opening' : entry.notes || 'Invoice'}${delBadge}</span>`;
+        const isReturn = entry.entry_type === 'return';
+        const cnReturn = isReturn || entry.entry_type === 'credit_note';
+
+        let typeLabel, subtitle;
+        if (isPay) {
+            typeLabel = '<span style="color:var(--ok); font-weight:600;">Payment</span>';
+            subtitle = '';
+        } else if (isReturn) {
+            typeLabel = '<span style="color:#e67e22; font-weight:600;">Item Return</span>';
+            var reason = entry.notes || '';
+            reason = reason.replace(/^Return on invoice\s+\S+:\s*/i, '');
+            subtitle = '<div style="font-size:0.7rem;color:var(--muted);margin-top:1px;">' + escHtml(reason) + '</div>';
+        } else if (entry.entry_type === 'opening') {
+            typeLabel = '<span style="color:var(--accent);">Opening</span>';
+            subtitle = '';
+        } else {
+            typeLabel = `<span style="color:var(--accent);">${entry.notes || 'Invoice'}${delBadge}</span>`;
+            subtitle = '';
+        }
+
         const bal = entry.balance;
         const balBadge = bal <= 0
             ? '<span class="badge badge-ok" style="font-size:0.7rem;">Cleared</span>'
@@ -183,15 +201,19 @@ async function toggleBills(className, custId) {
         if (isPay) {
             viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewPaymentReceipt('${entry.id}')">View</button>`;
         } else if (entry.invoice_id && entry.invoice_status !== 'deleted') {
-            viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewInvoice('${entry.invoice_id}')">View</button>`;
+            if (isReturn) {
+                viewBtn = '';
+            } else {
+                viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewInvoice('${entry.invoice_id}')">View</button>`;
+            }
         }
 
         ledgerHtml += `
           <tr class="${CSS.escape(className)}" style="display:none; background: var(--bg-100);">
             <td colspan="2" style="font-size:0.8rem; color:var(--muted); padding-left:24px;">${dateStr} ${timeStr}</td>
-            <td style="font-size:0.85rem;">${typeLabel}</td>
+            <td style="font-size:0.85rem;">${typeLabel}${subtitle}</td>
             <td></td>
-            <td style="font-size:0.85rem;">${isPay ? '-' : formatCurrency(entry.debit)}</td>
+            <td style="font-size:0.85rem;">${isPay || isReturn ? '-' : formatCurrency(entry.debit)}</td>
             <td style="font-size:0.85rem; color:var(--ok);">${entry.credit > 0 ? formatCurrency(entry.credit) : '-'}</td>
             <td style="font-size:0.85rem;">${balBadge}</td>
             <td></td>

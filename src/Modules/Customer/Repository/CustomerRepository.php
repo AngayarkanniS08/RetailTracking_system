@@ -200,8 +200,10 @@ class CustomerRepository implements CustomerRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT
-                COALESCE(SUM(cl.debit), 0) AS total_purchases,
-                COALESCE(SUM(cl.credit), 0) AS total_paid,
+                COALESCE(SUM(cl.debit) FILTER (WHERE cl.entry_type IN ('invoice', 'opening')), 0)
+                - COALESCE(SUM(cl.credit) FILTER (WHERE cl.entry_type = 'return'), 0) AS total_purchases,
+                GREATEST(0, COALESCE(SUM(cl.credit) FILTER (WHERE cl.entry_type = 'payment'), 0)
+                    - COALESCE(SUM(cl.credit) FILTER (WHERE cl.entry_type = 'return'), 0)) AS total_paid,
                 COUNT(*) FILTER (WHERE cl.entry_type = 'invoice') AS total_bills,
                 COUNT(*) FILTER (WHERE cl.entry_type = 'invoice' AND COALESCE(i.balance_due, 0) <= 0) AS bills_cleared
             FROM customer_ledger cl
