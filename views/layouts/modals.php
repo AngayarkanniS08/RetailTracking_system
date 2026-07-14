@@ -167,20 +167,7 @@
         <label class="input-label">Phone Number <span style="color:var(--danger);">*</span></label>
         <input type="text" id="custPhone" class="input-field" placeholder="10-digit number">
       </div>
-      <div class="d-flex" style="gap:10px;">
-        <div class="input-group" style="flex:1;">
-          <label class="input-label">Email</label>
-          <input type="email" id="custEmail" class="input-field" placeholder="email@example.com">
-        </div>
-        <div class="input-group" style="flex:1;">
-          <label class="input-label">GSTIN</label>
-          <input type="text" id="custGstin" class="input-field" placeholder="GSTIN (optional)">
-        </div>
-      </div>
-      <div class="input-group">
-        <label class="input-label">Address</label>
-        <input type="text" id="custAddress" class="input-field" placeholder="Address (optional)">
-      </div>
+
       <div class="d-flex" style="gap:10px;">
         <div class="input-group" style="flex:1;">
           <label class="input-label">Credit Limit (₹) <span style="color:var(--muted);font-weight:400;">(optional)</span></label>

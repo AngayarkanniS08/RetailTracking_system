@@ -238,9 +238,6 @@ function viewInvoice(invoiceId) {
 function saveCustomer() {
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
-    const email = document.getElementById('custEmail')?.value.trim() || '';
-    const gstin = document.getElementById('custGstin')?.value.trim() || '';
-    const address = document.getElementById('custAddress')?.value.trim() || '';
     const creditLimit = parseFloat(document.getElementById('custCreditLimit')?.value) || 0;
     const openingBalance = parseFloat(document.getElementById('custOpeningBalance')?.value) || 0;
 
@@ -250,9 +247,6 @@ function saveCustomer() {
     }
 
     const payload = { name, phone };
-    if (email) payload.email = email;
-    if (gstin) payload.gstin = gstin;
-    if (address) payload.address = address;
     if (creditLimit > 0) payload.credit_limit = creditLimit;
     if (openingBalance > 0) payload.opening_balance = openingBalance;
 
@@ -263,9 +257,6 @@ function saveCustomer() {
         closeModal('addCustomerModal');
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
-        if (document.getElementById('custEmail')) document.getElementById('custEmail').value = '';
-        if (document.getElementById('custGstin')) document.getElementById('custGstin').value = '';
-        if (document.getElementById('custAddress')) document.getElementById('custAddress').value = '';
         if (document.getElementById('custCreditLimit')) document.getElementById('custCreditLimit').value = '';
         if (document.getElementById('custOpeningBalance')) document.getElementById('custOpeningBalance').value = '';
         const custIdField = document.getElementById('billCustomerId');
