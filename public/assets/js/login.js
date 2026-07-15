@@ -55,12 +55,7 @@
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // Sync session with the frontend container locally
-                await fetch('/index.php?action=set_session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: data.user.id, username: data.user.username })
-                });
+                document.cookie = "auth_uid=" + data.user.id + "; path=/; max-age=86400; SameSite=Lax";
                 localStorage.setItem('auth_token', data.token);
                 if (data.user) {
                     localStorage.setItem('auth_user', JSON.stringify(data.user));

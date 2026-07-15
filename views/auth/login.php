@@ -27,4 +27,4 @@
       </form>
     </div>
   </div>
-<script src="public/assets/js/login.js"></script>
+<script src="public/assets/js/login.js?v=<?= time(); ?>"></script>

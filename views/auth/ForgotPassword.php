@@ -20,4 +20,4 @@
       <p style="text-align: center; margin-top: 1.5rem;"><a href="index.php?action=login">Back to Login</a></p>
     </div>
   </div>
-<script src="public/assets/js/forgot-password.js"></script>
+<script src="public/assets/js/forgot-password.js?v=<?= time(); ?>"></script>

@@ -15,7 +15,7 @@ async function apiRequest(path, options = {}) {
     if (!token && !path.includes('/api/login') && !path.includes('/api/register') && !path.startsWith('/api/backup/')) {
         if (!_redirecting) {
             _redirecting = true;
-            window.location.href = '/index.php?action=logout';
+            logoutUser();
         }
         throw new Error('Not authenticated');
     }
@@ -39,7 +39,7 @@ async function apiRequest(path, options = {}) {
         localStorage.removeItem('auth_user');
         if (!_redirecting) {
             _redirecting = true;
-            window.location.href = '/index.php?action=logout';
+            logoutUser();
         }
         throw new Error('Session expired');
     }
@@ -155,6 +155,13 @@ async function openSalesSummaryDetail(period) {
     }
 }
 
+function logoutUser() {
+    document.cookie = "auth_uid=; path=/; max-age=0; SameSite=Lax";
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+    window.location.href = '/login';
+}
+
 // Export functions to global window object
 window.apiRequest = apiRequest;
 window.openModal = openModal;
@@ -162,4 +169,5 @@ window.closeModal = closeModal;
 window.formatCurrency = formatCurrency;
 window.generateId = generateId;
 window.openSalesSummaryDetail = openSalesSummaryDetail;
+window.logoutUser = logoutUser;
 

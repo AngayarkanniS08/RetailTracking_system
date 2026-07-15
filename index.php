@@ -15,39 +15,11 @@ foreach ($autoloadPaths as $path) {
 
 $startTime = microtime(true);
 
-// Local bootstrapping for frontend session and settings
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-
-$sessionPath = __DIR__ . '/tmp/sessions';
-if (!is_dir($sessionPath) && !mkdir($sessionPath, 0777, true) && !is_dir($sessionPath)) {
-    throw new \RuntimeException("Unable to create session directory: $sessionPath");
-}
-
-session_save_path($sessionPath);
-ini_set('session.cookie_lifetime', '28800');
-ini_set('session.gc_maxlifetime', '28800');
-
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
-
 // Set the include path to include the root directory so requires resolve views/layouts/...
 set_include_path(get_include_path() . PATH_SEPARATOR . __DIR__);
 
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-    session_destroy();
     header('Location: /login');
-    exit;
-}
-
-if (isset($_GET['action']) && $_GET['action'] === 'set_session') {
-    $input = json_decode(file_get_contents('php://input'), true);
-    $_SESSION['user_id'] = $input['user_id'] ?? '';
-    $_SESSION['username'] = $input['username'] ?? '';
-    header('Content-Type: application/json');
-    echo json_encode(['success' => true]);
     exit;
 }
 
@@ -81,7 +53,7 @@ $initialSection = $routeMap[$routePath] ?? null;
 // ============================================
 // Determine if user is logged in
 // ============================================
-$isLoggedIn = isset($_SESSION['user_id']);
+$isLoggedIn = isset($_COOKIE['auth_uid']);
 
 $publicPages = ['backup'];
 

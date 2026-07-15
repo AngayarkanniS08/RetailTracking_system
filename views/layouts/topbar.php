@@ -18,7 +18,7 @@
             <span id="topbarAlertBadge" style="position: absolute; top: 6px; right: 6px; background: var(--danger); border-radius: 50%; width: 8px; height: 8px; border: 1px solid var(--bg-card); display: none;"></span>
         </div>
         <div class="avatar">A</div>
-        <a href="index.php?action=logout" class="btn btn-outline">Logout</a>
+        <a href="javascript:void(0)" onclick="logoutUser()" class="btn btn-outline">Logout</a>
       </div>
       
     </header>

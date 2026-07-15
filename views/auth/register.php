@@ -32,4 +32,4 @@
       <p class="text-center mt-1" style="color: var(--muted); font-size: 0.8rem;"></p>
     </div>
   </div>
-<script src="public/assets/js/register.js"></script>
+<script src="public/assets/js/register.js?v=<?= time(); ?>"></script>

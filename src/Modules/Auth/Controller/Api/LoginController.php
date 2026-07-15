@@ -46,10 +46,6 @@ class LoginController
             $user = $this->service->login($dto);
             $jwt = $this->jwtService->generateToken($user);
 
-            // Set session variables for server-side layout rendering
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-
             echo json_encode([
                 'success' => true,
                 'token' => $jwt,

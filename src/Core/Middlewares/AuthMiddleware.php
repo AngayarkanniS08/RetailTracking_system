@@ -105,7 +105,19 @@ class AuthMiddleware
 
     public static function getUserId(): string
     {
-        return $_SESSION['user_id'] ?? ''; // or fetch from JWT
+        $headers = getallheaders();
+        foreach ($headers as $key => $value) {
+            if (strtolower($key) === 'authorization' && preg_match('/Bearer\s(\S+)/', $value, $m)) {
+                try {
+                    $jwtService = new \Modules\Auth\Service\JWTService();
+                    $decoded = $jwtService->verifyToken($m[1]);
+                    return $decoded->data->user_id ?? '';
+                } catch (\Exception $e) {
+                    return '';
+                }
+            }
+        }
+        return '';
     }
 
 }
