@@ -522,28 +522,10 @@ function renderInventory(stats = {}) {
     let calculatedStockValue = 0;
     let totalBatchesCalculated = 0;
     let lowStockCalculated = 0;
-    // 1. Calculate Sales Revenue & Costs
-    let stockSoldValue = 0;
-    let stockSoldCost = 0;
 
-    window.sale_items.forEach(item => {
-        stockSoldValue += item.qty * item.price;
-
-        // Attempt to find the purchase cost to calculate net margins
-        let pCost = 0;
-        if (item.batch_id) {
-            const batch = window.batches.find(b => b.id === item.batch_id);
-            pCost = batch ? batch.purchase_price : 0;
-        }
-        if (pCost === 0 && item.product_id) {
-            const productBatch = window.batches.find(b => b.product_id === item.product_id);
-            pCost = productBatch ? productBatch.purchase_price : 0;
-        }
-        stockSoldCost += item.qty * pCost;
-    });
-
-    // 2. Compute Profit Amount
-    const profitAmount = stockSoldValue - stockSoldCost;
+    const stockSoldValue = typeof stats.stock_sold_value !== 'undefined' ? stats.stock_sold_value : 0;
+    const costOfGoodsSold = typeof stats.cost_of_goods_sold !== 'undefined' ? stats.cost_of_goods_sold : 0;
+    const profitAmount = stockSoldValue - costOfGoodsSold;
 
 
     window.batches.forEach(b => {

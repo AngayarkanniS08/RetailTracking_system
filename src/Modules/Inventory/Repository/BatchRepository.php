@@ -229,42 +229,62 @@ class BatchRepository implements BatchRepositoryInterface
     
     public function getStats(string $search = '', string $categoryId = '', string $subcategoryId = ''): array
     {
-        $sql = "
-            FROM public.inventory_batches b
-            JOIN public.products p ON p.id = b.product_id
-            WHERE b.user_id = current_setting('app.current_user_id')::uuid
-        ";
+        // Shared filter conditions (applied to both queries)
+        $filterSql = '';
         $params = [];
         if (!empty($categoryId)) {
-            $sql .= " AND p.category_id = ?";
+            $filterSql .= " AND p.category_id = ?";
             $params[] = $categoryId;
         }
         if (!empty($subcategoryId)) {
-            $sql .= " AND p.subcategory_id = ?";
+            $filterSql .= " AND p.subcategory_id = ?";
             $params[] = $subcategoryId;
         }
         if (!empty($search)) {
-            $sql .= " AND (p.name ILIKE ? OR b.batch_number ILIKE ? OR b.id::text ILIKE ?)";
+            $filterSql .= " AND (p.name ILIKE ? OR b.batch_number ILIKE ? OR b.id::text ILIKE ?)";
             $params[] = "%$search%";
             $params[] = "%$search%";
             $params[] = "%$search%";
         }
 
+        // Query 1: Stock value, batches, low stock
         $selectSql = "
-            SELECT 
+            SELECT
                 COALESCE(SUM(b.remaining_qty * b.cost_price), 0) AS total_stock_value,
                 COUNT(b.id) AS total_batches,
                 COUNT(CASE WHEN p.rop > 0 AND b.remaining_qty <= p.rop THEN 1 END) AS low_stock_count
-            " . $sql;
+            FROM public.inventory_batches b
+            JOIN public.products p ON p.id = b.product_id
+            WHERE b.user_id = current_setting('app.current_user_id')::uuid
+        " . $filterSql;
 
         $stmt = $this->db->prepare($selectSql);
         $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Query 2: Sales data (respects same category/subcategory/search filters)
+        $salesSql = "
+            SELECT
+                COALESCE(SUM(ii.unit_price * ii.quantity), 0) AS stock_sold_value,
+                COALESCE(SUM(ii.cost_price_snapshot * ii.quantity), 0) AS cost_of_goods_sold
+            FROM invoice_items ii
+            JOIN invoices i ON i.id = ii.invoice_id
+            JOIN public.inventory_batches b ON b.id = ii.batch_id
+            JOIN public.products p ON p.id = b.product_id
+            WHERE i.user_id = current_setting('app.current_user_id')::uuid
+              AND i.invoice_status = 'completed'
+        " . $filterSql;
+
+        $stmt2 = $this->db->prepare($salesSql);
+        $stmt2->execute($params);
+        $salesRow = $stmt2->fetch(PDO::FETCH_ASSOC);
+
         return [
             'total_stock_value' => (float)($row['total_stock_value'] ?? 0),
             'total_batches' => (int)($row['total_batches'] ?? 0),
-            'low_stock_count' => (int)($row['low_stock_count'] ?? 0)
+            'low_stock_count' => (int)($row['low_stock_count'] ?? 0),
+            'stock_sold_value' => (float)($salesRow['stock_sold_value'] ?? 0),
+            'cost_of_goods_sold' => (float)($salesRow['cost_of_goods_sold'] ?? 0)
         ];
     }
 }
