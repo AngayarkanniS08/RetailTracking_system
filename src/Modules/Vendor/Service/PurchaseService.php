@@ -82,14 +82,14 @@ class PurchaseService
             purchaseDate: $dto->purchaseDate,
             baseAmount: $dto->baseAmount,
             amountPaid: $dto->amountPaid,
-            status: $this->determineStatus($dto->amountPaid, $dto->baseAmount),
+            status: $this->determineStatus($dto->amountPaid, $totalAmount),
             userId: $userId,
             createdAt: null,
             updatedAt: null,
             items: null
         );
 
-        // 5. Save purchase header + items in a single transaction
+        // 5. Save purchase header + items + initial payment in a single transaction
         $this->repo->beginTransaction();
         try {
             $purchase = $this->repo->createPurchase($purchase);
@@ -107,6 +107,10 @@ class PurchaseService
                 );
             }
             $this->repo->createPurchaseItems($items, $purchase->id);
+
+            if ($dto->amountPaid > 0) {
+                $this->repo->insertPaymentRecord($purchase->id, $dto->amountPaid, $dto->purchaseDate);
+            }
 
             $this->repo->commit();
             $this->invalidateVendorCaches();
@@ -192,12 +196,12 @@ class PurchaseService
     /**
      * Determine the purchase status based on amount paid
      */
-    private function determineStatus(float $amountPaid, float $baseAmount): string
+    private function determineStatus(float $amountPaid, float $totalWithGst): string
     {
         if ($amountPaid <= 0) {
             return 'pending';
         }
-        if ($amountPaid >= $baseAmount) {
+        if ($amountPaid >= $totalWithGst) {
             return 'paid';
         }
         return 'partial';
@@ -259,7 +263,7 @@ class PurchaseService
                 purchaseDate: $dto->purchaseDate,
                 baseAmount: $dto->baseAmount,
                 amountPaid: $dto->amountPaid,
-                status: $this->determineStatus($dto->amountPaid, $dto->baseAmount),
+                status: $this->determineStatus($dto->amountPaid, $totalAmount),
                 userId: $userId,
                 createdAt: $existing->createdAt,
                 updatedAt: null,

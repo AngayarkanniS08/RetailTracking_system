@@ -316,8 +316,8 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
         // Insert new items
         $stmt = $this->db->prepare("
-            INSERT INTO vendor_purchase_items (id, purchase_id, product_id, product_name_snapshot, quantity, unit_cost, gst_rate)
-            VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)
+            INSERT INTO vendor_purchase_items (id, purchase_id, product_id, product_name_snapshot, quantity, unit_cost, gst_rate,user_id)
+            VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?,current_setting('app.current_user_id')::uuid)
         ");
         $nameStmt = $this->db->prepare("SELECT name FROM products WHERE id = ?");
         foreach ($items as $item) {
@@ -334,6 +334,15 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             ]);
         }
     }
+    public function insertPaymentRecord(string $purchaseId, float $amount, string $paymentDate = null): void
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO vendor_payments (id, user_id, purchase_id, amount, payment_date)
+            VALUES (gen_random_uuid(), current_setting('app.current_user_id')::uuid, ?, ?, ?::timestamptz)
+        ");
+        $stmt->execute([$purchaseId, $amount, $paymentDate ?? date('Y-m-d')]);
+    }
+
         public function recordPayment(string $purchaseId, float $amount, string $paymentDate = null): bool
         {
             $this->db->beginTransaction();
@@ -553,8 +562,8 @@ class PurchaseRepository implements PurchaseRepositoryInterface
     public function createPurchaseItems(array $items, string $purchaseId): void
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO vendor_purchase_items (id, purchase_id, product_id, product_name_snapshot, quantity, unit_cost, gst_rate) 
-            VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO vendor_purchase_items (id, purchase_id, product_id, product_name_snapshot, quantity, unit_cost, gst_rate,user_id) 
+            VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, ?,current_setting('app.current_user_id')::uuid)"
         );
         $nameStmt = $this->db->prepare("SELECT name FROM products WHERE id = ?");
         foreach ($items as $item) {

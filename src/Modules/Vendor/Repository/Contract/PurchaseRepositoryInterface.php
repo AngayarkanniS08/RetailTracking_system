@@ -28,6 +28,7 @@ interface PurchaseRepositoryInterface {
 
     //payment methods
     public function recordPayment(string $purchaseId, float $amount, string $paymentDate = null): bool;
+    public function insertPaymentRecord(string $purchaseId, float $amount, string $paymentDate = null): void;
     public function getVendorPayments(string $vendorId): array;
     public function findAllPayments(): array;
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 // CORS headers for multi-container browser access
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (str_ends_with($origin, ':8080') || str_ends_with($origin, 'localhost')) {
+if (!empty($origin)) {
     header("Access-Control-Allow-Origin: $origin");
 } else {
-    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Origin: http://localhost:8080");
 }
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
