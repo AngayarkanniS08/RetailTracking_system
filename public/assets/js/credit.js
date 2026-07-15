@@ -72,9 +72,11 @@ function renderCreditTable() {
                 ${billsCleared} / ${totalBills}
               </span>
             </td>
-            <td style="display:flex; gap:8px; align-items:center;">
-              ${totalBills > 0 ? `<button class="btn btn-outline btn-sm" onclick="toggleBills('${billsClass}','${c.id}')" style="font-weight:600; min-width:90px;">Bills</button>` : ''}
-              ${bal > 0 ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${c.id}')" style="min-width:70px;">Settle</button>` : `<span class="badge badge-ok">Cleared</span>`}
+            <td>
+              <div style="display:flex; gap:8px; align-items:center;">
+                ${totalBills > 0 ? `<button class="btn btn-outline btn-sm" onclick="toggleBills('${billsClass}','${c.id}')" style="font-weight:600; min-width:90px;">Bills</button>` : ''}
+                ${bal > 0 ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${c.id}')" style="min-width:70px;">Settle</button>` : `<span class="badge badge-ok">Cleared</span>`}
+              </div>
             </td>
           </tr>
         `;
