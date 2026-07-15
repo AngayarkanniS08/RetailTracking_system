@@ -604,6 +604,8 @@ select.input-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-y: auto;
+  height: 100%;
 }
 
 .sidebar-section {
@@ -1077,7 +1079,8 @@ select.input-field {
 }
 
 /* TABLES */
-.table-container {
+.table-container,
+.data-table {
   overflow-x: auto;
 }
 

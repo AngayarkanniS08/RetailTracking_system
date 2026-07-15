@@ -275,12 +275,14 @@ function renderVendorSummaryTable(vendors) {
 
         const actionCell = tr.insertCell();
         actionCell.innerHTML = `
-            <button class="btn btn-sm btn-outline" onclick="switchTab('vendorhistory','${v.vendorId}')" style="padding:2px 10px; font-size:0.75rem;">
-                View History
-            </button>
-            <button class="btn btn-sm btn-primary" onclick="openQuickPurchaseForVendor('${v.vendorId}','${(v.vendorName || '').replace(/'/g, "\\'")}','${(v.vendorPhone || '').replace(/'/g, "\\'")}')" style="padding:2px 10px; font-size:0.75rem;">
-                +Add
-            </button>
+            <div style="white-space:nowrap;">
+                <button class="btn btn-sm btn-outline" onclick="switchTab('vendorhistory','${v.vendorId}')" style="padding:2px 10px; font-size:0.75rem;">
+                    View History
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="openQuickPurchaseForVendor('${v.vendorId}','${(v.vendorName || '').replace(/'/g, "\\'")}','${(v.vendorPhone || '').replace(/'/g, "\\'")}')" style="padding:2px 10px; font-size:0.75rem;">
+                    +Add
+                </button>
+            </div>
         `;
     });
 }
@@ -746,8 +748,8 @@ function renderVendorHistoryBody(grouped, sortedDates, page) {
                     <span>Paid: ${formatCurrency(totalPaid)}</span>
                     <span style="font-weight:700; color:${totalDue > 0 ? 'var(--danger)' : 'var(--ok)'};">Due: ${formatCurrency(totalDue)}</span>
                 </summary>
-                <div class="accordion-body" style="padding:0.5rem;">
-                    <table class="table">
+                <div class="accordion-body" style="padding:0.5rem; overflow-x:auto;">
+                    <table class="table" style="min-width:900px;">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -794,13 +796,15 @@ function renderVendorHistoryBody(grouped, sortedDates, page) {
                                 <td style="color:var(--ok);">${formatCurrency(p.amountPaid || 0)}</td>
                                 <td style="font-weight:700; color:${balance > 0 ? 'var(--danger)' : 'var(--ok)'};">${formatCurrency(balance)}</td>
                                 <td><span class="badge ${statusClass}">${p.status || 'N/A'}</span></td>
-                                <td style="display:flex; gap:4px;">
-                                    <button class="btn btn-sm btn-primary" onclick="editPurchase('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
-                                        Edit
-                                    </button>
-                                    ${balance > 0 ? `<button class="btn btn-sm btn-outline" onclick="recordPayment('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
-                                        Pay
-                                    </button>` : ''}
+                                <td>
+                                    <div style="display:flex; gap:4px;">
+                                        <button class="btn btn-sm btn-primary" onclick="editPurchase('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
+                                            Edit
+                                        </button>
+                                        ${balance > 0 ? `<button class="btn btn-sm btn-outline" onclick="recordPayment('${p.id}')" style="padding:2px 10px; font-size:0.75rem;">
+                                            Pay
+                                        </button>` : ''}
+                                    </div>
                                 </td>
                             </tr>`;
         });
@@ -869,8 +873,8 @@ function renderPaymentHistoryBody(grouped, sortedDates, page) {
                     <span style="color:var(--muted-strong);">Payments: <strong>${paymentsOnDate.length}</strong></span>
                     <span>Total: ${formatCurrency(totalAmount)}</span>
                 </summary>
-                <div class="accordion-body" style="padding:0.5rem;">
-                    <table class="table">
+                <div class="accordion-body" style="padding:0.5rem; overflow-x:auto;">
+                    <table class="table" style="min-width:500px;">
                         <thead>
                             <tr>
                                 ${!currentHistoryVendorId ? '<th>Vendor</th>' : ''}
