@@ -12,14 +12,6 @@ async function apiRequest(path, options = {}) {
     const fullPath = path.startsWith('http') ? path : apiBase + path;
 
     const token = localStorage.getItem('auth_token');
-    if (!token && !path.includes('/api/login') && !path.includes('/api/register') && !path.startsWith('/api/backup/')) {
-        if (!_redirecting) {
-            _redirecting = true;
-            logoutUser();
-        }
-        throw new Error('Not authenticated');
-    }
-
     const headers = {
         'Content-Type': 'application/json',
         'Authorization': token ? 'Bearer ' + token : '',

@@ -1,4 +1,4 @@
-<div class="view-section" id="backup">
+<div class="view-section active" id="backup">
   <div style="margin-bottom: 2rem;">
     <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.3rem;">Backup & Restore</h2>
     <p style="color: var(--muted); font-size: 0.9rem;">Manage database backups with Google Drive storage</p>

@@ -805,7 +805,7 @@ document.addEventListener('visibilitychange', () => {
 
 // Initialize on document ready
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('dashboardView')) {
+    if (document.getElementById('inventory')) {
         fetchAndRenderDbAlerts();
         startPolling();
     }
@@ -1334,6 +1334,7 @@ let invSubcategoryCombobox = null;
 let stockProductCombobox = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (!document.getElementById('inventory')) return;
     // 1. Category Filter Combobox
     invCategoryCombobox = new SearchableCombobox('invCatInput', 'invCatFilter', 'invCatDropdown', async (id) => {
         await loadSubcategoriesForInventoryCombobox(id);

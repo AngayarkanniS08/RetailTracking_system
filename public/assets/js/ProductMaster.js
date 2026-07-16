@@ -555,8 +555,8 @@ window.deleteProduct = function (productId) {
 // DOMContentLoaded: ALWAYS pre-load data so categories survive page refresh.
 // Sidebar.js also calls initProductMaster() on every navigation to product_master.
 document.addEventListener('DOMContentLoaded', () => {
-    // Only run initialization if we are logged in (dashboardView is present)
-    if (!document.getElementById('dashboardView')) {
+    // Only run initialization if the product_master section exists in the DOM
+    if (!document.getElementById('product_master')) {
         return;
     }
 

@@ -533,7 +533,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize if dashboard is loaded
+        if (!document.getElementById('product_master')) return;
         initProductMaster();
     });
 

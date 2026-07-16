@@ -50,6 +50,7 @@ $routeMap = [
 
 $initialSection = $routeMap[$routePath] ?? null;
 
+
 // ============================================
 // Determine if user is logged in
 // ============================================
@@ -59,20 +60,83 @@ $publicPages = ['backup'];
 
 if (!$isLoggedIn) {
     if ($initialSection && in_array($initialSection, $publicPages)) {
-        // Public page — show full SPA layout without requiring session
+        // Public page — backup-only, no topbar/sidebar/auth JS
         require_once 'views/layouts/header.php';
         echo '<div class="dashboard" id="dashboardView">';
-        require_once 'views/layouts/topbar.php';
         echo '<div class="main-container">';
-        require_once 'views/layouts/sidebar.php';
         echo '<main class="content-area">';
         require_once 'views/settings/backup.php';
         echo '</main>';
         echo '</div>';
         echo '</div>';
-        require_once 'views/layouts/modals.php';
-        require_once 'views/layouts/footer.php';
-        echo "<script>document.addEventListener('DOMContentLoaded', function() { switchTab('{$initialSection}'); });</script>";
+        echo <<<HTML
+  <!-- Backup Progress Modal -->
+  <div class="modal-overlay" id="backupProgressModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">Backup in Progress</div>
+        <button class="close-btn" onclick="closeModal('backupProgressModal')" id="backupCloseBtn">&times;</button>
+      </div>
+      <div id="backupStatusContent" style="margin: 1rem 0;">
+        <div id="backupStepDisplay" style="margin-bottom: 1rem;">
+          <div class="backup-step" data-step="pending"><span class="step-icon">⏳</span> Queued</div>
+          <div class="backup-step" data-step="dump"><span class="step-icon">⏳</span> Dumping database...</div>
+          <div class="backup-step" data-step="uploading"><span class="step-icon">⏳</span> Uploading to Google Drive...</div>
+          <div class="backup-step" data-step="completed"><span class="step-icon">⏳</span> Completed</div>
+        </div>
+        <div id="backupResultMessage" style="display:none; padding: 1rem; border-radius: 8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restore Confirmation Modal -->
+  <div class="modal-overlay" id="restoreConfirmModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title" style="color: var(--danger);">⚠️ Restore Backup</div>
+        <button class="close-btn" onclick="closeModal('restoreConfirmModal')">&times;</button>
+      </div>
+      <div style="margin: 1rem 0;">
+        <div style="padding: 1rem; background: rgba(220, 38, 38, 0.08); border-radius: 8px; border: 1px solid rgba(220, 38, 38, 0.2); margin-bottom: 1rem;">
+          <strong style="color: var(--danger);">This will replace ALL current data</strong>
+          <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted);">All existing invoices, products, inventory, and customer data will be replaced with the selected backup.</p>
+        </div>
+        <div id="restoreFileInfo" style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-elevated); border-radius: 8px;"></div>
+        <div class="input-group">
+          <label class="input-label">Admin Password <span style="color:var(--danger);">*</span></label>
+          <input type="password" id="restorePassword" class="input-field" placeholder="Enter admin password to confirm">
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-outline btn-block" onclick="closeModal('restoreConfirmModal')">Cancel</button>
+        <button class="btn btn-danger btn-block" id="executeRestoreBtn" onclick="executeRestore()">Restore Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restore Progress Modal -->
+  <div class="modal-overlay" id="restoreProgressModal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">Restore in Progress</div>
+        <button class="close-btn" id="restoreCloseBtn" onclick="closeModal('restoreProgressModal')">&times;</button>
+      </div>
+      <div id="restoreStatusContent" style="margin: 1rem 0;">
+        <div id="restoreStepDisplay">
+          <div class="backup-step" data-step="downloading"><span class="step-icon">⏳</span> Downloading backup...</div>
+          <div class="backup-step" data-step="restoring"><span class="step-icon">⏳</span> Restoring database...</div>
+          <div class="backup-step" data-step="completed"><span class="step-icon">⏳</span> Completed</div>
+        </div>
+        <div id="restoreResultMessage" style="display:none; padding: 1rem; border-radius: 8px;"></div>
+      </div>
+    </div>
+  </div>
+HTML;
+        echo '<script src="public/assets/js/utils.js?v=' . time() . '"></script>';
+        echo '<script src="public/assets/js/backup.js?v=' . time() . '"></script>';
+        echo '<link rel="stylesheet" href="public/assets/css/theme.css?v=' . time() . '">';
+        echo '<script>loadBackupPage();</script>';
+        echo '</body></html>';
         exit;
     }
 
@@ -149,5 +213,5 @@ require_once 'views/layouts/footer.php';
 
 // Set initial section via JS
 if ($initialSection && $initialSection !== 'login') {
-    echo "<script>document.addEventListener('DOMContentLoaded', function() { switchTab('{$initialSection}'); });</script>";
+    echo "<script>switchTab('{$initialSection}');</script>";
 }
