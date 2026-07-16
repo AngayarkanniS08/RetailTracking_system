@@ -308,6 +308,9 @@ class ApiRoutes
         $router->add('GET', '/api/backup/status/{id}', function (array $params): void {
             (new BackupController())->status($params['id']);
         });
+        $router->add('GET', '/api/backup/status', function (): void {
+            (new BackupController())->currentStatus();
+        });
         $router->add('GET', '/api/backup/files', function (): void {
             (new BackupController())->files();
         });

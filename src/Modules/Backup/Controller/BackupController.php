@@ -68,6 +68,20 @@ class BackupController
         ]);
     }
 
+    public function currentStatus(): void
+    {
+        header('Content-Type: application/json');
+
+        $job = $this->repo->getMostRecentJob();
+        $running = $job && in_array($job->status, ['pending', 'dump', 'uploading']);
+
+        echo json_encode([
+            'running' => $running,
+            'status' => $job?->status,
+            'progress' => $running ? ($this->queue->getProgress($job->id) ?: 'Starting...') : null
+        ]);
+    }
+
     public function files(): void
     {
         header('Content-Type: application/json');

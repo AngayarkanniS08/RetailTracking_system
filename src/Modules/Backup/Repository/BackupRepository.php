@@ -135,6 +135,17 @@ class BackupRepository implements BackupRepositoryInterface
         return $row ? $this->hydrateJob($row) : null;
     }
 
+    public function getMostRecentJob(): ?BackupJob
+    {
+        $stmt = $this->db->query("
+            SELECT id, user_id, job_type, status, file_name, file_size, error_message, created_at, completed_at
+            FROM backup_jobs
+            ORDER BY created_at DESC LIMIT 1
+        ");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $this->hydrateJob($row) : null;
+    }
+
     public function getLatestJob(string $userId, string $jobType): ?BackupJob
     {
         $stmt = $this->db->prepare("
