@@ -52,24 +52,18 @@ $initialSection = $routeMap[$routePath] ?? null;
 
 
 // ============================================
-// Determine if user is logged in
+// Backup — always standalone, no auth required
 // ============================================
-$isLoggedIn = isset($_COOKIE['auth_uid']);
-
-$publicPages = ['backup'];
-
-if (!$isLoggedIn) {
-    if ($initialSection && in_array($initialSection, $publicPages)) {
-        // Public page — backup-only, no topbar/sidebar/auth JS
-        require_once 'views/layouts/header.php';
-        echo '<div class="dashboard" id="dashboardView">';
-        echo '<div class="main-container">';
-        echo '<main class="content-area">';
-        require_once 'views/settings/backup.php';
-        echo '</main>';
-        echo '</div>';
-        echo '</div>';
-        echo <<<HTML
+if ($initialSection === 'backup') {
+    require_once 'views/layouts/header.php';
+    echo '<div class="dashboard" id="dashboardView">';
+    echo '<div class="main-container">';
+    echo '<main class="content-area">';
+    require_once 'views/settings/backup.php';
+    echo '</main>';
+    echo '</div>';
+    echo '</div>';
+    echo <<<HTML
   <!-- Backup Progress Modal -->
   <div class="modal-overlay" id="backupProgressModal">
     <div class="modal-content" style="max-width: 500px;">
@@ -132,14 +126,21 @@ if (!$isLoggedIn) {
     </div>
   </div>
 HTML;
-        echo '<script src="public/assets/js/utils.js?v=' . time() . '"></script>';
-        echo '<script src="public/assets/js/backup.js?v=' . time() . '"></script>';
-        echo '<link rel="stylesheet" href="public/assets/css/theme.css?v=' . time() . '">';
-        echo '<script>loadBackupPage();</script>';
-        echo '</body></html>';
-        exit;
-    }
+    echo '<script src="public/assets/js/utils.js?v=' . time() . '"></script>';
+    echo '<script src="public/assets/js/backup.js?v=' . time() . '"></script>';
+    echo '<link rel="stylesheet" href="public/assets/css/theme.css?v=' . time() . '">';
+    echo '<script>loadBackupPage();</script>';
+    echo '</body></html>';
+    exit;
+}
 
+
+// ============================================
+// Determine if user is logged in
+// ============================================
+$isLoggedIn = isset($_COOKIE['auth_uid']);
+
+if (!$isLoggedIn) {
     // Show auth forms (no dashboard layout)
     require_once 'views/layouts/header.php';
     $action = $initialSection ?? 'login';
@@ -195,7 +196,6 @@ require_once 'views/vendor/index.php';
 require_once 'views/vendor/history.php';
 require_once 'views/reports/stockintel.php';
 require_once 'views/product/history.php';
-require_once 'views/settings/backup.php';
 
 echo '</main>';
 echo '</div>';

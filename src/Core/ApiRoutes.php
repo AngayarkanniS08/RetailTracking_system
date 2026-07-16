@@ -303,11 +303,9 @@ class ApiRoutes
             (new BackupConfigController())->update();
         });
         $router->add('POST', '/api/backup/start', function (): void {
-            AuthMiddleware::authenticate();
             (new BackupController())->start();
         });
         $router->add('GET', '/api/backup/status/{id}', function (array $params): void {
-            AuthMiddleware::authenticate();
             (new BackupController())->status($params['id']);
         });
         $router->add('GET', '/api/backup/files', function (): void {

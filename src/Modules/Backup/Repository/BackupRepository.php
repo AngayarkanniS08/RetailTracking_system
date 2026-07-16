@@ -23,7 +23,7 @@ class BackupRepository implements BackupRepositoryInterface
                    retention_daily, retention_weekly, retention_monthly,
                    last_backup_at, last_backup_status, created_at, updated_at
             FROM backup_config
-            WHERE user_id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE user_id = ?
         ");
         $stmt->execute([$userId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

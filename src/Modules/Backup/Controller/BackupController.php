@@ -1,7 +1,6 @@
 <?php
 namespace Modules\Backup\Controller;
 
-use Core\Middlewares\AuthMiddleware;
 use Modules\Backup\Service\BackupService;
 use Modules\Backup\Service\JobQueue;
 use Modules\Backup\Service\GoogleDriveService;
@@ -23,8 +22,13 @@ class BackupController
     public function start(): void
     {
         header('Content-Type: application/json');
-        $user = AuthMiddleware::authenticate();
-        $userId = $user->data->user_id ?? '';
+        $userId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+        );
 
         try {
             $job = $this->service->startBackup($userId);
