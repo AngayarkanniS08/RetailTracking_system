@@ -309,16 +309,26 @@ function saveCustomer() {
 
 // ── Payment ───────────────────────────────────────────────
 
-function openPaymentModal(custId) {
-    const customer = window.creditCustomers.find(c => c.id === custId);
-    if (!customer) return;
+async function openPaymentModal(custId) {
+    let bal = 0;
+    let name = '';
+    try {
+        const fresh = await window.apiRequest(`/api/customers/${custId}`);
+        bal = parseFloat(fresh.balance || 0);
+        name = fresh.name || '';
+    } catch (e) {
+        const cached = window.creditCustomers.find(c => c.id === custId);
+        if (!cached) return;
+        bal = parseFloat(cached.balance || 0);
+        name = cached.name;
+    }
 
-    const bal = parseFloat(customer.balance || 0);
-    document.getElementById('payCustName').innerText = customer.name;
+    document.getElementById('payCustName').innerText = name;
     document.getElementById('payOutstanding').innerText = formatCurrency(bal);
+    document.getElementById('payOutstanding').dataset.raw = bal;
     document.getElementById('payCustId').value = custId;
-    document.getElementById('payAmount').value = bal;
-    document.getElementById('payAmount').max = bal;
+    document.getElementById('payAmount').value = '';
+    document.getElementById('payAmount').placeholder = `Max ${formatCurrency(bal)}`;
     openModal('paymentModal');
 }
 
