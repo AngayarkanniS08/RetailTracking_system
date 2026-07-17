@@ -50,11 +50,17 @@ class InvoiceService
             if ($itemDTO->quantity <= 0) {
                 throw new ValidationException("Quantity must be positive for each item");
             }
-            if ($itemDTO->unitPrice < 0) {
-                throw new ValidationException("Unit price cannot be negative");
+            if ($itemDTO->unitPrice <= 0) {
+                throw new ValidationException("Unit price must be positive");
             }
             if ($itemDTO->discountAmount < 0) {
                 throw new ValidationException("Item discount amount cannot be negative");
+            }
+            $maxLineDiscount = $itemDTO->quantity * $itemDTO->unitPrice;
+            if ($itemDTO->discountAmount > $maxLineDiscount) {
+                throw new ValidationException(
+                    "Item discount ₹{$itemDTO->discountAmount} exceeds line total ₹{$maxLineDiscount}"
+                );
             }
         }
 
@@ -112,9 +118,10 @@ class InvoiceService
 
             $gstRate = $dto->applyGst ? (float)($product['gst_rate'] ?? 0) : 0;
             $lineSubtotal = $itemDTO->quantity * $itemDTO->unitPrice;
-            $gstAmount = $lineSubtotal * ($gstRate / 100);
             $lineDiscount = $itemDTO->discountAmount;
-            $lineTotal = $lineSubtotal - $lineDiscount + $gstAmount;
+            $taxableBase = $lineSubtotal - $lineDiscount;
+            $gstAmount = $taxableBase * ($gstRate / 100);
+            $lineTotal = $taxableBase + $gstAmount;
 
             $subtotal += $lineSubtotal;
             $totalGst += $gstAmount;
@@ -139,10 +146,31 @@ class InvoiceService
             );
         }
 
-        // ── 1.5 Calculate financials ──────────────────────
+        if ($dto->discountAmount > $subtotal) {
+            throw new ValidationException(
+                "Bill discount ₹{$dto->discountAmount} exceeds subtotal ₹{$subtotal}"
+            );
+        }
 
-        $totalDiscount = $dto->discountAmount + $totalItemDiscount;
-        $beforeRound = $subtotal - $totalDiscount + $totalGst;
+        // ── 1.5 Apportion bill discount across items to reduce GST base ──
+
+        $netSubtotal = $subtotal - $totalItemDiscount;
+        if ($dto->discountAmount > 0 && $netSubtotal > 0) {
+            $totalGst = 0;
+            foreach ($itemModels as $m) {
+                $taxBase = ($m->quantity * $m->unitPrice) - $m->discountAmount;
+                $prop = $taxBase / $netSubtotal;
+                $reducedBase = $taxBase - ($dto->discountAmount * $prop);
+                $gst = $reducedBase * ($m->gstRateSnapshot / 100);
+                $m->gstAmount = $gst;
+                $m->lineTotal = $taxBase + $gst;
+                $totalGst += $gst;
+            }
+        }
+
+        // ── 1.6 Calculate financials ──────────────────────
+
+        $beforeRound = $netSubtotal - $dto->discountAmount + $totalGst;
         $grandTotal = round($beforeRound);
         $roundOff = $grandTotal - $beforeRound;
         $balanceDue = $grandTotal - $dto->amountPaid;
@@ -150,7 +178,13 @@ class InvoiceService
             $balanceDue = 0;
         }
 
-        // ── 1.6 Validate expectedGrandTotal ───────────────
+        if (!$dto->customerId && $dto->amountPaid < $grandTotal) {
+            throw new ValidationException(
+                "Walk-in customers must pay in full. Paid ₹{$dto->amountPaid}, total ₹{$grandTotal}"
+            );
+        }
+
+        // ── 1.7 Validate expectedGrandTotal ───────────────
 
         if (abs($grandTotal - $dto->expectedGrandTotal) > 0.01) {
             throw new ValidationException(
