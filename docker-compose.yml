@@ -109,6 +109,7 @@ services:
       dockerfile: Dockerfile.worker
     container_name: retail_backup_worker
     environment:
+      TZ: Asia/Kolkata
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: retail_pos
@@ -141,6 +142,7 @@ services:
     container_name: retail_backup_scheduler
     command: sh -c "while true; do php /var/www/html/scripts/check_schedule.php; sleep 60; done"
     environment:
+      TZ: Asia/Kolkata
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: retail_pos

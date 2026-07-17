@@ -2,7 +2,7 @@
 // ── Backup Worker Daemon ──────────────────────────────────────────────────────
 // Runs as a long-lived process inside the backup-worker container.
 // Picks jobs from the Valkey queue and processes them.
-
+date_default_timezone_set('Asia/Kolkata');
 require_once __DIR__ . '/../src/vendor/autoload.php';
 
 // Bootstrap database config

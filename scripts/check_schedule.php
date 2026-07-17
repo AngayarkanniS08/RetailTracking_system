@@ -2,7 +2,7 @@
 // ── Backup Schedule Checker ───────────────────────────────────────────────────
 // Runs every 60s inside the backup-scheduler container.
 // If schedule_enabled + schedule_time matches + no backup today → enqueue job.
-
+date_default_timezone_set('Asia/Kolkata');
 require_once __DIR__ . '/../src/vendor/autoload.php';
 
 $configPath = __DIR__ . '/../config/Database.php';
