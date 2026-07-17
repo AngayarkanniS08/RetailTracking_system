@@ -51,7 +51,7 @@
           <div class="billing-bottom-bar">
             <div class="bbb-left">
               <label class="bbb-gst-toggle">
-                <input type="checkbox" id="enableGstToggle" checked onchange="calculateCart()">
+                <input type="checkbox" id="enableGstToggle" checked onchange="calculateCart(true)">
                 Generate Tax Invoice (Apply GST)
               </label>
               <span class="bbb-sep">|</span>
