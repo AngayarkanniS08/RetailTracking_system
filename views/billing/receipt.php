@@ -125,13 +125,18 @@ hr{border:none;border-top:1px dashed #000;margin:4px 0}
     </div>
 
 <?php if ($invoice->totalGst > 0): ?>
-<?php $gstRateDisplay = isset($items[0]) ? $items[0]->gstRateSnapshot / 2 : 0; ?>
+<?php
+$uniqueRates = array_unique(array_map(fn($i) => $i->gstRateSnapshot, $items));
+$gstRateDisplay = count($uniqueRates) === 1 && $uniqueRates[0] > 0 ? $uniqueRates[0] / 2 : null;
+$cgstLabel = 'CGST' . ($gstRateDisplay !== null ? ' @ ' . number_format($gstRateDisplay, 1) . '%' : '');
+$sgstLabel = 'SGST' . ($gstRateDisplay !== null ? ' @ ' . number_format($gstRateDisplay, 1) . '%' : '');
+?>
     <div class="fin-row">
-        <span>CGST @ <?= number_format($gstRateDisplay, 1) ?>%</span>
+        <span><?= $cgstLabel ?></span>
         <span><?= number_format($cgst, 2) ?></span>
     </div>
     <div class="fin-row">
-        <span>SGST @ <?= number_format($gstRateDisplay, 1) ?>%</span>
+        <span><?= $sgstLabel ?></span>
         <span><?= number_format($sgst, 2) ?></span>
     </div>
 <?php endif; ?>
