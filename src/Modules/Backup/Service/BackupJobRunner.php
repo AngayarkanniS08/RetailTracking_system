@@ -41,6 +41,7 @@ class BackupJobRunner
                 'status' => 'failed',
                 'error_message' => $e->getMessage()
             ]);
+            $this->repo->updateConfigBackupStatus($job->userId, 'failed');
             $this->queue->setStatus($jobId, 'failed');
             $this->queue->setProgress($jobId, $e->getMessage());
         }
@@ -71,6 +72,7 @@ class BackupJobRunner
             'file_size' => $fileSize,
             'error_message' => null
         ]);
+        $this->repo->updateConfigBackupStatus($userId, 'completed');
         $this->queue->setStatus($jobId, 'completed');
         $this->queue->setProgress($jobId, 'Backup completed successfully');
     }

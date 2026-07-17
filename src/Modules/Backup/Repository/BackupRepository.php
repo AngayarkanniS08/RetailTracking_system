@@ -170,6 +170,22 @@ class BackupRepository implements BackupRepositoryInterface
         return array_map(fn($r) => $this->hydrateJob($r), $rows);
     }
 
+    public function updateConfigBackupStatus(string $userId, string $status, ?\DateTime $backupAt = null): void
+    {
+        $stmt = $this->db->prepare("
+            UPDATE backup_config
+            SET last_backup_at = COALESCE(?, last_backup_at),
+                last_backup_status = ?,
+                updated_at = now()
+            WHERE user_id = ?
+        ");
+        $stmt->execute([
+            $backupAt ? $backupAt->format('Y-m-d H:i:s') : date('Y-m-d H:i:s'),
+            $status,
+            $userId
+        ]);
+    }
+
     private function hydrateConfig(array $row): BackupConfig
     {
         return new BackupConfig(

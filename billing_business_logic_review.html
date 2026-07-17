@@ -1,0 +1,564 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.wrap { padding: 1rem 0; }
+.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 16px; flex-wrap: wrap; }
+.tab { font-size: 12px; font-weight: 500; padding: 7px 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.sec { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin: 16px 0 9px; }
+.sec:first-child { margin-top: 0; }
+.note { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 12px; color: var(--color-text-secondary); border: 0.5px solid var(--color-border-tertiary); margin-top: 10px; line-height: 1.6; }
+
+.tc { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 8px; overflow: hidden; }
+.tc-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+.tc-num { font-size: 11px; font-weight: 700; width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.n-c  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.n-w  { background: var(--color-background-warning); color: var(--color-text-warning); }
+.n-ok { background: var(--color-background-success); color: var(--color-text-success); }
+.n-i  { background: var(--color-background-info);    color: var(--color-text-info); }
+.tc-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+.tag { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+.t-c  { background: var(--color-background-danger);  color: var(--color-text-danger); }
+.t-w  { background: var(--color-background-warning); color: var(--color-text-warning); }
+.t-ok { background: var(--color-background-success); color: var(--color-text-success); }
+.t-i  { background: var(--color-background-info);    color: var(--color-text-info); }
+.tc-body { padding: 11px 14px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.box { border-radius: var(--border-radius-md); padding: 9px 11px; background: var(--color-background-secondary); }
+.bl { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-secondary); margin-bottom: 4px; }
+.bt { font-size: 12px; color: var(--color-text-primary); line-height: 1.6; }
+.code { font-size: 10px; font-family: var(--font-mono); background: var(--color-background-secondary); border: 0.5px dashed var(--color-border-secondary); border-radius: 4px; padding: 6px 9px; margin-top: 8px; white-space: pre-wrap; color: var(--color-text-secondary); line-height: 1.7; display: block; }
+.expect { font-size: 11px; padding-top: 7px; border-top: 0.5px solid var(--color-border-tertiary); display: flex; gap: 6px; align-items: flex-start; line-height: 1.5; color: var(--color-text-secondary); }
+.el { font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+.el-fix { background: var(--color-background-danger); color: var(--color-text-danger); }
+.el-ok  { background: var(--color-background-success); color: var(--color-text-success); }
+
+.score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.sc { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 12px; text-align: center; border: 0.5px solid var(--color-border-tertiary); }
+.sn { font-size: 24px; font-weight: 500; margin-bottom: 3px; }
+.sl { font-size: 11px; color: var(--color-text-secondary); }
+.r { color: var(--color-text-danger); }
+.w { color: var(--color-text-warning); }
+.g { color: var(--color-text-success); }
+
+.priority-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.pg { border-radius: var(--border-radius-lg); padding: 12px 14px; border: 0.5px solid var(--color-border-tertiary); }
+.pg-title { font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+.pg-item { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; display: flex; gap: 7px; line-height: 1.4; align-items: flex-start; }
+.dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+</style>
+
+<div class="wrap">
+<div class="tabs">
+  <div class="tab active" onclick="sw('score')">Scorecard</div>
+  <div class="tab" onclick="sw('money')">Money bugs</div>
+  <div class="tab" onclick="sw('stock')">Stock bugs</div>
+  <div class="tab" onclick="sw('credit')">Credit bugs</div>
+  <div class="tab" onclick="sw('edge')">Edge cases</div>
+  <div class="tab" onclick="sw('priority')">Fix order</div>
+</div>
+
+<!-- SCORECARD -->
+<div id="score" class="tab-panel active">
+  <div class="score-grid">
+    <div class="sc"><div class="sn r">5</div><div class="sl">Money logic bugs</div></div>
+    <div class="sc"><div class="sn r">3</div><div class="sl">Stock logic bugs</div></div>
+    <div class="sc"><div class="sn w">4</div><div class="sl">Credit logic gaps</div></div>
+    <div class="sc"><div class="sn w">4</div><div class="sl">Edge cases missed</div></div>
+  </div>
+  <div class="note">
+    <strong style="color:var(--color-text-primary)">Overall:</strong> The billing UI and flow are well built. The business logic has <strong style="color:var(--color-text-danger)">16 issues</strong> — 5 directly cause wrong money calculations, 3 cause wrong stock numbers, 4 affect customer credit accuracy, and 4 edge cases that will confuse shop owners in daily use. None are performance issues — all are pure business logic problems.
+  </div>
+</div>
+
+<!-- MONEY BUGS -->
+<div id="money" class="tab-panel">
+<div class="sec">BUG 1 — GST is calculated on discounted amount for item-level but not bill-level discount</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">1</div>
+    <div class="tc-title">Bill discount does not reduce GST — customer overpays tax</div>
+    <span class="tag t-c">Money lost</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">What your code does</div><div class="bt">GST is calculated on <code>afterItemDisc</code> (after item discount). But bill-level discount is subtracted AFTER GST is added. So bill discount reduces the total but not the tax base.</div></div>
+      <div class="box"><div class="bl">Real impact</div><div class="bt">Subtotal ₹1000, bill discount ₹100, GST 5%. Your code: GST = ₹50 on ₹1000. Total = 1000 - 100 + 50 = ₹950. Correct: GST should be on ₹900 = ₹45. Total should be ₹945. Customer overpays ₹5 GST.</div></div>
+    </div>
+    <code class="code">// Current (wrong):
+const netSubtotal = grossSubtotal - totalItemDiscount;
+// GST is calculated before bill discount is applied
+const total = Math.max(0, netSubtotal - billDiscount + totalGst);
+
+// Fix — apply bill discount before GST:
+const taxableAmount = netSubtotal - billDiscount;
+const totalGst = taxableAmount * gstRate / 100;
+const total = Math.max(0, taxableAmount + totalGst);</code>
+    <div class="expect"><span class="el el-fix">FIX</span> GST must be calculated on (subtotal − all discounts), not on subtotal before bill discount.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 2 — Receipt prints wrong subtotal label</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">2</div>
+    <div class="tc-title">printThermalBill uses calc.subtotal — but the object has calc.netSubtotal</div>
+    <span class="tag t-c">Wrong receipt</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt"><code>calculateCart()</code> returns <code>netSubtotal</code>. But <code>printThermalBill()</code> reads <code>calc.subtotal</code> — which is <code>undefined</code>. So the receipt prints "Subtotal: ₹NaN" or "₹undefined".</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Every single receipt printed has a broken subtotal line. The total may still be correct (it comes from <code>calc.total</code>) but the breakdown shows wrong data. Customers see "NaN" on their bills.</div></div>
+    </div>
+    <code class="code">// In printThermalBill — wrong key:
+receipt += `Subtotal: ${formatCurrency(calc.subtotal)}\n`; // undefined!
+
+// Fix — use correct key:
+receipt += `Subtotal: ${formatCurrency(calc.netSubtotal)}\n`;</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Change <code>calc.subtotal</code> → <code>calc.netSubtotal</code> in printThermalBill. Check all other calc property references too.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 3 — GST rate hardcoded as 18% in receipt but calculated correctly per product</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">3</div>
+    <div class="tc-title">Receipt says "Tax Invoice (GST 18%)" regardless of actual rates</div>
+    <span class="tag t-c">Wrong GST label</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt">Line 4183: <code>const billType = calc.isGst ? "Tax Invoice (GST 18%)" : "Estimate"</code>. Your products have individual GST rates (0%, 5%, 12%). The receipt always says 18% even if the actual GST was 5%.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">A textile shop selling fabric at 5% GST gives customers a receipt saying 18% GST. This is a legal compliance issue — wrong GST% on an invoice is a GST audit risk.</div></div>
+    </div>
+    <code class="code">// Current (wrong):
+const billType = calc.isGst ? "Tax Invoice (GST 18%)" : "Estimate";
+
+// Fix — show actual GST amount, not a hardcoded rate:
+const billType = calc.isGst
+  ? `Tax Invoice (GST: ${formatCurrency(calc.gst)})`
+  : "Estimate / Non-GST Bill";</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Never hardcode a GST rate on a receipt. Show the actual GST amount collected instead.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 4 — Item discount can be set higher than line total in checkout modal</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">4</div>
+    <div class="tc-title">checkoutSetItemDiscount() has no cap — discount can exceed item value</div>
+    <span class="tag t-c">Negative line total</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt">In <code>setItemDiscount()</code> you correctly cap: <code>Math.min(disc, maxLine)</code>. But <code>checkoutSetItemDiscount()</code> in the checkout modal has NO cap: <code>item.discount = disc</code> directly. Different function, missing protection.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">In checkout modal, cashier types discount ₹500 on an item worth ₹200. Line total becomes −₹300. Bill total becomes negative. Sale record stores a negative total. Revenue reports show wrong numbers.</div></div>
+    </div>
+    <code class="code">// Current checkoutSetItemDiscount (wrong — no cap):
+function checkoutSetItemDiscount(idx, val) {
+  const disc = parseFloat(val) || 0;
+  const item = cart[idx];
+  item.discount = disc; // ← no limit!
+  updateCheckoutTotals();
+}
+
+// Fix — match the logic in setItemDiscount:
+function checkoutSetItemDiscount(idx, val) {
+  const disc = parseFloat(val) || 0;
+  const item = cart[idx];
+  const maxLine = item.price * item.qty;
+  item.discount = Math.min(disc, maxLine); // ← cap it
+  updateCheckoutTotals();
+}</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Add the same Math.min cap to checkoutSetItemDiscount that exists in setItemDiscount.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 5 — Bill discount can exceed the subtotal — total goes negative</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">5</div>
+    <div class="tc-title">Bill discount input has no maximum — total can go below zero</div>
+    <span class="tag t-c">Negative total</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt"><code>Math.max(0, netSubtotal - billDiscount + totalGst)</code> clamps total at 0 — which prevents a negative display. But the sale is still recorded with this wrong total. The <code>amount_paid</code> field auto-fills to 0, and the ledger entry records a ₹0 sale.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Bill total ₹500. Cashier types discount ₹800. Display shows ₹0. Sale records ₹0. Stock still deducted. Products leave the shop for free. Revenue report shows ₹0 for that transaction.</div></div>
+    </div>
+    <code class="code">// Fix — cap bill discount at netSubtotal:
+function checkoutSetBillDiscount(val) {
+  const disc = parseFloat(val) || 0;
+  const calc = calculateCart();
+  const maxDisc = calc.netSubtotal; // can't give more discount than bill value
+  const cappedDisc = Math.min(disc, maxDisc);
+
+  const discInput = document.getElementById('cartDiscountInput');
+  if (discInput) discInput.value = cappedDisc;
+  updateCheckoutTotals();
+}</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Cap bill discount at netSubtotal before applying. Show a warning if input exceeds the limit.</div>
+  </div>
+</div>
+</div>
+
+<!-- STOCK BUGS -->
+<div id="stock" class="tab-panel">
+<div class="sec">BUG 6 — Stock deducted even when qty is 0 or negative</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">6</div>
+    <div class="tc-title">confirmCheckout deducts stock without validating final qty</div>
+    <span class="tag t-c">Stock corruption</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt">In checkout modal, cashier can change qty to 0 via <code>checkoutSetQty()</code>. <code>confirmCheckout()</code> then iterates all cart items and does <code>batch.quantity -= item.qty</code> for every item including those with qty 0. Also if cashier types a negative qty — stock actually increases.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Qty 0 item: sale_item record created with qty 0 — phantom line on the invoice. Negative qty: batch.quantity increases — free stock added to inventory without a purchase. Revenue records show items sold at qty 0.</div></div>
+    </div>
+    <code class="code">// Fix in confirmCheckout — validate before deducting:
+const validItems = cart.filter(item => item.qty > 0);
+if (validItems.length === 0) return alert('No valid items in cart.');
+
+validItems.forEach(item => {
+  if (item.qty > item.max_qty) {
+    return alert(`${item.product_name}: qty exceeds available stock.`);
+  }
+  sale_items.push({ ...item });
+  const batch = batches.find(b => b.id === item.batch_id);
+  if (batch) batch.quantity -= item.qty;
+});</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Filter cart to qty > 0 before deducting. Reject qty > available stock. Reject negative qty.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 7 — max_qty is set at cart entry time — not rechecked at checkout</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">7</div>
+    <div class="tc-num n-w" style="display:none">7</div>
+    <div class="tc-title">Another cashier could sell the same batch between cart add and checkout</div>
+    <span class="tag t-w">Stock over-sell</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Scenario</div><div class="bt">Cashier A adds 10 meters to cart (batch has 10 meters). Cashier B (different tab/device) checks out 8 meters from the same batch first. Now Cashier A confirms checkout — deducts 10 from a batch that only has 2. Batch goes to −8.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Batch quantity becomes negative. Inventory shows phantom negative stock. All velocity and days-of-supply calculations break for this product.</div></div>
+    </div>
+    <code class="code">// Fix — re-read batch at checkout time, not from cart:
+validItems.forEach(item => {
+  const batch = batches.find(b => b.id === item.batch_id);
+  if (!batch) return alert(`Batch for ${item.product_name} not found.`);
+  if (batch.quantity < item.qty) {
+    return alert(
+      `${item.product_name}: only ${batch.quantity} left. ` +
+      `You tried to sell ${item.qty}. Update qty and retry.`
+    );
+  }
+  batch.quantity -= item.qty;
+});</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Always re-read batch.quantity at the moment of checkout, not the cached max_qty from cart add time.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 8 — Retail price fallback is batch.selling_price × 1.2</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-w">8</div>
+    <div class="tc-title">No retail_price stored → auto-inflates by 20% with no business basis</div>
+    <span class="tag t-w">Wrong pricing</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact code</div><div class="bt"><code>batch.retail_price || batch.selling_price * 1.2</code> — when retail_price is null, the system charges 20% above wholesale automatically. This 20% has no business justification — different products have different margins.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">A product with actual retail margin of 5% gets billed at 20% above wholesale. Customer overpays. Or a product with 40% margin only gets 20% — shop owner undercharges. Both are financial losses.</div></div>
+    </div>
+    <code class="code">// Current (wrong):
+const price = batch.retail_price || batch.selling_price * 1.2;
+
+// Fix option A — require retail_price at stock entry time (best):
+// Add retail_price field to addStockEntryModal — mandatory for retail items
+
+// Fix option B — warn cashier instead of guessing:
+if (!batch.retail_price && priceMode === 'retail') {
+  alert(`No retail price set for this product. Using wholesale price.`);
+  return batch.selling_price;
+}</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Require retail_price at stock entry. Never auto-calculate a price the owner hasn't set.</div>
+  </div>
+</div>
+</div>
+
+<!-- CREDIT BUGS -->
+<div id="credit" class="tab-panel">
+<div class="sec">BUG 9 — Walk-in customer credit validation bypassed in checkout modal</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-c">9</div>
+    <div class="tc-title">amountPaid can be changed to less than total in checkout modal for walk-in</div>
+    <span class="tag t-c">Free credit given</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt"><code>processCheckout()</code> checks: if no customer and amountPaid &lt; total → block. But in the checkout modal, cashier can change amountPaid input. <code>confirmCheckout()</code> does NOT re-validate this rule — it just reads the current value and proceeds.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Cashier selects "Walk-in", enters partial payment in the checkout modal, clicks Confirm. Sale recorded with balance but no customer linked — the balance is unrecoverable. The shop gives away credit with no record of who owes it.</div></div>
+    </div>
+    <code class="code">// In confirmCheckout — re-validate the same rule:
+function confirmCheckout() {
+  const calc = calculateCart();
+  const total = calc.total;
+  const amountPaid = parseFloat(document.getElementById('amountPaidInput').value) || 0;
+  const customerId = document.getElementById('billCustomerSelect').value;
+
+  // Re-validate — do not trust processCheckout's earlier check:
+  if (!customerId && amountPaid < total) {
+    closeModal('checkoutConfirmModal');
+    return alert('Walk-in customer must pay in full.');
+  }
+  // ... rest of logic
+}</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Repeat the walk-in validation inside confirmCheckout. Never trust processCheckout's earlier check alone.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 10 — Credit ledger balance field stores per-entry balance, not running balance</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-w">10</div>
+    <div class="tc-title">balance: total - amountPaid per entry — not running balance across all entries</div>
+    <span class="tag t-w">Wrong balance shown</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt">Each credit_ledger entry stores <code>balance: total - amountPaid</code> — just the balance for that one transaction. But the customer may have multiple bills. <code>getCustomerLedgerTotals()</code> correctly sums all entries, but the entry-level balance column in the UI is wrong.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">INV002: billed ₹2500, paid ₹1500, balance ₹1000. INV007: billed ₹3200, paid ₹2000, balance ₹1200. The UI shows "₹1000 due" and "₹1200 due" separately — giving the impression of two separate debts. Shop owner thinks customer owes ₹2200. Correct: running balance should show ₹2200 as a single cumulative number.</div></div>
+    </div>
+    <code class="code">// Correct approach — calculate running balance at render time:
+// Sort entries by date, compute cumulative:
+let running = 0;
+entries.sort((a,b) => a.created_at - b.created_at).forEach(entry => {
+  running += entry.amount_billed;
+  running -= entry.amount_paid;
+  entry.runningBalance = running; // use this for display, not entry.balance
+});</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Calculate and display running balance (cumulative) per entry in the ledger view. The stored balance per entry is misleading.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 11 — processPayment blocks payment if amount exceeds balance</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-w">11</div>
+    <div class="tc-title">Can't record overpayment — customer can't pay more than exact balance</div>
+    <span class="tag t-w">Business restriction</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact code</div><div class="bt"><code>if (amt > totals.balance) return alert('Amount exceeds outstanding balance')</code>. In real retail, customers often give a round amount — balance ₹950, customer pays ₹1000 and gets ₹50 change. The system blocks this.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Cashier must calculate exact balance amount to enter. Customers paying with exact round notes (₹500, ₹1000) are blocked. System forces exact payments — not how any real shop works.</div></div>
+    </div>
+    <code class="code">// Fix — allow overpayment, show change:
+if (amt > totals.balance) {
+  const change = amt - totals.balance;
+  const confirm = window.confirm(
+    `Payment ₹${amt} exceeds balance ₹${totals.balance}.\n` +
+    `Change to return: ₹${change}.\nProceed?`
+  );
+  if (!confirm) return;
+  amt = totals.balance; // record only the balance, not the overpayment
+}</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Allow overpayment. Show change amount. Record only the actual balance amount as settled.</div>
+  </div>
+</div>
+
+<div class="sec">BUG 12 — viewPaymentReceipt shows wrong remaining balance</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-w">12</div>
+    <div class="tc-title">Running balance calculation in viewPaymentReceipt skips the current entry</div>
+    <span class="tag t-w">Wrong receipt</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Exact bug</div><div class="bt">The loop iterates all entries and does <code>if (l.id === ledgerId) return;</code> — this SKIPS the current payment entry. So the balance shown on the receipt is the balance BEFORE the payment, not after.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Customer pays ₹500 off a ₹1200 balance. Receipt should say "Remaining balance: ₹700". Instead it says "Remaining balance: ₹1200" — the customer is confused and thinks their payment wasn't recorded.</div></div>
+    </div>
+    <code class="code">// Current (wrong — skips current entry):
+allEntries.forEach(l => {
+  runningBilled += l.amount_billed;
+  runningPaid += l.amount_paid;
+  if (l.id === ledgerId) return; // ← skips the payment itself!
+});
+
+// Fix — include current entry, then compute balance:
+allEntries.forEach(l => {
+  runningBilled += l.amount_billed;
+  runningPaid += l.amount_paid;
+});
+const balAfter = runningBilled - runningPaid; // now includes current payment</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Remove the <code>if (l.id === ledgerId) return</code> early exit. Include all entries including the current payment.</div>
+  </div>
+</div>
+</div>
+
+<!-- EDGE CASES -->
+<div id="edge" class="tab-panel">
+<div class="sec">EDGE 1 — Same product from two different batches added to cart separately</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-i">E1</div>
+    <div class="tc-title">Customer buys "Cotton Fabric" from Batch A and Batch B — shown as two separate lines</div>
+    <span class="tag t-i">UX confusion</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Scenario</div><div class="bt">Cashier adds Cotton Fabric from Batch B001 (10 meters @ ₹85) and same product from Batch B002 (5 meters @ ₹90 — newer batch, different purchase price). Cart shows two separate lines for "Cotton Fabric".</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Customer's receipt shows the same product twice with different prices — looks like a mistake. Cashier has to explain batch pricing to every confused customer. Standard POS systems merge by product, not batch, for the customer-facing receipt.</div></div>
+    </div>
+    <code class="code">// Decision: Keep two lines in cart (correct for inventory tracking)
+// BUT merge on the printed receipt for the customer:
+const receiptLines = {};
+cart.forEach(item => {
+  if (receiptLines[item.product_name]) {
+    receiptLines[item.product_name].qty  += item.qty;
+    receiptLines[item.product_name].total += (item.price * item.qty) - (item.discount||0);
+  } else {
+    receiptLines[item.product_name] = { qty: item.qty, total: (item.price*item.qty)-(item.discount||0) };
+  }
+});
+// Print merged receiptLines, not raw cart items</code>
+    <div class="expect"><span class="el el-ok">DECIDE</span> Keep batch-level tracking internally. Merge by product name on printed receipt.</div>
+  </div>
+</div>
+
+<div class="sec">EDGE 2 — Cashier changes qty to decimal for whole-unit products</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-i">E2</div>
+    <div class="tc-title">checkoutSetQty allows 2.5 pcs — half a shirt sold in the system</div>
+    <span class="tag t-i">Data integrity</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Scenario</div><div class="bt">Product unit = "pcs". Cashier types 1.5 in qty input. Sale records 1.5 pcs sold. Batch deducted by 1.5. Velocity calculation gets a fractional unit for a whole item. Stock shows 10.5 pcs.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Inventory shows non-integer stock for whole-unit items. Reorder calculations get confused. Half-unit sale_items pollute velocity data.</div></div>
+    </div>
+    <code class="code">// Fix — round based on product unit (from your earlier velocity discussion):
+const WHOLE_UNITS = ['pcs','pieces','nos','box','pair','set','bottle','packet'];
+function checkoutSetQty(idx, val) {
+  const item = cart[idx];
+  const product = getProduct(item.product_id);
+  const isWhole = WHOLE_UNITS.includes(product?.unit?.toLowerCase());
+  let qty = isWhole ? Math.round(parseFloat(val)||0) : parseFloat(val)||0;
+  if (qty < 0) qty = 0;
+  cart[idx].qty = qty;
+  updateCheckoutTotals();
+}</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Round qty to integer for whole-unit products. Allow decimals only for mtr, kg, ltr.</div>
+  </div>
+</div>
+
+<div class="sec">EDGE 3 — Cart item price changed to 0 in checkout modal</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-i">E3</div>
+    <div class="tc-title">checkoutSetPrice allows ₹0 — products given away for free</div>
+    <span class="tag t-i">Revenue loss</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Scenario</div><div class="bt">Retail mode allows price editing. Cashier accidentally clears the field or types 0. Line total becomes ₹0. Sale recorded with ₹0 for that item. Stock still deducted.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Product leaves the shop for free. Revenue report misses that item's value. If cashier does this intentionally — it is a fraud vector with no audit trail.</div></div>
+    </div>
+    <code class="code">// Fix — require price > 0:
+function checkoutSetPrice(idx, val) {
+  const price = parseFloat(val) || 0;
+  if (price <= 0) {
+    // Reset to purchase price minimum:
+    const batch = batches.find(b => b.id === cart[idx].batch_id);
+    alert('Price cannot be zero. Minimum: purchase price.');
+    return;
+  }
+  cart[idx].price = price;
+  updateCheckoutTotals();
+}</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Block price = 0. Optionally warn if price is below purchase cost (selling at a loss).</div>
+  </div>
+</div>
+
+<div class="sec">EDGE 4 — amountPaid auto-fills to total when no customer — but GST toggle change after doesn't update it</div>
+<div class="tc">
+  <div class="tc-head">
+    <div class="tc-num n-i">E4</div>
+    <div class="tc-title">GST toggled after amountPaid auto-fill — amountPaid stays at old total</div>
+    <span class="tag t-i">Amount mismatch</span>
+  </div>
+  <div class="tc-body">
+    <div class="two">
+      <div class="box"><div class="bl">Scenario</div><div class="bt">Cashier adds items. No customer selected. amountPaid auto-fills to ₹1050 (with GST). Cashier then unchecks GST toggle. Total becomes ₹1000. But amountPaid still shows ₹1050 — ₹50 overpayment recorded.</div></div>
+      <div class="box"><div class="bl">Impact</div><div class="bt">Sale recorded: total ₹1000, amountPaid ₹1050. Balance = −₹50. If a customer ledger entry is created, it shows a negative balance — customer is in credit. Shop owner gave ₹50 change but the system shows an overpayment.</div></div>
+    </div>
+    <code class="code">// Fix — always re-sync amountPaid when total changes:
+function calculateCart() {
+  // ... existing calculation ...
+  const total = Math.max(0, netSubtotal - billDiscount + totalGst);
+
+  // Re-sync amountPaid if no customer selected:
+  const custId = document.getElementById('billCustomerSelect')?.value;
+  const amtPaidInput = document.getElementById('amountPaidInput');
+  if (!custId && amtPaidInput) {
+    amtPaidInput.value = total.toFixed(2);
+  }
+  return { ..., total };
+}
+// This already exists but must also fire on GST toggle change</code>
+    <div class="expect"><span class="el el-fix">FIX</span> Call calculateCart() in the GST toggle's onchange handler to re-sync amountPaid.</div>
+  </div>
+</div>
+</div>
+
+<!-- PRIORITY -->
+<div id="priority" class="tab-panel">
+  <div class="sec">Fix in this exact order</div>
+  <div class="priority-grid">
+    <div class="pg" style="border-color:var(--color-border-danger);background:color-mix(in srgb,var(--color-background-danger) 8%,transparent)">
+      <div class="pg-title" style="color:var(--color-text-danger)">Fix today — cause wrong money</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Bug 2: calc.subtotal → calc.netSubtotal in receipt (every receipt is broken now)</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Bug 9: re-validate walk-in rule in confirmCheckout</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Bug 4: cap discount in checkoutSetItemDiscount</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Bug 5: cap bill discount at netSubtotal</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-danger)"></span>Bug 6: filter qty > 0 before deducting stock</div>
+    </div>
+    <div class="pg" style="border-color:var(--color-border-warning);background:color-mix(in srgb,var(--color-background-warning) 8%,transparent)">
+      <div class="pg-title" style="color:var(--color-text-warning)">Fix this week — cause wrong data</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Bug 3: hardcoded GST 18% on receipt</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Bug 1: GST calculated before bill discount</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Bug 7: re-read batch qty at checkout time</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Bug 12: wrong balance on payment receipt</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-warning)"></span>Bug 10: running balance in ledger view</div>
+    </div>
+    <div class="pg" style="border-color:var(--color-border-secondary)">
+      <div class="pg-title" style="color:var(--color-text-secondary)">Fix before first customer</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Bug 8: retail_price fallback × 1.2</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Bug 11: allow overpayment with change</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Edge 2: decimal qty for whole-unit products</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Edge 3: price = 0 allowed in checkout</div>
+      <div class="pg-item"><span class="dot" style="background:var(--color-text-secondary)"></span>Edge 4: GST toggle desync with amountPaid</div>
+    </div>
+  </div>
+  <div class="note" style="margin-top:12px">
+    <strong style="color:var(--color-text-danger)">Most urgent single fix:</strong> Bug 2 — <code>calc.subtotal</code> is undefined. This means every printed receipt right now shows "Subtotal: ₹NaN". This is visible to every customer and makes the system look broken. Fix this in 2 minutes before anything else.
+  </div>
+</div>
+</div>
+
+<script>
+function sw(id) {
+  const ids = ['score','money','stock','credit','edge','priority'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ids[i]===id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===id));
+}
+</script>
