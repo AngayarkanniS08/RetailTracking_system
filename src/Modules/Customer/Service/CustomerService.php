@@ -165,13 +165,14 @@ class CustomerService
         try {
             $currentBalance = $this->getCustomerBalanceWithLock($dto->customerId);
 
+            $change = 0;
+            $actualPayment = $dto->amount;
             if ($dto->amount > $currentBalance) {
-                throw new ValidationException(
-                    "Payment amount ₹{$dto->amount} exceeds outstanding balance ₹{$currentBalance}"
-                );
+                $change = $dto->amount - $currentBalance;
+                $actualPayment = $currentBalance;
             }
 
-            $newBalance = $currentBalance - $dto->amount;
+            $newBalance = $currentBalance - $actualPayment;
 
             $ledgerEntry = new CreditLedger(
                 id: null,
@@ -179,9 +180,9 @@ class CustomerService
                 customerId: $dto->customerId,
                 entryType: 'payment',
                 debit: 0,
-                credit: $dto->amount,
+                credit: $actualPayment,
                 balance: max($newBalance, 0),
-                notes: $dto->notes ?? "Payment received"
+                notes: $dto->notes ?? ($change > 0 ? "Payment received (change: ₹{$change})" : "Payment received")
             );
 
             $savedLedger = $this->addLedgerEntry($ledgerEntry);
@@ -194,7 +195,7 @@ class CustomerService
                 customerId: $dto->customerId,
                 ledgerId: $savedLedger->id,
                 receiptNumber: $receiptNumber,
-                amount: $dto->amount,
+                amount: $actualPayment,
                 notes: $dto->notes
             );
 
@@ -211,6 +212,7 @@ class CustomerService
         }
 
         return [
+            'change' => $change,
             'payment' => [
                 'id' => $savedPayment->id,
                 'receipt_number' => $savedPayment->receiptNumber,
