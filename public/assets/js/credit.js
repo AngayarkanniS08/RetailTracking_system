@@ -150,6 +150,8 @@ async function toggleBills(className, custId) {
     // Group ledger entries — invoice + its payment share one row; returns, credit notes, standalone payments each get their own row
     const grouped = {};
     entries.forEach(entry => {
+        if (entry.invoice_status === 'deleted') return;
+
         const isStandalone = entry.entry_type === 'return' || entry.entry_type === 'credit_note';
         const key = isStandalone ? entry.id : (entry.invoice_id || entry.id);
         if (!grouped[key]) {
@@ -166,8 +168,8 @@ async function toggleBills(className, custId) {
                 _isPay: entry.invoice_id ? false : (entry.entry_type === 'payment' || (entry.debit === 0 && entry.credit > 0))
             };
         }
-        grouped[key].debit += entry.debit || 0;
-        grouped[key].credit += entry.credit || 0;
+        grouped[key].debit = Math.round((grouped[key].debit + (entry.debit || 0)) * 100) / 100;
+        grouped[key].credit = Math.round((grouped[key].credit + (entry.credit || 0)) * 100) / 100;
     });
 
     const mergedEntries = Object.values(grouped);
