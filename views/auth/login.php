@@ -21,8 +21,8 @@
         <div id="messageBox" class="auth-message" style="display:none; margin-bottom:10px; font-size:0.9rem;"></div>
         <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Login to System</button>
         <div class="RegisterForgot">
-          <p>New User?<a href="index.php?action=register">Register here</a></p>
-          <p><a href="index.php?action=ForgotPassword">Forgot Password?</a></p>
+          <p>New User?<a href="/register">Register here</a></p>
+          <p><a href="/forgot-password">Forgot Password?</a></p>
         </div>
       </form>
     </div>

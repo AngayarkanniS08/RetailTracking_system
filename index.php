@@ -45,6 +45,8 @@ $routeMap = [
     '/vendor-history' => 'vendorhistory',
     '/stock-intel'    => 'stockintel',
     '/product-history'=> 'product_history',
+    '/forgot-password'=> 'forgot_password',
+    '/reset-password' => 'reset_password',
     '/backup'         => 'backup',
 ];
 

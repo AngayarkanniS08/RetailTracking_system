@@ -71,7 +71,7 @@
                 }
                 showMessage('success', 'Account created! Redirecting to login...');
                 setTimeout(() => {
-                    window.location.href = '/index.php?action=login&registered=1';
+                    window.location.href = '/login?registered=1';
                 }, 2000);
             } else {
                 showMessage('error', data.error || 'Registration failed. Please try again.');

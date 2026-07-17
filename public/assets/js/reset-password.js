@@ -73,7 +73,7 @@
                 showMessage('success', data.message || 'Password reset successfully!');
                 form.reset();
                 setTimeout(() => {
-                    window.location.href = '/index.php?action=login';
+                    window.location.href = '/login';
                 }, 2000);
             } else {
                 showMessage('error', data.error || 'Something went wrong. Please try again.');

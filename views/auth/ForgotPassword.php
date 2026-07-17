@@ -17,7 +17,7 @@
         <div id="messageBox" class="auth-message" style="display:none; margin-bottom:10px; font-size:0.9rem;"></div>
         <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Send Reset Link</button>
       </form>
-      <p style="text-align: center; margin-top: 1.5rem;"><a href="index.php?action=login">Back to Login</a></p>
+      <p style="text-align: center; margin-top: 1.5rem;"><a href="/login">Back to Login</a></p>
     </div>
   </div>
 <script src="public/assets/js/forgot-password.js?v=<?= time(); ?>"></script>

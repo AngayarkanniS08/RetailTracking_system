@@ -28,7 +28,7 @@
         <div id="messageBox" class="auth-message" style="display:none; margin-bottom:10px; font-size:0.9rem;"></div>
         <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Sign Up</button>
       </form>
-      <p>Already have an account? <a href="index.php?action=login">Login here</a></p>
+      <p>Already have an account? <a href="/login">Login here</a></p>
       <p class="text-center mt-1" style="color: var(--muted); font-size: 0.8rem;"></p>
     </div>
   </div>
