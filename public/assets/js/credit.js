@@ -52,11 +52,21 @@ function renderCreditTable() {
 
     window.creditCustomers.forEach(c => {
         const bal = parseFloat(c.balance || 0);
-        const balColor = bal > 0 ? 'var(--danger)' : 'var(--ok)';
+        const balColor = bal > 0 ? 'var(--danger)' : (bal < 0 ? 'var(--accent)' : 'var(--ok)');
+        const balDisplay = bal < 0 ? `Adv: ${formatCurrency(Math.abs(bal))}` : formatCurrency(bal);
         const firstDate = c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
         const billsClass = `credit-bills-${c.id}`.replace(/[^a-zA-Z0-9_-]/g, '_');
         const totalBills = c.total_bills || 0;
         const billsCleared = c.bills_cleared || 0;
+
+        let actionHtml;
+        if (bal > 0) {
+            actionHtml = `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${c.id}')" style="min-width:70px;">Settle</button>`;
+        } else if (bal < 0) {
+            actionHtml = `<span class="badge badge-warn">Advance ${formatCurrency(Math.abs(bal))}</span>`;
+        } else {
+            actionHtml = `<span class="badge badge-ok">Cleared</span>`;
+        }
 
         tbody.innerHTML += `
           <tr>
@@ -66,7 +76,7 @@ function renderCreditTable() {
             <td>${escHtml(c.phone)}</td>
             <td>${formatCurrency(c.total_purchases || 0)}</td>
             <td>${formatCurrency(c.total_paid || 0)}</td>
-            <td style="font-weight: 700; color: ${balColor}">${formatCurrency(bal)}</td>
+            <td style="font-weight: 700; color: ${balColor}">${balDisplay}</td>
             <td>
               <span class="badge ${billsCleared === totalBills && totalBills > 0 ? 'badge-ok' : 'badge-warn'}">
                 ${billsCleared} / ${totalBills}
@@ -75,7 +85,7 @@ function renderCreditTable() {
             <td>
               <div style="display:flex; gap:8px; align-items:center;">
                 ${totalBills > 0 ? `<button class="btn btn-outline btn-sm" onclick="toggleBills('${billsClass}','${c.id}')" style="font-weight:600; min-width:90px;">Bills</button>` : ''}
-                ${bal > 0 ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('${c.id}')" style="min-width:70px;">Settle</button>` : `<span class="badge badge-ok">Cleared</span>`}
+                ${actionHtml}
               </div>
             </td>
           </tr>
