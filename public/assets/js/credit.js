@@ -476,6 +476,10 @@ setTimeout(function(){window.print()},300);
 </html>`;
 
     const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) {
+        alert('Popup blocked — please allow popups for this site to print receipts. Payment was recorded successfully.');
+        return;
+    }
     printWindow.document.write(html);
     printWindow.document.close();
 }
@@ -566,6 +570,10 @@ setTimeout(function(){window.print()},300);
 </html>`;
 
     const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) {
+        alert('Popup blocked — please allow popups for this site to print receipts.');
+        return;
+    }
     printWindow.document.write(html);
     printWindow.document.close();
 }
