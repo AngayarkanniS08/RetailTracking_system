@@ -334,11 +334,21 @@ async function openPaymentModal(custId) {
 
 function processPayment() {
     const custId = document.getElementById('payCustId').value;
-    const amount = parseFloat(document.getElementById('payAmount').value);
+    const rawInput = document.getElementById('payAmount').value.trim();
+    const outstanding = parseFloat(document.getElementById('payOutstanding').dataset.raw || 0);
     const notes = document.getElementById('payNotes')?.value.trim() || '';
 
-    if (!amount || amount <= 0) {
+    if (!/^\d+(\.\d{1,2})?$/.test(rawInput)) {
+        alert('Enter a valid amount (up to 2 decimal places)');
+        return;
+    }
+    const amount = Math.round(parseFloat(rawInput) * 100) / 100;
+    if (amount <= 0) {
         alert('Enter a valid payment amount');
+        return;
+    }
+    if (amount > outstanding + 0.01) {
+        alert(`Amount exceeds outstanding balance of ${formatCurrency(outstanding)}`);
         return;
     }
 
