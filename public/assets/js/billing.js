@@ -383,6 +383,79 @@ document.addEventListener('keydown', function(e) {
             if (targetCells[cellIndex]) targetCells[cellIndex].focus();
         }
     });
+
+    /* Sync contenteditable edits back to cart */
+    grid.addEventListener('input', function(e) {
+        const td = e.target.closest('td');
+        if (!td) return;
+        const tr = td.closest('tr');
+        if (!tr) return;
+        const bid = tr.getAttribute('data-batch-id');
+        if (!bid) return;
+        const item = cart.find(c => c.batchId === bid);
+        if (!item) return;
+        const cells = tr.querySelectorAll('td');
+        const cellIndex = Array.from(tr.children).indexOf(td);
+
+        if (cellIndex === 2) {
+            const newPrice = parseFloat(td.textContent) || 0;
+            item.sellingPrice = newPrice;
+            const qty = parseFloat(cells[5].textContent) || 0;
+            cells[7].textContent = (qty * newPrice).toFixed(2);
+            calculateCart();
+        } else if (cellIndex === 3) {
+            const val = parseFloat(td.textContent) || 0;
+            const qty = parseFloat(cells[5].textContent) || 0;
+            const price = parseFloat(cells[2].textContent) || 0;
+            const capped = Math.min(val, qty * price);
+            item.discount = capped;
+            td.textContent = capped.toFixed(2);
+            calculateCart();
+        } else if (cellIndex === 5) {
+            let newQty = parseFloat(td.textContent) || 0;
+            if (newQty <= 0) { newQty = 1; td.textContent = '1.00'; }
+            const batch = posBatches.find(b => b.id === bid);
+            const maxQty = batch ? (batch.quantity || batch.remaining_qty || Infinity) : Infinity;
+            if (newQty > maxQty) { newQty = maxQty; td.textContent = maxQty.toFixed(2); }
+            item.qty = newQty;
+            const price = parseFloat(cells[2].textContent) || 0;
+            cells[7].textContent = (newQty * price).toFixed(2);
+            calculateCart();
+        }
+    });
+
+    /* Sync + reformat on blur (catches paste / context-menu edits that input may miss) */
+    grid.addEventListener('focusout', function(e) {
+        const td = e.target.closest('td');
+        if (!td) return;
+        const tr = td.closest('tr');
+        if (!tr) return;
+        const bid = tr.getAttribute('data-batch-id');
+        if (!bid) return;
+        const item = cart.find(c => c.batchId === bid);
+        if (!item) return;
+        const cells = tr.querySelectorAll('td');
+        const cellIndex = Array.from(tr.children).indexOf(td);
+
+        if (cellIndex === 2) {
+            item.sellingPrice = parseFloat(td.textContent) || 0;
+            td.textContent = item.sellingPrice.toFixed(2);
+            cells[7].textContent = (item.sellingPrice * item.qty).toFixed(2);
+            calculateCart();
+        } else if (cellIndex === 3) {
+            const val = parseFloat(td.textContent) || 0;
+            item.discount = Math.min(val, item.qty * item.sellingPrice);
+            td.textContent = item.discount.toFixed(2);
+            calculateCart();
+        } else if (cellIndex === 5) {
+            let qty = parseFloat(td.textContent) || 1;
+            if (qty < 1) qty = 1;
+            item.qty = qty;
+            td.textContent = qty.toFixed(2);
+            cells[7].textContent = (qty * item.sellingPrice).toFixed(2);
+            calculateCart();
+        }
+    });
 })();
 
 /* Track manual edits to amountPaidInput so calculateCart doesn't overwrite it */
@@ -557,12 +630,17 @@ function restoreGridFromCart() {
         targetRow.setAttribute('data-batch-id', item.batchId);
         cells[0].textContent = batch.batch_number || batch.id;
         cells[1].textContent = product.name;
-        cells[2].textContent = (item.sellingPrice || 0).toFixed(2);
+        // Use current batch price instead of stale stored price
+        const retailPrice = parseFloat(batch.retail_price);
+        const sellingPrice = parseFloat(batch.selling_price) || 0;
+        const currentPrice = priceMode === 'wholesale' ? sellingPrice : (retailPrice || sellingPrice);
+        item.sellingPrice = currentPrice;
+        cells[2].textContent = currentPrice.toFixed(2);
         cells[3].textContent = (item.discount || 0).toFixed(2);
         cells[4].textContent = product.unit || 'Nos';
         cells[5].textContent = (item.qty || 1).toFixed(2);
         cells[6].textContent = (item.gstRate || 0).toFixed(1);
-        cells[7].textContent = ((item.qty || 1) * (item.sellingPrice || 0)).toFixed(2);
+        cells[7].textContent = ((item.qty || 1) * currentPrice).toFixed(2);
     });
     calculateCart();
 }
@@ -651,6 +729,28 @@ function setItemDiscount(idx, val) {
     if (!c) return;
     const maxLine = c.qty * c.sellingPrice;
     c.discount = Math.min(Math.max(0, parseFloat(val) || 0), maxLine);
+    calculateCart();
+}
+
+/* Sync all grid cell values back to cart (catch any contenteditable edits that input missed) */
+function syncGridToCart() {
+    const rows = document.querySelectorAll('#billingGrid tbody tr');
+    rows.forEach(function(tr) {
+        const bid = tr.getAttribute('data-batch-id');
+        if (!bid) return;
+        const item = cart.find(function(c) { return c.batchId === bid; });
+        if (!item) return;
+        const cells = tr.querySelectorAll('td');
+        const price = parseFloat(cells[2].textContent) || 0;
+        const disc = parseFloat(cells[3].textContent) || 0;
+        const qty = parseFloat(cells[5].textContent) || 0;
+        const batch = posBatches.find(function(b) { return b.id === bid; });
+        const maxQty = batch ? (batch.quantity || batch.remaining_qty || Infinity) : Infinity;
+        item.sellingPrice = price;
+        item.qty = Math.min(Math.max(1, qty), maxQty);
+        item.discount = Math.min(disc, item.qty * item.sellingPrice);
+        cells[7].textContent = (item.qty * item.sellingPrice).toFixed(2);
+    });
     calculateCart();
 }
 
@@ -785,6 +885,7 @@ async function populateCustomerSelect() {
 }
 
 async function processCheckout() {
+    syncGridToCart();
     const amountPaid = parseFloat(document.getElementById('amountPaidInput')?.value || 0);
     const customerId = document.getElementById('billCustomerId')?.value || null;
     const customerName = customerId
