@@ -144,9 +144,11 @@ function selectPOSProduct(batchId) {
 
     const cells = targetRow.querySelectorAll('td');
     const qty = 1;
+    const retailPrice = parseFloat(batch.retail_price);
+    const sellingPrice = parseFloat(batch.selling_price) || 0;
     const price = priceMode === 'wholesale'
-        ? (parseFloat(batch.selling_price) || 0)
-        : (parseFloat(batch.retail_price) || parseFloat(batch.selling_price) * 1.2 || 0);
+        ? sellingPrice
+        : (retailPrice || sellingPrice);
     const amount = qty * price;
     const tax = parseFloat(product.gst_rate) || 0;
 
@@ -221,9 +223,11 @@ function togglePriceMode(force) {
         const qty = parseFloat(cells[5].textContent) || 0;
         if (qty === 0) return;
 
+        const retailPrice = parseFloat(batch.retail_price);
+        const sellingPrice = parseFloat(batch.selling_price) || 0;
         const newPrice = priceMode === 'wholesale'
-            ? (parseFloat(batch.selling_price) || 0)
-            : (parseFloat(batch.retail_price) || parseFloat(batch.selling_price) * 1.2 || 0);
+            ? sellingPrice
+            : (retailPrice || sellingPrice);
         const newAmount = qty * newPrice;
 
         cells[2].textContent = newPrice.toFixed(2);
@@ -249,9 +253,11 @@ function toggleRowPriceMode(tr, mode) {
     const qty = parseFloat(cells[5].textContent) || 0;
     if (qty === 0) return;
 
+    const retailPrice = parseFloat(batch.retail_price);
+    const sellingPrice = parseFloat(batch.selling_price) || 0;
     const newPrice = mode === 'wholesale'
-        ? (parseFloat(batch.selling_price) || 0)
-        : (parseFloat(batch.retail_price) || parseFloat(batch.selling_price) * 1.2 || 0);
+        ? sellingPrice
+        : (retailPrice || sellingPrice);
     const newAmount = qty * newPrice;
 
     cells[2].innerHTML = `<span class="row-price-val">${newPrice.toFixed(2)}</span> <span class="row-price-mode">${mode === 'wholesale' ? 'W' : 'R'}</span>`;
@@ -641,11 +647,14 @@ function updateCartQty(idx, delta) {
 }
 
 function setItemDiscount(idx, val) {
-    if (cart[idx]) cart[idx].discount = Math.max(0, parseFloat(val) || 0);
+    const c = cart[idx];
+    if (!c) return;
+    const maxLine = c.qty * c.sellingPrice;
+    c.discount = Math.min(Math.max(0, parseFloat(val) || 0), maxLine);
     calculateCart();
 }
 
-function calculateCart() {
+function calculateCart(forceSyncPaid) {
     const applyGst = document.getElementById('enableGstToggle')?.checked || false;
     const billDiscount = parseFloat(document.getElementById('cartDiscountInput')?.value || 0);
 
@@ -670,8 +679,12 @@ function calculateCart() {
     document.getElementById('cartTotal').textContent = '₹' + grandTotal.toFixed(2);
 
     const paidInput = document.getElementById('amountPaidInput');
-    if (paidInput && !paidInput.dataset.userEdited) {
-        paidInput.value = grandTotal.toFixed(2);
+    const custIdInput = document.getElementById('billCustomerId');
+    if (paidInput && custIdInput) {
+        const noCustomer = !custIdInput.value;
+        if (noCustomer && (!paidInput.dataset.userEdited || forceSyncPaid)) {
+            paidInput.value = grandTotal.toFixed(2);
+        }
     }
 
     window._posCalc = { subtotal, totalGst, billDiscount, totalDiscount, roundOff, grandTotal, applyGst };
