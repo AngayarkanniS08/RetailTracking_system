@@ -23,7 +23,7 @@ let totalPages = 1;
 
 async function loadProducts(page = 1) {
     currentPage = page;
-    let url = `/api/products?page=${page}&limit=20`;
+    let url = `/api/products?page=${page}&limit=4`;
     if (currentSearch) {
         url += `&search=${encodeURIComponent(currentSearch)}`;
     }
@@ -515,7 +515,7 @@ window.saveProduct = async function () {
         });
 
         if (data && data.success) {
-            await loadProducts(currentPage);
+            await loadProducts(1);
             await loadCategories();
             resetProductModal();
             closeModal('addProductModal');
@@ -734,7 +734,7 @@ window.updateProduct = async function () {
         });
 
         if (data && data.success) {
-            await loadProducts(currentPage);
+            await loadProducts(1);
             closeModal('addProductModal');
             resetProductModal();
             showAlert('Success', 'Product updated successfully');
