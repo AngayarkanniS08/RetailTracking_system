@@ -77,6 +77,14 @@ class ProductService
             throw new ValidationException("A product with this name already exists");
         }
 
+        if ($dto->gstRate < 0 || $dto->gstRate > 100) {
+            throw new ValidationException("GST rate must be between 0% and 100%");
+        }
+
+        if ($dto->hsnCode !== null && !preg_match('/^\d{4}(\d{2})?(\d{2})?$/', $dto->hsnCode)) {
+            throw new ValidationException("HSN code must be 4, 6 or 8 digits");
+        }
+
         $product = $this->repo->create(
             trim($dto->name),
             $dto->categoryId,
@@ -116,6 +124,14 @@ class ProductService
         $existing = $this->repo->findByName($dto->name);
         if ($existing && $existing['id'] !== $id) {
             throw new ValidationException("A product with this name already exists");
+        }
+
+        if ($dto->gstRate < 0 || $dto->gstRate > 100) {
+            throw new ValidationException("GST rate must be between 0% and 100%");
+        }
+
+        if ($dto->hsnCode !== null && !preg_match('/^\d{4}(\d{2})?(\d{2})?$/', $dto->hsnCode)) {
+            throw new ValidationException("HSN code must be 4, 6 or 8 digits");
         }
 
         $product = $this->repo->update(

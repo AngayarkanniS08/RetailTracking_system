@@ -394,12 +394,17 @@ async function loadSubcategoriesIntoProductModal(categoryId) {
 // ============================================
 // 4. CRUD actions
 // ============================================
+let previousSearch = '';
 const pmSearch = document.getElementById('pmSearch');
 if (pmSearch) {
     pmSearch.addEventListener('input', (e) => {
-        currentSearch = e.target.value;
-        currentPage = 1;
-        loadProducts(1);  // server handles search; renderProductTable called inside
+        const searchTerm = e.target.value;
+        if (searchTerm !== previousSearch) {
+            previousSearch = searchTerm;
+            currentSearch = searchTerm;
+            currentPage = 1;
+            loadProducts(1);
+        }
     });
 }
 
@@ -486,6 +491,16 @@ window.saveProduct = async function () {
         return;
     }
 
+    if (!Number.isFinite(gst) || gst < 0 || gst > 100) {
+        alert('GST rate must be between 0% and 100%');
+        return;
+    }
+
+    if (hsn && !/^\d{4}(\d{2})?(\d{2})?$/.test(hsn)) {
+        alert('HSN code must be 4, 6 or 8 digits');
+        return;
+    }
+
     const data = await apiRequest('/api/products', {
         method: 'POST',
         body: JSON.stringify({
@@ -499,7 +514,7 @@ window.saveProduct = async function () {
     });
 
     if (data && data.success) {
-        await loadProducts();
+        await loadProducts(currentPage);
         await loadCategories();
         resetProductModal();
         closeModal('addProductModal');
@@ -574,8 +589,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const productId = pendingDeleteProductId;
                 const data = await apiRequest(`/api/products/${productId}`, { method: 'DELETE' });
                 if (data && data.success) {
-                    await loadProducts();        // refresh product list
-                    await loadCategories();      // update category counts
+                    await loadProducts(currentPage);
+                    await loadCategories();
                     closeModal('deleteProductModal');
                     pendingDeleteProductId = null;
                     // Reset modal body to default (optional)
@@ -595,9 +610,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                     const modalFooter = deleteModal.querySelector('.modal-footer');
                     if (modalFooter) {
-                        modalFooter.innerHTML = '<button class="btn btn-primary" onclick="closeModal(\'deleteProductModal\')">Close</button>';
+                        modalFooter.innerHTML = `
+                            <button class="btn btn-outline" onclick="closeModal('deleteProductModal')">Cancel</button>
+                            <button class="btn btn-danger" onclick="deleteProduct('${productId}')">Retry Delete</button>
+                        `;
                     }
-                    pendingDeleteProductId = null;
                 }
             }
         });
@@ -626,7 +643,9 @@ window.editProduct = async function (productId) {
 
     document.getElementById('pmProductName').value = product.name;
     if (categoryCombobox) {
-        categoryCombobox.selectItem(product.category_id, product.category_name || '');
+        categoryCombobox.hidden.value = product.category_id;
+        categoryCombobox.input.value = product.category_name || '';
+        categoryCombobox.closeDropdown();
     }
 
     if (subcategoryCombobox) {
@@ -671,6 +690,16 @@ window.updateProduct = async function () {
         return;
     }
 
+    if (!Number.isFinite(gst) || gst < 0 || gst > 100) {
+        alert('GST rate must be between 0% and 100%');
+        return;
+    }
+
+    if (hsn && !/^\d{4}(\d{2})?(\d{2})?$/.test(hsn)) {
+        alert('HSN code must be 4, 6 or 8 digits');
+        return;
+    }
+
     const data = await apiRequest(`/api/products/${editingProductId}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -684,9 +713,7 @@ window.updateProduct = async function () {
     });
 
     if (data && data.success) {
-        // Refresh products list
-        await loadProducts();
-        // Close modal and reset to "Add" mode
+        await loadProducts(currentPage);
         closeModal('addProductModal');
         resetProductModal(); // this function should reset title/button/onclick
         alert('Product updated successfully');

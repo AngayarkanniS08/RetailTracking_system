@@ -16,7 +16,7 @@
 
           <!-- Search Bar -->
           <div class="input-group" style="margin-bottom: 1rem;">
-            <input type="text" id="pmSearch" class="input-field" placeholder="Search products by name or ID..." oninput="renderProductMaster()">
+            <input type="text" id="pmSearch" class="input-field" placeholder="Search products by name or ID...">
           </div>
 
           <!-- Stats -->
