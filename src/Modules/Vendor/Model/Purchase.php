@@ -9,6 +9,7 @@ class Purchase {
         public string $status,
         public ?array $items,
         public ?float $baseAmount = null,
+        public ?float $totalAmount = null,
         public ?float $amountPaid = null,
         public ?string $purchaseDate = null,
         public ?string $userId = null,

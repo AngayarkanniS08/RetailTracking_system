@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS vendor_purchases (
     vendor_id UUID NOT NULL REFERENCES vendors(id) ON DELETE RESTRICT,
     
     invoice_number TEXT,                       -- Essential for tracking physical bills
+    base_amount DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (base_amount >= 0),
     total_amount DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (total_amount >= 0),
     amount_paid DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (amount_paid >= 0 AND amount_paid <= total_amount),
     
@@ -29,6 +30,7 @@ CREATE TABLE IF NOT EXISTS vendor_purchase_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     purchase_id UUID NOT NULL REFERENCES vendor_purchases(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     
     -- Good Denormalization: Snapshot of name & cost at the exact moment of purchase
     product_name_snapshot TEXT NOT NULL, 

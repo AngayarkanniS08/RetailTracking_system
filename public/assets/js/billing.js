@@ -133,6 +133,7 @@ function selectPOSProduct(batchId) {
     let targetRow = null;
     const rows = tbody.querySelectorAll('tr');
     for (let i = 0; i < rows.length; i++) {
+        if (rows[i].getAttribute('data-batch-id')) continue;
         const cells = rows[i].querySelectorAll('td');
         let isEmpty = true;
         for (let j = 0; j < cells.length; j++) {
@@ -140,7 +141,23 @@ function selectPOSProduct(batchId) {
         }
         if (isEmpty) { targetRow = rows[i]; break; }
     }
-    if (!targetRow) return;
+    if (!targetRow) {
+        // Fallback: find first row with textContent-empty cells even if data-batch-id is stale
+        for (let i = 0; i < rows.length; i++) {
+            const cells = rows[i].querySelectorAll('td');
+            let allEmpty = true;
+            for (let j = 0; j < cells.length; j++) {
+                if (cells[j].textContent.trim() !== '') { allEmpty = false; break; }
+            }
+            if (allEmpty) { targetRow = rows[i]; break; }
+        }
+        if (!targetRow) return;
+        const oldBatchId = targetRow.getAttribute('data-batch-id');
+        if (oldBatchId && oldBatchId !== batchId) {
+            const oldIdx = cart.findIndex(c => c.batchId === oldBatchId);
+            if (oldIdx !== -1) cart.splice(oldIdx, 1);
+        }
+    }
 
     const cells = targetRow.querySelectorAll('td');
     const qty = 1;
@@ -575,7 +592,7 @@ function renderPOSItems() {
     </tr></thead><tbody>`;
 
     rows.forEach(r => {
-        html += `<tr onclick="addToCart('${r.batchId}')">
+        html += `<tr>
           <td>
             <div class="t-name">${r.name}</div>
             <div style="font-size: 0.75rem; color: var(--muted);">Batch: ${r.batchId.slice(0,8)} | ${r.vendorName}</div>
@@ -602,21 +619,26 @@ function saveCart() {
 function restoreGridFromCart() {
     const stored = sessionStorage.getItem('posCart');
     if (!stored) return;
+    let restored;
     try {
-        cart = JSON.parse(stored);
-    } catch (e) { cart = []; return; }
-    if (!cart.length) return;
+        restored = JSON.parse(stored);
+    } catch (e) { return; }
+    if (!restored || !restored.length) return;
 
-    cart.forEach(function(item) {
+    const tbody = document.querySelector('#billingGrid tbody');
+    if (!tbody) return;
+
+    cart = [];
+
+    restored.forEach(function(item) {
         const batch = posBatches.find(function(b) { return b.id === item.batchId; });
         const product = posProducts.find(function(p) { return p.id === item.productId; });
         if (!batch || !product) return;
 
-        const tbody = document.querySelector('#billingGrid tbody');
-        if (!tbody) return;
         const rows = tbody.querySelectorAll('tr');
         let targetRow = null;
         for (let i = 0; i < rows.length; i++) {
+            if (rows[i].getAttribute('data-batch-id')) continue;
             const cells = rows[i].querySelectorAll('td');
             let empty = true;
             for (let j = 0; j < cells.length; j++) {
@@ -630,7 +652,6 @@ function restoreGridFromCart() {
         targetRow.setAttribute('data-batch-id', item.batchId);
         cells[0].textContent = batch.batch_number || batch.id;
         cells[1].textContent = product.name;
-        // Use current batch price instead of stale stored price
         const retailPrice = parseFloat(batch.retail_price);
         const sellingPrice = parseFloat(batch.selling_price) || 0;
         const currentPrice = priceMode === 'wholesale' ? sellingPrice : (retailPrice || sellingPrice);
@@ -641,103 +662,22 @@ function restoreGridFromCart() {
         cells[5].textContent = (item.qty || 1).toFixed(2);
         cells[6].textContent = (item.gstRate || 0).toFixed(1);
         cells[7].textContent = ((item.qty || 1) * currentPrice).toFixed(2);
+
+        cart.push(item);
     });
     calculateCart();
 }
 
-function addToCart(batchId) {
-    const batch = posBatches.find(b => b.id === batchId);
-    if (!batch || batch.quantity <= 0) return;
 
-    const product = posProducts.find(p => p.id === batch.product_id);
-    if (!product) return;
-
-    const existing = cart.find(c => c.batchId === batchId);
-    if (existing) {
-        if (existing.qty >= batch.quantity) return;
-        existing.qty++;
-    } else {
-        cart.push({
-            batchId: batch.id,
-            productId: product.id,
-            name: product.name,
-            unit: product.unit || 'pcs',
-            qty: 1,
-            sellingPrice: parseFloat(batch.selling_price) || 0,
-            retailPrice: parseFloat(batch.retail_price) || 0,
-            purchasePrice: parseFloat(batch.purchase_price) || 0,
-            gstRate: parseFloat(product.gst_rate) || 0,
-            hsnCode: product.hsn_code || '',
-            discount: 0
-        });
-    }
-
-    renderCart();
-}
-
-function renderCart() {
-    const container = document.getElementById('cartItemsContainer');
-    if (!container) return;
-
-    if (cart.length === 0) {
-        container.innerHTML = `<div class="text-center" style="color:var(--muted); margin-top: 50px;">Cart is empty. Select items to bill.</div>`;
-        calculateCart();
-        return;
-    }
-
-    let html = `<table class="pos-table" style="font-size:0.8rem;"><thead><tr>
-      <th>Item</th><th>Price</th><th>Qty</th><th>Disc</th><th>Total</th><th></th>
-    </tr></thead><tbody>`;
-
-    cart.forEach((c, idx) => {
-        const lineTotal = (c.qty * c.sellingPrice) - c.discount;
-        html += `<tr>
-          <td><div class="t-name" style="font-size:0.75rem;">${c.name}</div></td>
-          <td>₹${c.sellingPrice.toFixed(2)}</td>
-          <td>
-            <button class="btn btn-sm" onclick="updateCartQty(${idx}, -1)" style="padding:1px 6px;">−</button>
-            ${c.qty}
-            <button class="btn btn-sm" onclick="updateCartQty(${idx}, 1)" style="padding:1px 6px;">+</button>
-          </td>
-          <td><input type="number" class="input-field" value="${c.discount}" min="0" style="width:55px;padding:2px 4px;font-size:0.75rem;" onchange="setItemDiscount(${idx}, this.value)"></td>
-          <td>₹${lineTotal.toFixed(2)}</td>
-          <td><button class="btn btn-sm" onclick="cart.splice(${idx},1);renderCart();" style="color:var(--danger);padding:1px 6px;">✕</button></td>
-        </tr>`;
-    });
-
-    html += '</tbody></table>';
-    container.innerHTML = html;
-    calculateCart();
-}
-
-function updateCartQty(idx, delta) {
-    const c = cart[idx];
-    if (!c) return;
-    const newQty = c.qty + delta;
-    if (newQty <= 0) {
-        cart.splice(idx, 1);
-    } else {
-        const batch = posBatches.find(b => b.id === c.batchId);
-        if (batch && newQty > batch.quantity) return;
-        c.qty = newQty;
-    }
-    renderCart();
-}
-
-function setItemDiscount(idx, val) {
-    const c = cart[idx];
-    if (!c) return;
-    const maxLine = c.qty * c.sellingPrice;
-    c.discount = Math.min(Math.max(0, parseFloat(val) || 0), maxLine);
-    calculateCart();
-}
 
 /* Sync all grid cell values back to cart (catch any contenteditable edits that input missed) */
 function syncGridToCart() {
     const rows = document.querySelectorAll('#billingGrid tbody tr');
+    const activeBatchIds = new Set();
     rows.forEach(function(tr) {
         const bid = tr.getAttribute('data-batch-id');
         if (!bid) return;
+        activeBatchIds.add(bid);
         const item = cart.find(function(c) { return c.batchId === bid; });
         if (!item) return;
         const cells = tr.querySelectorAll('td');
@@ -751,6 +691,12 @@ function syncGridToCart() {
         item.discount = Math.min(disc, item.qty * item.sellingPrice);
         cells[7].textContent = (item.qty * item.sellingPrice).toFixed(2);
     });
+    // Remove ghost items (cart entries whose grid row was deleted or overwritten)
+    for (let i = cart.length - 1; i >= 0; i--) {
+        if (!activeBatchIds.has(cart[i].batchId)) {
+            cart.splice(i, 1);
+        }
+    }
     calculateCart();
 }
 
@@ -940,7 +886,7 @@ async function processCheckout() {
             }
 
             sessionStorage.removeItem('posCart');
-            renderCart();
+            calculateCart();
             const paidInput = document.getElementById('amountPaidInput');
             paidInput.value = '';
             delete paidInput.dataset.userEdited;

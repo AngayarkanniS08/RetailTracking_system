@@ -150,7 +150,7 @@ async function saveStockEntry() {
         items: [{
             product_id: productId,
             quantity: quantity,
-            unit_price: baseAmount / quantity,
+            unit_price: Number((baseAmount / quantity).toFixed(2)),
             gst_rate: gstRate
         }]
     };
@@ -335,7 +335,7 @@ async function recordPayment(purchaseId) {
             alert(data?.error || 'Failed to load purchase details');
             return;
         }
-        const totalAmount = (data.baseAmount || 0) + (data.totalGst || 0);
+        const totalAmount = data.totalAmount || ((data.baseAmount || 0) + (data.totalGst || 0));
         const balance = totalAmount - (data.amountPaid || 0);
         document.getElementById('vpPurchaseId').value = purchaseId;
         document.getElementById('vpVendorId').value = data.vendorId || '';
@@ -712,6 +712,7 @@ function groupByDate(records, dateField) {
 }
 
 function calcTotalWithGst(p) {
+    if (p.totalAmount) return p.totalAmount;
     let gst = 0;
     if (p.items) p.items.forEach(item => { gst += item.quantity * item.unit_price * (item.gst_rate || 0) / 100; });
     return (p.baseAmount || 0) + gst;
@@ -767,9 +768,7 @@ function renderVendorHistoryBody(grouped, sortedDates, page) {
                         <tbody>
         `;
         grouped[date].forEach(p => {
-            const statusClass = p.status === 'completed' || p.status === 'paid' ? 'badge-success'
-                : p.status === 'cancelled' ? 'badge-danger'
-                : 'badge-warning';
+            const statusClass = p.status === 'paid' ? 'badge-success' : 'badge-warning';
             let itemsHtml = '';
             let totalGst = 0;
             if (p.items && p.items.length > 0) {
@@ -783,7 +782,7 @@ function renderVendorHistoryBody(grouped, sortedDates, page) {
                             </div>`;
                 });
             }
-            const totalAmount = (p.baseAmount || 0) + totalGst;
+            const totalAmount = p.totalAmount || ((p.baseAmount || 0) + totalGst);
             const balance = Math.max(0, totalAmount - (p.amountPaid || 0));
             html += `
                             <tr>

@@ -7,6 +7,7 @@ use Modules\Vendor\Model\Vendor;
 use Modules\Vendor\Model\Purchase;
 use Modules\Vendor\Model\PurchaseItem;
 use Modules\Vendor\Repository\Contract\PurchaseRepositoryInterface;
+use Modules\Vendor\Exception\VendorException;
 
 class PurchaseRepository implements PurchaseRepositoryInterface
 {
@@ -25,33 +26,16 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
     public function findOrCreateVendor(string $name, string $phone): Vendor
     {
-        $name = trim($name);
-        $stmt = $this->db->prepare(
-            "SELECT id, name, contact_info AS phone, created_at, updated_at FROM vendors
-             WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))
-               AND user_id = current_setting('app.current_user_id')::uuid"
-        );
-        $stmt->execute([$name]);
+        $stmt = $this->db->prepare("
+            INSERT INTO vendors (name, contact_info, user_id)
+            VALUES (?, ?, current_setting('app.current_user_id')::uuid)
+            ON CONFLICT (user_id, name) DO UPDATE
+                SET contact_info = EXCLUDED.contact_info,
+                    updated_at = now()
+            RETURNING id, name, contact_info AS phone, created_at, updated_at
+        ");
+        $stmt->execute([trim($name), $phone]);
         $vendor = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($vendor) {
-            if ($vendor['phone'] !== $phone) {
-                $updateStmt = $this->db->prepare(
-                    "UPDATE vendors SET contact_info = ?, updated_at = now()
-                     WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid"
-                );
-                $updateStmt->execute([$phone, $vendor['id']]);
-                $vendor['phone'] = $phone;
-            }
-        } else {
-            $stmt = $this->db->prepare(
-                "INSERT INTO vendors (name, contact_info, user_id)
-                 VALUES (?, ?, current_setting('app.current_user_id')::uuid)
-                 RETURNING id, name, contact_info AS phone, created_at, updated_at"
-             );
-            $stmt->execute([$name, $phone]);
-            $vendor = $stmt->fetch(PDO::FETCH_ASSOC);
-        }
 
         return new Vendor(
             id: $vendor['id'],
@@ -123,7 +107,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         ");
         $stmt->execute([$id]);
         if ($stmt->fetchColumn()) {
-            throw new \Exception('Cannot delete vendor with existing purchases');
+            throw new VendorException('Cannot delete vendor with existing purchases');
         }
         $stmt = $this->db->prepare("
             DELETE FROM vendors
@@ -138,13 +122,14 @@ class PurchaseRepository implements PurchaseRepositoryInterface
     public function createPurchase(Purchase $purchase): Purchase
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO vendor_purchases (id, vendor_id, total_amount, amount_paid, purchase_date, user_id, created_at, updated_at)
-             VALUES (gen_random_uuid(), ?, ?, ?, ?, current_setting('app.current_user_id')::uuid, now(), now())
-             RETURNING id, vendor_id, total_amount, amount_paid, purchase_date, user_id, created_at, updated_at"
+            "INSERT INTO vendor_purchases (id, vendor_id, base_amount, total_amount, amount_paid, purchase_date, user_id, created_at, updated_at)
+             VALUES (gen_random_uuid(), ?, ?, ?, ?, ?, current_setting('app.current_user_id')::uuid, now(), now())
+             RETURNING id, vendor_id, base_amount, total_amount, amount_paid, purchase_date, user_id, created_at, updated_at"
         );
         $stmt->execute([
             $purchase->vendorId,
             $purchase->baseAmount,
+            $purchase->totalAmount,
             $purchase->amountPaid,
             $purchase->purchaseDate ?: date('Y-m-d H:i:s')
         ]);
@@ -157,7 +142,8 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             vendorId: $row['vendor_id'],
             status: $status,
             items: $purchase->items,
-            baseAmount: (float)$row['total_amount'],
+            baseAmount: (float)$row['base_amount'],
+            totalAmount: (float)$row['total_amount'],
             amountPaid: (float)$row['amount_paid'],
             purchaseDate: $row['purchase_date'],
             userId: $row['user_id'],
@@ -169,7 +155,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
     public function findPurchaseById(string $id, bool $withItems = false): ?Purchase
     {
         $stmt = $this->db->prepare("
-            SELECT p.id, p.vendor_id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid, p.user_id, p.created_at, p.updated_at,
+            SELECT p.id, p.vendor_id, p.purchase_date, p.base_amount, p.total_amount, p.amount_paid, p.user_id, p.created_at, p.updated_at,
                    v.name AS vendor_name
             FROM vendor_purchases p
             LEFT JOIN vendors v ON v.id = p.vendor_id
@@ -202,11 +188,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             }
         }
 
-        $totalWithGst = (float)$row['base_amount'];
-        foreach ($items as $item) {
-            $totalWithGst += $item->quantity * $item->unitPrice * ($item->gstRate / 100);
-        }
-        $status = $row['amount_paid'] >= $totalWithGst ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending');
+        $status = $row['amount_paid'] >= $row['total_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending');
 
         return new Purchase(
             id: $row['id'],
@@ -214,6 +196,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
             status: $status,
             items: $items,
             baseAmount: (float)$row['base_amount'],
+            totalAmount: (float)$row['total_amount'],
             amountPaid: (float)$row['amount_paid'],
             purchaseDate: $row['purchase_date'],
             userId: $row['user_id'],
@@ -226,16 +209,21 @@ class PurchaseRepository implements PurchaseRepositoryInterface
     public function findAllPurchases(int $page, int $limit, array $filters): array
     {
         $params = [];
-        $searchSql = '';
+        $whereSql = '';
 
         if (!empty($filters['search'])) {
-            $searchSql = " AND v.name ILIKE ?";
+            $whereSql .= " AND v.name ILIKE ?";
             $params[] = "%{$filters['search']}%";
+        }
+
+        if (!empty($filters['vendor_id'])) {
+            $whereSql .= " AND v.id = ?";
+            $params[] = $filters['vendor_id'];
         }
 
         $countStmt = $this->db->prepare("
             SELECT COUNT(*) FROM vendors v
-            WHERE v.user_id = current_setting('app.current_user_id')::uuid $searchSql
+            WHERE v.user_id = current_setting('app.current_user_id')::uuid $whereSql
         ");
         $countStmt->execute($params);
         $total = (int)$countStmt->fetchColumn();
@@ -248,19 +236,13 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT v.id AS vendor_id, v.name AS vendor_name, v.contact_info AS vendor_phone,
                 COUNT(p.id) AS total_orders,
-                COALESCE(SUM(p.total_amount + (
-                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
-                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                )), 0) AS total_billed,
+                COALESCE(SUM(p.total_amount), 0) AS total_billed,
                 COALESCE(SUM(p.amount_paid), 0) AS total_paid,
-                COALESCE(GREATEST(SUM(p.total_amount + (
-                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
-                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                ) - p.amount_paid), 0), 0) AS balance_due
+                COALESCE(GREATEST(SUM(p.total_amount - p.amount_paid), 0), 0) AS balance_due
             FROM vendors v
             LEFT JOIN vendor_purchases p ON p.vendor_id = v.id
             WHERE v.user_id = current_setting('app.current_user_id')::uuid
-            $searchSql
+            $whereSql
             GROUP BY v.id, v.name, v.contact_info
             ORDER BY v.name ASC
             LIMIT ? OFFSET ?
@@ -288,6 +270,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $stmt = $this->db->prepare("
             UPDATE vendor_purchases
             SET purchase_date = ?,
+                base_amount = ?,
                 total_amount = ?,
                 amount_paid = ?,
                 updated_at = now()
@@ -297,6 +280,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $stmt->execute([
             $purchase->purchaseDate,
             $purchase->baseAmount,
+            $purchase->totalAmount,
             $purchase->amountPaid,
             $purchase->id
         ]);
@@ -304,7 +288,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         if ($row) {
             $purchase->updatedAt = $row['updated_at'];
         }
-        $purchase->status = $purchase->amountPaid >= $purchase->baseAmount ? 'paid' : ($purchase->amountPaid > 0 ? 'partial' : 'pending');
+        $purchase->status = $purchase->amountPaid >= $purchase->totalAmount ? 'paid' : ($purchase->amountPaid > 0 ? 'partial' : 'pending');
         return $purchase;
     }
 
@@ -345,31 +329,26 @@ class PurchaseRepository implements PurchaseRepositoryInterface
 
         public function recordPayment(string $purchaseId, float $amount, string $paymentDate = null): bool
         {
-            $this->db->beginTransaction();
-            try {
-                $stmt = $this->db->prepare("
-                    UPDATE vendor_purchases
-                    SET amount_paid = amount_paid + ?,
-                        updated_at = now()
-                    WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            $stmt = $this->db->prepare("
+                UPDATE vendor_purchases
+                SET amount_paid = amount_paid + ?,
+                    updated_at = now()
+                WHERE id = ?
+                  AND user_id = current_setting('app.current_user_id')::uuid
+                  AND amount_paid + ? <= total_amount
+            ");
+            $stmt->execute([$amount, $purchaseId, $amount]);
+            $updated = $stmt->rowCount() > 0;
+
+            if ($updated) {
+                $insertStmt = $this->db->prepare("
+                    INSERT INTO vendor_payments (id, user_id, purchase_id, amount, payment_date)
+                    VALUES (gen_random_uuid(), current_setting('app.current_user_id')::uuid, ?, ?, ?::timestamptz)
                 ");
-                $stmt->execute([$amount, $purchaseId]);
-                $updated = $stmt->rowCount() > 0;
-
-                if ($updated) {
-                    $insertStmt = $this->db->prepare("
-                        INSERT INTO vendor_payments (id, user_id, purchase_id, amount, payment_date)
-                        VALUES (gen_random_uuid(), current_setting('app.current_user_id')::uuid, ?, ?, ?::timestamptz)
-                    ");
-                    $insertStmt->execute([$purchaseId, $amount, $paymentDate ?? date('Y-m-d')]);
-                }
-
-                $this->db->commit();
-                return $updated;
-            } catch (\Exception $e) {
-                $this->db->rollBack();
-                throw $e;
+                $insertStmt->execute([$purchaseId, $amount, $paymentDate ?? date('Y-m-d')]);
             }
+
+            return $updated;
         }
 
     public function getVendorPayments(string $vendorId, array $filters = []): array
@@ -462,7 +441,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         }
 
         $stmt = $this->db->prepare("
-            SELECT p.id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid,
+            SELECT p.id, p.purchase_date, p.base_amount, p.total_amount, p.amount_paid,
                 p.created_at,
                 v.name AS vendor_name, v.contact_info AS vendor_phone,
                 pi.product_id, pi.quantity, pi.unit_cost AS unit_price, pi.gst_rate,
@@ -486,8 +465,9 @@ class PurchaseRepository implements PurchaseRepositoryInterface
                     'id' => $row['id'],
                     'purchaseDate' => $row['purchase_date'],
                     'baseAmount' => (float)$row['base_amount'],
+                    'totalAmount' => (float)$row['total_amount'],
                     'amountPaid' => (float)$row['amount_paid'],
-                    'status' => $row['amount_paid'] >= $row['base_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending'),
+                    'status' => $row['amount_paid'] >= $row['total_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending'),
                     'vendorName' => $row['vendor_name'],
                     'vendorPhone' => $row['vendor_phone'],
                     'items' => []
@@ -511,15 +491,9 @@ class PurchaseRepository implements PurchaseRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT
-                COALESCE(SUM(total_amount + (
-                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
-                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                )), 0) AS total_spent,
+                COALESCE(SUM(total_amount), 0) AS total_spent,
                 COALESCE(SUM(amount_paid), 0) AS total_paid,
-                COALESCE(GREATEST(SUM(total_amount + (
-                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
-                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                ) - amount_paid), 0), 0) AS balance_due
+                COALESCE(GREATEST(SUM(total_amount - amount_paid), 0), 0) AS balance_due
             FROM vendor_purchases p
             WHERE vendor_id = ? AND user_id = current_setting('app.current_user_id')::uuid
         ");
@@ -537,15 +511,9 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $stmt = $this->db->prepare("
             SELECT
                 COALESCE(COUNT(DISTINCT vendor_id), 0) AS total_vendors,
-                COALESCE(SUM(total_amount + (
-                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
-                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                )), 0) AS total_purchased,
+                COALESCE(SUM(total_amount), 0) AS total_purchased,
                 COALESCE(SUM(amount_paid), 0) AS total_paid,
-                COALESCE(GREATEST(SUM(total_amount + (
-                    SELECT COALESCE(SUM(pi.quantity * pi.unit_cost * pi.gst_rate / 100), 0)
-                    FROM vendor_purchase_items pi WHERE pi.purchase_id = p.id
-                ) - amount_paid), 0), 0) AS balance_due
+                COALESCE(GREATEST(SUM(total_amount - amount_paid), 0), 0) AS balance_due
             FROM vendor_purchases p
             WHERE user_id = current_setting('app.current_user_id')::uuid
         ");
@@ -595,7 +563,7 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         }
 
         $stmt = $this->db->prepare("
-            SELECT p.id, p.vendor_id, p.purchase_date, p.total_amount AS base_amount, p.amount_paid,
+            SELECT p.id, p.vendor_id, p.purchase_date, p.base_amount, p.total_amount, p.amount_paid,
                 p.created_at,
                 v.name AS vendor_name, v.contact_info AS vendor_phone,
                 pi.product_id, pi.quantity, pi.unit_cost AS unit_price,pi.gst_rate AS gst_rate,
@@ -619,8 +587,9 @@ class PurchaseRepository implements PurchaseRepositoryInterface
                     'id' => $row['id'],
                     'purchaseDate' => $row['purchase_date'],
                     'baseAmount' => (float)$row['base_amount'],
+                    'totalAmount' => (float)$row['total_amount'],
                     'amountPaid' => (float)$row['amount_paid'],
-                    'status' => $row['amount_paid'] >= $row['base_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending'),
+                    'status' => $row['amount_paid'] >= $row['total_amount'] ? 'paid' : ($row['amount_paid'] > 0 ? 'partial' : 'pending'),
                     'vendorName' => $row['vendor_name'],
                     'vendorPhone' => $row['vendor_phone'],
                     'items' => []

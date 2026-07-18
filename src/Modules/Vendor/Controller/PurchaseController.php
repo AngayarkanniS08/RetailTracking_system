@@ -5,11 +5,6 @@ use Modules\Vendor\DTO\PurchaseDTO;
 use Modules\Vendor\DTO\PurchaseItemDTO;
 use Modules\Vendor\Service\PurchaseService;
 use Modules\Vendor\Repository\PurchaseRepository;
-use Modules\Product\Service\ProductService;
-use Modules\Product\Repository\ProductRepository;
-use Modules\Product\Repository\CategoryRepository;
-use Modules\Inventory\Service\BatchService;
-use Modules\Inventory\Repository\BatchRepository;
 use Core\Middlewares\AuthMiddleware;
 use Core\Cache\ValkeyCache;
 use Modules\Auth\Validation\ValidationException;
@@ -21,14 +16,8 @@ class PurchaseController
 
     public function __construct()
     {
-        // Build dependencies (you can later use a DI container)
-        $productRepo = new ProductRepository();
-        $categoryRepo = new CategoryRepository();
-        $productService = new ProductService($productRepo, $categoryRepo);
-        $batchRepo = new BatchRepository();
-        $batchService = new BatchService($batchRepo);
         $purchaseRepo = new PurchaseRepository();
-        $this->service = new PurchaseService($purchaseRepo, $productService, $batchService);
+        $this->service = new PurchaseService($purchaseRepo);
     }
 
     /**
@@ -55,9 +44,11 @@ class PurchaseController
 
         $userId = $user->data->user_id ?? null;
 
-        // Build cache key (unique per search, page, filters, user)
+        // Build cache key unique per search, page, filters, user, and version
+        $cacheVersion = $this->getVendorCacheVersion();
         $cacheKey = sprintf(
-            'vendors:list:search:%s:page:%d:limit:%d:user:%s',
+            'vendors:list:v%d:search:%s:page:%d:limit:%d:user:%s',
+            $cacheVersion,
             md5($search),
             $page,
             $limit,
@@ -170,13 +161,7 @@ class PurchaseController
                 return;
             }
             $response = json_decode(json_encode($purchase), true);
-            $totalGst = 0;
-            if ($purchase->items) {
-                foreach ($purchase->items as $item) {
-                    $totalGst += $item->quantity * $item->unitPrice * ($item->gstRate / 100);
-                }
-            }
-            $response['totalGst'] = $totalGst;
+            $response['totalGst'] = ($purchase->totalAmount ?? 0) - ($purchase->baseAmount ?? 0);
             echo json_encode($response);
         } catch (\Throwable $e) {
             http_response_code(500);
@@ -310,8 +295,10 @@ class PurchaseController
             $filters['year'] = $year;
         }
 
+        $cacheVersion = $this->getVendorCacheVersion();
         $cacheKey = sprintf(
-            'vendors:history:%s:date:%s:month:%s:year:%s:user:%s',
+            'vendors:history:v%d:%s:date:%s:month:%s:year:%s:user:%s',
+            $cacheVersion,
             $vendorId,
             md5($date),
             md5($month),
@@ -365,8 +352,10 @@ class PurchaseController
             $filters['year'] = $year;
         }
 
+        $cacheVersion = $this->getVendorCacheVersion();
         $cacheKey = sprintf(
-            'vendors:history:all:date:%s:month:%s:year:%s:user:%s',
+            'vendors:history:all:v%d:date:%s:month:%s:year:%s:user:%s',
+            $cacheVersion,
             md5($date),
             md5($month),
             md5($year),
@@ -419,8 +408,10 @@ class PurchaseController
             $filters['year'] = $year;
         }
 
+        $cacheVersion = $this->getVendorCacheVersion();
         $cacheKey = sprintf(
-            'vendors:payments:%s:date:%s:month:%s:year:%s:user:%s',
+            'vendors:payments:v%d:%s:date:%s:month:%s:year:%s:user:%s',
+            $cacheVersion,
             $vendorId,
             md5($date),
             md5($month),
@@ -474,8 +465,10 @@ class PurchaseController
             $filters['year'] = $year;
         }
 
+        $cacheVersion = $this->getVendorCacheVersion();
         $cacheKey = sprintf(
-            'vendors:payments:all:date:%s:month:%s:year:%s:user:%s',
+            'vendors:payments:all:v%d:date:%s:month:%s:year:%s:user:%s',
+            $cacheVersion,
             md5($date),
             md5($month),
             md5($year),
@@ -527,6 +520,16 @@ class PurchaseController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load vendors']);
+        }
+    }
+
+    private function getVendorCacheVersion(): int
+    {
+        try {
+            $valkey = ValkeyCache::getClient();
+            return (int)($valkey->get('vendors:cache:version') ?: 0);
+        } catch (\Exception $e) {
+            return 0;
         }
     }
 }

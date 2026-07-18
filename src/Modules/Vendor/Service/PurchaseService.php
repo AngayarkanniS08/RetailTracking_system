@@ -16,9 +16,7 @@ class PurchaseService
     private PurchaseRepositoryInterface $repo;
 
     public function __construct(
-        PurchaseRepositoryInterface $repo,
-        $productService = null,
-        $batchService = null
+        PurchaseRepositoryInterface $repo
     ) {
         $this->repo = $repo;
     }
@@ -50,10 +48,15 @@ class PurchaseService
         }
         // Calculate total (base + GST) from items
         $totalAmount = 0;
+        $computedBase = 0;
         foreach ($dto->items as $item) {
             $itemTotal = $item->quantity * $item->unitPrice;
             $gstAmount = $itemTotal * ($item->gstRate / 100);
             $totalAmount += $itemTotal + $gstAmount;
+            $computedBase += $itemTotal;
+        }
+        if (abs($dto->baseAmount - $computedBase) > 0.01) {
+            throw new ValidationException("Base amount does not match sum of line items");
         }
         if ($dto->amountPaid > $totalAmount) {
             throw new ValidationException("Amount paid cannot exceed total amount");
@@ -81,6 +84,7 @@ class PurchaseService
             vendorId: $vendor->id,
             purchaseDate: $dto->purchaseDate,
             baseAmount: $dto->baseAmount,
+            totalAmount: $totalAmount,
             amountPaid: $dto->amountPaid,
             status: $this->determineStatus($dto->amountPaid, $totalAmount),
             userId: $userId,
@@ -134,38 +138,35 @@ class PurchaseService
             throw new ValidationException("Payment amount must be positive");
         }
 
-        $purchase = $this->repo->findPurchaseById($purchaseId, true);
-        if (!$purchase) {
-            throw new ValidationException("Purchase not found");
-        }
-
-        if ($purchase->status === 'paid') {
-            throw new ValidationException("Purchase is already fully paid");
-        }
-
-        // Calculate total with GST
-        $totalAmount = $purchase->baseAmount;
-        if ($purchase->items) {
-            $gstSum = 0;
-            foreach ($purchase->items as $item) {
-                $gstSum += $item->quantity * $item->unitPrice * ($item->gstRate / 100);
+        $this->repo->beginTransaction();
+        try {
+            $purchase = $this->repo->findPurchaseById($purchaseId, true);
+            if (!$purchase) {
+                throw new ValidationException("Purchase not found");
             }
-            $totalAmount += $gstSum;
-        }
 
-        $newPaid = $purchase->amountPaid + $amount;
-        if ($newPaid > $totalAmount) {
-            throw new ValidationException("Payment would exceed total amount");
-        }
+            if ($purchase->status === 'paid') {
+                throw new ValidationException("Purchase is already fully paid");
+            }
 
-        $success = $this->repo->recordPayment($purchaseId, $amount, $paymentDate);
-        if (!$success) {
-            throw new ValidationException("Failed to record payment");
+            $newPaid = $purchase->amountPaid + $amount;
+            if ($newPaid > $purchase->totalAmount) {
+                throw new ValidationException("Payment would exceed total amount");
+            }
+
+            $success = $this->repo->recordPayment($purchaseId, $amount, $paymentDate);
+            if (!$success) {
+                throw new ValidationException("Payment rejected due to concurrent transaction; please retry");
+            }
+
+            $this->repo->commit();
+        } catch (\Exception $e) {
+            $this->repo->rollback();
+            throw $e;
         }
 
         $this->invalidateVendorCaches();
 
-        // Refresh the purchase
         return $this->repo->findPurchaseById($purchaseId);
     }
 
@@ -225,10 +226,16 @@ class PurchaseService
         }
         // Calculate total (base + GST) from items
         $totalAmount = 0;
+        $computedBase = 0;
         foreach ($dto->items as $item) {
             $itemTotal = $item->quantity * $item->unitPrice;
             $gstAmount = $itemTotal * ($item->gstRate / 100);
             $totalAmount += $itemTotal + $gstAmount;
+            $computedBase += $itemTotal;
+        }
+
+        if (abs($dto->baseAmount - $computedBase) > 0.01) {
+            throw new ValidationException("Base amount does not match sum of line items");
         }
 
         if ($dto->amountPaid > $totalAmount) {
@@ -255,6 +262,8 @@ class PurchaseService
         }
 
         // 4. Update header + replace items in a single transaction
+        $oldAmountPaid = $existing->amountPaid ?? 0;
+
         $this->repo->beginTransaction();
         try {
             $purchase = new Purchase(
@@ -262,6 +271,7 @@ class PurchaseService
                 vendorId: $existing->vendorId,
                 purchaseDate: $dto->purchaseDate,
                 baseAmount: $dto->baseAmount,
+                totalAmount: $totalAmount,
                 amountPaid: $dto->amountPaid,
                 status: $this->determineStatus($dto->amountPaid, $totalAmount),
                 userId: $userId,
@@ -284,6 +294,11 @@ class PurchaseService
                 );
             }
             $this->repo->replacePurchaseItems($purchaseId, $items);
+
+            $paymentDelta = $dto->amountPaid - $oldAmountPaid;
+            if ($paymentDelta > 0) {
+                $this->repo->insertPaymentRecord($purchaseId, $paymentDelta, $dto->purchaseDate);
+            }
 
             $this->repo->commit();
             $this->invalidateVendorCaches();
@@ -325,12 +340,9 @@ class PurchaseService
     {
         try {
             $valkey = ValkeyCache::getClient();
-            foreach (['vendors:list:*', 'vendors:history:*', 'vendors:payments:*'] as $pattern) {
-                $keys = $valkey->keys($pattern);
-                if ($keys) {
-                    $valkey->del($keys);
-                }
-            }
+            // Increment version counters to invalidate all cached queries
+            // (cache keys in the controller include these version numbers)
+            $valkey->incr('vendors:cache:version');
         } catch (\Exception $e) {
             error_log('Valkey vendor cache invalidation failed: ' . $e->getMessage());
         }
