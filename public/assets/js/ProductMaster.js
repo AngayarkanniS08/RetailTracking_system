@@ -23,7 +23,7 @@ let totalPages = 1;
 
 async function loadProducts(page = 1) {
     currentPage = page;
-    let url = `/api/products?page=${page}&limit=4`;
+    let url = `/api/products?page=${page}&limit=20`;
     if (currentSearch) {
         url += `&search=${encodeURIComponent(currentSearch)}`;
     }

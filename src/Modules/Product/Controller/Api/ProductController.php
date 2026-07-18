@@ -26,7 +26,7 @@ class ProductController
     {
         header('Content-Type: application/json');
         $page = (int)($_GET['page'] ?? 1);
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 4; // default to 4 if not specified
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
         $search = trim($_GET['search'] ?? '');
         $categoryId = trim($_GET['category_id'] ?? '');
         $subcategoryId = trim($_GET['subcategory_id'] ?? '');
