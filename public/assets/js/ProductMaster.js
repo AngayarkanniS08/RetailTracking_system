@@ -501,25 +501,29 @@ window.saveProduct = async function () {
         return;
     }
 
-    const data = await apiRequest('/api/products', {
-        method: 'POST',
-        body: JSON.stringify({
-            name,
-            category_id: categoryId,
-            subcategory_id: subcategoryId || null,
-            unit,
-            hsn_code: hsn || null,
-            gst_rate: gst
-        })
-    });
+    try {
+        const data = await apiRequest('/api/products', {
+            method: 'POST',
+            body: JSON.stringify({
+                name,
+                category_id: categoryId,
+                subcategory_id: subcategoryId || null,
+                unit,
+                hsn_code: hsn || null,
+                gst_rate: gst
+            })
+        });
 
-    if (data && data.success) {
-        await loadProducts(currentPage);
-        await loadCategories();
-        resetProductModal();
-        closeModal('addProductModal');
-    } else {
-        alert(data?.error || 'Failed to add product');
+        if (data && data.success) {
+            await loadProducts(currentPage);
+            await loadCategories();
+            resetProductModal();
+            closeModal('addProductModal');
+        } else {
+            showAlert('Error', data?.error || 'Failed to add product');
+        }
+    } catch (e) {
+        showAlert('Error', e.message || 'Failed to add product');
     }
 };
 
@@ -714,25 +718,29 @@ window.updateProduct = async function () {
         return;
     }
 
-    const data = await apiRequest(`/api/products/${editingProductId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            name,
-            category_id: categoryId,
-            subcategory_id: subcategoryId,
-            unit,
-            hsn_code: hsn,
-            gst_rate: gst
-        })
-    });
+    try {
+        const data = await apiRequest(`/api/products/${editingProductId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                name,
+                category_id: categoryId,
+                subcategory_id: subcategoryId,
+                unit,
+                hsn_code: hsn,
+                gst_rate: gst
+            })
+        });
 
-    if (data && data.success) {
-        await loadProducts(currentPage);
-        closeModal('addProductModal');
-        resetProductModal(); // this function should reset title/button/onclick
-        alert('Product updated successfully');
-    } else {
-        alert(data?.error || 'Failed to update product');
+        if (data && data.success) {
+            await loadProducts(currentPage);
+            closeModal('addProductModal');
+            resetProductModal();
+            showAlert('Success', 'Product updated successfully');
+        } else {
+            showAlert('Error', data?.error || 'Failed to update product');
+        }
+    } catch (e) {
+        showAlert('Error', e.message || 'Failed to update product');
     }
 };
 

@@ -56,6 +56,14 @@ async function apiRequest(path, options = {}) {
     return data;
 }
 
+function showAlert(title, message) {
+    const t = document.getElementById('alertDialogTitle');
+    const m = document.getElementById('alertDialogMessage');
+    if (t) t.textContent = title;
+    if (m) m.innerHTML = message;
+    openModal('alertDialogModal');
+}
+
 // ── Modal Handling ─────────────────────────────────────────────────────────
 function openModal(id) {
     const modal = document.getElementById(id);

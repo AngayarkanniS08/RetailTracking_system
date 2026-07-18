@@ -148,8 +148,24 @@
         <button class="btn btn-outline btn-block" onclick="closeModal('addStockModal')" style="margin-top: 1.5rem;">Cancel</button>
         <button class="btn btn-primary btn-block" id="addStockModalBtn" onclick="saveStock()" style="margin-top: 1.5rem;">Save Batch Entry</button>
       </div>
+        </div>
     </div>
-  </div>
+</div>
+
+<!-- Generic Alert Dialog -->
+<div id="alertDialogModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header">
+            <div class="modal-title" id="alertDialogTitle">Alert</div>
+            <button class="close-btn" onclick="closeModal('alertDialogModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="alertDialogMessage"></p>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
+            <button class="btn btn-primary" onclick="closeModal('alertDialogModal')">OK</button>
+        </div>
+    </div>
 </div>
 
   <!-- Add Customer Modal -->
