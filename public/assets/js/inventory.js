@@ -46,6 +46,7 @@ async function loadCategoriesForInventory() {
         const data = await window.apiRequest('/api/categories');
         if (data && !data.error) {
             const categories = data.map(cat => ({ id: cat.id, name: cat.name }));
+            categories.unshift({ id: '__all__', name: 'All Categories' });
             if (invCategoryCombobox) {
                 invCategoryCombobox.setItems(categories);
             }
@@ -415,8 +416,8 @@ async function editBatch(batchId) {
     if (retailSPEl) retailSPEl.value = batch.retail_price || 0;
 
     const retailBaseEl = document.getElementById('retailBasePrice');
-    if (retailBaseEl && batch.purchase_price && batch.quantity) {
-        retailBaseEl.value = (batch.purchase_price / batch.quantity).toFixed(2);
+    if (retailBaseEl && batch.purchase_price) {
+        retailBaseEl.value = batch.purchase_price;
     }
 
     const retailProfitEl = document.getElementById('retailProfit');
@@ -527,13 +528,22 @@ function renderInventory(stats = {}) {
     const costOfGoodsSold = typeof stats.cost_of_goods_sold !== 'undefined' ? stats.cost_of_goods_sold : 0;
     const profitAmount = stockSoldValue - costOfGoodsSold;
 
-
+    // Per-product low stock tracking
+    const productStockMap = {};
     window.batches.forEach(b => {
         calculatedStockValue += b.quantity * b.purchase_price;
         totalBatchesCalculated++;
-        const bp = getProduct(b.product_id);
-        const rop = bp?.rop ?? 0;
-        if (rop > 0 && b.quantity <= rop) lowStockCalculated++;
+        if (!productStockMap[b.product_id]) {
+            const bp = getProduct(b.product_id);
+            productStockMap[b.product_id] = {
+                totalQty: 0,
+                rop: bp?.rop ?? 0
+            };
+        }
+        productStockMap[b.product_id].totalQty += b.quantity;
+    });
+    Object.values(productStockMap).forEach(p => {
+        if (p.rop > 0 && p.totalQty <= p.rop) lowStockCalculated++;
     });
 
     const statsGrid = document.getElementById('inventoryStats');
@@ -567,7 +577,7 @@ function renderInventory(stats = {}) {
             <div class="stat-card">
               <div class="stat-label">Low / Out of Stock</div>
               <div class="stat-value" style="color:${lowStockCount > 0 ? 'var(--warn)' : 'var(--ok)'}">${lowStockCount}</div>
-              <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Batches needing attention</div>
+              <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Products needing attention</div>
             </div>
         `;
     }
@@ -1227,11 +1237,16 @@ class SearchableCombobox {
     }
 
     selectItem(id, name) {
-        this.hidden.value = id;
-        this.input.value = name;
+        if (id === '__all__') {
+            this.hidden.value = '';
+            this.input.value = '';
+        } else {
+            this.hidden.value = id;
+            this.input.value = name;
+        }
         this.closeDropdown();
         if (typeof this.onSelect === 'function') {
-            this.onSelect(id, name);
+            this.onSelect(this.hidden.value, this.input.value);
         }
     }
 
@@ -1296,7 +1311,8 @@ class SearchableCombobox {
                 this.hidden.value = '';
             }
         } else {
-            this.input.value = '';
+            const allItem = this.allItems.find(item => item.id === '__all__');
+            this.input.value = allItem ? '' : '';
         }
     }
 

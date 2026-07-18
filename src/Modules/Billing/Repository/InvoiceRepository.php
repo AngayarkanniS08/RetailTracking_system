@@ -53,7 +53,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
 
     // ── Batch / Stock lookups ─────────────────────────────
 
-    public function findAvailableBatch(string $productId): ?array
+    public function findAvailableBatch(string $productId, float $requestedQty = 0): ?array
     {
         $stmt = $this->db->prepare("
             SELECT id, product_id, batch_number, selling_price, cost_price,
@@ -62,11 +62,20 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             WHERE product_id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
               AND remaining_qty > 0
             ORDER BY created_at ASC
-            LIMIT 1
         ");
         $stmt->execute([$productId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row ?: null;
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($requestedQty > 0) {
+            foreach ($rows as $row) {
+                if ((float)$row['remaining_qty'] >= $requestedQty) {
+                    return $row;
+                }
+            }
+            return null;
+        }
+
+        return $rows[0] ?? null;
     }
 
     // ── Invoice ────────────────────────────────────────────
@@ -383,37 +392,29 @@ class InvoiceRepository implements InvoiceRepositoryInterface
     {
         $prefix = 'INV';
 
-        $this->db->beginTransaction();
-        try {
-            $stmt = $this->db->prepare("
-                SELECT last_number FROM invoice_sequences
+        $stmt = $this->db->prepare("
+            SELECT last_number FROM invoice_sequences
+            WHERE user_id = ? AND year = ? AND prefix = ?
+            FOR UPDATE
+        ");
+        $stmt->execute([$userId, $year, $prefix]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            $nextNum = $row['last_number'] + 1;
+            $updateStmt = $this->db->prepare("
+                UPDATE invoice_sequences
+                SET last_number = ?, updated_at = now()
                 WHERE user_id = ? AND year = ? AND prefix = ?
-                FOR UPDATE
             ");
-            $stmt->execute([$userId, $year, $prefix]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($row) {
-                $nextNum = $row['last_number'] + 1;
-                $updateStmt = $this->db->prepare("
-                    UPDATE invoice_sequences
-                    SET last_number = ?, updated_at = now()
-                    WHERE user_id = ? AND year = ? AND prefix = ?
-                ");
-                $updateStmt->execute([$nextNum, $userId, $year, $prefix]);
-            } else {
-                $nextNum = 1;
-                $insertStmt = $this->db->prepare("
-                    INSERT INTO invoice_sequences (id, user_id, year, prefix, last_number, updated_at)
-                    VALUES (gen_random_uuid(), ?, ?, ?, ?, now())
-                ");
-                $insertStmt->execute([$userId, $year, $prefix, $nextNum]);
-            }
-
-            $this->db->commit();
-        } catch (\Exception $e) {
-            $this->db->rollBack();
-            throw $e;
+            $updateStmt->execute([$nextNum, $userId, $year, $prefix]);
+        } else {
+            $nextNum = 1;
+            $insertStmt = $this->db->prepare("
+                INSERT INTO invoice_sequences (id, user_id, year, prefix, last_number, updated_at)
+                VALUES (gen_random_uuid(), ?, ?, ?, ?, now())
+            ");
+            $insertStmt->execute([$userId, $year, $prefix, $nextNum]);
         }
 
         return sprintf('%s-%s-%06d', $prefix, $year, $nextNum);
@@ -559,11 +560,15 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $stmt = $this->db->prepare("
             UPDATE inventory_batches
             SET remaining_qty = remaining_qty + ?,
-                status = 'active',
                 updated_at = now()
             WHERE id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$qty, $batchId]);
+        if ($stmt->rowCount() === 0) {
+            throw new \RuntimeException(
+                "Failed to increment batch stock: batch {$batchId} not found or unauthorized"
+            );
+        }
     }
 
     public function refreshStockList(): void

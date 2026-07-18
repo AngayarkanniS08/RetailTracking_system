@@ -103,7 +103,7 @@ class InvoiceService
                     throw new ValidationException("Batch not found: {$batchId}");
                 }
             } else {
-                $batch = $this->repo->findAvailableBatch($itemDTO->productId);
+                $batch = $this->repo->findAvailableBatch($itemDTO->productId, $itemDTO->quantity);
                 if (!$batch) {
                     throw new ValidationException("No available stock for product: {$product['name']}");
                 }
@@ -195,7 +195,6 @@ class InvoiceService
         // ── 1.7-1.8 Invoice number & status ───────────────
 
         $year = date('Y');
-        $invoiceNumber = $this->repo->getNextInvoiceNumber($userId, $year);
 
         $paymentStatus = $balanceDue <= 0 ? 'paid' : ($dto->amountPaid > 0 ? 'partial' : 'pending');
 
@@ -204,7 +203,7 @@ class InvoiceService
         $invoice = new Invoice(
             id: null,
             userId: $userId,
-            invoiceNumber: $invoiceNumber,
+            invoiceNumber: '',
             customerId: $dto->customerId,
             customerNameSnapshot: $customerNameSnapshot,
             customerPhoneSnapshot: $customerPhoneSnapshot,
@@ -229,6 +228,9 @@ class InvoiceService
 
         $this->repo->beginTransaction();
         try {
+            $invoiceNumber = $this->repo->getNextInvoiceNumber($userId, $year);
+            $invoice->invoiceNumber = $invoiceNumber;
+
             $saved = $this->repo->createInvoice($invoice);
 
             foreach ($itemModels as $itemModel) {

@@ -20,7 +20,7 @@ interface InvoiceRepositoryInterface {
 
     // ── Batch / Stock ──────────────────────────────────────
     public function findBatchById(string $id): ?array;
-    public function findAvailableBatch(string $productId): ?array;
+    public function findAvailableBatch(string $productId, float $requestedQty = 0): ?array;
 
     // ── Invoice ────────────────────────────────────────────
     public function createInvoice(Invoice $invoice): Invoice;

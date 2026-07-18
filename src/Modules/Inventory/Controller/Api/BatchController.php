@@ -116,6 +116,24 @@ class BatchController
                 return;
             }
 
+            if ($costPrice < 0) {
+                http_response_code(422);
+                echo json_encode(['error' => 'Cost price cannot be negative']);
+                return;
+            }
+
+            if ($sellingPrice < 0) {
+                http_response_code(422);
+                echo json_encode(['error' => 'Selling price cannot be negative']);
+                return;
+            }
+
+            if ($retailPrice < 0) {
+                http_response_code(422);
+                echo json_encode(['error' => 'Retail price cannot be negative']);
+                return;
+            }
+
             $batchData = [
                 'product_id'   => $productId,
                 'batch_number' => $batchNumber,
@@ -184,7 +202,25 @@ class BatchController
                 echo json_encode(['error' => 'Quantity must be non-negative']);
                 return;
             }
-            
+
+            if ($purchasePrice < 0) {
+                http_response_code(422);
+                echo json_encode(['error' => 'Cost price cannot be negative']);
+                return;
+            }
+
+            if ($sellingPrice < 0) {
+                http_response_code(422);
+                echo json_encode(['error' => 'Selling price cannot be negative']);
+                return;
+            }
+
+            if ($retailPrice < 0) {
+                http_response_code(422);
+                echo json_encode(['error' => 'Retail price cannot be negative']);
+                return;
+            }
+
             $batchData = [
                 'vendor_name' => $vendorName,
                 'batch_number' => $batchNumber,

@@ -118,6 +118,11 @@ class BatchRepository implements BatchRepositoryInterface
         $stmtProduct->execute([$id]);
         $productId = $stmtProduct->fetchColumn();
 
+        $initialQty = isset($data['initial_qty']) ? (int)$data['initial_qty'] : null;
+        if ($initialQty === null) {
+            $initialQty = max((int)$data['quantity'], $this->getInitialQtyForBatch($id));
+        }
+
         $stmt = $this->db->prepare("
             UPDATE public.inventory_batches
             SET batch_number = ?,
@@ -126,6 +131,8 @@ class BatchRepository implements BatchRepositoryInterface
                 selling_price = ?,
                 retail_price = ?,
                 remaining_qty = ?,
+                initial_qty = ?,
+                original_quantity = ?,
                 created_at = ?,
                 updated_at = now()
             WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
@@ -137,6 +144,8 @@ class BatchRepository implements BatchRepositoryInterface
             $data['selling_price'],
             $data['retail_price'],
             $data['quantity'],
+            $initialQty,
+            $initialQty,
             $data['created_at'],
             $id
         ]);
@@ -160,6 +169,13 @@ class BatchRepository implements BatchRepositoryInterface
     {
         $stmt = $this->db->query("SELECT current_setting('app.current_user_id', true)");
         return $stmt->fetchColumn() ?: '';
+    }
+
+    private function getInitialQtyForBatch(string $id): int
+    {
+        $stmt = $this->db->prepare("SELECT initial_qty FROM public.inventory_batches WHERE id = ?");
+        $stmt->execute([$id]);
+        return (int)$stmt->fetchColumn();
     }
 
     public function findPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array
@@ -231,28 +247,42 @@ class BatchRepository implements BatchRepositoryInterface
     {
         // Shared filter conditions (applied to both queries)
         $filterSql = '';
+        $subFilterSql = '';
         $params = [];
         if (!empty($categoryId)) {
             $filterSql .= " AND p.category_id = ?";
+            $subFilterSql .= " AND p2.category_id = ?";
             $params[] = $categoryId;
         }
         if (!empty($subcategoryId)) {
             $filterSql .= " AND p.subcategory_id = ?";
+            $subFilterSql .= " AND p2.subcategory_id = ?";
             $params[] = $subcategoryId;
         }
         if (!empty($search)) {
             $filterSql .= " AND (p.name ILIKE ? OR b.batch_number ILIKE ? OR b.id::text ILIKE ?)";
+            $subFilterSql .= " AND (p2.name ILIKE ? OR b2.batch_number ILIKE ? OR b2.id::text ILIKE ?)";
             $params[] = "%$search%";
             $params[] = "%$search%";
             $params[] = "%$search%";
         }
 
-        // Query 1: Stock value, batches, low stock
+        // Query 1: Stock value, batches, low stock (per-product)
         $selectSql = "
             SELECT
                 COALESCE(SUM(b.remaining_qty * b.cost_price), 0) AS total_stock_value,
                 COUNT(b.id) AS total_batches,
-                COUNT(CASE WHEN p.rop > 0 AND b.remaining_qty <= p.rop THEN 1 END) AS low_stock_count
+                (
+                    SELECT COUNT(*) FROM (
+                        SELECT p2.id
+                        FROM public.inventory_batches b2
+                        JOIN public.products p2 ON p2.id = b2.product_id
+                        WHERE b2.user_id = current_setting('app.current_user_id')::uuid
+                        $subFilterSql
+                        GROUP BY p2.id, p2.rop
+                        HAVING p2.rop > 0 AND COALESCE(SUM(b2.remaining_qty), 0) <= p2.rop
+                    ) low_products
+                ) AS low_stock_count
             FROM public.inventory_batches b
             JOIN public.products p ON p.id = b.product_id
             WHERE b.user_id = current_setting('app.current_user_id')::uuid
