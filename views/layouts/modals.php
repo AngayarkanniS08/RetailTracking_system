@@ -358,6 +358,7 @@
         <div class="input-group" style="flex:1;">
           <label class="input-label">HSN Code</label>
           <input type="text" id="pmProductHsn" class="input-field" placeholder="e.g. 5208">
+          <div id="pmHsnError" class="form-error" style="display:none; font-size:0.75rem; color:var(--danger); margin-top:4px;">HSN must be 4, 6 or 8 digits</div>
         </div>
         <div class="input-group" style="flex:1;">
           <label class="input-label">GST (%)</label>

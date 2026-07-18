@@ -581,6 +581,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initProductMaster();
 
+    // Real-time HSN validation
+    const hsnInput = document.getElementById('pmProductHsn');
+    const hsnError = document.getElementById('pmHsnError');
+    if (hsnInput && hsnError) {
+        hsnInput.addEventListener('input', function() {
+            const val = this.value.trim();
+            if (val && !/^\d{4}(\d{2})?(\d{2})?$/.test(val)) {
+                hsnError.style.display = 'block';
+            } else {
+                hsnError.style.display = 'none';
+            }
+        });
+    }
+
     // Handle delete confirmation
     const deleteModal = document.getElementById('deleteProductModal');
     if (deleteModal) {
