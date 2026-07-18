@@ -285,9 +285,7 @@ function submitReceiptReturn(invoiceId) {
     }).then(function(data) {
         if (data.warning) alert(data.warning);
         if (data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
-        alert('Return processed successfully');
-        document.getElementById('receiptReturnSection').style.display = 'none';
-        if (btn) { btn.disabled = false; btn.textContent = 'Process Return'; }
+        location.reload();
     }).catch(function(err) {
         alert(err.message || 'Return failed');
         if (btn) { btn.disabled = false; btn.textContent = 'Process Return'; }
