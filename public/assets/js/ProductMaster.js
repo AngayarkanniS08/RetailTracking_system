@@ -520,9 +520,11 @@ window.saveProduct = async function () {
             resetProductModal();
             closeModal('addProductModal');
         } else {
+            closeModal('addProductModal');
             showAlert('Error', data?.error || 'Failed to add product');
         }
     } catch (e) {
+        closeModal('addProductModal');
         showAlert('Error', e.message || 'Failed to add product');
     }
 };
@@ -737,9 +739,11 @@ window.updateProduct = async function () {
             resetProductModal();
             showAlert('Success', 'Product updated successfully');
         } else {
+            closeModal('addProductModal');
             showAlert('Error', data?.error || 'Failed to update product');
         }
     } catch (e) {
+        closeModal('addProductModal');
         showAlert('Error', e.message || 'Failed to update product');
     }
 };
