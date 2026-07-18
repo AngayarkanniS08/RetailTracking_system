@@ -285,7 +285,7 @@ function submitReceiptReturn(invoiceId) {
     }).then(function(data) {
         if (data.warning) alert(data.warning);
         if (data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
-        location.reload();
+        window.location.href = window.location.pathname + window.location.search + '&_=' + Date.now();
     }).catch(function(err) {
         alert(err.message || 'Return failed');
         if (btn) { btn.disabled = false; btn.textContent = 'Process Return'; }

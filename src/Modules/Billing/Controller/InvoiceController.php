@@ -310,6 +310,8 @@ class InvoiceController
             }
 
             header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
             require __DIR__ . '/../../../../views/billing/receipt.php';
         } catch (\Throwable $e) {
             http_response_code(500);
