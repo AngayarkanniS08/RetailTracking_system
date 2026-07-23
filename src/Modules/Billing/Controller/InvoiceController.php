@@ -171,9 +171,9 @@ class InvoiceController
                 echo json_encode(['error' => 'Invoice not found']);
                 return;
             }
-            if ($invoice->invoiceStatus === 'deleted') {
+            if ($invoice->invoiceStatus === 'cancelled') {
                 http_response_code(410);
-                echo json_encode(['error' => 'This bill has been deleted']);
+                echo json_encode(['error' => 'This bill has been cancelled']);
                 return;
             }
             echo json_encode($invoice);
@@ -303,9 +303,9 @@ class InvoiceController
                 echo 'Invoice not found';
                 return;
             }
-            if ($invoice->invoiceStatus === 'deleted') {
+            if ($invoice->invoiceStatus === 'cancelled') {
                 http_response_code(410);
-                echo 'This bill has been deleted';
+                echo 'This bill has been cancelled';
                 return;
             }
 

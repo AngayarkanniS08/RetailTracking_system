@@ -150,6 +150,7 @@ async function toggleBills(className, custId) {
     // Group ledger entries — invoice + its payment share one row; returns, credit notes, standalone payments each get their own row
     const grouped = {};
     entries.forEach(entry => {
+        // Keep cancelled invoices visible — they get a (Cancelled) badge below
         if (entry.invoice_status === 'deleted') return;
 
         const isStandalone = entry.entry_type === 'return' || entry.entry_type === 'credit_note';
@@ -184,8 +185,8 @@ async function toggleBills(className, custId) {
             ? new Date(entry.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
             : '';
         const isPay = entry._isPay && !entry.invoice_id;
-        const isDeleted = entry.invoice_status === 'deleted';
-        const delBadge = isDeleted ? ' <span style="color:var(--danger);font-size:0.65rem;">(Deleted)</span>' : '';
+        const isCancelled = entry.invoice_status === 'cancelled';
+        const statusBadge = isCancelled ? ' <span style="color:var(--danger);font-size:0.65rem;">(Cancelled)</span>' : '';
         const isReturn = entry.entry_type === 'return';
         const cnReturn = isReturn || entry.entry_type === 'credit_note';
 
@@ -202,7 +203,7 @@ async function toggleBills(className, custId) {
             typeLabel = '<span style="color:var(--accent);">Opening</span>';
             subtitle = '';
         } else {
-            typeLabel = `<span style="color:var(--accent);">${entry.notes || 'Invoice'}${delBadge}</span>`;
+            typeLabel = `<span style="color:var(--accent);">${entry.notes || 'Invoice'}${statusBadge}</span>`;
             subtitle = '';
         }
 
@@ -214,7 +215,7 @@ async function toggleBills(className, custId) {
         let viewBtn = '';
         if (isPay) {
             viewBtn = `<button class="btn btn-outline btn-sm" style="padding:1px 6px; font-size:0.7rem;" onclick="viewPaymentReceipt('${entry.id}')">View</button>`;
-        } else if (entry.invoice_id && entry.invoice_status !== 'deleted') {
+        } else if (entry.invoice_id && entry.invoice_status !== 'cancelled') {
             if (isReturn) {
                 viewBtn = '';
             } else {
