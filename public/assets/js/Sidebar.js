@@ -13,7 +13,8 @@ const sections = [
     'vendor_list',
     'vendorhistory',
     'stockintel',
-    'product_history'
+    'product_history',
+    'system_health'
 ];
 
 // Map section IDs to URL paths
@@ -27,7 +28,8 @@ const sectionUrlMap = {
     'vendor_list': '/vendors',
     'vendorhistory': '/vendor-history',
     'stockintel': '/stock-intel',
-    'product_history': '/product-history'
+    'product_history': '/product-history',
+    'system_health': '/system-health'
 };
 
 // Switch to a specific section by ID
@@ -82,6 +84,10 @@ function switchTab(sectionId, vendorId = null) {
 
     if (sectionId === 'billing_pos') {
         if (posProducts.length === 0) loadPOSData();
+    }
+
+    if (sectionId === 'system_health') {
+        if (typeof initSystemHealth === 'function') initSystemHealth();
     }
 
 }

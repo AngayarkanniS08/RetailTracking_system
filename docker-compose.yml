@@ -43,6 +43,12 @@ services:
       - /var/www/html/src/Modules/Product/Controller/Api
       - /var/www/html/src/Modules/Reports/Controller/Api
       - /var/www/html/Database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
       app-api:
         condition: service_started
@@ -77,6 +83,12 @@ services:
       - ./views:/var/www/html/views:ro
       # Keep public directory empty in API container
       - /var/www/html/public
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     depends_on:
       db:
         condition: service_healthy

@@ -1,4 +1,4 @@
-.PHONY: up down restart migrate seed logs logs-api logs-ui logs-db logs-cache logs-all logs-php-errors logs-php-tail status test-all cache-keys cache-inventory cache-products cache-clear
+.PHONY: up down restart migrate seed logs logs-api logs-ui logs-db logs-cache logs-all logs-php-errors logs-php-tail status test-all cache-keys cache-inventory cache-products cache-vendor cache-clear health-rebuild health-live health-ready health health-metrics
 
 # Build and start all services in the background
 up:
@@ -100,4 +100,27 @@ cache-vendor:
 
 cache-clear:
 	docker exec -it retail_valkey valkey-cli flushall
+
+# ── Health / Monitoring ─────────────────────────────────────────────────────
+
+# Rebuild app-api and app-ui images (needed after Dockerfile changes for curl)
+health-rebuild:
+	docker compose build app-api app-ui
+	docker compose up -d app-api app-ui
+
+# Quick liveness check
+health-live:
+	curl -s http://localhost:8081/health/live | jq .
+
+# Readiness check (DB + Valkey)
+health-ready:
+	curl -s -w '\nHTTP %{http_code}\n' http://localhost:8081/health/ready | jq .
+
+# Full system health
+health:
+	curl -s http://localhost:8081/health | jq .
+
+# Prometheus-style metrics
+health-metrics:
+	curl -s http://localhost:8081/metrics
 

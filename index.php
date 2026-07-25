@@ -48,6 +48,7 @@ $routeMap = [
     '/forgot-password'=> 'forgot_password',
     '/reset-password' => 'reset_password',
     '/backup'         => 'backup',
+    '/system-health'  => 'system_health',
 ];
 
 $initialSection = $routeMap[$routePath] ?? null;
@@ -198,6 +199,7 @@ require_once 'views/vendor/index.php';
 require_once 'views/vendor/history.php';
 require_once 'views/reports/stockintel.php';
 require_once 'views/product/history.php';
+require_once 'views/system/health.php';
 
 echo '</main>';
 echo '</div>';

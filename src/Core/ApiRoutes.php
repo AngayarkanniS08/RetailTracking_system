@@ -330,5 +330,19 @@ class ApiRoutes
             (new BackupConfigController())->exchangeCode();
         });
 
+        // ── Health / Monitoring ─────────────────────────────────────────
+        $router->add('GET', '/health/live', function (): void {
+            (new \Modules\Health\Controller\HealthController())->live();
+        });
+        $router->add('GET', '/health/ready', function (): void {
+            (new \Modules\Health\Controller\HealthController())->ready();
+        });
+        $router->add('GET', '/health', function (): void {
+            (new \Modules\Health\Controller\HealthController())->health();
+        });
+        $router->add('GET', '/metrics', function (): void {
+            (new \Modules\Health\Controller\HealthController())->metrics();
+        });
+
     }
 }

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+define('APP_START_TIME', time());
+
 // CORS headers for multi-container browser access
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (!empty($origin)) {
@@ -37,7 +39,7 @@ $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($requestUri, PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-if (str_starts_with($path, '/api/')) {
+if (str_starts_with($path, '/api/') || $path === '/health' || str_starts_with($path, '/health/') || $path === '/metrics') {
     $router->dispatch($method, $path);
     exit;
 }

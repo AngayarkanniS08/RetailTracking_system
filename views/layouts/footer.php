@@ -18,6 +18,7 @@
   <script src="public/assets/js/dashboard.js?v=<?= time(); ?>"></script>
   <script src="public/assets/js/product-history.js?v=<?= time(); ?>"></script>
   <script src="public/assets/js/backup-status.js?v=<?= time(); ?>"></script>
+  <script src="public/assets/js/system-health.js?v=<?= time(); ?>"></script>
   <link rel="stylesheet" href="public/assets/css/theme.css?v=<?= time(); ?>">
 </body>
 </html>

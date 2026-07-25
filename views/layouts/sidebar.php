@@ -68,6 +68,13 @@
         </svg>
         Vendor History
       </div>
+        <div class="sidebar-section">System</div>
+        <div class="nav-item" data-section="system_health">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          System Health
+        </div>
         <div class="sidebar-section">Insights</div>
         <div class="nav-item" data-section="product_history">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
