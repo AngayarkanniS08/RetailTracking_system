@@ -123,14 +123,13 @@ async function toggleBills(className, custId) {
         return;
     }
 
-    if (!window.creditLedgerCache[custId]) {
-        try {
-            const data = await window.apiRequest(`/api/customers/${custId}/ledger?limit=100`);
-            window.creditLedgerCache[custId] = data.entries || [];
-        } catch (e) {
-            console.error('Failed to load ledger:', e);
-            return;
-        }
+    delete window.creditLedgerCache[custId];
+    try {
+        const data = await window.apiRequest(`/api/customers/${custId}/ledger?limit=100`);
+        window.creditLedgerCache[custId] = data.entries || [];
+    } catch (e) {
+        console.error('Failed to load ledger:', e);
+        return;
     }
 
     const entries = window.creditLedgerCache[custId];

@@ -1,6 +1,7 @@
 <?php
 namespace Modules\Billing\Service;
 
+use PDO;
 use Modules\Billing\DTO\InvoiceDTO;
 use Modules\Billing\Model\Invoice;
 use Modules\Billing\Model\InvoiceItem;
@@ -66,6 +67,8 @@ class InvoiceService
 
         // ── 1.2 Resolve customer ──────────────────────────
 
+        $isWalkin = !$dto->customerId;
+
         if ($dto->customerId) {
             $customer = $this->repo->findCustomerById($dto->customerId);
             if (!$customer) {
@@ -78,8 +81,11 @@ class InvoiceService
             $customerPhoneSnapshot = $customer['phone'];
             $customerGstinSnapshot = $customer['gstin'];
         } else {
-            $customerNameSnapshot = trim($dto->customerName ?? '');
-            $customerPhoneSnapshot = trim($dto->customerPhone ?? '') ?: null;
+            // Auto-assign walk-in customer so returns create a ledger entry
+            $dto->customerId = $this->getOrCreateWalkinCustomer($userId);
+            $customer = $this->repo->findCustomerById($dto->customerId);
+            $customerNameSnapshot = $customer['name'];
+            $customerPhoneSnapshot = $customer['phone'];
             $customerGstinSnapshot = null;
         }
 
@@ -178,7 +184,7 @@ class InvoiceService
             $balanceDue = 0;
         }
 
-        if (!$dto->customerId && $dto->amountPaid < $grandTotal) {
+        if ($isWalkin && $dto->amountPaid < $grandTotal) {
             throw new ValidationException(
                 "Walk-in customers must pay in full. Paid ₹{$dto->amountPaid}, total ₹{$grandTotal}"
             );
@@ -471,7 +477,7 @@ class InvoiceService
             $this->repo->refreshStockList();
 
             $excessRefund = 0;
-            if ($totalRefund > 0 && $invoice->customerId) {
+            if ($totalRefund > 0) {
                 $currentBalance = $this->repo->getCustomerBalance($invoice->customerId);
                 $newBalance = $currentBalance - $totalRefund;
                 if ($newBalance < 0) {
@@ -559,5 +565,22 @@ class InvoiceService
         } catch (\Exception $e) {
             error_log('Valkey billing cache invalidation failed: ' . $e->getMessage());
         }
+    }
+
+    private function getOrCreateWalkinCustomer(string $userId): string
+    {
+        $db = \Config\Database::getConnection();
+        $stmt = $db->prepare("SELECT id FROM customers WHERE user_id = ? AND phone = '0000000000'");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) return $row['id'];
+
+        $stmt = $db->prepare(
+            "INSERT INTO customers (id, user_id, name, phone, credit_limit, created_at, updated_at)
+             VALUES (gen_random_uuid(), ?, 'Walk-in Customer', '0000000000', 0, now(), now())
+             RETURNING id"
+        );
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn();
     }
 }
