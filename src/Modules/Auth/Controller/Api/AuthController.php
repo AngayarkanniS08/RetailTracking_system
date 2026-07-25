@@ -40,6 +40,12 @@ class AuthController
             return;
         }
 
-        echo json_encode(['token' => $newToken]);
+        $decoded = $this->jwtService->verifyToken($newToken);
+        $user = (array)$decoded->data;
+
+        echo json_encode([
+            'token' => $newToken,
+            'user' => $user
+        ]);
     }
 }

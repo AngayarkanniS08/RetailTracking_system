@@ -54,18 +54,26 @@ class JWTService
             return null;
         }
 
-        if (!isset($decoded->session_iat) || !isset($decoded->data)) {
+        if (!isset($decoded->data)) {
             return null;
         }
 
-        $sessionAge = time() - (int)$decoded->session_iat;
+        $sessionIat = isset($decoded->session_iat)
+            ? (int)$decoded->session_iat
+            : (isset($decoded->iat) ? (int)$decoded->iat : null);
+
+        if ($sessionIat === null) {
+            return null;
+        }
+
+        $sessionAge = time() - $sessionIat;
         if ($sessionAge > 2592000 || $sessionAge < 0) {
             return null;
         }
 
         return $this->generateToken(
             (array)$decoded->data,
-            (int)$decoded->session_iat
+            $sessionIat
         );
     }
 

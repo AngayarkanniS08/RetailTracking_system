@@ -27,6 +27,10 @@ async function refreshToken() {
             const data = await res.json();
             if (!data.token) return null;
             localStorage.setItem('auth_token', data.token);
+            if (data.user && data.user.user_id) {
+                document.cookie = 'auth_uid=' + data.user.user_id + '; path=/; max-age=86400; SameSite=Lax';
+                localStorage.setItem('auth_user', JSON.stringify(data.user));
+            }
             return data.token;
         } catch {
             return null;
