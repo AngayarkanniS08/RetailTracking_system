@@ -9,6 +9,7 @@ use Modules\Auth\Controller\Api\ForgotPasswordController;
 use Modules\Auth\Controller\Api\ResetPasswordController;
 use Modules\Auth\Controller\Api\RegistrationController;
 use Modules\Auth\Controller\Api\LoginController;
+use Modules\Auth\Controller\Api\AuthController;
 use Modules\Product\Controller\Api\CategoryController;
 use Modules\Product\Controller\Api\SubcategoryController;
 use Modules\Product\Controller\Api\ProductController;
@@ -33,6 +34,11 @@ class ApiRoutes
         });
         $router->add('POST', '/api/login', function (): void {
             (new LoginController())->login();
+        });
+
+        // ── Token refresh (no auth — accepts an expired token) ────
+        $router->add('POST', '/api/auth/refresh', function (): void {
+            (new AuthController())->refresh();
         });
 
         // ── Categories (default 24h expiry) ────────────────────────

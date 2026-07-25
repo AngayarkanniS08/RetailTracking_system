@@ -5,36 +5,78 @@
 // ── API Helper ─────────────────────────────────────────────────────────────
 /**
  * Wrapper for fetch API to include JWT token and handle 401 Unauthorized
+ * with automatic token refresh.
  */
-let _redirecting = false;
+let _refreshing = null;
+
+async function refreshToken() {
+    if (_refreshing) return _refreshing;
+
+    const oldToken = localStorage.getItem('auth_token');
+    if (!oldToken) return null;
+
+    _refreshing = (async () => {
+        try {
+            const apiBase = `${window.location.protocol}//${window.location.hostname}:8081`;
+            const res = await fetch(apiBase + '/api/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: oldToken })
+            });
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (!data.token) return null;
+            localStorage.setItem('auth_token', data.token);
+            return data.token;
+        } catch {
+            return null;
+        }
+    })();
+
+    const result = await _refreshing;
+    _refreshing = null;
+    return result;
+}
+
 async function apiRequest(path, options = {}) {
     const apiBase = `${window.location.protocol}//${window.location.hostname}:8081`;
     const fullPath = path.startsWith('http') ? path : apiBase + path;
 
-    const token = localStorage.getItem('auth_token');
-    const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': token ? 'Bearer ' + token : '',
-        ...options.headers
+    const doFetch = async (retryAllowed) => {
+        const token = localStorage.getItem('auth_token');
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': token ? 'Bearer ' + token : '',
+            ...options.headers
+        };
+
+        let response;
+        try {
+            response = await fetch(fullPath, { ...options, headers });
+        } catch (networkErr) {
+            console.error('Network error calling', fullPath, networkErr);
+            throw networkErr;
+        }
+
+        if (response.status === 401) {
+            if (!retryAllowed) {
+                logoutUser();
+                throw new Error('Session expired');
+            }
+
+            const newToken = await refreshToken();
+            if (!newToken) {
+                logoutUser();
+                throw new Error('Session expired');
+            }
+
+            return doFetch(false);
+        }
+
+        return response;
     };
 
-    let response;
-    try {
-        response = await fetch(fullPath, { ...options, headers });
-    } catch (networkErr) {
-        console.error('Network error calling', fullPath, networkErr);
-        throw networkErr;
-    }
-
-    if (response.status === 401) {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        if (!_redirecting) {
-            _redirecting = true;
-            logoutUser();
-        }
-        throw new Error('Session expired');
-    }
+    const response = await doFetch(true);
 
     const text = await response.text();
     if (!text || !text.trim()) {
