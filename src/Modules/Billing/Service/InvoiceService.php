@@ -80,10 +80,11 @@ class InvoiceService
             $customerNameSnapshot = $customer['name'];
             $customerPhoneSnapshot = $customer['phone'];
             $customerGstinSnapshot = $customer['gstin'];
+            $effectiveCustomerId = $dto->customerId;
         } else {
             // Auto-assign walk-in customer so returns create a ledger entry
-            $dto->customerId = $this->getOrCreateWalkinCustomer($userId);
-            $customer = $this->repo->findCustomerById($dto->customerId);
+            $effectiveCustomerId = $this->getOrCreateWalkinCustomer($userId);
+            $customer = $this->repo->findCustomerById($effectiveCustomerId);
             $customerNameSnapshot = $customer['name'];
             $customerPhoneSnapshot = $customer['phone'];
             $customerGstinSnapshot = null;
@@ -210,7 +211,7 @@ class InvoiceService
             id: null,
             userId: $userId,
             invoiceNumber: '',
-            customerId: $dto->customerId,
+            customerId: $effectiveCustomerId,
             customerNameSnapshot: $customerNameSnapshot,
             customerPhoneSnapshot: $customerPhoneSnapshot,
             customerGstinSnapshot: $customerGstinSnapshot,
@@ -262,15 +263,15 @@ class InvoiceService
 
             $this->repo->refreshStockList();
 
-            if ($dto->customerId) {
-                $currentBalance = $this->repo->getCustomerBalance($dto->customerId);
+            if ($effectiveCustomerId) {
+                $currentBalance = $this->repo->getCustomerBalance($effectiveCustomerId);
 
                 // Record full invoice amount as debit
                 $invoiceBalance = $currentBalance + $grandTotal;
                 $this->repo->addLedgerEntry(new CustomerLedger(
                     id: null,
                     userId: $userId,
-                    customerId: $dto->customerId,
+                    customerId: $effectiveCustomerId,
                     entryType: 'invoice',
                     debit: $grandTotal,
                     credit: 0,
@@ -286,7 +287,7 @@ class InvoiceService
                     $this->repo->addLedgerEntry(new CustomerLedger(
                         id: null,
                         userId: $userId,
-                        customerId: $dto->customerId,
+                        customerId: $effectiveCustomerId,
                         entryType: 'payment',
                         debit: 0,
                         credit: $dto->amountPaid,
