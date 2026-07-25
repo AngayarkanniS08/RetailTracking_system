@@ -706,16 +706,32 @@ function calculateCart(forceSyncPaid) {
 
     let subtotal = 0;
     let totalGst = 0;
+    let totalItemDiscount = 0;
 
     cart.forEach(c => {
         const lineSub = c.qty * c.sellingPrice;
-        const gstRate = applyGst ? c.gstRate : 0;
-        const gstAmt = lineSub * (gstRate / 100);
         subtotal += lineSub;
-        totalGst += gstAmt;
+        totalItemDiscount += (c.discount || 0);
     });
 
-    const totalDiscount = billDiscount + cart.reduce((s, c) => s + (c.discount || 0), 0);
+    const netSubtotal = subtotal - totalItemDiscount;
+    if (billDiscount > 0 && netSubtotal > 0) {
+        cart.forEach(c => {
+            const taxBase = (c.qty * c.sellingPrice) - (c.discount || 0);
+            const prop = taxBase / netSubtotal;
+            const reducedBase = taxBase - (billDiscount * prop);
+            const gstRate = applyGst ? c.gstRate : 0;
+            totalGst += reducedBase * (gstRate / 100);
+        });
+    } else {
+        cart.forEach(c => {
+            const lineSub = c.qty * c.sellingPrice;
+            const gstRate = applyGst ? c.gstRate : 0;
+            totalGst += lineSub * (gstRate / 100);
+        });
+    }
+
+    const totalDiscount = billDiscount + totalItemDiscount;
     const beforeRound = subtotal - totalDiscount + totalGst;
     const grandTotal = Math.round(beforeRound);
     const roundOff = grandTotal - beforeRound;
