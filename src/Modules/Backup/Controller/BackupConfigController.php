@@ -25,18 +25,27 @@ class BackupConfigController
         header('Content-Type: application/json');
 
         $fileTokens = $this->driveService->loadTokens();
+        $userId = '00000000-0000-4000-8000-000000000001';
+
+        $dbConfig = null;
+        try {
+            \Config\Database::setCurrentUser($userId);
+            $dbConfig = $this->repo->getConfig($userId);
+        } catch (\PDOException $e) {
+            // backup_config table may not exist
+        }
 
         echo json_encode([
             'gdrive_connected' => !empty($fileTokens['refresh_token']),
             'gdrive_auth_email' => $fileTokens['auth_email'] ?? null,
             'gdrive_backup_folder_id' => $fileTokens['folder_id'] ?? null,
-            'schedule_enabled' => false,
-            'schedule_time' => '22:00',
-            'retention_daily' => 7,
-            'retention_weekly' => 4,
-            'retention_monthly' => 12,
-            'last_backup_at' => null,
-            'last_backup_status' => 'never'
+            'schedule_enabled' => $dbConfig?->scheduleEnabled ?? false,
+            'schedule_time' => $dbConfig?->scheduleTime ?? '22:00',
+            'retention_daily' => $dbConfig?->retentionDaily ?? 7,
+            'retention_weekly' => $dbConfig?->retentionWeekly ?? 4,
+            'retention_monthly' => $dbConfig?->retentionMonthly ?? 12,
+            'last_backup_at' => $dbConfig?->lastBackupAt,
+            'last_backup_status' => $dbConfig?->lastBackupStatus ?? 'never'
         ]);
     }
 

@@ -25,7 +25,7 @@ try {
         WHERE schedule_enabled = true
     ");
 
-    $currentTime = date('H:i');
+    $currentTime = date('H:i:s');
     $today = date('Y-m-d');
 
     while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {

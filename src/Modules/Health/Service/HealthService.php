@@ -76,16 +76,9 @@ class HealthService
 
         try {
             $pdo = Database::getConnection();
-            $userStmt = $pdo->query('SELECT id FROM users LIMIT 1');
-            $userId = $userStmt->fetchColumn();
-
-            if ($userId) {
-                Database::setCurrentUser($userId);
-                $stmt = $pdo->query('SELECT last_backup_status, last_backup_at FROM backup_config LIMIT 1');
-                $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-            } else {
-                $row = false;
-            }
+            Database::setCurrentUser('00000000-0000-4000-8000-000000000001');
+            $stmt = $pdo->query('SELECT last_backup_status, last_backup_at FROM backup_config ORDER BY last_backup_at DESC NULLS LAST LIMIT 1');
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             if (!$row) {
                 $result = [

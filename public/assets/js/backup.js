@@ -43,7 +43,7 @@ async function loadBackupConfig() {
         if (data.last_backup_at) {
             const bar = document.getElementById('backupStatusBar');
             bar.style.display = 'block';
-            document.getElementById('lastBackupInfo').textContent = formatDate(data.last_backup_at) + ' - ' + (data.last_backup_file || 'Unknown');
+            document.getElementById('lastBackupInfo').textContent = formatDate(data.last_backup_at) + (data.last_backup_file ? ' - ' + data.last_backup_file : '');
             const badge = document.getElementById('lastBackupStatusBadge');
             badge.textContent = data.last_backup_status === 'completed' ? '✓ Success' : '✗ Failed';
             badge.style.background = data.last_backup_status === 'completed' ? 'rgba(34,197,94,0.1)' : 'rgba(220,38,38,0.1)';
@@ -362,6 +362,10 @@ function formatFileSize(bytes) {
 
 function formatDate(iso) {
     if (!iso) return '-';
+    if (iso.length === 19) {
+        const d = new Date(iso.replace(' ', 'T') + 'Z');
+        return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
     const d = new Date(iso);
     return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }

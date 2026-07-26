@@ -180,7 +180,7 @@ class BackupRepository implements BackupRepositoryInterface
             WHERE user_id = ?
         ");
         $stmt->execute([
-            $backupAt ? $backupAt->format('Y-m-d H:i:s') : date('Y-m-d H:i:s'),
+            $backupAt ? $backupAt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z') : gmdate('Y-m-d\TH:i:s\Z'),
             $status,
             $userId
         ]);
