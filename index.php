@@ -32,7 +32,7 @@ $routePath = $basePath === '/' ? $requestUri : substr($requestUri, strlen($baseP
 $routePath = $routePath ?: '/';
 
 $routeMap = [
-    '/'               => null,
+    '/'               => 'landing',
     '/login'          => 'login',
     '/register'       => 'register',
     '/dashboard'      => 'dashboard',
@@ -52,6 +52,20 @@ $routeMap = [
 ];
 
 $initialSection = $routeMap[$routePath] ?? null;
+
+
+// ============================================
+// Landing page — standalone, no auth required
+// ============================================
+if ($initialSection === 'landing') {
+    $isLoggedIn = isset($_COOKIE['auth_uid']);
+    if ($isLoggedIn) {
+        header('Location: /dashboard');
+        exit;
+    }
+    require_once 'views/landing/index.php';
+    exit;
+}
 
 
 // ============================================
