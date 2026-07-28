@@ -7,17 +7,17 @@ class Router
 {
     private array $routes = [];
 
-    public function get(string $path, array $handler, array $middlewares = []): void
+    public function get(string $path, array|callable $handler, array $middlewares = []): void
     {
         $this->addRoute('GET', $path, $handler, $middlewares);
     }
 
-    public function post(string $path, array $handler, array $middlewares = []): void
+    public function post(string $path, array|callable $handler, array $middlewares = []): void
     {
         $this->addRoute('POST', $path, $handler, $middlewares);
     }
 
-    private function addRoute(string $method, string $path, array $handler, array $middlewares): void
+    private function addRoute(string $method, string $path, array|callable $handler, array $middlewares): void
     {
         $this->routes[] = [
             'method'      => $method,
@@ -32,6 +32,12 @@ class Router
         $method = $request->getMethod();
         $uri = $request->getUri();
 
+        // Handle favicon requests gracefully
+        if ($uri === '/favicon.ico') {
+            http_response_code(204);
+            exit;
+        }
+
         foreach ($this->routes as $route) {
             if ($route['method'] !== $method) continue;
 
@@ -41,7 +47,14 @@ class Router
                     call_user_func([$middleware, 'handle'], $request);
                 }
 
-                [$controllerClass, $action] = $route['handler'];
+                $handler = $route['handler'];
+
+                if (is_callable($handler)) {
+                    call_user_func($handler, $request);
+                    return;
+                }
+
+                [$controllerClass, $action] = $handler;
 
                 // Dependency Injection resolution via Container
                 $container = Container::getInstance();

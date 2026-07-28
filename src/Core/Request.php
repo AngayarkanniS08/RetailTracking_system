@@ -46,7 +46,7 @@ class Request
         return array_merge($this->query, $this->body);
     }
 
-    public function isJson(): boolean
+    public function isJson(): bool
     {
         $contentType = $this->headers['Content-Type'] ?? '';
         return str_contains($contentType, 'application/json');
