@@ -1,79 +1,67 @@
 /* =============================================================
-   typography.css — Font scale and text hierarchy
-   All sizes reference design tokens from variables.css
+   typography.css — Modern SaaS Typography Scale & Hierarchy
    ============================================================= */
 
-/* ── Base body typography ── */
 body {
-  font-family: var(--font-body-md);
-  font-size: var(--fs-body-md);
-  line-height: var(--lh-body-md);
-  font-weight: var(--fw-body-md);
+  font-family: var(--font-body);
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--text);
 }
 
-/* ── Heading scale ── */
-h1 {
-  font-family: var(--font-display-lg);
-  font-size: var(--fs-display-lg);
-  line-height: var(--lh-display-lg);
-  font-weight: var(--fw-display-lg);
-  letter-spacing: var(--ls-display-lg);
+/* ── Heading Scale ── */
+h1, .page-title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem; /* 28px */
+  line-height: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text-strong);
 }
 
 h2 {
-  font-family: var(--font-headline-md);
-  font-size: var(--fs-headline-md);
-  line-height: var(--lh-headline-md);
-  font-weight: var(--fw-headline-md);
+  font-family: var(--font-heading);
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text-strong);
 }
 
-h3 {
-  font-family: var(--font-headline-sm);
-  font-size: var(--fs-headline-sm);
-  line-height: var(--lh-headline-sm);
-  font-weight: var(--fw-headline-sm);
-  color: var(--text-strong);
-}
-
-/* ── Label scale ── */
-.label-sm {
-  font-family: var(--font-label-sm);
-  font-size: var(--fs-label-sm);
-  line-height: var(--lh-label-sm);
-  font-weight: var(--fw-label-sm);
-  letter-spacing: var(--ls-label-sm);
-}
-
-.label-md {
-  font-family: var(--font-label-md);
-  font-size: var(--fs-label-md);
-  line-height: var(--lh-label-md);
-  font-weight: var(--fw-label-md);
-  letter-spacing: var(--ls-label-md);
-}
-
-/* ── Monospace ── */
-code,
-pre,
-.mono {
-  font-family: var(--mono);
-}
-
-/* ── Page title (used in dashboard top bar) ── */
-.page-title {
-  font-size: 1.5rem;
+h3, .card-title {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem;
   font-weight: 600;
   color: var(--text-strong);
 }
 
-/* ── Muted / secondary text ── */
-.text-muted {
+/* ── Label / Meta Scale ── */
+.label-sm, .stat-label {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--muted);
+}
+
+.text-muted, .text-subtle {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .text-strong {
   color: var(--text-strong);
   font-weight: 600;
+}
+
+/* ── Monetary / Number Formats ── */
+.tabular-nums, .stat-value, .t-price {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+code, pre, .mono {
+  font-family: var(--mono);
 }

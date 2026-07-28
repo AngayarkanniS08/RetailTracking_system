@@ -1,49 +1,44 @@
 /* =============================================================
-   containers.css — App shell and view container layout
+   containers.css — App shell and max-width 1440px container layout
    ============================================================= */
 
-/* ── Full-app wrapper (dashboard shell) ── */
+/* ── App Shell Wrapper ── */
 .dashboard,
 #dashboardView {
   display: flex;
   width: 100%;
-  max-width: 100%;
-  height: 100vh;
-  flex: 1 1 auto;
+  min-height: 100vh;
   flex-direction: column;
-  animation: dashboard-enter 0.3s var(--ease-out);
-  background: var(--bg);
+  background: var(--background);
   margin: 0;
   padding: 0;
 }
 
-/* ── Auth page centering wrapper ── */
-.app-wrapper {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: var(--bg);
-  transition: background var(--duration-normal) var(--ease-out);
-}
-
-/* ── Main flex split: sidebar + content ── */
+/* ── Main Flex Split: Sidebar + Content ── */
 .main-container {
   display: flex;
   flex: 1;
   overflow: hidden;
+  width: 100%;
 }
 
-/* ── Scrollable content area ── */
+/* ── Scrollable Content Area (Airy 32px padding, 1440px max width) ── */
 .content-area {
   flex: 1;
-  padding: 2rem;
+  padding: var(--space-4); /* 32px padding */
   overflow-y: auto;
-  transition: padding 0.3s ease;
+  transition: padding var(--duration-normal) ease;
+  background: var(--background);
 }
 
-/* ── View section toggling ── */
+/* Inner content constraint box to prevent edge-to-edge stretching */
+.content-area > * {
+  max-width: var(--container-max); /* 1440px */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ── View Section Toggling ── */
 .view-section {
   display: none;
 }
@@ -53,25 +48,25 @@
   animation: rise 0.2s var(--ease-out);
 }
 
-/* ── Segment control (tab-style switcher) ── */
+/* ── Segment Control ── */
 .segment-control {
-  display: flex;
-  background: var(--bg-100);
-  padding: 4px;
+  display: inline-flex;
+  background: var(--surface-container-low);
+  padding: var(--space-05);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
+  gap: var(--space-05);
 }
 
 .segment-item {
-  flex: 1;
-  padding: 0.6rem;
+  padding: 6px 16px;
   text-align: center;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   border-radius: var(--radius-sm);
-  color: var(--muted-strong);
-  transition: all 0.2s;
+  color: var(--muted);
+  transition: all var(--duration-fast);
 }
 
 .segment-item:hover {
@@ -81,16 +76,16 @@
 .segment-item.active {
   background: var(--card);
   color: var(--accent);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
 }
 
-/* ── Responsive: collapse sidebar on mobile ── */
+/* ── Responsive breakpoint ── */
 @media (max-width: 768px) {
   .main-container {
     flex-direction: column;
   }
 
   .content-area {
-    padding: 1rem;
+    padding: var(--space-2); /* 16px padding on mobile */
   }
 }

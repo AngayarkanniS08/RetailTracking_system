@@ -1,291 +1,120 @@
 /* =============================================================
-   cards.css — Card and panel component system
+   cards.css — Card component system (Stripe / Linear / Vercel style)
    ============================================================= */
 
-/* ── Base card panel ── */
+/* ── Base Card Panel ── */
 .card-panel {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  border-radius: var(--radius-md); /* 8px radius */
+  padding: var(--space-3); /* 24px internal padding */
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.card-panel:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-2); /* 16px bottom margin */
   color: var(--text-strong);
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
-/* ── Stat cards ── */
+/* ── KPI Stat Cards ── */
 .stat-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.2rem;
+  border-radius: var(--radius-md); /* 8px radius */
+  padding: var(--space-3); /* 24px internal padding */
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast), border-color var(--duration-fast);
+}
+
+.stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
 }
 
 .stat-label {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--muted);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-1);
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 2rem; /* 32px display font */
+  line-height: 2.25rem;
   font-weight: 700;
   color: var(--text-strong);
-  margin-top: 0.25rem;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Login card ── */
-.login-card {
-  max-width: 420px;
-  width: 100%;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 2.5rem 2rem;
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(4px);
-  animation: rise 0.35s var(--ease-spring);
-}
-
-/* ── Stock intelligence card ── */
+/* ── Stock Intelligence Card ── */
 .si-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+  box-shadow: var(--shadow-sm);
 }
 
 .si-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.2rem;
-}
-
-.si-product {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.si-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-}
-
-.si-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-strong);
-}
-
-.si-meta {
-  font-size: 0.8rem;
-  color: var(--muted);
+  margin-bottom: var(--space-2);
 }
 
 .si-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 1rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .si-metric {
-  background: var(--bg-elevated);
+  background: var(--surface-container-low);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  padding: var(--space-15) var(--space-2);
 }
 
 .si-metric-label {
   font-size: 0.75rem;
   color: var(--muted);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .si-metric-value {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
 }
 
-.si-stock-bar {
-  margin-top: 0.5rem;
-}
-
-.si-stock-label {
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin-bottom: 6px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.si-bar-track,
-.ph-bar-track {
-  height: 8px;
-  background: var(--bg-hover);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.si-bar-fill,
-.ph-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.5s ease;
-}
-
-.si-bar-track { background: var(--bg-hover); }
-.ph-bar-track { background: var(--bg-muted); margin: 10px 0 6px; }
-
-.ph-bar-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--muted);
-}
-
-.si-alert {
-  margin-top: 12px;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.si-alert.critical { background: var(--danger-subtle); border: 1px solid var(--danger); color: var(--danger); }
-.si-alert.warning  { background: var(--warn-subtle);   border: 1px solid var(--warn);   color: var(--warn); }
-.si-alert.good     { background: var(--ok-subtle);     border: 1px solid var(--ok);     color: var(--ok); }
-
-/* ── Restock stock row pills ── */
-.stock-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 1.25rem;
-}
-
-.stock-pill {
-  flex: 1;
-  background: var(--bg-hover);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-}
-
-.stock-pill .pill-label {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 3px;
-}
-
-.stock-pill .pill-value {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-strong);
-}
-
-.stock-pill .pill-value.highlight {
-  color: var(--accent);
-}
-
-/* ── Field group ── */
-.field-group { margin-bottom: 1.25rem; }
-.label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.field-label { font-size: 13px; font-weight: 500; color: var(--muted-strong); }
-.field-label .required { color: var(--danger); margin-left: 2px; }
-
-.autofill-badge {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-subtle);
-  color: var(--accent);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.helper-text {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-/* ── Forgot password container ── */
-.forgot-page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.forgot-container {
-  width: 450px;
-  margin: auto;
+/* ── Login Card ── */
+.login-card {
+  max-width: 420px;
+  width: 100%;
   background: var(--card);
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: var(--shadow-md);
-}
-
-.forgot-container h2 {
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 28px;
-  color: var(--text-strong);
-}
-
-/* ── Date group (vendor history) ── */
-.date-group-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-100);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 10px 16px;
-  cursor: pointer;
-  margin-bottom: 4px;
-  transition: background var(--duration-fast);
-  user-select: none;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4); /* 32px padding */
+  box-shadow: var(--shadow-lg);
+  animation: rise 0.35s var(--ease-out);
 }
-
-.date-group-header:hover { background: var(--panel-hover); }
-.date-group-header .dg-date { font-weight: 600; color: var(--text-strong); font-size: 0.95rem; }
-.date-group-header .dg-meta { font-size: 0.8rem; color: var(--muted); display: flex; gap: 16px; }
-.date-group-header .dg-arrow { color: var(--muted); transition: transform 0.2s; font-size: 1.1rem; }
-.date-group-header.open .dg-arrow { transform: rotate(90deg); }
-
-.date-group-body { display: none; margin-bottom: 12px; }
-.date-group-body.open { display: block; animation: rise 0.15s ease-out; }

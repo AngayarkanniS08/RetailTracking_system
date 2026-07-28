@@ -1,108 +1,73 @@
 /* =============================================================
-   grid.css — Structural grid and flex layouts
+   grid.css — 12-Column CSS Grid Layout System (Linear / Stripe style)
    ============================================================= */
 
-/* ── Stats grid (responsive card row) ── */
+/* ── 12-Column CSS Grid Base ── */
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-3); /* 24px gap */
+  margin-bottom: var(--space-3);
+}
+
+/* Common Column Spans */
+.col-span-12 { grid-column: span 12; }
+.col-span-8  { grid-column: span 8;  }
+.col-span-7  { grid-column: span 7;  }
+.col-span-6  { grid-column: span 6;  }
+.col-span-5  { grid-column: span 5;  }
+.col-span-4  { grid-column: span 4;  } /* 3 equal cards */
+.col-span-3  { grid-column: span 3;  } /* 4 equal cards */
+
+/* ── Stats Grid (Responsive KPI Row) ── */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3); /* 24px gap */
+  margin-bottom: var(--space-3);
 }
 
-/* ── POS two-column grid (product list + cart) ── */
-.pos-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-  height: 100%;
-}
-
-/* ── Time cards (today / week / month) ── */
+/* ── Time Cards Row ── */
 .time-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-3); /* 24px gap */
+  margin-bottom: var(--space-3);
 }
 
-/* ── POS search area ── */
-.pos-search-area {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 1.5rem;
-  position: relative;
+/* ── POS Two-Column Grid ── */
+.pos-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--space-3);
+  height: 100%;
 }
 
-/* ── Category filter tabs ── */
-.cat-filters {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-}
-
-/* ── Action button group ── */
-.action-buttons {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* ── GST toggle row ── */
-.gst-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  padding: 10px;
-  background: var(--bg);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.gst-input-row {
-  width: 100%;
-  display: none;
-  animation: rise 0.2s var(--ease-out);
-}
-
-.gst-input-row.visible {
-  display: block;
-}
-
-/* ── Register + forgot link row ── */
-.RegisterForgot {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-
-.RegisterForgot a {
-  color: #d8a7ff;
-  text-decoration: underline;
-}
-
-/* ── Responsive breakpoints ── */
+/* Responsive Grid Adjustments */
 @media (max-width: 1024px) {
   .pos-grid {
     grid-template-columns: 1fr;
   }
+  
+  .col-span-4,
+  .col-span-3 {
+    grid-column: span 6;
+  }
 }
 
 @media (max-width: 768px) {
+  .grid-12 {
+    grid-template-columns: 1fr;
+  }
+
+  .col-span-12, .col-span-8, .col-span-7, .col-span-6, .col-span-5, .col-span-4, .col-span-3 {
+    grid-column: span 1;
+  }
+
   .time-cards {
     grid-template-columns: 1fr;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 480px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }

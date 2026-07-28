@@ -1,10 +1,54 @@
 /* =============================================================
-   light.css — Light mode explicit token values
-   The light theme IS the :root default in variables.css.
-   This file exists as the canonical source if tokens ever diverge.
+   light.css — Light mode token overrides (Slate Clean Light theme)
+   Applied when: html[data-theme-mode="light"]
    ============================================================= */
 
 :root[data-theme-mode="light"] {
-  /* All values inherit from :root in variables.css */
+  --background: #f8fafc;
+  --surface-container: #ffffff;
+  --surface-container-low: #f1f5f9;
+  --surface-container-high: #e2e8f0;
+
+  --primary: #0f172a;
+  --on-primary: #ffffff;
+  --primary-hover: #1e293b;
+
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-subtle: rgba(37, 99, 235, 0.08);
+  --accent-glow: rgba(37, 99, 235, 0.15);
+
+  --text: #334155;
+  --text-strong: #0f172a;
+  --muted: #64748b;
+  --muted-strong: #475569;
+  --muted-subtle: rgba(100, 116, 139, 0.1);
+
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-hover: #94a3b8;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --panel: #ffffff;
+  --panel-hover: #f1f5f9;
+  --bg-hover: #f1f5f9;
+
+  --ok: #16a34a;
+  --ok-subtle: rgba(22, 163, 74, 0.08);
+  --warn: #d97706;
+  --warn-subtle: rgba(217, 119, 6, 0.08);
+  --danger: #dc2626;
+  --danger-subtle: rgba(220, 38, 38, 0.08);
+  --info: #2563eb;
+  --info-subtle: rgba(37, 99, 235, 0.08);
+
+  /* Clean elevation shadows for light mode */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+
   color-scheme: light;
 }
