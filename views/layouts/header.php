@@ -15,7 +15,7 @@
       var saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme-mode', saved);
 
-      window.switchTab = function(sectionId) {
+      window.switchTab = window.switchTab || function(sectionId) {
         document.querySelectorAll('.view-section').forEach(function(el) {
           el.classList.remove('active');
         });
@@ -29,22 +29,29 @@
         });
       };
 
-      window.openModal = function(id) {
+      window.openModal = window.openModal || function(id) {
         var el = document.getElementById(id);
         if (el) { el.classList.add('active'); document.body.style.overflow = 'hidden'; }
       };
 
-      window.closeModal = function(id) {
+      window.closeModal = window.closeModal || function(id) {
         var el = document.getElementById(id);
         if (el) { el.classList.remove('active'); document.body.style.overflow = ''; }
       };
 
-      window.logoutUser = function() {
+      window.logoutUser = window.logoutUser || function() {
         document.cookie = "auth_uid=; path=/; max-age=0;";
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
         window.location.href = '/login';
       };
+
+      // Vendor fallback stubs to prevent inline onclick ReferenceError before ES module load
+      window.searchVendorHistory = window.searchVendorHistory || function() {};
+      window.clearVendorHistorySearch = window.clearVendorHistorySearch || function() {};
+      window.loadProductsForVendor = window.loadProductsForVendor || function() {};
+      window.loadPurchases = window.loadPurchases || function() {};
+      window.switchHistoryTab = window.switchHistoryTab || function() {};
     })();
   </script>
 </head>
