@@ -14,3 +14,10 @@ export async function recordCreditPaymentApi(customerId, paymentData) {
     body: JSON.stringify(paymentData),
   });
 }
+
+export async function createCustomerApi(customerData) {
+  return apiRequest('/api/customers', {
+    method: 'POST',
+    body: JSON.stringify(customerData),
+  });
+}
