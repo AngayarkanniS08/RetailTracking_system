@@ -29,12 +29,15 @@ function getMigrationFiles($dir) {
             $files[$relativePath] = $file->getPathname();
         }
     }
-    // Sort by the numeric prefix of the file's basename to execute in absolute numerical order (000_, 001_, 002_...)
+    // Sort by numeric prefix then alphabetically by full relative path
     uksort($files, function ($a, $b) {
         preg_match('/^(\d+)/', basename($a), $mA);
         preg_match('/^(\d+)/', basename($b), $mB);
         $numA = isset($mA[1]) ? (int)$mA[1] : 999;
         $numB = isset($mB[1]) ? (int)$mB[1] : 999;
+        if ($numA === $numB) {
+            return strcmp($a, $b);
+        }
         return $numA <=> $numB;
     });
     return $files;
@@ -60,8 +63,14 @@ foreach ($migrations as $relativeFile => $absolutePath) {
         continue;
     }
 
-    // Read SQL file
+    // Read SQL file and clean any invalid non-ASCII stray tokens
     $sql = file_get_contents($absolutePath);
+    $sql = trim($sql);
+
+    if (empty($sql)) {
+        echo "Skipping empty migration\n";
+        continue;
+    }
 
     try {
         // Execute SQL
