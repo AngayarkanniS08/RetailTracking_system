@@ -27,7 +27,8 @@
   </div>
 
   <!-- Data Card Container -->
-  <div class="card-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm);">
+  <div class="card-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); padding: 0;">
+
     
     <div class="table-container" style="overflow-x: auto;">
       <table id="creditTable" class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">

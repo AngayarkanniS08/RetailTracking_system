@@ -34,18 +34,18 @@
             </div>
           </div>
 
-          <div class="card-panel">
-            <div class="data-table">
-              <table id="vendorPurchaseTable">
+          <div class="card-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); padding: 0;">
+            <div class="table-container" style="overflow-x: auto;">
+              <table id="vendorPurchaseTable" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                 <thead>
-                  <tr>
-                    <th>Vendor Name</th>
-                    <th>Contact</th>
-                    <th>Orders</th>
-                    <th>Total (₹)</th>
-                    <th>Paid (₹)</th>
-                    <th>Balance (₹)</th>
-                    <th>Action</th>
+                  <tr style="background: var(--surface-container-low); border-bottom: 1px solid var(--border); text-align: left;">
+                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Vendor Name</th>
+                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Contact</th>
+                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Orders</th>
+                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Total (₹)</th>
+                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Paid (₹)</th>
+                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Balance (₹)</th>
+                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -54,5 +54,7 @@
               </table>
             </div>
           </div>
+
+
           <div id="purchasePaginationControls" style="display:none;"></div>
         </section>

@@ -2,10 +2,57 @@
    vendors.css — Vendor pages (list + history) specific styles
    ============================================================= */
 
-/* ── Vendor stats grid ── */
+/* ── Vendor stats grid & panel overrides ── */
+#vendor_list .card-panel {
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
 #vendorhistory .stats-grid,
 #vendor .stats-grid {
   margin-bottom: 1.5rem;
 }
 
-/* Any vendor-history-specific overrides go here */
+/* ── Vendor Table Styling & Visual Hierarchy ── */
+#vendorPurchaseTable th {
+  background: var(--surface-container-low);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+#vendorPurchaseTable td {
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  color: var(--text-strong);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+/* ── Empty State Box Styling ── */
+.empty-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: var(--muted);
+}
+
+.empty-state-icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  opacity: 0.7;
+}
+
+.empty-state-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+

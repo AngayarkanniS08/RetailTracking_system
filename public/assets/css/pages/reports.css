@@ -32,3 +32,9 @@
 
 .report-totals .total-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
 .report-totals .total-value { font-size: 1.25rem; font-weight: 700; color: var(--text-strong); }
+
+/* ── Day to Day Selling Card Panel Override ── */
+#day_to_day_selling .card-panel {
+  padding: 0;
+}
+
