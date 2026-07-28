@@ -1,0 +1,27 @@
+/* =============================================================
+   inventory.css — Inventory page specific overrides
+   ============================================================= */
+
+/* ── Inventory section layout ── */
+#inventory .card-panel {
+  margin-bottom: 1rem;
+}
+
+/* ── Stock-level progress bar ── */
+.stock-progress {
+  height: 6px;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.stock-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s var(--ease-out);
+}
+
+.stock-progress-fill.ok      { background: var(--ok); }
+.stock-progress-fill.warn    { background: var(--warn); }
+.stock-progress-fill.danger  { background: var(--danger); }

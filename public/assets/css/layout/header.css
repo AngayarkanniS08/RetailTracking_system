@@ -1,0 +1,131 @@
+/* =============================================================
+   header.css — Top bar, user menu, theme switcher
+   ============================================================= */
+
+/* ── Top bar ── */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  flex-shrink: 0;
+}
+
+/* ── User menu ── */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Avatar ── */
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-subtle);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  border: 1.5px solid var(--border);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* ── Theme panel (fixed bottom-right toggle) ── */
+.theme-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--chrome);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 6px;
+  display: flex;
+  gap: 6px;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+}
+
+.theme-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.theme-btn:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.theme-btn.active {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.theme-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Logo area (auth pages) ── */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-foreground);
+  box-shadow: var(--shadow-glow);
+}
+
+.logo-text {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 1.4rem;
+  color: var(--text-strong);
+  letter-spacing: -0.02em;
+}
+
+/* ── Auth header (forgot/reset pages) ── */
+.auth-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo { width: 35px; height: 35px; }
+.system-name { font-size: 17px; font-weight: bold; }
+.back-link { font-size: 14px; }
+.auth-footer { text-align: center; padding: 20px; font-size: 14px; color: var(--muted); }
+.auth-footer a { color: var(--accent); text-decoration: none; }
+
+@media (max-width: 768px) {
+  .top-bar {
+    padding: 0.75rem 1rem;
+  }
+}

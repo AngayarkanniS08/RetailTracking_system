@@ -1,0 +1,11 @@
+/* =============================================================
+   vendors.css — Vendor pages (list + history) specific styles
+   ============================================================= */
+
+/* ── Vendor stats grid ── */
+#vendorhistory .stats-grid,
+#vendor .stats-grid {
+  margin-bottom: 1.5rem;
+}
+
+/* Any vendor-history-specific overrides go here */

@@ -1,0 +1,19 @@
+/* =============================================================
+   customers.css — Customer list page specific styles
+   ============================================================= */
+
+/* Customer page specific layout overrides */
+#customers .card-panel {
+  margin-bottom: 1rem;
+}
+
+/* Credit balance highlight */
+.credit-balance {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--warn);
+}
+
+.credit-balance.zero {
+  color: var(--ok);
+}

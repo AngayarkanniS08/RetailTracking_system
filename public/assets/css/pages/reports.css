@@ -1,0 +1,34 @@
+/* =============================================================
+   reports.css — Reports and daily sales page specific styles
+   ============================================================= */
+
+/* ── Report filter toolbar ── */
+.report-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Report totals summary row ── */
+.report-totals {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.report-totals .total-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.report-totals .total-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.report-totals .total-value { font-size: 1.25rem; font-weight: 700; color: var(--text-strong); }

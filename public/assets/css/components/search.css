@@ -1,0 +1,48 @@
+/* =============================================================
+   search.css — Search bar and filter strip component
+   ============================================================= */
+
+/* ── Search bar wrapper ── */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+
+.search-bar .input-field {
+  padding-left: 2.5rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 1rem;
+}
+
+/* ── Filter toolbar ── */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+/* ── Date range inputs ── */
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-range .input-field {
+  width: auto;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+}

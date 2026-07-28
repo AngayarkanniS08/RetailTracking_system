@@ -1,0 +1,93 @@
+/* =============================================================
+   accessibility.css — WCAG 2.2 AA compliance
+   Focus management, skip links, screen reader utilities
+   ============================================================= */
+
+/* ── Skip to main content link (keyboard/screen-reader nav) ── */
+.skip-link {
+  position: absolute;
+  top: -999px;
+  left: 0;
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: 600;
+  border-radius: 0 0 var(--radius-md) 0;
+  text-decoration: none;
+  transition: top var(--duration-fast);
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ── Visually hidden (screen readers only) ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── Visible when focused (show on focus for keyboard users) ── */
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ── Focus ring — global interactive element focus ── */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Interactive element minimum touch target (WCAG 2.5.5) ── */
+button,
+[role="button"],
+input[type="checkbox"],
+input[type="radio"],
+select {
+  min-height: 24px;
+  min-width: 24px;
+}
+
+/* ── High contrast text for important UI states ── */
+[aria-current="page"],
+[aria-selected="true"] {
+  font-weight: 600;
+}
+
+/* ── Disabled state — visually distinct ── */
+[disabled],
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Ensure links have adequate color contrast ── */
+a:not([class]) {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:not([class]):hover {
+  text-decoration-thickness: 2px;
+}
+
+/* ── Focus-within for compound widgets ── */
+.input-group:focus-within .input-label {
+  color: var(--accent);
+}

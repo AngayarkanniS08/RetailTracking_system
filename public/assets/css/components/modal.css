@@ -1,0 +1,89 @@
+/* =============================================================
+   modal.css — Modal overlay and dialog component
+   ============================================================= */
+
+/* ── Overlay backdrop ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+/* ── Modal box ── */
+.modal-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  animation: rise 0.2s var(--ease-out);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  width: 50vw;
+  max-width: 1200px;
+  height: 85vh;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* ── Modal header ── */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: color var(--duration-fast);
+}
+
+.close-btn:hover {
+  color: var(--text-strong);
+}
+
+.close-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Scrollable modal content ── */
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-track { background: transparent; }
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+/* ── Responsive modal ── */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95vw;
+    height: 90vh;
+    max-height: 90vh;
+    padding: 1.5rem;
+  }
+}

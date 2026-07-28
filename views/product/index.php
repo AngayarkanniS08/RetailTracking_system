@@ -3,41 +3,39 @@
   - Catalog Registry: Central hub for defining products in the system.
   - Categorization: "Manage Categories & Subcategories" modal to build product hierarchies.
   - Product Creation: "+ Add Product" modal capturing custom units, categories, and taxation (HSN/GST).
---> <script> console.log('Token:', localStorage.getItem('auth_token'))</script>
-<link rel="stylesheet" href="public/assets/css/product.css">
-        <section id="product_master" class="view-section">
-          <div class="card-header">
-            <span>Product Master</span>
-            <div class="d-flex">
-              <button class="btn btn-outline btn-sm" onclick="openModal('addCategoryModal')">+ Add Category</button>
-              <button class="btn btn-primary btn-sm" onclick="resetProductModal(); openModal('addProductModal')">+ Add Product</button>
-            </div>
-          </div>
+-->
+<section id="product_master" class="view-section">
+  <div class="card-header">
+    <span>Product Master</span>
+    <div class="d-flex">
+      <button class="btn btn-outline btn-sm" onclick="openModal('addCategoryModal')">+ Add Category</button>
+      <button class="btn btn-primary btn-sm" onclick="resetProductModal(); openModal('addProductModal')">+ Add Product</button>
+    </div>
+  </div>
 
-          <!-- Search Bar -->
-          <div class="input-group" style="margin-bottom: 1rem;">
-            <input type="text" id="pmSearch" class="input-field" placeholder="Search products by name or ID...">
-          </div>
+  <!-- Search Bar -->
+  <div class="input-group" style="margin-bottom: 1rem;">
+    <input type="text" id="pmSearch" class="input-field" placeholder="Search products by name or ID...">
+  </div>
 
-          <!-- Stats -->
-          <div class="stats-grid" style="margin-bottom: 1.5rem;">
-            <div class="stat-card">
-              <div class="stat-label">Total Products</div>
-              <div class="stat-value" id="pmTotalProducts">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Categories</div>
-              <div class="stat-value" id="pmTotalCategories">0</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Active Batches</div>
-              <div class="stat-value" style="color:var(--info)" id="pmTotalBatches">0</div>
-            </div>
-          </div>
-          <div id="productAccordionContainer">
-            <!-- Rendered via JS -->
-          </div>
-          
-          <div id="paginationControls" class="pagination"></div>
-        </section>
-
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+      <div class="stat-label">Total Products</div>
+      <div class="stat-value" id="pmTotalProducts">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Categories</div>
+      <div class="stat-value" id="pmTotalCategories">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Batches</div>
+      <div class="stat-value" style="color:var(--info)" id="pmTotalBatches">0</div>
+    </div>
+  </div>
+  <div id="productAccordionContainer">
+    <!-- Rendered via JS -->
+  </div>
+  
+  <div id="paginationControls" class="pagination"></div>
+</section>

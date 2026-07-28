@@ -1,0 +1,54 @@
+/* =============================================================
+   charts.css — Chart and gauge component styles
+   ============================================================= */
+
+/* ── SVG gauge wrapper ── */
+.gauge-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.gauge-label {
+  position: absolute;
+  text-align: center;
+}
+
+.gauge-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.gauge-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* ── Bar chart ── */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 80px;
+}
+
+.bar-chart-bar {
+  flex: 1;
+  background: var(--accent-subtle);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height 0.4s var(--ease-out);
+  position: relative;
+  cursor: pointer;
+}
+
+.bar-chart-bar:hover {
+  background: var(--accent);
+}
+
+/* ── Mini sparkline ── */
+.sparkline {
+  display: inline-block;
+  vertical-align: middle;
+}

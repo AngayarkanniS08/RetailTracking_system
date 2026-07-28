@@ -1,0 +1,68 @@
+/* =============================================================
+   badges.css — Status badge component
+   ============================================================= */
+
+.badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-ok      { background: var(--ok-subtle);     color: var(--ok); }
+.badge-warn    { background: var(--warn-subtle);   color: var(--warn); }
+.badge-danger  { background: var(--danger-subtle); color: var(--danger); }
+.badge-muted   { background: var(--muted-subtle);  color: var(--muted); }
+.badge-info    { background: var(--info-subtle);   color: var(--info); }
+
+/* ── Payment status badges ── */
+.badge-paid    { background: var(--ok-subtle);     color: var(--ok); }
+.badge-partial { background: var(--warn-subtle);   color: var(--warn); }
+.badge-pending { background: var(--danger-subtle); color: var(--danger); }
+
+/* ── Stock intelligence badges ── */
+.si-badge {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.si-badge.high { background: var(--ok-subtle);     color: var(--ok);     border: 1px solid var(--ok); }
+.si-badge.low  { background: var(--warn-subtle);   color: var(--warn);   border: 1px solid var(--warn); }
+.si-badge.old  { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger); }
+
+/* ── Price mode badge ── */
+.price-mode-badge {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: middle;
+  user-select: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+.price-mode-badge.mode-retail {
+  background: var(--warn, #f59e0b);
+  color: #fff;
+}
+
+/* ── Row price mode tag ── */
+.row-price-mode {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent);
+  vertical-align: super;
+}
+
+.row-price-val { font-weight: 600; }

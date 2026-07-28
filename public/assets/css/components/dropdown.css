@@ -1,0 +1,160 @@
+/* =============================================================
+   dropdown.css — Search dropdowns (POS + Customer)
+   ============================================================= */
+
+/* ── POS search dropdown ── */
+.pos-search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.pos-search-dropdown .psd-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.pos-search-dropdown .psd-item:last-child { border-bottom: none; }
+.pos-search-dropdown .psd-item:hover { background: var(--accent-subtle); }
+.pos-search-dropdown .psd-item .psd-name { font-weight: 600; color: var(--text-strong); font-size: 0.9rem; }
+.pos-search-dropdown .psd-item .psd-meta { font-size: 0.75rem; color: var(--muted); }
+.pos-search-dropdown .psd-item .psd-price { font-weight: 700; color: var(--accent); font-size: 0.9rem; }
+
+/* ── POS search pagination ── */
+.pos-search-dropdown .psd-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg-muted);
+}
+
+.pos-search-dropdown .psd-pagination .psd-page-btn {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: none;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin: 0 2px;
+}
+
+.pos-search-dropdown .psd-pagination .psd-page-btn:hover { opacity: 0.85; }
+
+/* ── Custom scrollbar for POS dropdown ── */
+.pos-search-dropdown::-webkit-scrollbar { width: 6px; }
+.pos-search-dropdown::-webkit-scrollbar-track { background: transparent; }
+.pos-search-dropdown::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+/* ── Customer search combobox ── */
+.customer-search-combobox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.customer-search-combobox .input-field {
+  width: 200px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.customer-search-combobox.is-open .input-field {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-subtle) !important;
+}
+
+.customer-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  transition: all 0.2s var(--ease-out);
+}
+
+.customer-search-dropdown.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+}
+
+.customer-search-dropdown .cs-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.85rem;
+  margin: 4px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.customer-search-dropdown .cs-item:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.customer-search-dropdown .cs-item .cs-item-main { font-weight: 600; font-size: 0.9rem; }
+.customer-search-dropdown .cs-item .cs-item-sub { font-size: 0.75rem; opacity: 0.7; margin-top: 2px; }
+.customer-search-dropdown .cs-item:hover .cs-item-sub { opacity: 1; }
+
+/* ── Customer search scrollbar ── */
+.customer-search-dropdown::-webkit-scrollbar { width: 6px; }
+.customer-search-dropdown::-webkit-scrollbar-track { background: transparent; }
+.customer-search-dropdown::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+.customer-search-dropdown::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Customer search pagination ── */
+.customer-search-dropdown .cs-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.customer-search-dropdown .cs-pagination .cs-page-btn {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: none;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin: 0 2px;
+}
+
+.customer-search-dropdown .cs-pagination .cs-page-btn:hover { opacity: 0.85; }

@@ -1,0 +1,122 @@
+/* =============================================================
+   dark.css — Dark mode design token overrides
+   Applied when: html[data-theme-mode="dark"]
+   ============================================================= */
+
+:root[data-theme-mode="dark"] {
+  /* ── Material You dark palette ── */
+  --inverse-primary: #755750;
+  --tertiary-fixed-dim: #900038;
+  --primary-fixed-dim: #755750;
+  --on-primary-container: #ffdad2;
+  --on-error-container: #ffdad6;
+  --surface-container-highest: #3b3d3b;
+  --on-tertiary-container: #ff7995;
+  --secondary-fixed: #1f1b14;
+  --on-tertiary: #51001c;
+  --secondary: #cec5bb;
+  --error: #ffb4ab;
+  --background: #1a1c1a;
+  --error-container: #93000a;
+  --on-secondary-container: #4c463e;
+  --tertiary: #ffb2be;
+  --primary-container: #ffdad2;
+  --primary: #e5beb5;
+  --on-primary-fixed: #ffdad2;
+  --on-primary: #361f1a;
+  --on-background: #e3e2e0;
+  --surface-tint: #e5beb5;
+  --surface-bright: #424242;
+  --outline-variant: #504442;
+  --surface-container-low: #222422;
+  --on-secondary-fixed: #ebe1d6;
+  --surface-dim: #1a1c1a;
+  --secondary-fixed-dim: #1f1b14;
+  --on-primary-fixed-variant: #5c403a;
+  --on-surface-variant: #d4c3bf;
+  --inverse-surface: #e3e2e0;
+  --tertiary-container: #79002e;
+  --inverse-on-surface: #2f312f;
+  --primary-fixed: #755750;
+  --on-secondary: #1f1b14;
+  --secondary-container: #4c463e;
+  --surface-variant: #504442;
+  --on-surface: #e3e2e0;
+  --tertiary-fixed: #400014;
+  --outline: #9e8e8a;
+  --on-tertiary-fixed: #ffd9de;
+  --surface-container-lowest: #141615;
+  --surface-container-high: #313330;
+  --on-secondary-fixed-variant: #ebe1d6;
+  --on-error: #690005;
+  --surface: #1a1c1a;
+  --surface-container: #262826;
+  --on-tertiary-fixed-variant: #ffd9de;
+
+  /* ── Dark semantic aliases ── */
+  --bg: var(--background);
+  --bg-accent: var(--surface-container-low);
+  --bg-elevated: var(--surface-container-lowest);
+  --bg-hover: var(--surface-container-high);
+  --bg-muted: var(--surface-container-low);
+  --bg-content: var(--background);
+  --bg-100: var(--surface-container-low);
+  --card: var(--surface-container-lowest);
+  --card-foreground: var(--on-surface);
+  --card-highlight: rgba(255, 255, 255, 0.04);
+  --popover: var(--surface-container-lowest);
+  --popover-foreground: var(--on-surface);
+  --panel: var(--surface-container);
+  --panel-strong: var(--surface-container-high);
+  --panel-hover: var(--surface-container-highest);
+  --chrome: rgba(26, 28, 26, 0.96);
+  --chrome-strong: rgba(26, 28, 26, 0.98);
+  --text: var(--on-surface);
+  --text-strong: var(--primary);
+  --chat-text: var(--on-surface);
+  --muted: var(--on-surface-variant);
+  --muted-strong: var(--outline);
+  --muted-foreground: var(--on-surface-variant);
+  --muted-subtle: rgba(212, 195, 191, 0.12);
+  --border: var(--outline-variant);
+  --border-strong: var(--outline);
+  --border-hover: var(--on-surface-variant);
+  --input: var(--surface-container-low);
+  --ring: var(--primary);
+  --accent: var(--primary);
+  --accent-hover: var(--on-primary-fixed-variant);
+  --accent-muted: var(--primary);
+  --accent-subtle: rgba(229, 190, 181, 0.18);
+  --accent-foreground: var(--on-primary);
+  --accent-glow: rgba(229, 190, 181, 0.2);
+  --primary-foreground: var(--on-primary);
+  --secondary-foreground: var(--on-secondary-container);
+  --accent-2: var(--tertiary);
+  --accent-2-muted: var(--tertiary);
+  --accent-2-subtle: rgba(255, 178, 190, 0.12);
+  --ok: #22c55e;
+  --ok-muted: rgba(34, 197, 94, 0.75);
+  --ok-subtle: rgba(34, 197, 94, 0.1);
+  --destructive: var(--error);
+  --destructive-foreground: var(--on-error);
+  --warn: #f59e0b;
+  --warn-muted: rgba(245, 158, 11, 0.75);
+  --warn-subtle: rgba(245, 158, 11, 0.1);
+  --danger: var(--error);
+  --danger-muted: rgba(255, 180, 171, 0.75);
+  --danger-subtle: rgba(255, 180, 171, 0.1);
+  --info: #60a5fa;
+  --info-subtle: rgba(96, 165, 250, 0.15);
+  --focus: rgba(229, 190, 181, 0.15);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 3px color-mix(in srgb, var(--ring) 70%, transparent);
+  --focus-glow: 0 0 0 2px var(--bg), 0 0 0 3px var(--ring), 0 0 12px var(--accent-glow);
+
+  /* ── Dark shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+
+  color-scheme: dark;
+}

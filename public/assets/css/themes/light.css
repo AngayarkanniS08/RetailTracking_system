@@ -1,0 +1,10 @@
+/* =============================================================
+   light.css — Light mode explicit token values
+   The light theme IS the :root default in variables.css.
+   This file exists as the canonical source if tokens ever diverge.
+   ============================================================= */
+
+:root[data-theme-mode="light"] {
+  /* All values inherit from :root in variables.css */
+  color-scheme: light;
+}

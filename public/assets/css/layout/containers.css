@@ -1,0 +1,96 @@
+/* =============================================================
+   containers.css — App shell and view container layout
+   ============================================================= */
+
+/* ── Full-app wrapper (dashboard shell) ── */
+.dashboard,
+#dashboardView {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+  flex: 1 1 auto;
+  flex-direction: column;
+  animation: dashboard-enter 0.3s var(--ease-out);
+  background: var(--bg);
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Auth page centering wrapper ── */
+.app-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg);
+  transition: background var(--duration-normal) var(--ease-out);
+}
+
+/* ── Main flex split: sidebar + content ── */
+.main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Scrollable content area ── */
+.content-area {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  transition: padding 0.3s ease;
+}
+
+/* ── View section toggling ── */
+.view-section {
+  display: none;
+}
+
+.view-section.active {
+  display: block;
+  animation: rise 0.2s var(--ease-out);
+}
+
+/* ── Segment control (tab-style switcher) ── */
+.segment-control {
+  display: flex;
+  background: var(--bg-100);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.segment-item {
+  flex: 1;
+  padding: 0.6rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--muted-strong);
+  transition: all 0.2s;
+}
+
+.segment-item:hover {
+  color: var(--text-strong);
+}
+
+.segment-item.active {
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Responsive: collapse sidebar on mobile ── */
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+  }
+
+  .content-area {
+    padding: 1rem;
+  }
+}

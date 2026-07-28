@@ -1,0 +1,103 @@
+/* =============================================================
+   auth.css — Authentication pages (login, register, forgot, reset)
+   ============================================================= */
+
+/* Center the card on auth pages when wrapper is present */
+.auth-page-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg);
+  margin: 0;
+  padding: 1rem;
+}
+
+/* Card container */
+.auth-card {
+  max-width: 420px;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Logo area */
+.auth-logo-area {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-logo-area img {
+  width: 200px;
+  height: auto;
+  border-radius: 12px;
+}
+
+.auth-logo-text {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-top: 0.5rem;
+}
+
+/* Titles */
+.auth-title {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: var(--text-strong);
+  font-size: 1.4rem;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Feedback message box */
+.auth-message {
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  display: none;
+}
+
+.auth-message.error {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border: 1px solid var(--danger);
+  display: block;
+}
+
+.auth-message.success {
+  color: var(--ok);
+  background: var(--ok-subtle);
+  border: 1px solid var(--ok);
+  display: block;
+}
+
+/* Footer links (register / login / forgot) */
+.auth-links {
+  text-align: center;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.auth-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}

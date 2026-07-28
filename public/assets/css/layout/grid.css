@@ -1,0 +1,109 @@
+/* =============================================================
+   grid.css — Structural grid and flex layouts
+   ============================================================= */
+
+/* ── Stats grid (responsive card row) ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── POS two-column grid (product list + cart) ── */
+.pos-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  height: 100%;
+}
+
+/* ── Time cards (today / week / month) ── */
+.time-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── POS search area ── */
+.pos-search-area {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+/* ── Category filter tabs ── */
+.cat-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+/* ── Action button group ── */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── GST toggle row ── */
+.gst-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 10px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gst-input-row {
+  width: 100%;
+  display: none;
+  animation: rise 0.2s var(--ease-out);
+}
+
+.gst-input-row.visible {
+  display: block;
+}
+
+/* ── Register + forgot link row ── */
+.RegisterForgot {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.RegisterForgot a {
+  color: #d8a7ff;
+  text-decoration: underline;
+}
+
+/* ── Responsive breakpoints ── */
+@media (max-width: 1024px) {
+  .pos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .time-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
