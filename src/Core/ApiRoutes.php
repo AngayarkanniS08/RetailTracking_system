@@ -225,6 +225,10 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Customer\Controller\Api\CustomerController())->index();
         });
+        $router->add('GET', '/api/customers/credits', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Customer\Controller\Api\CustomerController())->index();
+        });
         $router->add('POST', '/api/customers', function (): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Customer\Controller\Api\CustomerController())->store();

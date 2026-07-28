@@ -96,16 +96,44 @@ function groupInvoicesByDate(invoices) {
 
 function renderSalesTimeline() {
     var tbody = document.querySelector('#salesTimelineTable tbody');
+    var emptyState = document.getElementById('salesEmptyState');
+    var table = document.getElementById('salesTimelineTable');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     var dates = Object.keys(_tlGroups).sort(function(a, b) { return b.localeCompare(a); });
     _tlTotalPages = Math.max(1, Math.ceil(dates.length / _tlPerPage));
 
+    // Calculate KPI Totals
+    var totalRevenue = 0;
+    var totalBillsCount = 0;
+    dates.forEach(function(d) {
+        totalRevenue += _tlGroups[d].total;
+        totalBillsCount += _tlGroups[d].count;
+    });
+
+    var todayStr = new Date().toISOString().split('T')[0];
+    var todayRevenue = _tlGroups[todayStr] ? _tlGroups[todayStr].total : 0;
+    var avgBill = totalBillsCount > 0 ? Math.round(totalRevenue / totalBillsCount) : 0;
+
+    var elToday = document.getElementById('kpiTodaySales');
+    var elBills = document.getElementById('kpiTotalBills');
+    var elAvg = document.getElementById('kpiAvgBill');
+    var elRatio = document.getElementById('kpiRatio');
+
+    if (elToday) elToday.innerText = '₹' + formatNumber(todayRevenue);
+    if (elBills) elBills.innerText = totalBillsCount;
+    if (elAvg) elAvg.innerText = '₹' + formatNumber(avgBill);
+    if (elRatio) elRatio.innerText = totalBillsCount > 0 ? '100% Cash' : '0% Sales';
+
     if (dates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">No sales found</td></tr>';
+        if (table) table.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'flex';
         return;
     }
+
+    if (table) table.style.display = 'table';
+    if (emptyState) emptyState.style.display = 'none';
 
     var start = (_tlPage - 1) * _tlPerPage;
     var pageDates = dates.slice(start, start + _tlPerPage);
@@ -118,25 +146,31 @@ function renderSalesTimeline() {
         globalIndex++;
 
         tbody.innerHTML += ''
-            + '<tr onclick="toggleSalesBills(\'' + cls + '\')" style="cursor:pointer;">'
-                + '<td style="font-weight:500;color:var(--text-strong)">' + displayDate(dateStr) + '</td>'
-                + '<td style="font-weight:600">' + g.count + '</td>'
-                + '<td style="font-weight:600;color:var(--ok)">\u20b9' + formatNumber(g.total) + '</td>'
-                + '<td style="color:var(--muted-strong)">\u20b9' + formatNumber(avg) + '</td>'
-                + '<td style="text-align:right">-</td>'
+            + '<tr onclick="toggleSalesBills(\'' + cls + '\')" style="cursor:pointer; background: var(--surface-container-low); border-bottom: 1px solid var(--border);">'
+                + '<td style="padding:14px 16px; font-weight:600; color:var(--text-strong)">' + displayDate(dateStr) + '</td>'
+                + '<td style="padding:14px 16px; font-weight:600; color:var(--accent);">Summary Row (' + g.count + ' bills)</td>'
+                + '<td style="padding:14px 16px; color:var(--muted);">-</td>'
+                + '<td style="padding:14px 16px; color:var(--muted);">' + g.count + ' orders</td>'
+                + '<td style="padding:14px 16px; font-weight:700; color:var(--success);">\u20b9' + formatNumber(g.total) + '</td>'
+                + '<td style="padding:14px 16px; color:var(--muted);">Cash</td>'
+                + '<td style="padding:14px 16px;"><span class="badge badge-success" style="padding: 2px 6px; font-size: 0.72rem;">Completed</span></td>'
+                + '<td style="padding:14px 16px; text-align:right;"><span style="font-size:0.75rem; color:var(--accent); text-decoration:underline;">View Details</span></td>'
             + '</tr>';
 
         g.invoices.forEach(function(inv) {
             var isCompletable = inv.invoiceStatus === 'completed';
             tbody.innerHTML += ''
-                + '<tr class="bill-row ' + cls + '" style="display:none;background:var(--bg-hover);">'
-                    + '<td style="padding-left:20px;font-weight:600;color:var(--accent);">\uD83D\uDCC4 ' + escHtml(inv.invoiceNumber || '-') + '</td>'
-                    + '<td>' + escHtml(inv.customerNameSnapshot || inv.customerName || 'Walk-in') + '</td>'
-                    + '<td style="color:var(--ok)">\u20b9' + formatNumber(inv.grandTotal) + '</td>'
-                    + '<td style="text-align:right">'
-+ '<button class="btn btn-sm" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')" style="background:var(--primary);color:#fff;border:none;font-size:0.7rem;padding:2px 8px;">View</button>'
-+ (isCompletable ? '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openReturnModal(\'' + inv.id + '\')" style="margin-left:6px;color:var(--accent);border-color:rgba(99,102,241,0.3);font-size:0.7rem;padding:2px 8px;">Return</button>' : '')
-+ '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();confirmDeleteInvoice(\'' + inv.id + '\')" style="margin-left:6px;color:var(--danger);border-color:rgba(239,68,68,0.3);font-size:0.7rem;padding:2px 8px;">Delete</button>'
+                + '<tr class="bill-row ' + cls + '" style="display:none; background:var(--card); border-bottom: 1px solid var(--border);">'
+                    + '<td style="padding: 12px 16px 12px 28px; color: var(--muted); font-size: 0.8rem;">' + (inv.billedAt ? new Date(inv.billedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-') + '</td>'
+                    + '<td style="padding: 12px 16px; font-weight:600; color:var(--accent); font-family: var(--font-mono, monospace);">\uD83D\uDCC4 ' + escHtml(inv.invoiceNumber || '-') + '</td>'
+                    + '<td style="padding: 12px 16px; color: var(--text-strong);">' + escHtml(inv.customerNameSnapshot || inv.customerName || 'Walk-in Customer') + '</td>'
+                    + '<td style="padding: 12px 16px; color: var(--muted);">' + (inv.itemsCount || inv.items?.length || 1) + ' items</td>'
+                    + '<td style="padding: 12px 16px; font-weight:600; color:var(--success);">\u20b9' + formatNumber(inv.grandTotal) + '</td>'
+                    + '<td style="padding: 12px 16px; color: var(--muted); font-size: 0.8rem;">' + escHtml(inv.paymentMode || 'Cash') + '</td>'
+                    + '<td style="padding: 12px 16px;"><span class="badge badge-success" style="padding: 2px 6px; font-size: 0.72rem;">Completed</span></td>'
+                    + '<td style="padding: 12px 16px; text-align:right;">'
+                        + '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')" style="font-size:0.75rem; padding:3px 8px;">View</button>'
+                        + (isCompletable ? '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openReturnModal(\'' + inv.id + '\')" style="margin-left:6px; font-size:0.75rem; padding:3px 8px;">Return</button>' : '')
                     + '</td>'
                 + '</tr>';
         });

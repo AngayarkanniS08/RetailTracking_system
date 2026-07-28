@@ -15,69 +15,154 @@
   z-index: 100;
 }
 
+/* ── Central Global Search Bar ── */
+.topbar-global-search {
+  display: flex;
+  align-items: center;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  width: 380px;
+  max-width: 100%;
+  transition: all var(--duration-fast);
+}
+
+.topbar-global-search:focus-within,
+.topbar-global-search:hover {
+  border-color: var(--accent);
+  background: var(--card);
+}
+
+.topbar-global-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--text-strong);
+  width: 100%;
+  padding: 0;
+}
+
+.topbar-global-search input::placeholder {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.topbar-kbd {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--surface-container);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+/* ── User Menu Right Group ── */
 .user-menu {
   display: flex;
   align-items: center;
-  gap: var(--space-2); /* 16px gap */
+  gap: var(--space-2);
+}
+
+/* Theme Switcher Pill */
+.topbar-theme-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 2px;
+  gap: 2px;
+}
+
+.topbar-theme-btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--duration-fast);
+}
+
+.topbar-theme-btn.active {
+  background: var(--card);
+  color: var(--text-strong);
+  box-shadow: var(--shadow-xs);
+  font-weight: 600;
+}
+
+/* Notification Alert Icon */
+.topbar-alert-icon {
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  color: var(--muted);
+  background: var(--surface-container-low);
+  border: 1px solid var(--border);
+  transition: all var(--duration-fast);
+}
+
+.topbar-alert-icon:hover {
+  color: var(--text-strong);
+  border-color: var(--border-strong);
+}
+
+.topbar-alert-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  padding: 1px 5px;
+  line-height: 1;
+  border: 2px solid var(--surface-container);
 }
 
 /* Avatar */
 .avatar {
-  width: 36px;
-  height: 36px;
-  background: var(--surface-container-low);
+  width: 34px;
+  height: 34px;
+  background: #2563eb;
+  color: #ffffff;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
-  border: 1px solid var(--border);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.85rem;
   flex-shrink: 0;
 }
 
-/* Theme panel toggle */
-.theme-panel {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: var(--surface-container);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-full);
-  padding: 4px;
-  display: flex;
-  gap: 4px;
-  box-shadow: var(--shadow-lg);
-  z-index: 100;
-}
-
-.theme-btn {
-  background: transparent;
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all var(--duration-fast);
-}
-
-.theme-btn:hover {
-  background: var(--surface-container-low);
-  color: var(--text-strong);
-}
-
-.theme-btn.active {
-  background: var(--accent-subtle);
-  color: var(--accent);
+@media (max-width: 900px) {
+  .topbar-global-search {
+    width: 220px;
+  }
 }
 
 @media (max-width: 768px) {
   .top-bar {
     padding: 0 var(--space-2);
+  }
+  .topbar-global-search {
+    display: none;
   }
 }

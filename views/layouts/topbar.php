@@ -1,24 +1,45 @@
     <header class="top-bar">
-      <div class="logo-area" style="margin:0;">
-        <div class="logo-icon"
-          style="background: white; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 2px;">
-          <img src="public/assets/images/logo.png" alt="Logo" style="width: 20px; height: 20px; object-fit: contain;">
+      <div class="logo-area" style="margin:0; display:flex; align-items:center; gap:10px;">
+        <div class="logo-icon" style="background: white; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 2px; width: 28px; height: 28px; flex-shrink:0;">
+          <img src="/public/assets/images/logo.png" alt="Logo" style="width: 20px; height: 20px; object-fit: contain;">
         </div>
-        <div class="logo-text">Pudheera Retail <span
-            style="font-size: 0.8rem; color:var(--muted); font-family:var(--font-body)">v1.0</span></div>
+        <div class="logo-text" style="font-weight: 700; font-size: 1rem; color: var(--text-strong);">Pudheera Retail <span style="font-size: 0.75rem; color:var(--muted); font-weight: 400; font-family:var(--font-body); background: var(--surface-container-low); padding: 2px 6px; border-radius: 4px; margin-left: 4px;">v1.0</span></div>
       </div>
-      <div class="user-menu">
-        <div class="user-menu">
-        <!-- 🔔 Notification Icon -->
-        <div class="topbar-alert-icon" id="topbarAlertIcon" onclick="openActiveAlertsModal()" style="cursor: pointer; position: relative; margin-right: 15px; display: flex; align-items: center; padding: 8px; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-elevated)'" onmouseout="this.style.background='transparent'">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span id="topbarAlertBadge" style="position: absolute; top: 6px; right: 6px; background: var(--danger); border-radius: 50%; width: 8px; height: 8px; border: 1px solid var(--bg-card); display: none;"></span>
+
+      <!-- Central Global Search Input (Matching Reference Screenshot) -->
+      <div class="topbar-global-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--muted); margin-right: 8px; flex-shrink: 0;">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search billing, products, customers..." readonly style="cursor: pointer;" onclick="document.querySelector('#creditSearch, #salesSearch, input[type=text]')?.focus()" />
+        <kbd class="topbar-kbd">⌘K</kbd>
+      </div>
+
+      <div class="user-menu" style="display:flex; align-items:center; gap: 12px;">
+        <!-- Topbar Theme Switcher Pill -->
+        <div class="topbar-theme-pill">
+          <button class="topbar-theme-btn" data-theme="light" title="Switch to Light Mode">
+            <span>☀️</span> Light
+          </button>
+          <button class="topbar-theme-btn active" data-theme="dark" title="Switch to Dark Mode">
+            <span>🌙</span> Dark
+          </button>
         </div>
-        <div class="avatar">A</div>
-        <a href="javascript:void(0)" onclick="logoutUser()" class="btn btn-outline">Logout</a>
+
+        <!-- 🔔 Notification Icon with Badge -->
+        <div class="topbar-alert-icon" id="topbarAlertIcon" onclick="openActiveAlertsModal()" title="Alerts & Notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span id="topbarAlertBadge" class="topbar-alert-badge">3</span>
+        </div>
+
+        <!-- User Avatar -->
+        <div class="avatar" title="Admin Account">A</div>
+
+        <!-- Logout Button -->
+        <a href="javascript:void(0)" onclick="logoutUser()" class="btn btn-outline btn-sm" style="border-color: var(--border-strong); padding: 6px 14px; font-weight: 500;">Logout</a>
       </div>
-      
     </header>

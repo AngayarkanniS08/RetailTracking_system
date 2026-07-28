@@ -34,7 +34,7 @@ class Database
     public static function setCurrentUser(string $userId): void
     {
         try {
-            self::getConnection()->exec("SET LOCAL app.current_user_id = " . self::getConnection()->quote($userId));
+            self::getConnection()->exec("SET app.current_user_id = " . self::getConnection()->quote($userId));
         } catch (\Throwable $e) {
             // Ignore session var set errors if RLS table session is optional
         }

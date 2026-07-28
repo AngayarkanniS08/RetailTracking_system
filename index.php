@@ -56,6 +56,9 @@ $request   = new Request();
 // 3. Register Application Routes
 $router = new Router();
 
+// Register API Routes
+\Core\ApiRoutes::register($router);
+
 // Guest Auth Routes
 $router->get('/login',           [AuthController::class, 'showLogin']);
 $router->get('/register',        [AuthController::class, 'showRegister']);

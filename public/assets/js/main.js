@@ -19,6 +19,7 @@ import { initDashboardPage } from './pages/dashboard.js';
 import { initBillingPage } from './pages/billing.js';
 import { initSystemHealthPage } from './pages/system-health.js';
 import { initVendorsPage } from './pages/vendors.js';
+import { initCustomerCredit } from './pages/customers.js';
 
 // Expose core global helpers for HTML inline attribute handlers (backward compatibility)
 window.logoutUser = logoutUser;
@@ -49,12 +50,15 @@ async function boot() {
   initAuthPage();
 
   // 6. Bind theme toggle buttons
-  document.querySelectorAll('.theme-btn[data-theme]').forEach((btn) => {
+  document.querySelectorAll('.theme-btn[data-theme], .topbar-theme-btn[data-theme]').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (btn.dataset.theme === 'toggle') {
         toggleTheme();
       } else {
         setAppTheme(btn.dataset.theme);
+        document.querySelectorAll('.topbar-theme-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.theme === btn.dataset.theme);
+        });
       }
     });
   });
@@ -67,6 +71,10 @@ async function boot() {
     else if (id === 'billing_pos') initBillingPage();
     else if (id === 'system_health') initSystemHealthPage();
     else if (id === 'vendor_list' || id === 'vendor_history') initVendorsPage();
+    else if (id === 'credit_kadan' || id === 'customers') initCustomerCredit();
+    else if (id === 'day_to_day_selling' || id === 'daily_sales') {
+      if (typeof window.initDayToDaySelling === 'function') window.initDayToDaySelling();
+    }
   }
 }
 

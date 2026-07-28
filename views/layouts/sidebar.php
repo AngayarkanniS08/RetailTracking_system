@@ -5,7 +5,7 @@ if ($route === '/' || empty($route)) {
 }
 ?>
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-section">OPERATIONS</div>
+  <div class="sidebar-section">OPERATIONS & FINANCE</div>
   <a href="/dashboard" class="nav-item <?= $route === '/dashboard' ? 'active' : '' ?>">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="3" width="7" height="9" rx="1"></rect>
@@ -69,13 +69,15 @@ if ($route === '/' || empty($route)) {
     Vendor History
   </a>
 
-  <div class="sidebar-section">SYSTEM & INSIGHTS</div>
+  <div class="sidebar-section">SYSTEM</div>
   <a href="/system/health" class="nav-item <?= $route === '/system/health' ? 'active' : '' ?>">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
     </svg>
     System Health
   </a>
+
+  <div class="sidebar-section">INSIGHTS</div>
   <a href="/products/history" class="nav-item <?= $route === '/products/history' ? 'active' : '' ?>">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="18" y1="20" x2="18" y2="10"></line>

@@ -34,9 +34,9 @@ class AuthMiddleware
             $authHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         }
 
-        // Fallback: accept token via query param (for window.open etc.)
+        // Fallback: accept token via query param or cookie
         if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $queryToken = $_GET['token'] ?? '';
+            $queryToken = $_GET['token'] ?? ($_COOKIE['auth_token'] ?? '');
             if ($queryToken !== '') {
                 $authHeader = 'Bearer ' . $queryToken;
                 $matches = [1 => $queryToken];

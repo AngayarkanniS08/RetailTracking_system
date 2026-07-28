@@ -5,7 +5,7 @@
 import { apiRequest } from '../core/api.js';
 
 export async function fetchCustomerCreditsApi() {
-  return apiRequest('/api/customers/credits');
+  return apiRequest('/api/customers');
 }
 
 export async function recordCreditPaymentApi(customerId, paymentData) {

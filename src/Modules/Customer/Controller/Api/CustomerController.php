@@ -66,9 +66,9 @@ class CustomerController
             }
 
             echo $json;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to load customers: ' . $e->getMessage()]);
+            echo json_encode(['error' => 'Failed to load customers: ' . $e->getMessage(), 'trace' => $e->getTraceAsString()]);
         }
     }
 
