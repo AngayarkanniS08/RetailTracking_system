@@ -1,5 +1,5 @@
 /* =============================================================
-   footer.css — Footer layout
+   footer.css — Low-contrast Subtle Footer Layout
    ============================================================= */
 
 footer,
@@ -7,20 +7,28 @@ footer,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 2rem;
+  padding: 16px var(--space-4); /* 32px horizontal padding */
   border-top: 1px solid var(--border);
-  background: var(--card);
+  background: var(--surface-container);
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* 12px clean text */
+  font-weight: 400;
   flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity var(--duration-fast);
+}
+
+footer:hover,
+.footer:hover {
+  opacity: 1;
 }
 
 @media (max-width: 768px) {
   footer,
   .footer {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-1);
     text-align: center;
-    padding: 0.75rem 1rem;
+    padding: 16px var(--space-2);
   }
 }

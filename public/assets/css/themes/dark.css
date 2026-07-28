@@ -1,10 +1,12 @@
 /* =============================================================
-   dark.css — Dark mode token overrides (Midnight Slate theme)
+   dark.css — Dark mode token overrides (Layered Midnight theme)
+   Applied when: html[data-theme-mode="dark"]
    ============================================================= */
 
 :root[data-theme-mode="dark"] {
-  --background: #0b0f17;
-  --surface-container: #151d2a;
+  --background: #090d16;       /* Level 0: Deep canvas */
+  --sidebar-bg: #0d131f;        /* Level 1: Off-canvas sidebar */
+  --surface-container: #131b29;/* Level 2: Surface cards & navbar */
   --surface-container-low: #1e293b;
   --surface-container-high: #334155;
 
@@ -23,13 +25,13 @@
   --muted-strong: #cbd5e1;
   --muted-subtle: rgba(148, 163, 184, 0.12);
 
-  --border: #1e293b;
+  --border: rgba(30, 41, 59, 0.8);
   --border-strong: #334155;
   --border-hover: #475569;
 
-  --card: #151d2a;
+  --card: #131b29;
   --card-foreground: #f8fafc;
-  --panel: #151d2a;
+  --panel: #131b29;
   --panel-hover: #1e293b;
   --bg-hover: #1e293b;
 
@@ -42,7 +44,6 @@
   --info: #3b82f6;
   --info-subtle: rgba(59, 130, 246, 0.12);
 
-  /* Shadows for dark mode */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);

@@ -4,9 +4,9 @@
 
 .sidebar {
   width: 260px;
-  background: var(--surface-container);
+  background: var(--sidebar-bg); /* Level 1: Off-canvas sidebar background */
   border-right: 1px solid var(--border);
-  padding: var(--space-3) var(--space-2); /* 24px top/bottom, 16px left/right */
+  padding: var(--space-4) var(--space-2); /* 32px top/bottom, 16px left/right */
   display: flex;
   flex-direction: column;
   gap: var(--space-05); /* 4px gap */
@@ -15,15 +15,15 @@
   flex-shrink: 0;
 }
 
-/* Section label / divider */
+/* Category section header with 32px top separation & top border divider */
 .sidebar-section {
   font-size: 0.70rem;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin: var(--space-3) 0 var(--space-1) var(--space-1); /* 24px top margin */
-  padding-top: var(--space-15);
+  margin: var(--space-4) 0 var(--space-1) var(--space-1); /* 32px top margin for breathing room */
+  padding-top: var(--space-2); /* 16px top padding */
   border-top: 1px solid var(--border);
   user-select: none;
 }
@@ -36,15 +36,15 @@
 
 /* Nav Item Button */
 .nav-item {
-  padding: 10px 14px; /* Generous internal padding */
-  border-radius: var(--radius-md); /* 8px radius */
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
   color: var(--text);
   font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 12px; /* 12px between icon and text */
+  gap: 12px;
   transition: all var(--duration-fast) var(--ease-out);
   border: none;
   background: transparent;
@@ -63,8 +63,7 @@
   font-weight: 600;
 }
 
-.nav-item svg,
-.nav-item icon {
+.nav-item svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
