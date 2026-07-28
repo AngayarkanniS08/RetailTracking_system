@@ -6,15 +6,21 @@ import { switchTab } from '../core/router.js';
 
 /**
  * Initialise sidebar click delegation.
- * @param {string} [containerId='sidebar'] - ID of the sidebar element
  */
-export function initSidebar(containerId = 'sidebar') {
-  const sidebar = document.getElementById(containerId);
+export function initSidebar() {
+  const sidebar = document.querySelector('aside.sidebar, #sidebar, .sidebar');
   if (!sidebar) return;
 
   sidebar.addEventListener('click', (e) => {
     const navItem = e.target.closest('.nav-item[data-section]');
     if (!navItem) return;
-    switchTab(navItem.dataset.section);
+    const section = navItem.getAttribute('data-section') || navItem.dataset.section;
+    if (section) {
+      if (typeof window.switchTab === 'function') {
+        window.switchTab(section);
+      } else {
+        switchTab(section);
+      }
+    }
   });
 }

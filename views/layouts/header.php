@@ -10,10 +10,41 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="public/assets/css/style.css?v=<?= time(); ?>">
   <script>
-    // Inline script for flash-free theme detection on page load
+    // Inline script for flash-free theme detection & immediate global helpers
     (function() {
       var saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme-mode', saved);
+
+      window.switchTab = function(sectionId) {
+        document.querySelectorAll('.view-section').forEach(function(el) {
+          el.classList.remove('active');
+        });
+        var target = document.getElementById(sectionId);
+        if (target) {
+          target.classList.add('active');
+          window.location.hash = sectionId;
+        }
+        document.querySelectorAll('.nav-item[data-section]').forEach(function(nav) {
+          nav.classList.toggle('active', nav.getAttribute('data-section') === sectionId);
+        });
+      };
+
+      window.openModal = function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.classList.add('active'); document.body.style.overflow = 'hidden'; }
+      };
+
+      window.closeModal = function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.classList.remove('active'); document.body.style.overflow = ''; }
+      };
+
+      window.logoutUser = function() {
+        document.cookie = "auth_uid=; path=/; max-age=0;";
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        window.location.href = '/login';
+      };
     })();
   </script>
 </head>
