@@ -7,6 +7,6 @@
   </div>
 
   <!-- Modular Application Entry Point -->
-  <script type="module" src="public/assets/js/main.js?v=<?= time(); ?>"></script>
+  <script type="module" src="/public/assets/js/main.js?v=<?= time(); ?>"></script>
 </body>
 </html>

@@ -1,69 +1,112 @@
 /* =============================================================
-   auth.css — Authentication pages (login, register, forgot, reset)
+   auth.css — Authentication pages (Login, Register, Recovery)
    ============================================================= */
 
-/* Center the card on auth pages when wrapper is present */
-.auth-page-body {
+/* Centering layout for auth pages */
+body:has(.auth-wrapper),
+.auth-wrapper,
+#loginView {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--background);
   margin: 0;
-  padding: 1rem;
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
-/* Card container */
-.auth-card {
+/* Auth Card Aesthetics */
+.auth-card,
+.login-card {
   max-width: 420px;
   width: 100%;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 2rem;
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-xl); /* 16px radius */
+  padding: 40px 40px 0 40px; /* 40px padding top/sides */
+  box-shadow: var(--shadow-xl), 0 0 0 1px var(--border);
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Logo area */
-.auth-logo-area {
+/* Logo & Header Area */
+.auth-logo-area,
+.logo-area {
   text-align: center;
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
-.auth-logo-area img {
-  width: 200px;
+.auth-logo-area img,
+.logo-area img {
+  width: 220px;
   height: auto;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
-.auth-logo-text {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--text-strong);
-  margin-top: 0.5rem;
-}
-
-/* Titles */
 .auth-title {
-  text-align: center;
-  margin-bottom: 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 700;
   color: var(--text-strong);
-  font-size: 1.4rem;
+  margin-bottom: 4px;
 }
 
 .auth-subtitle {
-  text-align: center;
-  color: var(--muted);
   font-size: 0.9rem;
+  color: var(--muted);
   margin-bottom: 1.5rem;
 }
 
-/* Feedback message box */
+/* Form Spacing */
+#loginForm,
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Form Input Styling */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.input-field {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  color: var(--text-strong);
+  background: var(--background);
+  transition: all 200ms var(--ease-out);
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-subtle);
+}
+
+/* Feedback Message Box */
 .auth-message {
   font-size: 0.85rem;
-  margin-bottom: 1rem;
+  margin-bottom: 4px;
   text-align: center;
-  padding: 0.6rem 1rem;
+  padding: 10px 14px;
   border-radius: var(--radius-md);
   display: none;
 }
@@ -75,29 +118,52 @@
   display: block;
 }
 
-.auth-message.success {
-  color: var(--ok);
-  background: var(--ok-subtle);
-  border: 1px solid var(--ok);
-  display: block;
+/* Primary Action Button */
+.btn-primary.btn-block {
+  height: 46px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm), 0 2px 4px var(--accent-glow);
+  transition: all 200ms var(--ease-out);
 }
 
-/* Footer links (register / login / forgot) */
-.auth-links {
+.btn-primary.btn-block:hover {
+  box-shadow: var(--shadow-md), 0 4px 8px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+/* Contrasting Card Footer for Secondary Links */
+.RegisterForgot,
+.auth-footer {
+  background: var(--surface-container-low);
+  padding: 16px 24px;
+  margin: 24px -40px 0 -40px; /* Pull to card edges */
+  border-top: 1px solid var(--border);
+  border-bottom-left-radius: var(--radius-xl);
+  border-bottom-right-radius: var(--radius-xl);
   text-align: center;
-  margin-top: 1rem;
+  font-size: 0.85rem;
   color: var(--muted);
-  font-size: 0.9rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.auth-links a {
+.RegisterForgot p,
+.auth-footer p {
+  margin: 0;
+}
+
+.RegisterForgot a,
+.auth-footer a {
   color: var(--accent);
+  font-weight: 600;
   text-decoration: none;
+  transition: color 150ms var(--ease-out);
 }
 
-.auth-links a:hover {
+.RegisterForgot a:hover,
+.auth-footer a:hover {
   text-decoration: underline;
+  color: var(--accent-hover);
 }

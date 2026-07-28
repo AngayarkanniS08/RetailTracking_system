@@ -1,5 +1,8 @@
 <?php
-$route = $currentRoute ?? '/dashboard';
+$route = $currentRoute ?? parse_url($_SERVER['REQUEST_URI'] ?? '/dashboard', PHP_URL_PATH);
+if ($route === '/' || empty($route)) {
+    $route = '/dashboard';
+}
 ?>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-section">OPERATIONS</div>

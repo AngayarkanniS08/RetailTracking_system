@@ -7,6 +7,11 @@ class Router
 {
     private array $routes = [];
 
+    public function add(string $method, string $path, array|callable $handler, array $middlewares = []): void
+    {
+        $this->addRoute(strtoupper($method), $path, $handler, $middlewares);
+    }
+
     public function get(string $path, array|callable $handler, array $middlewares = []): void
     {
         $this->addRoute('GET', $path, $handler, $middlewares);
@@ -17,20 +22,48 @@ class Router
         $this->addRoute('POST', $path, $handler, $middlewares);
     }
 
+    public function put(string $path, array|callable $handler, array $middlewares = []): void
+    {
+        $this->addRoute('PUT', $path, $handler, $middlewares);
+    }
+
+    public function delete(string $path, array|callable $handler, array $middlewares = []): void
+    {
+        $this->addRoute('DELETE', $path, $handler, $middlewares);
+    }
+
+    public function patch(string $path, array|callable $handler, array $middlewares = []): void
+    {
+        $this->addRoute('PATCH', $path, $handler, $middlewares);
+    }
+
     private function addRoute(string $method, string $path, array|callable $handler, array $middlewares): void
     {
+        // Convert parameterized routes like /api/categories/{id} to regex
+        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<\1>[^/]+)', $path);
+        $regex = '#^' . rtrim($pattern, '/') . '/?$#';
+
         $this->routes[] = [
             'method'      => $method,
             'path'        => rtrim($path, '/') ?: '/',
+            'regex'       => $regex,
             'handler'     => $handler,
             'middlewares' => $middlewares,
         ];
     }
 
-    public function dispatch(Request $request): void
+    public function dispatch($methodOrRequest = null, ?string $pathOverride = null): void
     {
-        $method = $request->getMethod();
-        $uri = $request->getUri();
+        if ($methodOrRequest instanceof Request) {
+            $method = $methodOrRequest->getMethod();
+            $uri    = $methodOrRequest->getUri();
+            $requestObj = $methodOrRequest;
+        } else {
+            $method = is_string($methodOrRequest) ? strtoupper($methodOrRequest) : strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+            $path   = $pathOverride ?? parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+            $uri    = rtrim($path, '/') ?: '/';
+            $requestObj = new Request();
+        }
 
         // Handle favicon requests gracefully
         if ($uri === '/favicon.ico') {
@@ -41,16 +74,29 @@ class Router
         foreach ($this->routes as $route) {
             if ($route['method'] !== $method) continue;
 
-            if ($route['path'] === $uri) {
+            $params = [];
+            if ($route['path'] === $uri || preg_match($route['regex'], $uri, $matches)) {
+                if (isset($matches)) {
+                    foreach ($matches as $key => $value) {
+                        if (is_string($key)) {
+                            $params[$key] = $value;
+                        }
+                    }
+                }
+
                 // Execute Middlewares
                 foreach ($route['middlewares'] as $middleware) {
-                    call_user_func([$middleware, 'handle'], $request);
+                    if (is_callable($middleware)) {
+                        call_user_func($middleware, $requestObj);
+                    } else {
+                        call_user_func([$middleware, 'handle'], $requestObj);
+                    }
                 }
 
                 $handler = $route['handler'];
 
                 if (is_callable($handler)) {
-                    call_user_func($handler, $request);
+                    call_user_func($handler, $params);
                     return;
                 }
 
@@ -60,12 +106,19 @@ class Router
                 $container = Container::getInstance();
                 $controller = $container->make($controllerClass);
 
-                call_user_func([$controller, $action], $request);
+                call_user_func([$controller, $action], $requestObj, $params);
                 return;
             }
         }
 
         // 404 Route Not Found
+        http_response_code(404);
+        if (str_starts_with($uri, '/api/')) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['error' => "API Route [{$uri}] not found"]);
+            exit;
+        }
+
         throw new \Exception("Route [{$uri}] not found", 404);
     }
 }

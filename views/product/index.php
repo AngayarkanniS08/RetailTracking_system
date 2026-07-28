@@ -4,7 +4,7 @@
   - Categorization: "Manage Categories & Subcategories" modal to build product hierarchies.
   - Product Creation: "+ Add Product" modal capturing custom units, categories, and taxation (HSN/GST).
 -->
-<section id="product_master" class="view-section">
+<section id="product_master" class="view-section active">
   <div class="card-header">
     <span>Product Master</span>
     <div class="d-flex">

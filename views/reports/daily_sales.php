@@ -1,4 +1,4 @@
-        <section id="day_to_day_selling" class="view-section">
+        <section id="day_to_day_selling" class="view-section active">
           <h2 style="margin: 0 0 1.2rem; font-size: 1.4rem; font-weight: 700; color: var(--text-strong);">Day to Day
             Selling</h2>
 

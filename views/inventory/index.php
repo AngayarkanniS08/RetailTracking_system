@@ -5,7 +5,7 @@
   - Alerts: "Set Low Stock Alert" modal to configure custom thresholds.
   - Filtering: Search bar and category dropdown filters.
 -->
-        <section id="inventory" class="view-section">
+        <section id="inventory" class="view-section active">
           <div class="card-header">
             <span>Inventory & Batches</span>
             <div class="d-flex" style="gap: 8px; align-items: center;">

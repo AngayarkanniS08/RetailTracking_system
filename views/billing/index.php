@@ -1,5 +1,5 @@
 <!-- BILLING SECTION -->
-        <section id="billing_pos" class="view-section">
+        <section id="billing_pos" class="view-section active">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--text-strong);">Billing (POS)</h2>
           </div>

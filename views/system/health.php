@@ -1,4 +1,4 @@
-<section id="system_health" class="view-section">
+<section id="system_health" class="view-section active">
   <h2 style="margin-bottom:1.5rem;">System Health</h2>
 
   <div id="healthOverallStatus" class="card-panel" style="padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;">

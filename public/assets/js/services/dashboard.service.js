@@ -17,5 +17,5 @@ export async function fetchLowStockItemsApi() {
 }
 
 export async function fetchSystemHealthApi() {
-  return apiRequest('/api/health');
+  return apiRequest('/health');
 }

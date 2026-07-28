@@ -1,5 +1,5 @@
         <!-- PRODUCT HISTORY / VELOCITY DETAIL -->
-        <section id="product_history" class="view-section">
+        <section id="product_history" class="view-section active">
           <div class="card-header" style="margin-bottom: 1rem;">
             <div style="display:flex; align-items:center; gap:12px; flex:1; flex-wrap:wrap;">
               <button class="btn btn-outline btn-sm" onclick="switchTab('dashboard')"

@@ -10,7 +10,7 @@ class DashboardController
 {
     public function index(Request $request): void
     {
-        View::render('dashboard/index', [
+        View::render('reports/dashboard', [
             'pageTitle'    => 'Dashboard',
             'currentRoute' => '/dashboard',
         ]);

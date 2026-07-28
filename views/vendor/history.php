@@ -23,7 +23,7 @@ if (empty($vendorId)) {
 }
 ?>    
     
-    <section id="vendorhistory" class="view-section">
+    <section id="vendorhistory" class="view-section active">
           <div class="card-header">
             <div style="display:flex; align-items:center; gap:12px;">
               <button class="btn btn-outline btn-sm" onclick="switchTab('vendor_list')"

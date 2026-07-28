@@ -26,13 +26,28 @@ class ApiRoutes
         $router->add('POST', '/api/forgot-password', function (): void {
             (new ForgotPasswordController())->forgot();
         });
+        $router->add('POST', '/api/auth/forgot-password', function (): void {
+            (new ForgotPasswordController())->forgot();
+        });
+
         $router->add('POST', '/api/reset-password', function (): void {
             (new ResetPasswordController())->reset();
         });
+        $router->add('POST', '/api/auth/reset-password', function (): void {
+            (new ResetPasswordController())->reset();
+        });
+
         $router->add('POST', '/api/register', function (): void {
             (new RegistrationController())->register();
         });
+        $router->add('POST', '/api/auth/register', function (): void {
+            (new RegistrationController())->register();
+        });
+
         $router->add('POST', '/api/login', function (): void {
+            (new LoginController())->login();
+        });
+        $router->add('POST', '/api/auth/login', function (): void {
             (new LoginController())->login();
         });
 
@@ -43,31 +58,29 @@ class ApiRoutes
 
         // ── Categories (default 24h expiry) ────────────────────────
         $router->add('GET', '/api/categories', function (): void {
-            AuthMiddleware::authenticate(); // default 86400s
+            AuthMiddleware::authenticate();
             (new CategoryController())->index();
         });
         $router->add('POST', '/api/categories', function (): void {
-            AuthMiddleware::authenticate(); // default
+            AuthMiddleware::authenticate();
             (new CategoryController())->store();
         });
         $router->add('PUT', '/api/categories/{id}', function (array $params): void {
-            // Shorter expiry for updates: 15 minutes (900s)
             AuthMiddleware::authenticate(900);
             (new CategoryController())->update($params['id']);
         });
         $router->add('DELETE', '/api/categories/{id}', function (array $params): void {
-            // Shorter expiry for deletions: 15 minutes
             AuthMiddleware::authenticate(900);
             (new CategoryController())->destroy($params['id']);
         });
 
         // ── Subcategories ──────────────────────────────────────────
         $router->add('GET', '/api/subcategories', function (): void {
-            AuthMiddleware::authenticate(); // default
+            AuthMiddleware::authenticate();
             (new SubcategoryController())->index();
         });
         $router->add('POST', '/api/subcategories', function (): void {
-            AuthMiddleware::authenticate(); // default
+            AuthMiddleware::authenticate();
             (new SubcategoryController())->store();
         });
         $router->add('PUT', '/api/subcategories/{id}', function (array $params): void {
@@ -81,11 +94,11 @@ class ApiRoutes
 
         // ── Products ────────────────────────────────────────────────
         $router->add('GET', '/api/products', function (): void {
-            AuthMiddleware::authenticate(); // default
+            AuthMiddleware::authenticate();
             (new ProductController())->index();
         });
         $router->add('POST', '/api/products', function (): void {
-            AuthMiddleware::authenticate(); // default
+            AuthMiddleware::authenticate();
             (new ProductController())->store();
         });
         $router->add('PUT', '/api/products/{id}', function (array $params): void {
@@ -97,9 +110,9 @@ class ApiRoutes
             (new ProductController())->destroy($params['id']);
         });
 
-        // ── Units (read‑only, default expiry) ──────────────────────
+        // ── Units ──────────────────────────────────────────────────
         $router->add('GET', '/api/units', function (): void {
-            AuthMiddleware::authenticate(); // default
+            AuthMiddleware::authenticate();
             (new UnitController())->index();
         });
 
@@ -114,7 +127,7 @@ class ApiRoutes
             (new BatchController())->update($params['id']);
         });
 
-        // ── Product Alerts (6-Layer flow) ──────────────────────────
+        // ── Product Alerts ──────────────────────────────────────────
         $router->add('GET', '/api/inventory/alerts', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Inventory\Controller\Api\AlertController())->index();
@@ -123,45 +136,29 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Inventory\Controller\Api\AlertController())->store();
         });
-        // FIX: renamed from DELETE to PATCH .../disable
-        // Reason: the operation resets alert fields to zero (soft-disable), it does
-        // not remove a database row. DELETE semantics were misleading to consumers.
         $router->add('PATCH', '/api/inventory/alerts/{productId}/disable', function (array $params): void {
-            AuthMiddleware::authenticate(900); // Shorter expiry for modifications
+            AuthMiddleware::authenticate(900);
             (new \Modules\Inventory\Controller\Api\AlertController())->disable($params['productId']);
         });
 
-                // ── Vendors (Standalone Profile Management) ────────────────
-        // ── Vendor Purchases (6-Layer flow) ──────────────────────────
-
-        // GET /api/purchases – list all purchases (paginated, filterable)
+        // ── Purchases & Vendors ──────────────────────────────────────
         $router->add('GET', '/api/purchases', function (): void {
             (new \Modules\Vendor\Controller\PurchaseController())->index();
         });
-
-        // POST /api/purchases – create a new purchase (with vendor on-the-fly)
         $router->add('POST', '/api/purchases', function (): void {
             (new \Modules\Vendor\Controller\PurchaseController())->store();
         });
-
-        // GET /api/purchases/{id} – get a single purchase with its items
         $router->add('GET', '/api/purchases/{id}', function (array $params): void {
             (new \Modules\Vendor\Controller\PurchaseController())->show($params['id']);
         });
-
-        // POST /api/purchases/{id}/pay – record a payment against a purchase
         $router->add('POST', '/api/purchases/{id}/pay', function (array $params): void {
-            AuthMiddleware::authenticate(900); // Shorter expiry for payment operations
+            AuthMiddleware::authenticate(900);
             (new \Modules\Vendor\Controller\PurchaseController())->recordPayment($params['id']);
         });
-
-        // (Optional) PUT /api/purchases/{id} – update a purchase
         $router->add('PUT', '/api/purchases/{id}', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Vendor\Controller\PurchaseController())->update($params['id']);
         });
-
-        // (Optional) DELETE /api/purchases/{id} – delete a purchase
         $router->add('DELETE', '/api/purchases/{id}', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Vendor\Controller\PurchaseController())->destroy($params['id']);
@@ -171,22 +168,18 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->vendorList();
         });
-
         $router->add('GET', '/api/vendors/{id}/history', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->vendorHistory($params['id']);
         });
-
         $router->add('GET', '/api/vendors/history/all', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->allHistory();
         });
-
         $router->add('GET', '/api/vendors/{id}/payments', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->vendorPayments($params['id']);
         });
-
         $router->add('GET', '/api/vendors/payments/all', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->allPayments();
@@ -197,68 +190,57 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Billing\Controller\InvoiceController())->index();
         });
-
         $router->add('POST', '/api/invoices', function (): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Billing\Controller\InvoiceController())->store();
         });
-
         $router->add('GET', '/api/invoices/{id}', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Billing\Controller\InvoiceController())->show($params['id']);
         });
-
         $router->add('POST', '/api/invoices/{id}/cancel', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Billing\Controller\InvoiceController())->cancel($params['id']);
         });
-
         $router->add('POST', '/api/invoices/{id}/return', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Billing\Controller\InvoiceController())->returnItems($params['id']);
         });
-
         $router->add('GET', '/api/invoices/{id}/receipt', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Billing\Controller\InvoiceController())->receipt($params['id']);
         });
 
-        // ── POS Search (Valkey-cached) ──────────────────────────────
+        // ── POS Search ──────────────────────────────────────────────
         $router->add('GET', '/api/pos/search', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Billing\Controller\Api\PosSearchController())->search();
         });
-
         $router->add('POST', '/api/pos/search/flush', function (): void {
             (new \Modules\Billing\Controller\Api\PosSearchController())->flushCache();
         });
 
-        // ── Customers / Credit (Kadan) ─────────────────────────
+        // ── Customers / Credit ─────────────────────────────────────
         $router->add('GET', '/api/customers', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Customer\Controller\Api\CustomerController())->index();
         });
-
         $router->add('POST', '/api/customers', function (): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Customer\Controller\Api\CustomerController())->store();
         });
-
         $router->add('GET', '/api/customers/{id}', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Customer\Controller\Api\CustomerController())->show($params['id']);
         });
-
         $router->add('PUT', '/api/customers/{id}', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Customer\Controller\Api\CustomerController())->update($params['id']);
         });
-
         $router->add('POST', '/api/customers/{id}/pay', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Customer\Controller\Api\CustomerController())->pay($params['id']);
         });
-
         $router->add('GET', '/api/customers/{id}/ledger', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Customer\Controller\Api\CustomerController())->ledger($params['id']);
@@ -269,33 +251,28 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\DashboardController())->stats();
         });
-
         $router->add('GET', '/api/dashboard/stock-intel', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\DashboardController())->stockIntel();
         });
 
-        // ── Product History / Analytics ─────────────────────────────
+        // ── Product History ─────────────────────────────────────────
         $router->add('GET', '/api/products/with-stock', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\ProductHistoryController())->productsWithStock();
         });
-
         $router->add('GET', '/api/products/{id}/history', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\ProductHistoryController())->show($params['id']);
         });
-
         $router->add('GET', '/api/products/{id}/daily-sales', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\ProductHistoryController())->dailySales($params['id']);
         });
-
         $router->add('POST', '/api/products/{id}/daily-sales', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Reports\Controller\Api\ProductHistoryController())->storeDailySale($params['id']);
         });
-
         $router->add('DELETE', '/api/products/daily-sales/{saleId}', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Reports\Controller\Api\ProductHistoryController())->destroyDailySale($params['saleId']);
@@ -340,9 +317,11 @@ class ApiRoutes
         $router->add('GET', '/health', function (): void {
             (new \Modules\Health\Controller\HealthController())->health();
         });
+        $router->add('GET', '/api/health', function (): void {
+            (new \Modules\Health\Controller\HealthController())->health();
+        });
         $router->add('GET', '/metrics', function (): void {
             (new \Modules\Health\Controller\HealthController())->metrics();
         });
-
     }
 }

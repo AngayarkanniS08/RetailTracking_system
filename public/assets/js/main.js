@@ -1,9 +1,9 @@
 /**
  * main.js — Application entry point
- * Bootstraps: theme, router, sidebar, modals, and page-specific init
+ * Bootstraps: theme, router, sidebar, modals, auth handlers, and page-specific init
  *
  * Usage in footer.php:
- *   <script type="module" src="public/assets/js/main.js"></script>
+ *   <script type="module" src="/public/assets/js/main.js"></script>
  */
 
 import { initTheme, toggleTheme, setAppTheme } from './ui/theme.js';
@@ -12,6 +12,13 @@ import { initSidebar } from './ui/sidebar.js';
 import { initModals, openModal, closeModal } from './ui/modal.js';
 import { logoutUser } from './core/auth.js';
 import { showToast } from './ui/toast.js';
+import { initAuthPage } from './pages/auth.js';
+
+// Page-specific modules
+import { initDashboardPage } from './pages/dashboard.js';
+import { initBillingPage } from './pages/billing.js';
+import { initSystemHealthPage } from './pages/system-health.js';
+import { initVendorsPage } from './pages/vendors.js';
 
 // Expose core global helpers for HTML inline attribute handlers (backward compatibility)
 window.logoutUser = logoutUser;
@@ -38,7 +45,10 @@ async function boot() {
   // 4. Route to the active section
   initRouter();
 
-  // 5. Bind theme toggle buttons
+  // 5. Initialize auth page listeners (Login/Register)
+  initAuthPage();
+
+  // 6. Bind theme toggle buttons
   document.querySelectorAll('.theme-btn[data-theme]').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (btn.dataset.theme === 'toggle') {
@@ -48,6 +58,16 @@ async function boot() {
       }
     });
   });
+
+  // 7. Initialize active page controller module
+  const activeSection = document.querySelector('.view-section.active');
+  if (activeSection) {
+    const id = activeSection.id;
+    if (id === 'dashboard') initDashboardPage();
+    else if (id === 'billing_pos') initBillingPage();
+    else if (id === 'system_health') initSystemHealthPage();
+    else if (id === 'vendor_list' || id === 'vendor_history') initVendorsPage();
+  }
 }
 
 // Guard: only run when DOM is ready

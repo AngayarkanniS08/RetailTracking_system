@@ -4,7 +4,7 @@
   - Registration: "+ Add Customer" modal for onboarding new clients with credit accounts.
   - Metrics: Displays outstanding balances, total purchases, and total payments per customer.
 -->
-        <section id="credit_kadan" class="view-section">
+        <section id="credit_kadan" class="view-section active">
           <div class="card-header">
             <span>Customer Credit (Kadan)</span>
             <button class="btn btn-outline btn-sm" onclick="openModal('addCustomerModal')">+ Add Customer</button>

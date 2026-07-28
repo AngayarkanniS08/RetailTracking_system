@@ -4,7 +4,7 @@
   - Vendor Metrics: Balances cards and transaction history per vendor.
   - Purchasing: "+ New Purchase" entry form to log incoming goods and update system batches.
 -->
-        <section id="vendor_list" class="view-section">
+        <section id="vendor_list" class="view-section active">
           <div class="card-header">
             <span>Vendor List</span>
             <div class="d-flex" style="gap: 10px;">
