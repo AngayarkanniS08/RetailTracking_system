@@ -24,11 +24,6 @@ require_once __DIR__ . '/header.php';
       <div class="page-content-wrapper">
         <?= $pageContent ?? '' ?>
       </div>
-      
-      <footer class="app-footer">
-        <div>&copy; <?= date('Y') ?> Pudheera Retail Tracking System. All rights reserved.</div>
-        <div>v1.0 &bull; Enterprise SaaS Edition</div>
-      </footer>
     </main>
   </div>
 </div>

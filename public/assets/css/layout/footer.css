@@ -1,34 +1,10 @@
 /* =============================================================
-   footer.css — Low-contrast Subtle Footer Layout
+   footer.css — App Footer & Theme Panel Removal Rules
    ============================================================= */
 
+.theme-panel,
 footer,
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px var(--space-4); /* 32px horizontal padding */
-  border-top: 1px solid var(--border);
-  background: var(--surface-container);
-  color: var(--muted);
-  font-size: 0.75rem; /* 12px clean text */
-  font-weight: 400;
-  flex-shrink: 0;
-  opacity: 0.8;
-  transition: opacity var(--duration-fast);
-}
-
-footer:hover,
-.footer:hover {
-  opacity: 1;
-}
-
-@media (max-width: 768px) {
-  footer,
-  .footer {
-    flex-direction: column;
-    gap: var(--space-1);
-    text-align: center;
-    padding: 16px var(--space-2);
-  }
+.footer,
+.app-footer {
+  display: none !important;
 }
