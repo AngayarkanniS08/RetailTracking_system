@@ -1,11 +1,18 @@
 /* =============================================================
-   light.css — Light mode token overrides (Layered Slate theme)
+   light.css — Light mode token overrides (Layered Slate / Stripe palette)
    Applied when: html[data-theme-mode="light"]
    ============================================================= */
 
 :root[data-theme-mode="light"] {
-  --background: #f6f7fb;       /* Level 0: Soft background */
+  --background: #f6f8fb;       /* Level 0: Soft background */
   --sidebar-bg: #fcfcfd;        /* Level 1: Off-canvas sidebar */
+  --sidebar-hover: #f4f6fa;
+  --sidebar-active: #eef4ff;
+  --sidebar-active-accent: #2563eb;
+  --sidebar-border: #e6eaf2;
+  --sidebar-text: #344054;
+  --sidebar-muted: #667085;
+
   --surface-container: #ffffff;/* Level 2: Surface cards & navbar */
   --surface-container-low: #f1f5f9;
   --surface-container-high: #e2e8f0;
@@ -19,13 +26,13 @@
   --accent-subtle: rgba(37, 99, 235, 0.08);
   --accent-glow: rgba(37, 99, 235, 0.15);
 
-  --text: #334155;
+  --text: #344054;
   --text-strong: #0f172a;
-  --muted: #64748b;
+  --muted: #667085;
   --muted-strong: #475569;
-  --muted-subtle: rgba(100, 116, 139, 0.08);
+  --muted-subtle: rgba(102, 112, 133, 0.08);
 
-  --border: rgba(226, 232, 240, 0.8);
+  --border: #e6eaf2;
   --border-strong: #cbd5e1;
   --border-hover: #94a3b8;
 

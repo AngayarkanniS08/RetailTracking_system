@@ -6,6 +6,13 @@
 :root[data-theme-mode="dark"] {
   --background: #090d16;       /* Level 0: Deep canvas */
   --sidebar-bg: #0d131f;        /* Level 1: Off-canvas sidebar */
+  --sidebar-hover: #182232;
+  --sidebar-active: rgba(59, 130, 246, 0.16);
+  --sidebar-active-accent: #3b82f6;
+  --sidebar-border: rgba(30, 41, 59, 0.8);
+  --sidebar-text: #cbd5e1;
+  --sidebar-muted: #94a3b8;
+
   --surface-container: #131b29;/* Level 2: Surface cards & navbar */
   --surface-container-low: #1e293b;
   --surface-container-high: #334155;
