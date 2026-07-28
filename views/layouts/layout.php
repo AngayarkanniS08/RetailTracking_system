@@ -1,5 +1,5 @@
 <?php
-// Master Layout Wrapper for Logged-In MPA Pages
+// Master Layout Wrapper for Logged-In Enterprise MPA Pages
 require_once __DIR__ . '/header.php';
 ?>
 <div class="dashboard" id="dashboardView">
@@ -19,8 +19,16 @@ require_once __DIR__ . '/header.php';
 
   <div class="main-container">
     <?php require_once __DIR__ . '/sidebar.php'; ?>
-    <main class="content-area">
-      <?= $pageContent ?? '' ?>
+    
+    <main class="content-area" id="mainContentArea">
+      <div class="page-content-wrapper">
+        <?= $pageContent ?? '' ?>
+      </div>
+      
+      <footer class="app-footer">
+        <div>&copy; <?= date('Y') ?> Pudheera Retail Tracking System. All rights reserved.</div>
+        <div>v1.0 &bull; Enterprise SaaS Edition</div>
+      </footer>
     </main>
   </div>
 </div>

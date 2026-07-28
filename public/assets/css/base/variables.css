@@ -23,6 +23,10 @@
   --stack-xl: var(--space-8);
   --container-max: 1440px;
 
+  /* ── Layout Shell Tokens ── */
+  --header-height: 64px;
+  --sidebar-width: 260px;
+
   /* ── Border Radius (Standardized 8px / 10px) ── */
   --radius-xs: 4px;
   --radius-sm: 6px;

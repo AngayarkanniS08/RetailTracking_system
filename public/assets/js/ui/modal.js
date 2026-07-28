@@ -12,7 +12,6 @@ export function openModal(modalIdOrEl) {
     : modalIdOrEl;
   if (!el) return;
   el.classList.add('active');
-  document.body.style.overflow = 'hidden';
   el.querySelector('[autofocus]')?.focus();
 }
 
@@ -26,7 +25,6 @@ export function closeModal(modalIdOrEl) {
     : modalIdOrEl;
   if (!el) return;
   el.classList.remove('active');
-  document.body.style.overflow = '';
 }
 
 /**

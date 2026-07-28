@@ -6,11 +6,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: var(--header-height, 64px);
   padding: 0 var(--space-4); /* 32px padding */
   border-bottom: 1px solid var(--border);
   background: var(--surface-container);
   flex-shrink: 0;
+  box-sizing: border-box;
+  z-index: 100;
 }
 
 .user-menu {

@@ -1,39 +1,66 @@
 /* =============================================================
-   containers.css — App shell and max-width 1440px container layout
+   containers.css — Fixed-Viewport Shell & Independent Scroll Regions
    ============================================================= */
 
-/* ── App Shell Wrapper ── */
+/* ── Master App Shell Viewport ── */
 .dashboard,
 #dashboardView {
   display: flex;
-  width: 100%;
-  min-height: 100vh;
   flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   background: var(--background);
   margin: 0;
   padding: 0;
 }
 
-/* ── Main Flex Split: Sidebar + Content ── */
+/* ── Main Layout Split: Sidebar + Content ── */
 .main-container {
   display: flex;
   flex: 1;
+  height: calc(100vh - var(--header-height, 64px));
   overflow: hidden;
   width: 100%;
+  position: relative;
 }
 
-/* ── Scrollable Content Area (Airy 32px padding, 1440px max width) ── */
+/* ── Independent Scrollable Content Area ── */
 .content-area {
   flex: 1;
-  padding: var(--space-4); /* 32px padding */
+  height: 100%;
   overflow-y: auto;
-  transition: padding var(--duration-normal) ease;
+  overflow-x: hidden;
+  padding: var(--space-4); /* 32px padding */
   background: var(--background);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+
+  /* Custom Clean Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
-/* Inner content constraint box to prevent edge-to-edge stretching */
-.content-area > * {
-  max-width: var(--container-max); /* 1440px */
+.content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+
+/* Inner content max-width wrapper */
+.page-content-wrapper {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: var(--container-max, 1440px);
   margin-left: auto;
   margin-right: auto;
 }
@@ -74,10 +101,10 @@
   box-shadow: var(--shadow-xs);
 }
 
-/* ── Responsive breakpoint ── */
+/* ── Responsive Mobile Overrides ── */
 @media (max-width: 768px) {
   .main-container {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .content-area {

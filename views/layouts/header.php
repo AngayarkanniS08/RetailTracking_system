@@ -31,12 +31,12 @@
 
       window.openModal = window.openModal || function(id) {
         var el = document.getElementById(id);
-        if (el) { el.classList.add('active'); document.body.style.overflow = 'hidden'; }
+        if (el) { el.classList.add('active'); }
       };
 
       window.closeModal = window.closeModal || function(id) {
         var el = document.getElementById(id);
-        if (el) { el.classList.remove('active'); document.body.style.overflow = ''; }
+        if (el) { el.classList.remove('active'); }
       };
 
       window.logoutUser = window.logoutUser || function() {
