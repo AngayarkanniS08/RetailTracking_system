@@ -20,32 +20,96 @@
 
 /* ── Modal box ── */
 .modal-content {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl, 0 10px 25px -5px rgba(0, 0, 0, 0.1));
   animation: rise 0.2s var(--ease-out);
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  width: 50vw;
-  max-width: 1200px;
-  height: 85vh;
-  max-height: 85vh;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  width: 480px;
+  max-width: 92vw;
+  height: auto;
+  max-height: 90vh;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
-/* ── Modal header ── */
+/* ── Modal header & child resets ── */
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 8px;
+  border: none;
+  border-bottom: 1px solid var(--border, #f3f4f6);
 }
 
+.modal-header h1,
+.modal-header h2,
+.modal-header h3,
 .modal-title {
+  margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--text-strong, #111827);
+}
+
+/* ── Modal body ── */
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Footer grid flow & action buttons ── */
+.modal-footer,
+.modal-content > div:last-child:not(.modal-header):not(.modal-body) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-top: 8px;
+  align-items: center;
+}
+
+.modal-footer .btn,
+.modal-content > div:last-child:not(.modal-header):not(.modal-body) .btn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.modal-footer .btn:only-child,
+.modal-content > div:last-child:not(.modal-header):not(.modal-body) .btn:only-child {
+  grid-column: 1 / -1;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.d-flex {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+button.btn-primary.btn-block {
+  margin-top: 8px;
+}
+
+label {
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: var(--text-strong);
 }
 
@@ -82,8 +146,8 @@
 @media (max-width: 768px) {
   .modal-content {
     width: 95vw;
-    height: 90vh;
+    height: auto;
     max-height: 90vh;
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 }

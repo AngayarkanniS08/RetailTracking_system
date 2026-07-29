@@ -2,56 +2,64 @@
 
   <!-- Active Low Stock Alerts Modal -->
   <div class="modal-overlay" id="activeAlertsModal">
-    <div class="modal-content" style="max-width: 500px; width: 95%;">
-      <div class="modal-header">
-        <div class="modal-title">⚠️ Active Low Stock Alerts</div>
+    <div class="modal-content" style="max-width: 520px; width: 95%; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 20px;">
+      <div class="modal-header" style="padding-bottom: 12px; border-bottom: 1px solid var(--border, #eaecf0); margin: 0;">
+        <div class="modal-title" style="font-size: 18px; font-weight: 600; color: var(--text-strong, #101828);">⚠️ Active Low Stock Alerts</div>
         <button class="close-btn" onclick="closeModal('activeAlertsModal')">&times;</button>
       </div>
-      <div id="activeAlertsModalList" style="margin-top: 0.5rem; margin-bottom: 1rem;">
+      <div id="activeAlertsModalList" style="display: flex; flex-direction: column; gap: 12px; margin: 0;">
         <!-- Loaded dynamically -->
       </div>
-      <button class="btn btn-outline btn-block" onclick="closeModal('activeAlertsModal')">Close</button>
+      <div class="modal-footer" style="margin-top: 8px;">
+        <button class="btn btn-outline btn-block" onclick="closeModal('activeAlertsModal')">Close</button>
+      </div>
     </div>
   </div>
 
   <!-- Low Stock Alert Modal -->
   <div class="modal-overlay" id="lowStockAlertModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div class="modal-title">🔔 Set Low Stock Alert</div>
+    <div class="modal-content" style="max-width: 520px; width: 95%; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 20px;">
+      <div class="modal-header" style="padding-bottom: 12px; border-bottom: 1px solid var(--border, #eaecf0); margin: 0;">
+        <div class="modal-title" style="font-size: 18px; font-weight: 600; color: var(--text-strong, #101828);">🔔 Set Low Stock Alert</div>
         <button class="close-btn" onclick="closeModal('lowStockAlertModal')">&times;</button>
       </div>
-      <div class="input-group">
-        <label class="input-label">Select Product</label>
-        <select id="alertProductSelect" class="input-field"></select>
-      </div>
       
-      <!-- Row 1: Lead Time & Daily Sales Qty -->
-      <div class="d-flex" style="gap: 12px; margin-bottom: 1rem;">
-        <div class="input-group" style="flex: 1; margin-bottom: 0;">
-          <label class="input-label">Lead Time (days)</label>
-          <input type="number" id="alertLeadTime" class="input-field" placeholder="e.g. 5" min="0" oninput="calculateReorderPoint()">
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 0;">
+        <div class="input-group" style="display: flex; flex-direction: column; gap: 6px;">
+          <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Select Product</label>
+          <select id="alertProductSelect" class="input-field" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;"></select>
         </div>
-        <div class="input-group" style="flex: 1; margin-bottom: 0;">
-          <label class="input-label">Daily Sale Qty</label>
-          <input type="number" id="alertDailySale" class="input-field" placeholder="e.g. 3" min="0" oninput="calculateReorderPoint()">
+        
+        <!-- Row 1: Lead Time & Daily Sales Qty -->
+        <div style="display: flex; flex-direction: row; gap: 16px; align-items: flex-end;">
+          <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+            <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Lead Time (days)</label>
+            <input type="number" id="alertLeadTime" class="input-field" placeholder="e.g. 5" min="0" oninput="calculateReorderPoint()" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+          </div>
+          <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+            <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Daily Sale Qty</label>
+            <input type="number" id="alertDailySale" class="input-field" placeholder="e.g. 3" min="0" oninput="calculateReorderPoint()" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+          </div>
         </div>
+
+        <!-- Row 2: Emergency Stock & Editable Calculated Threshold -->
+        <div style="display: flex; flex-direction: row; gap: 16px; align-items: flex-end;">
+          <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+            <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Emergency Stock</label>
+            <input type="number" id="alertEmergencyStock" class="input-field" placeholder="e.g. 10" min="0" oninput="calculateReorderPoint()" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+          </div>
+          <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+            <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Reorder Point (Qty)</label>
+            <input type="number" id="alertThreshold" class="input-field" placeholder="Calculated value" min="1" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div id="existingAlertsList" style="margin-top: 4px;"></div>
       </div>
 
-      <!-- Row 2: Emergency Stock & Editable Calculated Threshold -->
-      <div class="d-flex" style="gap: 12px; margin-bottom: 1.5rem;">
-        <div class="input-group" style="flex: 1; margin-bottom: 0;">
-          <label class="input-label">Emergency Stock</label>
-          <input type="number" id="alertEmergencyStock" class="input-field" placeholder="e.g. 10" min="0" oninput="calculateReorderPoint()">
-        </div>
-        <div class="input-group" style="flex: 1; margin-bottom: 0;">
-          <label class="input-label">Reorder Point (Qty)</label>
-          <input type="number" id="alertThreshold" class="input-field" placeholder="Calculated value" min="1">
-        </div>
+      <div class="modal-footer" style="margin-top: 8px;">
+        <button class="btn btn-primary btn-block" onclick="saveLowStockAlert()" style="height: 40px; font-weight: 600; border-radius: 8px;">Set Alert</button>
       </div>
-
-      <div id="existingAlertsList" style="margin-bottom: 1rem;"></div>
-      <button class="btn btn-primary btn-block" onclick="saveLowStockAlert()">Set Alert</button>
     </div>
   </div>
 
@@ -420,34 +428,62 @@
     </div>
   </div>
 
-  <!-- Add Category Modal -->
+  <!-- Add Category / Subcategory Modal -->
   <div class="modal-overlay" id="addCategoryModal">
-    <div class="modal-content" style="max-width: 500px;">
-      <div class="modal-header">
-        <div class="modal-title">Manage Categories & Subcategories</div>
-        <button class="close-btn" onclick="closeModal('addCategoryModal')">&times;</button>
+    <div class="modal-content" style="max-width: 520px; width: 95%; padding: 28px; border-radius: 16px; display: flex; flex-direction: column; gap: 24px; background: var(--card, #ffffff); border: 1px solid var(--border, #e2e8f0); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+      
+      <!-- Header -->
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border, #f1f5f9); padding-bottom: 14px; margin: 0;">
+        <div class="modal-title" style="font-size: 1.15rem; font-weight: 700; color: var(--text-strong, #0f172a);">Manage Categories & Subcategories</div>
+        <button class="close-btn" onclick="closeModal('addCategoryModal')" style="background: transparent; border: none; font-size: 1.25rem; cursor: pointer; color: var(--muted, #64748b); line-height: 1;">&times;</button>
       </div>
       
-      <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
-        <div style="font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; color: var(--accent);">Add Category</div>
-        <div class="input-group">
-          <input type="text" id="pmCategoryName" class="input-field" placeholder="e.g. Lace Work">
-        </div>
-        <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
-      </div>
-
-      <div>
-        <div style="font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; color: var(--accent);">Add Subcategory</div>
+      <div style="display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: stretch;">
         
-        <div class="input-group">
-          <label class="input-label">Select Category</label>
-          <select id="pmSubCatParent" class="input-field"></select>
+        <!-- Section 1: Add Category -->
+        <div style="background: var(--bg-hover, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; width: 100%; box-sizing: border-box;">
+          <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-strong, #0f172a); display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary, #2563eb);">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Add Category
+          </div>
+          
+          <div class="input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+            <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Category Name</label>
+            <input type="text" id="pmCategoryName" class="input-field" placeholder="e.g. Lace Work" style="height: 42px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #cbd5e1); background: var(--card, #ffffff); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; margin-top: 4px; width: 100%;">
+            <button class="btn btn-primary" onclick="saveCategory()" style="padding: 10px 20px; font-size: 0.875rem; font-weight: 600; border-radius: 8px;">Save Category</button>
+          </div>
         </div>
-        <div class="input-group">
-          <label class="input-label">Subcategory Name</label>
-          <input type="text" id="pmSubCategoryName" class="input-field" placeholder="e.g. Fancy Lace">
+
+        <!-- Section 2: Add Subcategory -->
+        <div style="background: var(--bg-hover, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px; width: 100%; box-sizing: border-box;">
+          <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-strong, #0f172a); display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary, #2563eb);">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+              <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            </svg>
+            Add Subcategory
+          </div>
+          
+          <div class="input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+            <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Select Parent Category</label>
+            <select id="pmSubCatParent" class="input-field" style="height: 42px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #cbd5e1); background: var(--card, #ffffff); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;"></select>
+          </div>
+
+          <div class="input-group" style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+            <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Subcategory Name</label>
+            <input type="text" id="pmSubCategoryName" class="input-field" placeholder="e.g. Fancy Lace" style="height: 42px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #cbd5e1); background: var(--card, #ffffff); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; margin-top: 4px; width: 100%;">
+            <button class="btn btn-primary" onclick="saveSubcategory()" style="padding: 10px 20px; font-size: 0.875rem; font-weight: 600; border-radius: 8px;">Save Subcategory</button>
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="saveSubcategory()">Save Subcategory</button>
+
       </div>
     </div>
   </div>
@@ -664,18 +700,47 @@
 
 <!-- Delete Product Confirmation Modal -->
 <div id="deleteProductModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-            <div class="modal-title">Confirm Delete</div>
-            <button class="close-btn" onclick="closeModal('deleteProductModal')">&times;</button>
+    <div class="modal-content" style="max-width: 420px; border-radius: 12px; padding: 20px 24px; background: var(--card, #ffffff); border: 1px solid var(--border, #e2e8f0); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border, #f1f5f9); padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="modal-title" style="font-size: 1.05rem; font-weight: 700; color: var(--text-strong, #0f172a);">Delete Product</div>
+                <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; background: rgba(239, 68, 68, 0.1); color: var(--danger, #ef4444); padding: 2px 7px; border-radius: 12px; letter-spacing: 0.04em;">Irreversible</span>
+            </div>
+            <button class="close-btn" onclick="closeModal('deleteProductModal')" style="background: transparent; border: none; font-size: 1.25rem; cursor: pointer; color: var(--muted, #64748b); line-height: 1;">&times;</button>
         </div>
-        <div class="modal-body" id="deleteProductModalBody">
-            <p>Are you sure you want to delete the product <strong id="deleteProductName"></strong>?</p>
-            <p class="text-muted" style="font-size: 0.85rem;">Inventory records (stock list, batches) will be permanently deleted. Invoice and purchase history will be preserved.</p>
+        
+        <div class="modal-body" id="deleteProductModalBody" style="padding: 0;">
+            <!-- Compact Product Preview Box with Warning Badge -->
+            <div style="background: var(--bg-hover, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(239, 68, 68, 0.1); color: var(--danger, #ef4444); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 0.7rem; font-weight: 700; color: var(--muted, #64748b); text-transform: uppercase;" id="deleteProductId">PRODUCT ID</span>
+                        <span style="font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--card, #ffffff); border: 1px solid var(--border, #e2e8f0); color: var(--text-strong, #334155);" id="deleteProductCategory">Category</span>
+                    </div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-strong, #0f172a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;" id="deleteProductName">Product Name</div>
+                </div>
+            </div>
+            
+            <p style="font-size: 0.85rem; font-weight: 600; text-align: center; color: var(--text-strong, #1f2937); margin: 0; line-height: 1.45;">
+                Are you sure you want to delete this product? Inventory stock records will be permanently removed.
+            </p>
         </div>
-        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
-            <button class="btn btn-outline" onclick="closeModal('deleteProductModal')">Cancel</button>
-            <button class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+        
+        <div class="modal-footer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px;">
+            <button class="btn btn-outline" onclick="closeModal('deleteProductModal')" style="padding: 8px 14px; font-size: 0.875rem; font-weight: 600; border-radius: 6px;">Cancel</button>
+            <button class="btn btn-danger" id="confirmDeleteBtn" style="padding: 8px 14px; font-size: 0.875rem; font-weight: 600; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete Product
+            </button>
         </div>
     </div>
 </div>

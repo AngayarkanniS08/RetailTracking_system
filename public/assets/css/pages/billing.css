@@ -1,15 +1,22 @@
-/* =============================================================
-   billing.css — POS Billing page specific styles
-   ============================================================= */
+/* ── Billing Section Base Container ── */
+section#billing_pos {
+  position: relative;
+  overflow: visible;
+  display: block;
+}
 
 /* ── Billing data grid wrap ── */
 .billing-grid-wrap {
   flex: 1;
-  overflow: auto;
+  padding: 0;
+  margin-bottom: 133px; /* Matches bottom bar height to prevent overlap */
+  height: calc(100vh - 250px);
+  overflow-y: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md); /* 8px radius */
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
   background: var(--card);
-  margin-bottom: 1rem;
 }
 
 .billing-grid-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -18,38 +25,72 @@
 .billing-grid-wrap::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
 /* ── Billing grid table ── */
-.billing-grid {
+.billing-grid,
+#billingGrid,
+table#billingGrid {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.85rem;
-  table-layout: fixed;
-}
-
-.billing-grid thead th {
-  padding: 8px 10px;
-  background: var(--bg-elevated);
-  color: var(--muted-strong);
-  font-weight: 600;
-  font-size: 0.8rem;
-  border-bottom: 2px solid var(--border-strong);
-  text-align: left;
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.billing-grid tbody td {
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
-  height: 32px;
-  vertical-align: middle;
-  color: var(--text);
   background: var(--card);
   font-size: 0.85rem;
+  table-layout: fixed;
+  border: 1.5px solid #334155;
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
-.billing-grid tbody tr:nth-child(even) td { background: var(--bg-accent); }
+.billing-grid thead tr,
+#billingGrid thead tr,
+table#billingGrid thead tr {
+  background-color: var(--surface-container-low);
+}
+
+.billing-grid thead th,
+#billingGrid th,
+table#billingGrid th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 12px 16px;
+  background-color: var(--surface-container-low); /* Light Slate (#F1F5F9) */
+  color: var(--text-strong); /* Dark Slate (#1E293B) */
+  font-weight: 650;
+  font-size: 0.75rem; /* 12px */
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-right: 1.5px solid #334155;
+  border-bottom: 2px solid #334155;
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+.billing-grid tbody td,
+#billingGrid td,
+table#billingGrid td {
+  padding: 12px 16px;
+  border-right: 1.5px solid #334155;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--card); /* Enforce background uniformity */
+  vertical-align: middle;
+  color: var(--text);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Remove trailing column border */
+.billing-grid th:last-child,
+.billing-grid td:last-child,
+#billingGrid th:last-child,
+#billingGrid td:last-child,
+table#billingGrid th:last-child,
+table#billingGrid td:last-child {
+  border-right: none !important;
+}
+
+.billing-grid tbody tr:hover td,
+#billingGrid tbody tr:hover td,
+table#billingGrid tbody tr:hover td {
+  background-color: var(--surface-container-low);
+}
 
 .billing-grid tbody tr.bg-active td {
   background: var(--accent-subtle);
@@ -57,7 +98,7 @@
 
 .billing-grid tbody tr.bg-active td:first-child {
   border-left: 3px solid var(--accent);
-  padding-left: 7px;
+  padding-left: 12px;
 }
 
 .billing-grid tbody td.cell-active {
@@ -72,17 +113,52 @@
   background: var(--bg-hover);
 }
 
-/* ── Billing bottom bar ── */
+/* ── Billing bottom bar (Sticky Fixed) ── */
 .billing-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width, 220px);
+  right: 0;
+  width: calc(100% - var(--sidebar-width, 220px));
+  z-index: 1000;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 1rem 1.5rem;
+  padding: 12px 24px;
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .billing-bottom-bar {
+    left: 0;
+    width: 100%;
+  }
+}
+
+/* ── Add Customer Solid Primary Button Style ── */
+.btn-add-customer {
+  background: var(--accent);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s var(--ease-out);
+}
+
+.btn-add-customer:hover {
+  background: var(--accent-hover);
 }
 
 .billing-bottom-bar .bbb-left {

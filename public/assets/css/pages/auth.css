@@ -12,19 +12,20 @@ body:has(.auth-wrapper),
   min-height: 100vh;
   background: var(--background);
   margin: 0;
-  padding: 1.5rem;
+  padding: var(--space-lg);
   box-sizing: border-box;
 }
 
-/* Auth Card Aesthetics */
+/* Auth Card Aesthetics & Sizing */
 .auth-card,
 .login-card {
   max-width: 420px;
   width: 100%;
+  margin: 0 auto;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl); /* 16px radius */
-  padding: 40px 40px 0 40px; /* 40px padding top/sides */
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl) var(--space-2xl) 0 var(--space-2xl);
   box-shadow: var(--shadow-xl), 0 0 0 1px var(--border);
   box-sizing: border-box;
   overflow: hidden;
@@ -36,31 +37,31 @@ body:has(.auth-wrapper),
 .auth-logo-area,
 .logo-area {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-lg);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .auth-logo-area img,
 .logo-area img {
-  width: 220px;
+  width: 200px;
   height: auto;
   border-radius: var(--radius-md);
 }
 
 .auth-title {
-  font-size: 1.35rem;
+  font-size: var(--font-xl);
   font-weight: 700;
   color: var(--text-strong);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-xs);
 }
 
 .auth-subtitle {
-  font-size: 0.9rem;
+  font-size: var(--font-sm);
   color: var(--muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-md);
 }
 
 /* Form Spacing */
@@ -68,32 +69,33 @@ body:has(.auth-wrapper),
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-md);
 }
 
-/* Form Input Styling */
+/* Form Input Styling & Typography Scaling */
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .input-label {
-  font-size: 0.9rem;
+  font-size: var(--font-md);
   font-weight: 600;
   color: var(--text-strong);
 }
 
 .input-field {
-  height: 44px;
-  padding: 0 14px;
+  height: 48px;
+  padding: 0 var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  font-size: 0.95rem;
+  font-size: var(--font-md);
   color: var(--text-strong);
   background: var(--background);
-  transition: all 200ms var(--ease-out);
+  transition: all var(--duration-fast) var(--ease-out);
   outline: none;
+  box-sizing: border-box;
 }
 
 .input-field:focus {

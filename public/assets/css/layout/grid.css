@@ -43,19 +43,33 @@
   height: 100%;
 }
 
+/* ── Dashboard Responsive Grid Container ── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
 /* Responsive Grid Adjustments */
 @media (max-width: 1024px) {
   .pos-grid {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   
   .col-span-4,
-  .col-span-3 {
+  .col-span-3,
+  .col-span-5 {
     grid-column: span 6;
   }
 }
 
 @media (max-width: 768px) {
+  .dashboard-grid,
   .grid-12 {
     grid-template-columns: 1fr;
   }

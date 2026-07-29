@@ -3,29 +3,48 @@
    ============================================================= */
 
 :root {
-  /* ── 8px Spacing Scale ── */
-  --space-05: 4px;
-  --space-1:  8px;
+  /* ── Core Typography Scale ── */
+  --font-base: 16px;
+  --font-xs:   0.75rem;   /* 12px */
+  --font-sm:   0.875rem;  /* 14px */
+  --font-md:   1rem;      /* 16px */
+  --font-lg:   1.125rem;  /* 18px */
+  --font-xl:   1.25rem;   /* 20px */
+  --font-2xl:  1.5rem;    /* 24px */
+  --font-3xl:  1.75rem;   /* 28px */
+
+  /* ── Standard Spacing System (8px Grid) ── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+
+  /* ── 8px Spacing Scale Aliases ── */
+  --space-05: var(--space-xs);
+  --space-1:  var(--space-sm);
   --space-15: 12px;
-  --space-2:  16px;
+  --space-2:  var(--space-md);
   --space-25: 20px;
-  --space-3:  24px;
-  --space-4:  32px;
+  --space-3:  var(--space-lg);
+  --space-4:  var(--space-xl);
   --space-5:  40px;
-  --space-6:  48px;
+  --space-6:  var(--space-2xl);
   --space-8:  64px;
 
-  /* Legacy spacing aliases */
+  /* Legacy spacing & container aliases */
   --gutter: var(--space-3);
   --stack-sm: var(--space-1);
   --stack-md: var(--space-2);
   --stack-lg: var(--space-3);
   --stack-xl: var(--space-8);
-  --container-max: 1440px;
+  --container-max: 1400px;
+  --container-max-laptop: 1400px;
 
   /* ── Layout Shell Tokens ── */
   --header-height: 64px;
-  --sidebar-width: 260px;
+  --sidebar-width: 220px;
 
   /* ── Border Radius (Standardized 8px / 10px) ── */
   --radius-xs: 4px;

@@ -43,6 +43,12 @@
                 <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
                 <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
                 <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <!-- 5 Additional Extended Entry Rows -->
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
+                <tr data-batch-id=""><td contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td><td style="text-align:right" contenteditable="true"></td></tr>
               </tbody>
             </table>
           </div>
@@ -72,7 +78,13 @@
                 <input type="hidden" id="billCustomerId" value="">
                 <div id="customerSearchDropdown" class="customer-search-dropdown"></div>
               </div>
-              <button class="btn btn-sm btn-outline" onclick="openModal('addCustomerModal')" style="padding:4px 10px; font-size:0.85rem; white-space:nowrap;">+ Add</button>
+              <button class="btn btn-add-customer" onclick="openModal('addCustomerModal')" title="Add New Customer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Customer</span>
+              </button>
               <span class="bbb-paid-wrap">
                 <span class="bbb-label">Paying</span>
                 <input type="number" id="amountPaidInput" class="bbb-input bbb-input-paid" placeholder="₹ 0">
@@ -88,10 +100,10 @@
                 <div class="modal-title">Delete Line Item</div>
                 <button class="close-btn" onclick="closeDeleteConfirm()">&times;</button>
               </div>
-              <div style="padding: 1rem 0;">
+              <div class="modal-body">
                 <p>Remove <strong id="deleteRowItemName"></strong> from this invoice?</p>
               </div>
-              <div style="display:flex; gap:8px; justify-content:flex-end;">
+              <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeDeleteConfirm()">Cancel</button>
                 <button class="btn btn-danger" onclick="confirmDeleteRow()">Delete</button>
               </div>

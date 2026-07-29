@@ -1,20 +1,12 @@
     <header class="top-bar">
       <div class="logo-area" style="margin:0; display:flex; align-items:center; gap:10px;">
+        <label for="sidebarToggle" class="mobile-hamburger-btn" title="Toggle Navigation Menu">☰</label>
         <div class="logo-icon" style="background: white; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 2px; width: 28px; height: 28px; flex-shrink:0;">
           <img src="/public/assets/images/logo.png" alt="Logo" style="width: 20px; height: 20px; object-fit: contain;">
         </div>
         <div class="logo-text" style="font-weight: 700; font-size: 1rem; color: var(--text-strong);">Pudheera Retail <span style="font-size: 0.75rem; color:var(--muted); font-weight: 400; font-family:var(--font-body); background: var(--surface-container-low); padding: 2px 6px; border-radius: 4px; margin-left: 4px;">v1.0</span></div>
       </div>
 
-      <!-- Central Global Search Input (Matching Reference Screenshot) -->
-      <div class="topbar-global-search">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--muted); margin-right: 8px; flex-shrink: 0;">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" placeholder="Search billing, products, customers..." readonly style="cursor: pointer;" onclick="document.querySelector('#creditSearch, #salesSearch, input[type=text]')?.focus()" />
-        <kbd class="topbar-kbd">⌘K</kbd>
-      </div>
 
       <div class="user-menu" style="display:flex; align-items:center; gap: 12px;">
         <!-- Topbar Theme Switcher Pill -->

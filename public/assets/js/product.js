@@ -2,6 +2,28 @@
     'use strict';
 
     // ============================================
+    // API Helper with port 8081 & JWT support
+    // ============================================
+    const API_BASE = `${window.location.protocol}//${window.location.hostname}:8081`;
+
+    async function apiRequest(path, options = {}) {
+        const token = localStorage.getItem('auth_token');
+        const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...options.headers,
+        };
+        const res = await fetch(url, { ...options, headers });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'API request failed');
+        }
+        return res.json();
+    }
+    window.apiRequest = apiRequest;
+
+    // ============================================
     // Global state
     // ============================================
     let categories = [];
@@ -14,13 +36,12 @@
     async function loadCategories() {
         try {
             const data = await window.apiRequest('/api/categories');
-            if (data && !data.error) {
-                categories = data;
-                renderCategoryTabs();
-                populateCategoryDropdowns();    // product-add modal
-                populateSubcategoryDropdown();  // sub-category section in manage modal
-                updateStats();
-            }
+            const catList = Array.isArray(data) ? data : (data?.data || []);
+            categories = catList;
+            renderCategoryTabs();
+            populateCategoryDropdowns();    // product-add modal
+            populateSubcategoryDropdown();  // sub-category section in manage modal
+            updateStats();
         } catch (e) {
             console.error('Error loading categories:', e);
         }
@@ -29,12 +50,11 @@
     async function loadProducts() {
         try {
             const data = await window.apiRequest('/api/products');
-            if (data && !data.error) {
-                products = data;
-                renderProductTable();
-                renderCategoryTabs();  // update per-category counts
-                updateStats();
-            }
+            const prodList = Array.isArray(data) ? data : (data?.data || []);
+            products = prodList;
+            renderProductTable();
+            renderCategoryTabs();  // update per-category counts
+            updateStats();
         } catch (e) {
             console.error('Error loading products:', e);
         }
@@ -86,13 +106,15 @@
     }
 
     function renderProductTable() {
+        const tableContainer = document.getElementById('productMasterTableContainer');
+        const emptyState = document.getElementById('pmEmptyState');
         const tbody = document.querySelector('#productMasterTable tbody');
         if (!tbody) return;
         
-        // Clear table body securely
+        // Clear table body
         tbody.innerHTML = '';
 
-        const query = document.getElementById('pmSearch')?.value.toLowerCase() || '';
+        const query = document.getElementById('pmSearch')?.value.toLowerCase().trim() || '';
         
         let filtered = products;
         if (activeCategoryFilter !== 'all') {
@@ -100,65 +122,119 @@
         }
         if (query) {
             filtered = filtered.filter(p => 
-                p.name.toLowerCase().includes(query) || 
+                (p.name && p.name.toLowerCase().includes(query)) || 
+                (p.hsn_code && p.hsn_code.toLowerCase().includes(query)) ||
+                (p.category_name && p.category_name.toLowerCase().includes(query)) ||
+                (p.subcategory_name && p.subcategory_name.toLowerCase().includes(query)) ||
                 (p.display_id && String(p.display_id).includes(query)) || 
                 (p.id && p.id.toLowerCase().includes(query))
             );
         }
         
         if (filtered.length === 0) {
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
-            td.colSpan = 7;
-            td.style.textAlign = 'center';
-            td.style.color = 'var(--muted)';
-            td.style.padding = '2rem';
-            td.textContent = 'No products found';
-            tr.appendChild(td);
-            tbody.appendChild(tr);
+            if (tableContainer) tableContainer.style.display = 'none';
+            if (emptyState) {
+                emptyState.style.display = 'block';
+                const titleEl = document.getElementById('emptyStateTitle');
+                const subEl = document.getElementById('emptyStateSub');
+
+                if (products.length === 0) {
+                    if (titleEl) titleEl.textContent = 'No Products in Catalog';
+                    if (subEl) subEl.textContent = 'Your inventory catalog is currently empty. Get started by adding your first product or category.';
+                } else {
+                    if (titleEl) titleEl.textContent = 'No Matching Products';
+                    if (subEl) subEl.textContent = 'No products match your search query or active filter. Try resetting your search or filter.';
+                }
+            }
             return;
         }
 
+        if (tableContainer) tableContainer.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+
         filtered.forEach(p => {
             const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--border, #f1f5f9)';
 
-            // Product ID (slice of first 8 characters)
+            // Product ID
             const tdId = document.createElement('td');
-            tdId.textContent = p.display_id ? '#' + p.display_id : (p.id ? p.id.slice(0, 8) : '');
+            tdId.style.padding = '14px 20px';
+            tdId.style.fontWeight = '500';
+            tdId.style.fontSize = '0.85rem';
+            tdId.style.color = 'var(--muted)';
+            tdId.textContent = p.display_id ? '#' + p.display_id : (p.id ? '#' + p.id.slice(0, 8) : '-');
             tr.appendChild(tdId);
 
             // Product Name
             const tdName = document.createElement('td');
-            tdName.textContent = p.name || '';
+            tdName.style.padding = '14px 20px';
+            const nameSpan = document.createElement('span');
+            nameSpan.style.fontWeight = '600';
+            nameSpan.style.color = 'var(--text-strong)';
+            nameSpan.textContent = p.name || '';
+            tdName.appendChild(nameSpan);
             tr.appendChild(tdName);
 
-            // Category Name with badge styling
+            // Category
             const tdCat = document.createElement('td');
-            const badge = document.createElement('span');
-            badge.className = 'badge';
-            badge.textContent = p.category_name || '';
-            tdCat.appendChild(badge);
+            tdCat.style.padding = '14px 20px';
+            if (p.category_name) {
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                badge.textContent = p.category_name;
+                tdCat.appendChild(badge);
+            } else {
+                tdCat.textContent = '-';
+            }
             tr.appendChild(tdCat);
+
+            // Subcategory
+            const tdSubcat = document.createElement('td');
+            tdSubcat.style.padding = '14px 20px';
+            if (p.subcategory_name) {
+                const subBadge = document.createElement('span');
+                subBadge.className = 'sub-badge';
+                subBadge.textContent = p.subcategory_name;
+                tdSubcat.appendChild(subBadge);
+            } else {
+                tdSubcat.textContent = '-';
+            }
+            tr.appendChild(tdSubcat);
 
             // Unit
             const tdUnit = document.createElement('td');
-            tdUnit.textContent = p.unit || '';
+            tdUnit.style.padding = '14px 20px';
+            const unitBadge = document.createElement('span');
+            unitBadge.style.fontSize = '0.8rem';
+            unitBadge.style.padding = '2px 8px';
+            unitBadge.style.borderRadius = '4px';
+            unitBadge.style.background = 'var(--bg-hover)';
+            unitBadge.style.border = '1px solid var(--border)';
+            unitBadge.textContent = p.unit || '-';
+            tdUnit.appendChild(unitBadge);
             tr.appendChild(tdUnit);
 
             // HSN Code
             const tdHsn = document.createElement('td');
+            tdHsn.style.padding = '14px 20px';
+            tdHsn.style.fontSize = '0.875rem';
             tdHsn.textContent = p.hsn_code || '-';
             tr.appendChild(tdHsn);
 
             // GST Rate
             const tdGst = document.createElement('td');
-            tdGst.textContent = (p.gst_rate !== undefined ? p.gst_rate : '0') + '%';
+            tdGst.style.padding = '14px 20px';
+            tdGst.style.fontSize = '0.875rem';
+            tdGst.textContent = (p.gst_rate !== undefined && p.gst_rate !== null ? p.gst_rate : '0') + '%';
             tr.appendChild(tdGst);
 
             // Action Buttons
             const tdActions = document.createElement('td');
+            tdActions.style.padding = '14px 20px';
+            tdActions.style.textAlign = 'right';
             const actionDiv = document.createElement('div');
             actionDiv.className = 'action-buttons';
+            actionDiv.style.justifyContent = 'flex-end';
 
             // Edit button
             const editBtn = document.createElement('button');
@@ -166,7 +242,7 @@
             editBtn.title = 'Edit product';
             editBtn.addEventListener('click', () => editProduct(p.id));
             editBtn.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
                 </svg>
@@ -179,7 +255,7 @@
             deleteBtn.title = 'Delete product';
             deleteBtn.addEventListener('click', () => deleteProduct(p.id));
             deleteBtn.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"></polyline>
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
@@ -194,10 +270,17 @@
     }
 
     function updateStats() {
-        const elProducts   = document.getElementById('pmTotalProducts');
-        const elCategories = document.getElementById('pmTotalCategories');
+        const elProducts      = document.getElementById('pmTotalProducts');
+        const elCategories    = document.getElementById('pmTotalCategories');
+        const elSubcategories = document.getElementById('pmTotalSubcategories');
+        const elBatches       = document.getElementById('pmTotalBatches');
+
         if (elProducts)   elProducts.innerText   = products.length;
         if (elCategories) elCategories.innerText = categories.length;
+        
+        let subCount = 0;
+        products.forEach(p => { if (p.subcategory_id) subCount++; });
+        if (elSubcategories) elSubcategories.innerText = subCount;
     }
 
     /** Populates the Category dropdown inside the "Add Product" modal */
@@ -346,13 +429,48 @@
         }
     };
 
+    // Helpers for retrieving category and subcategory values from dropdowns or comboboxes
+    function getSelectedCategory() {
+        const sel = document.getElementById('pmProductCategory');
+        if (sel && sel.value) return sel.value;
+        const hidden = document.getElementById('pmProductCategoryId');
+        if (hidden && hidden.value) return hidden.value;
+        return '';
+    }
+
+    function setSelectedCategory(catId, catName) {
+        const sel = document.getElementById('pmProductCategory');
+        if (sel) sel.value = catId || '';
+        const hidden = document.getElementById('pmProductCategoryId');
+        if (hidden) hidden.value = catId || '';
+        const input = document.getElementById('pmProductCategoryInput');
+        if (input) input.value = catName || '';
+    }
+
+    function getSelectedSubcategory() {
+        const sel = document.getElementById('pmProductSubcategory');
+        if (sel && sel.value) return sel.value;
+        const hidden = document.getElementById('pmProductSubcategoryId');
+        if (hidden && hidden.value) return hidden.value;
+        return null;
+    }
+
+    function setSelectedSubcategory(subId, subName) {
+        const sel = document.getElementById('pmProductSubcategory');
+        if (sel) sel.value = subId || '';
+        const hidden = document.getElementById('pmProductSubcategoryId');
+        if (hidden) hidden.value = subId || '';
+        const input = document.getElementById('pmProductSubcategoryInput');
+        if (input) input.value = subName || '';
+    }
+
     window.saveProduct = async function() {
-        const name          = document.getElementById('pmProductName').value.trim();
-        const categoryId    = document.getElementById('pmProductCategory').value;
-        const subcategoryId = document.getElementById('pmProductSubcategory')?.value || null;
-        const unit          = document.getElementById('pmProductUnit').value;
-        const hsn           = document.getElementById('pmProductHsn').value.trim();
-        const gst           = parseFloat(document.getElementById('pmProductGst').value) || 0;
+        const name          = document.getElementById('pmProductName')?.value.trim() || '';
+        const categoryId    = getSelectedCategory();
+        const subcategoryId = getSelectedSubcategory();
+        const unit          = document.getElementById('pmProductUnit')?.value || 'pcs';
+        const hsn           = document.getElementById('pmProductHsn')?.value.trim() || '';
+        const gst           = parseFloat(document.getElementById('pmProductGst')?.value) || 0;
 
         if (!name || !categoryId || !unit) {
             alert('Product name, category, and unit are required');
@@ -372,31 +490,65 @@
                 })
             });
 
-            if (data && data.success) {
+            if (data && (data.success || data.id || data.product)) {
                 await loadProducts();
                 await loadCategories();
                 window.resetProductModal();
-                window.closeModal('addProductModal');
+                if (window.closeModal) window.closeModal('addProductModal');
             } else {
                 alert(data?.error || 'Failed to add product');
             }
         } catch (e) {
-            alert('Error adding product');
+            alert(e.message || 'Error adding product');
         }
     };
 
-    window.deleteProduct = async function(productId) {
-        if (!confirm('Delete this product? This action cannot be undone.')) return;
-        try {
-            const data = await window.apiRequest(`/api/products/${productId}`, { method: 'DELETE' });
-            if (data && data.success) {
-                await loadProducts();
-                await loadCategories();
-            } else {
-                alert(data?.error || 'Failed to delete product');
-            }
-        } catch (e) {
-            alert('Error deleting product');
+    let pendingDeleteProductId = null;
+
+    window.deleteProduct = function(productId) {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+
+        pendingDeleteProductId = productId;
+        const nameEl = document.getElementById('deleteProductName');
+        if (nameEl) nameEl.textContent = product.name;
+
+        const catEl = document.getElementById('deleteProductCategory');
+        if (catEl) catEl.textContent = product.category_name || 'General';
+
+        const idEl = document.getElementById('deleteProductId');
+        if (idEl) idEl.textContent = product.display_id ? `#${product.display_id}` : `#${product.id.slice(0, 6)}`;
+
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmBtn) {
+            confirmBtn.onclick = async function() {
+                if (!pendingDeleteProductId) return;
+                try {
+                    confirmBtn.disabled = true;
+                    confirmBtn.textContent = 'Deleting...';
+                    const data = await window.apiRequest(`/api/products/${pendingDeleteProductId}`, { method: 'DELETE' });
+                    if (data && data.success) {
+                        if (window.closeModal) window.closeModal('deleteProductModal');
+                        await loadProducts();
+                        await loadCategories();
+                    } else {
+                        alert(data?.error || 'Failed to delete product');
+                    }
+                } catch (e) {
+                    alert('Error deleting product');
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete Product`;
+                    pendingDeleteProductId = null;
+                }
+            };
+        }
+
+        if (window.openModal) {
+            window.openModal('deleteProductModal');
+        } else {
+            const modal = document.getElementById('deleteProductModal');
+            if (modal) modal.classList.add('active');
         }
     };
 
@@ -409,7 +561,7 @@
         if (title) title.innerText = 'Add New Product';
         if (btn) {
             btn.innerText = 'Save Product';
-            btn.onclick   = window.saveProduct;   // ← always point back to Add
+            btn.onclick   = window.saveProduct;
         }
 
         // Clear form fields
@@ -420,36 +572,9 @@
         if (hsnEl)  hsnEl.value  = '';
         if (gstEl)  gstEl.value  = '';
 
-        // Reset category to first option
-        const catSelect = document.getElementById('pmProductCategory');
-        if (catSelect && catSelect.options.length) catSelect.selectedIndex = 0;
-
-        // Clear subcategory dropdown
-        const subSelect = document.getElementById('pmProductSubcategory');
-        if (subSelect) subSelect.innerHTML = '<option value="">No Subcategory</option>';
+        setSelectedCategory('', '');
+        setSelectedSubcategory('', '');
     };
-
-    // ============================================
-    // Render search filter
-    // ============================================
-
-
-    // ============================================
-    // HTML escape helper
-    // ============================================
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, m => {
-            switch (m) {
-                case '&': return '&amp;';
-                case '<': return '&lt;';
-                case '>': return '&gt;';
-                case '"': return '&quot;';
-                case "'": return '&#39;';
-                default: return m;
-            }
-        });
-    }
 
     // Global variable to track which product is being edited
     let editingProductId = null;
@@ -463,35 +588,44 @@
         }
         editingProductId = productId;
         
-        document.getElementById('addProductModalTitle').innerText = 'Edit Product';
-        document.getElementById('addProductModalBtn').innerText = 'Update Product';
+        const titleEl = document.getElementById('addProductModalTitle');
         const saveBtn = document.getElementById('addProductModalBtn');
-        saveBtn.onclick = window.updateProduct;
+        if (titleEl) titleEl.innerText = 'Edit Product';
+        if (saveBtn) {
+            saveBtn.innerText = 'Update Product';
+            saveBtn.onclick = window.updateProduct;
+        }
         
-        document.getElementById('pmProductName').value = product.name;
-        document.getElementById('pmProductCategory').value = product.category_id;
+        const nameEl = document.getElementById('pmProductName');
+        const unitEl = document.getElementById('pmProductUnit');
+        const hsnEl  = document.getElementById('pmProductHsn');
+        const gstEl  = document.getElementById('pmProductGst');
+
+        if (nameEl) nameEl.value = product.name || '';
+        if (unitEl) unitEl.value = product.unit || 'pcs';
+        if (hsnEl)  hsnEl.value  = product.hsn_code || '';
+        if (gstEl)  gstEl.value  = product.gst_rate !== undefined ? product.gst_rate : '';
         
-        loadSubcategoriesIntoProductModal(product.category_id);
-        setTimeout(() => {
-            if (product.subcategory_id) {
-                document.getElementById('pmProductSubcategory').value = product.subcategory_id;
-            }
-        }, 100);
-        
-        document.getElementById('pmProductUnit').value = product.unit;
-        document.getElementById('pmProductHsn').value = product.hsn_code || '';
-        document.getElementById('pmProductGst').value = product.gst_rate;
-        
-        window.openModal('addProductModal');
+        setSelectedCategory(product.category_id, product.category_name);
+        setSelectedSubcategory(product.subcategory_id, product.subcategory_name);
+
+        if (window.openModal) {
+            window.openModal('addProductModal');
+        } else {
+            const modal = document.getElementById('addProductModal');
+            if (modal) modal.classList.add('active');
+        }
     };
 
     window.updateProduct = async function() {
-        const name = document.getElementById('pmProductName').value.trim();
-        const categoryId = document.getElementById('pmProductCategory').value;
-        const subcategoryId = document.getElementById('pmProductSubcategory').value || null;
-        const unit = document.getElementById('pmProductUnit').value;
-        const hsn = document.getElementById('pmProductHsn').value.trim();
-        const gst = parseFloat(document.getElementById('pmProductGst').value) || 0;
+        if (!editingProductId) return;
+
+        const name          = document.getElementById('pmProductName')?.value.trim() || '';
+        const categoryId    = getSelectedCategory();
+        const subcategoryId = getSelectedSubcategory();
+        const unit          = document.getElementById('pmProductUnit')?.value || 'pcs';
+        const hsn           = document.getElementById('pmProductHsn')?.value.trim() || '';
+        const gst           = parseFloat(document.getElementById('pmProductGst')?.value) || 0;
         
         if (!name || !categoryId || !unit) {
             alert('Product name, category, and unit are required');
@@ -511,16 +645,15 @@
                 })
             });
             
-            if (data && data.success) {
+            if (data && (data.success || data.id || data.product)) {
                 await loadProducts();
-                window.closeModal('addProductModal');
+                if (window.closeModal) window.closeModal('addProductModal');
                 window.resetProductModal();
-                alert('Product updated successfully');
             } else {
                 alert(data?.error || 'Failed to update product');
             }
         } catch (e) {
-            alert('Error updating product');
+            alert(e.message || 'Error updating product');
         }
     };
 
@@ -532,9 +665,12 @@
         await loadProducts();
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        if (!document.getElementById('product_master')) return;
-        initProductMaster();
-    });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('product_master')) initProductMaster();
+        });
+    } else {
+        if (document.getElementById('product_master')) initProductMaster();
+    }
 
 })();

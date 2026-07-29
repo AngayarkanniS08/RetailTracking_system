@@ -56,11 +56,11 @@
   border-radius: var(--radius-full);
 }
 
-/* Inner content max-width wrapper */
+/* Inner content max-width wrapper for laptop/ultra-wide centering */
 .page-content-wrapper {
   flex: 1 0 auto;
   width: 100%;
-  max-width: var(--container-max, 1440px);
+  max-width: var(--container-max, 1400px);
   margin-left: auto;
   margin-right: auto;
 }
@@ -69,13 +69,54 @@
 .card-panel {
   margin: 0 auto;
   width: 100%;
-  max-width: var(--container-max, 1440px);
+  max-width: var(--container-max, 1400px);
   overflow: hidden;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius-lg);
   background: var(--card);
   padding: 0;
+  transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.card-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Skeleton Loading Shimmer Effects ── */
+.skeleton-box {
+  display: inline-block;
+  height: 1rem;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--surface-container-high);
+  border-radius: var(--radius-sm);
+  width: 100%;
+}
+
+.skeleton-box::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.25) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: skeleton-shimmer 1.5s infinite;
+  content: '';
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* ── View Section Toggling (MPA mode: default visible) ── */

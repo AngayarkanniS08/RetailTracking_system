@@ -2,6 +2,8 @@
 // Master Layout Wrapper for Logged-In Enterprise MPA Pages
 require_once __DIR__ . '/header.php';
 ?>
+<!-- Hidden Checkbox for Pure CSS Mobile Sidebar Drawer Toggle -->
+<input type="checkbox" id="sidebarToggle" style="display:none;" />
 <div class="dashboard" id="dashboardView">
   <?php require_once __DIR__ . '/topbar.php'; ?>
 
