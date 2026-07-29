@@ -15,6 +15,12 @@
             ...options.headers,
         };
         const res = await fetch(url, { ...options, headers });
+        if (res.status === 401) {
+            localStorage.removeItem('auth_token');
+            alert('Your session has expired. Please log in again to continue.');
+            window.location.href = '/login';
+            throw new Error('Session expired (401)');
+        }
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.error || 'API request failed');
