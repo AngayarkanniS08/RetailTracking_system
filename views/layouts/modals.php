@@ -572,12 +572,19 @@
         </table>
         <div class="input-group" style="margin-top:1rem;">
           <label class="input-label">Reason <span style="color:var(--danger);">*</span></label>
+          <style>
+            #returnReason::placeholder { color: #fff; }
+            .return-reason-btn { color: #fff; }
+            .return-reason-btn:hover,
+            .return-reason-btn:focus,
+            .return-reason-btn:active { color: #fff; }
+          </style>
           <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;">
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong size'">Wrong size</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Damaged'">Damaged</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Quality issue'">Quality issue</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong item'">Wrong item</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Changed mind'">Changed mind</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong size'">Wrong size</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Damaged'">Damaged</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Quality issue'">Quality issue</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong item'">Wrong item</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Changed mind'">Changed mind</button>
           </div>
           <input type="text" id="returnReason" class="input-field" placeholder="e.g. Damaged / Wrong size" required>
         </div>
