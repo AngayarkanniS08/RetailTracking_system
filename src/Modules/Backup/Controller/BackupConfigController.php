@@ -25,14 +25,15 @@ class BackupConfigController
         header('Content-Type: application/json');
 
         $fileTokens = $this->driveService->loadTokens();
-        $userId = '00000000-0000-4000-8000-000000000001';
+        $userId = \Config\Database::getCurrentUser();
 
         $dbConfig = null;
-        try {
-            \Config\Database::setCurrentUser($userId);
-            $dbConfig = $this->repo->getConfig($userId);
-        } catch (\PDOException $e) {
-            // backup_config table may not exist
+        if ($userId) {
+            try {
+                $dbConfig = $this->repo->getConfig($userId);
+            } catch (\PDOException $e) {
+                // backup_config table may not exist
+            }
         }
 
         echo json_encode([
@@ -52,7 +53,12 @@ class BackupConfigController
     public function update(): void
     {
         header('Content-Type: application/json');
-        $userId = '00000000-0000-4000-8000-000000000001';
+        $userId = \Config\Database::getCurrentUser();
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+            return;
+        }
         $input = json_decode(file_get_contents('php://input'), true);
 
         $dto = BackupConfigDTO::fromArray($input);

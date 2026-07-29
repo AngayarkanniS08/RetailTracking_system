@@ -432,7 +432,7 @@ window.saveCategory = async function () {
             document.getElementById('pmCategoryName').value = '';
             await loadCategories();  // refreshes both dropdowns
             await loadProducts();
-            closeModal('addCategoryModal');
+            // Keep modal open so user can add more categories
         }
     } catch (e) {
         alert(e.message || 'Failed to add category');
@@ -471,7 +471,7 @@ window.saveSubcategory = async function () {
                     subcategoryCombobox.loadForCategory(categoryId);
                 }
             }
-            // Keep manage modal open so user can add more
+            closeModal('addCategoryModal');
         }
     } catch (e) {
         alert(e.message || 'Failed to add subcategory');
