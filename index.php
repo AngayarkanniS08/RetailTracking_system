@@ -217,5 +217,7 @@ require_once 'views/layouts/footer.php';
 
 // Set initial section via JS
 if ($initialSection && $initialSection !== 'login') {
-    echo "<script>switchTab('{$initialSection}');</script>";
+    $vendorId = $_GET['vendor_id'] ?? '';
+    $vendorJs = $vendorId ? ", '" . addslashes($vendorId) . "'" : '';
+    echo "<script>switchTab('{$initialSection}'{$vendorJs});</script>";
 }

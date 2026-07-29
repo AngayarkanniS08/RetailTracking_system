@@ -56,8 +56,12 @@ function switchTab(sectionId, vendorId = null) {
 
     // Update browser URL
     const url = sectionUrlMap[sectionId] || '/dashboard';
-    if (window.location.pathname !== url) {
-        history.pushState({ section: sectionId }, '', url);
+    let fullUrl = url;
+    if (vendorId) {
+        fullUrl = url + '?vendor_id=' + encodeURIComponent(vendorId);
+    }
+    if (window.location.pathname + window.location.search !== fullUrl) {
+        history.pushState({ section: sectionId, vendorId: vendorId }, '', fullUrl);
     }
 
     // Call module‑specific initialisation when its section is shown
@@ -95,7 +99,7 @@ function switchTab(sectionId, vendorId = null) {
 // Handle browser back/forward
 window.addEventListener('popstate', function(e) {
     if (e.state && e.state.section) {
-        switchTab(e.state.section);
+        switchTab(e.state.section, e.state.vendorId || null);
     }
 });
 

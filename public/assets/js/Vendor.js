@@ -321,8 +321,7 @@ function viewVendorHistory(vendorId) {
         alert('No vendor selected');
         return;
     }
-    // Redirect to vendor history page with vendor_id as query parameter
-    window.location.href = `/vendor/history.php?vendor_id=${vendorId}`;
+    switchTab('vendorhistory', vendorId);
 }
 
 // ============================================
