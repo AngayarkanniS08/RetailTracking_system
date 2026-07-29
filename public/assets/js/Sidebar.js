@@ -34,6 +34,10 @@ const sectionUrlMap = {
 
 // Switch to a specific section by ID
 function switchTab(sectionId, vendorId = null) {
+    if (sectionId === 'vendorhistory' && !vendorId) {
+        const params = new URLSearchParams(window.location.search);
+        vendorId = params.get('vendor_id');
+    }
     // Hide all sections
     sections.forEach(id => {
         const section = document.getElementById(id);

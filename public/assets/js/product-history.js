@@ -457,8 +457,8 @@ function escH(str) {
 
 // Patch switchTab
 var _origSwitchTabPH = window.switchTab;
-window.switchTab = function(sectionId) {
-    _origSwitchTabPH(sectionId);
+window.switchTab = function(sectionId, vendorId) {
+    _origSwitchTabPH(sectionId, vendorId);
     if (sectionId === 'product_history') {
         initProductHistory();
     }

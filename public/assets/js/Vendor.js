@@ -274,16 +274,26 @@ function renderVendorSummaryTable(vendors) {
         balanceCell.innerHTML = `<span style="font-weight:700; color:${balance > 0 ? 'var(--danger)' : 'var(--ok)'};">${formatCurrency(balance)}</span>`;
 
         const actionCell = tr.insertCell();
-        actionCell.innerHTML = `
-            <div style="white-space:nowrap;">
-                <button class="btn btn-sm btn-outline" onclick="switchTab('vendorhistory','${v.vendorId}')" style="padding:2px 10px; font-size:0.75rem;">
-                    View History
-                </button>
-                <button class="btn btn-sm btn-primary" onclick="openQuickPurchaseForVendor('${v.vendorId}','${(v.vendorName || '').replace(/'/g, "\\'")}','${(v.vendorPhone || '').replace(/'/g, "\\'")}')" style="padding:2px 10px; font-size:0.75rem;">
-                    +Add
-                </button>
-            </div>
-        `;
+        actionCell.innerHTML = `<div style="white-space:nowrap;"></div>`;
+        const btnDiv = actionCell.firstChild;
+
+        const historyBtn = document.createElement('button');
+        historyBtn.className = 'btn btn-sm btn-outline';
+        historyBtn.textContent = 'View History';
+        historyBtn.style.cssText = 'padding:2px 10px; font-size:0.75rem;';
+        historyBtn.addEventListener('click', function() {
+            switchTab('vendorhistory', v.vendorId);
+        });
+        btnDiv.appendChild(historyBtn);
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn btn-sm btn-primary';
+        addBtn.textContent = '+Add';
+        addBtn.style.cssText = 'padding:2px 10px; font-size:0.75rem;';
+        addBtn.addEventListener('click', function() {
+            openQuickPurchaseForVendor(v.vendorId, v.vendorName || '', v.vendorPhone || '');
+        });
+        btnDiv.appendChild(addBtn);
     });
 }
 
