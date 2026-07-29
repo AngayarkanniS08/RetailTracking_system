@@ -289,7 +289,7 @@ class BatchRepository implements BatchRepositoryInterface
         " . $filterSql;
 
         $stmt = $this->db->prepare($selectSql);
-        $stmt->execute($params);
+        $stmt->execute(array_merge($params, $params));
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // Query 2: Sales data (respects same category/subcategory/search filters)
