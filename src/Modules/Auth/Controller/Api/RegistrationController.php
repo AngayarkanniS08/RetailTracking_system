@@ -3,7 +3,6 @@ namespace Modules\Auth\Controller\Api;
 
 use Modules\Auth\DTO\RegisterDTO;
 use Modules\Auth\Service\RegistrationService;
-use Modules\Auth\Service\JWTService;
 use Modules\Auth\Repository\UserRepository;
 use Modules\Auth\Validation\ValidationException;
 use Exception;
@@ -11,13 +10,11 @@ use Exception;
 class RegistrationController
 {
     private RegistrationService $service;
-    private JWTService $jwtService;
 
     public function __construct()
     {
-        $userRepo        = new UserRepository();
-        $this->service   = new RegistrationService($userRepo);
-        $this->jwtService = new JWTService();
+        $userRepo      = new UserRepository();
+        $this->service = new RegistrationService($userRepo);
     }
 
     public function register(): void
@@ -46,13 +43,9 @@ class RegistrationController
             $dto  = new RegisterDTO($username, $email, $password);
             $user = $this->service->register($dto);
 
-            // Generate JWT so the frontend can optionally store it for auto-login
-            $token = $this->jwtService->generateToken($user);
-
             http_response_code(201);
             echo json_encode([
                 'success' => true,
-                'token'   => $token,
                 'user'    => [
                     'id'       => $user['id'],
                     'username' => $user['username'],
