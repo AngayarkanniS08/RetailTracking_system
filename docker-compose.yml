@@ -77,6 +77,7 @@ services:
       - ./src:/var/www/html/src
       - ./Database:/var/www/html/Database
       - ./config:/var/www/html/config
+      - ./scripts:/var/www/html/scripts
       - tmpdata:/var/www/html/tmp
       - ./src/index.php:/var/www/html/index.php
       - ./src/.htaccess:/var/www/html/.htaccess

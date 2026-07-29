@@ -1,0 +1,20 @@
+-- ============================================================
+-- Module:          {{MODULE}}
+-- Migration Name:  {{NAME}}
+-- Author:          {{AUTHOR}}
+-- Created:         {{CREATED_AT}}
+-- Description:     {{DESCRIPTION}}
+-- Purpose:         {{PURPOSE}}
+-- Depends On:      {{DEPENDENCIES}}
+-- Risk Level:      {{RISK_LEVEL}}
+-- Transactional:   true
+-- Rollback:        Available (paired .down.sql)
+-- Estimated Time:  < 100ms
+-- ============================================================
+
+-- Write your UP migration SQL below.
+-- Rules:
+-- 1. One logical schema change per migration file.
+-- 2. Always use explicit constraint and index names.
+-- 3. Enforce strict type constraints and non-nullability where appropriate.
+-- 4. Never alter or drop tables owned by other modules.

@@ -1,0 +1,255 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+/**
+ * Enterprise Migration CLI
+ *
+ * Usage:
+ *   php scripts/migrate <command> [options]
+ *
+ * Commands:
+ *   up                          Run all pending migrations
+ *   rollback                    Roll back last batch
+ *   rollback --step <N>         Roll back N individual migrations
+ *   rollback --batch <B>        Roll back specific batch number
+ *   status                      Show migration status table
+ *   pending                     List pending migrations
+ *   validate                    Run validation pipeline (no execution)
+ *   dry-run                     Print execution plan without applying
+ *   fresh --force               Drop module-owned tables + re-run all (dev only)
+ *   generate <Module> <name>    Scaffold new timestamped migration pair
+ *   seed                        Run all development seeders
+ *   seed --module <Module>      Run seeders for one module
+ *   repair --approve            Re-register orphaned migrations (logged)
+ *
+ * Options:
+ *   --step N     Number of migrations to roll back
+ *   --batch B    Batch number to roll back
+ *   --force      Required for the `fresh` command
+ *   --approve    Required for the `repair` command
+ *   --module M   Filter by module name
+ *
+ * Environment:
+ *   APP_ENV                    current environment (development/staging/production)
+ *   MIGRATION_BACKUP_VERIFIED  set to 'true' to bypass backup check in staging/prod
+ *   MIGRATION_DEBUG            set to 'true' for verbose debug output
+ */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bootstrap
+// ─────────────────────────────────────────────────────────────────────────────
+
+$projectRoot = dirname(__DIR__);
+
+// Load engine classes
+$enginePath  = $projectRoot . '/Database/Engine';
+$seedersPath = $projectRoot . '/Database/Seeders';
+
+spl_autoload_register(function (string $class) use ($projectRoot): void {
+    // Database\Engine\* → Database/Engine/*.php
+    // Database\Seeders\* → Database/Seeders/*.php
+    $base = $projectRoot . '/';
+    $file = $base . str_replace(['\\', 'Database/'], ['/', 'Database/'], $class) . '.php';
+    $file = $base . str_replace('\\', '/', $class) . '.php';
+
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
+// Load config\Database
+require_once $projectRoot . '/config/Database.php';
+
+try {
+    $pdo = \Config\Database::getConnection();
+} catch (\Throwable $e) {
+    fwrite(STDERR, "❌ Database connection failed: " . $e->getMessage() . "\n");
+    exit(1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parse CLI arguments
+// ─────────────────────────────────────────────────────────────────────────────
+
+$args    = array_slice($argv, 1);
+$command = $args[0] ?? '';
+
+// Parse flags
+$flags  = [];
+$params = [];
+for ($i = 1; $i < count($args); $i++) {
+    if (str_starts_with($args[$i], '--')) {
+        $flag = ltrim($args[$i], '-');
+        $next = $args[$i + 1] ?? null;
+        if ($next !== null && !str_starts_with($next, '--')) {
+            $flags[$flag] = $next;
+            $i++;
+        } else {
+            $flags[$flag] = true;
+        }
+    } else {
+        $params[] = $args[$i];
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Require engine
+// ─────────────────────────────────────────────────────────────────────────────
+
+require_once $enginePath . '/MigrationLogger.php';
+require_once $enginePath . '/ValidationResult.php';
+require_once $enginePath . '/MigrationChecksum.php';
+require_once $enginePath . '/EventDispatcher.php';
+require_once $enginePath . '/BackupGuard.php';
+require_once $enginePath . '/MigrationLock.php';
+require_once $enginePath . '/MigrationRepository.php';
+require_once $enginePath . '/MigrationPlanner.php';
+require_once $enginePath . '/MigrationStatus.php';
+require_once $enginePath . '/MigrationExecutor.php';
+require_once $enginePath . '/FreshRunner.php';
+require_once $enginePath . '/MigrationGenerator.php';
+require_once $enginePath . '/SeederRunner.php';
+require_once $enginePath . '/SeederGenerator.php';
+require_once $enginePath . '/MigrationValidator.php';
+require_once $enginePath . '/MigrationRunner.php';
+
+// Rules
+$rulesPath = $enginePath . '/Rules';
+require_once $rulesPath . '/RuleInterface.php';
+require_once $rulesPath . '/NamingRule.php';
+require_once $rulesPath . '/DuplicateTimestampRule.php';
+require_once $rulesPath . '/RollbackRule.php';
+require_once $rulesPath . '/ChecksumRule.php';
+require_once $rulesPath . '/DependencyRule.php';
+require_once $rulesPath . '/ModuleBoundaryRule.php';
+require_once $rulesPath . '/DangerousSqlRule.php';
+
+// Seeders
+require_once $seedersPath . '/BaseSeeder.php';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Execute command
+// ─────────────────────────────────────────────────────────────────────────────
+
+use Database\Engine\MigrationRunner;
+use Database\Engine\SeederRunner;
+use Database\Engine\MigrationLogger;
+
+$runner = new MigrationRunner($pdo);
+
+try {
+    switch ($command) {
+
+        case 'up':
+            MigrationLogger::heading('Migration — UP');
+            $runner->up();
+            break;
+
+        case 'rollback':
+            $step  = isset($flags['step'])  ? (int) $flags['step']  : null;
+            $batch = isset($flags['batch']) ? (int) $flags['batch'] : null;
+            MigrationLogger::heading('Migration — ROLLBACK');
+            $runner->rollback($step, $batch);
+            break;
+
+        case 'status':
+            $runner->status();
+            break;
+
+        case 'pending':
+            $runner->pending();
+            break;
+
+        case 'validate':
+            MigrationLogger::heading('Migration — VALIDATE');
+            $runner->validate();
+            break;
+
+        case 'dry-run':
+            MigrationLogger::heading('Migration — DRY-RUN');
+            $runner->dryRun();
+            break;
+
+        case 'fresh':
+            $force = isset($flags['force']) && $flags['force'] === true;
+            MigrationLogger::heading('Migration — FRESH');
+            $runner->fresh($force);
+            break;
+
+        case 'generate':
+            $module = $params[0] ?? null;
+            $name   = $params[1] ?? null;
+            if (!$module || !$name) {
+                fwrite(STDERR, "Usage: php scripts/migrate generate <Module> <name>\n");
+                exit(1);
+            }
+            $runner->generate($module, $name);
+            break;
+
+        case 'seed':
+            $moduleFilter = $flags['module'] ?? null;
+            if (is_bool($moduleFilter)) {
+                $moduleFilter = null;
+            }
+            $seederRunner = new SeederRunner($pdo, $runner->getEventDispatcher());
+            MigrationLogger::heading('Seeder — RUN');
+            $seederRunner->run($moduleFilter ?: null);
+            break;
+
+        case 'repair':
+            $approve = isset($flags['approve']) && $flags['approve'] === true;
+            MigrationLogger::heading('Migration — REPAIR');
+            $runner->repair($approve);
+            break;
+
+        default:
+            printHelp();
+            exit($command === '' ? 0 : 1);
+    }
+
+    exit(0);
+
+} catch (\Throwable $e) {
+    fwrite(STDERR, "\n❌ " . $e->getMessage() . "\n\n");
+    exit(1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Help
+// ─────────────────────────────────────────────────────────────────────────────
+
+function printHelp(): void
+{
+    echo <<<HELP
+
+  ╔══════════════════════════════════════════════════════════════╗
+  ║         Enterprise Database Migration CLI                   ║
+  ╚══════════════════════════════════════════════════════════════╝
+
+  Usage: php scripts/migrate <command> [options]
+
+  Commands:
+    up                            Run all pending migrations
+    rollback                      Roll back last batch
+    rollback --step <N>           Roll back N migrations
+    rollback --batch <B>          Roll back a specific batch
+    status                        Show migration status table
+    pending                       List pending migrations
+    validate                      Run validation (no execution)
+    dry-run                       Print execution plan
+    fresh --force                 Drop + re-run all (dev only)
+    generate <Module> <name>      Scaffold new migration pair
+    seed                          Run all seeders
+    seed --module <Module>        Run seeders for one module
+    repair --approve              Re-register orphaned files
+
+  Examples:
+    php scripts/migrate up
+    php scripts/migrate rollback --step 3
+    php scripts/migrate generate Customer add_contact_notes
+    php scripts/migrate seed --module Auth
+    php scripts/migrate fresh --force
+
+HELP;
+}

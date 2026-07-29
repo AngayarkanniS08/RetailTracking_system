@@ -1,4 +1,4 @@
-.PHONY: up down restart migrate seed logs logs-api logs-ui logs-db logs-cache logs-all logs-php-errors logs-php-tail status test-all cache-keys cache-inventory cache-products cache-vendor cache-clear health-rebuild health-live health-ready health health-metrics
+.PHONY: up down restart migrate seed logs logs-api logs-ui logs-db logs-cache logs-all logs-php-errors logs-php-tail status test-all cache-keys cache-inventory cache-products cache-vendor cache-clear health-rebuild health-live health-ready health health-metrics migrate-up migrate-rollback migrate-status migrate-pending migrate-validate migrate-fresh migrate-create seed-module
 
 # Build and start all services in the background
 up:
@@ -19,6 +19,44 @@ migrate:
 # Seed test database data
 seed:
 	docker compose exec app-api php Database/Seed.php
+
+# ── Enterprise Migration Framework ──────────────────────────────────────────
+
+# Run pending migrations (new engine)
+migrate-up:
+	docker compose exec app-api php scripts/migrate up
+
+# Roll back last batch
+migrate-rollback:
+	docker compose exec app-api php scripts/migrate rollback
+
+# Show migration status table (exit 1 if pending exist — useful in CI)
+migrate-status:
+	docker compose exec app-api php scripts/migrate status
+
+# List pending migrations only
+migrate-pending:
+	docker compose exec app-api php scripts/migrate pending
+
+# Run full validation pipeline without executing
+migrate-validate:
+	docker compose exec app-api php scripts/migrate validate
+
+# Drop module-owned tables and re-run all migrations (dev only)
+migrate-fresh:
+	docker compose exec app-api php scripts/migrate fresh --force
+
+# Scaffold a new timestamped migration pair
+# Usage: make migrate-create MODULE=Customer NAME=add_contact_notes
+migrate-create:
+	docker compose exec app-api php scripts/migrate generate $(MODULE) $(NAME)
+
+# Run seeders for a specific module
+# Usage: make seed-module MODULE=Auth
+seed-module:
+	docker compose exec app-api php scripts/migrate seed --module $(MODULE)
+
+
 
 # View logs (usage guide)
 logs:
