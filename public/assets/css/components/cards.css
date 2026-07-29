@@ -21,10 +21,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-2); /* 16px bottom margin */
+  border-bottom: none;
+  margin-bottom: 0;
   color: var(--text-strong);
   font-weight: 600;
   font-size: 1rem;
+  width: 100%;
+}
+
+.card-header .d-flex,
+.card-header .card-header-actions,
+.card-header .header-actions,
+.card-header .card-actions,
+.card-header .actions {
+  width: auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
 }
 
 /* ── KPI Stat Cards ── */

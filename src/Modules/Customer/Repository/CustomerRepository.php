@@ -155,7 +155,7 @@ class CustomerRepository implements CustomerRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT balance FROM customer_ledger
-            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
             ORDER BY created_at DESC
             LIMIT 1
         ");
@@ -174,7 +174,7 @@ class CustomerRepository implements CustomerRepositoryInterface
             FROM customer_ledger cl
             LEFT JOIN payment_receipts pr ON pr.ledger_id = cl.id AND cl.entry_type = 'payment'
             LEFT JOIN invoices i ON i.id = cl.invoice_id
-            WHERE cl.customer_id = ? AND cl.user_id = current_setting('app.current_user_id')::uuid
+            WHERE cl.customer_id = ? AND cl.user_id = current_setting('app.current_user_id', true)::uuid
             ORDER BY cl.created_at DESC
             LIMIT ? OFFSET ?
         ");

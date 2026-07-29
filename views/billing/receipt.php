@@ -252,7 +252,9 @@ function toggleReturnSection() {
 function submitReceiptReturn(invoiceId) {
     var reason = document.getElementById('receiptRetReason').value.trim();
     if (!reason || reason.length < 3) {
-        alert('Please enter a return reason (min 3 characters)');
+        if (window.notify) window.notify.warning('Please enter a return reason (min 3 characters)');
+        else if (window.showToast) window.showToast('Please enter a return reason (min 3 characters)', 'warn');
+        else alert('Please enter a return reason (min 3 characters)');
         return;
     }
 
@@ -270,7 +272,12 @@ function submitReceiptReturn(invoiceId) {
         });
     });
 
-    if (items.length === 0) { alert('No items selected'); return; }
+    if (items.length === 0) {
+        if (window.notify) window.notify.warning('No items selected');
+        else if (window.showToast) window.showToast('No items selected', 'warn');
+        else alert('No items selected');
+        return;
+    }
 
     var btn = document.querySelector('#receiptReturnSection button');
     if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
@@ -283,11 +290,20 @@ function submitReceiptReturn(invoiceId) {
         if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Return failed'); });
         return r.json();
     }).then(function(data) {
-        if (data.warning) alert(data.warning);
-        if (data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
+        if (window.notify) window.notify.success('Return processed successfully');
+        if (data.warning) {
+            if (window.notify) window.notify.warning(data.warning);
+            else if (window.showToast) window.showToast(data.warning, 'warn');
+        }
+        if (data.stock_warning) {
+            if (window.notify) window.notify.warning('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
+            else if (window.showToast) window.showToast('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.', 'warn');
+        }
         window.location.href = window.location.pathname + window.location.search + '&_=' + Date.now();
     }).catch(function(err) {
-        alert(err.message || 'Return failed');
+        if (window.notify) window.notify.error(err.message || 'Return failed');
+        else if (window.showToast) window.showToast(err.message || 'Return failed', 'danger');
+        else alert(err.message || 'Return failed');
         if (btn) { btn.disabled = false; btn.textContent = 'Process Return'; }
     });
 }

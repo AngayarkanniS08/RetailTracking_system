@@ -161,16 +161,21 @@ table#billingGrid tbody tr:hover td {
   background: var(--accent-hover);
 }
 
-.billing-bottom-bar .bbb-left {
+.bbb-left {
   display: flex;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  font-size: 0.9rem;
+  gap: 12px;
+  font-size: 0.88rem;
   color: var(--text);
+  width: auto;
+  flex-shrink: 0;
 }
 
-.billing-bottom-bar .bbb-gst-toggle {
+.bbb-sep {
+  display: none;
+}
+
+.bbb-gst-toggle {
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--text-strong);
@@ -180,20 +185,77 @@ table#billingGrid tbody tr:hover td {
   cursor: pointer;
 }
 
-.billing-bottom-bar .bbb-sep { color: var(--border-strong); }
+.billing-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-width, 220px);
+  width: calc(100% - var(--sidebar-width, 220px));
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 100;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+  box-sizing: border-box;
+}
 
 .billing-bottom-bar .bbb-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
+.billing-bottom-bar .bbb-right > * {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.billing-bottom-bar .bbb-right > span:first-child {
+  font-size: 1.1rem;
+  font-weight: 700;
+  height: auto;
+}
+
+.billing-bottom-bar .bbb-right .customer-search-combobox {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.billing-bottom-bar .bbb-right .customer-search-combobox input.input-field {
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.billing-bottom-bar .bbb-right .btn-add-customer,
+.billing-bottom-bar .bbb-right .btn-primary {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+span.bbb-discount-wrap, 
+span.bbb-paid-wrap,
 .billing-bottom-bar .bbb-discount-wrap,
 .billing-bottom-bar .bbb-paid-wrap {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  height: 40px;
+  padding: 0 10px;
+  padding-right: 0px !important;
+  border-radius: var(--radius-md, 6px);
+  background: var(--surface-container-low, #f3f4f6);
+  border: 1px solid var(--border, #d1d5db);
+  box-sizing: border-box;
 }
 
 .billing-bottom-bar .bbb-label {

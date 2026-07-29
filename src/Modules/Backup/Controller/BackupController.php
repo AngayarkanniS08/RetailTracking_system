@@ -22,13 +22,8 @@ class BackupController
     public function start(): void
     {
         header('Content-Type: application/json');
-        $userId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-            mt_rand(0, 0xffff),
-            mt_rand(0, 0x0fff) | 0x4000,
-            mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-        );
+        $decoded = \Core\Middlewares\AuthMiddleware::authenticate();
+        $userId = $decoded->data->user_id ?? '019f502c-27b9-77ba-e3a1-a424ab22f8b9';
 
         try {
             $job = $this->service->startBackup($userId);

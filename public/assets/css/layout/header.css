@@ -15,6 +15,54 @@
   z-index: 100;
 }
 
+/* ── Modernized Breadcrumb Navigation ── */
+.topbar-breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+}
+
+.topbar-breadcrumb-nav .breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  gap: 8px;
+}
+
+.topbar-breadcrumb-nav .breadcrumb-item {
+  display: flex;
+  align-items: center;
+  color: var(--muted, #667085);
+  font-size: 14px;
+}
+
+.topbar-breadcrumb-nav .breadcrumb-item a {
+  color: var(--muted, #667085);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 400;
+}
+
+.topbar-breadcrumb-nav .breadcrumb-item a:hover {
+  color: var(--text-strong, #101828);
+  text-decoration: none;
+}
+
+.topbar-breadcrumb-nav .breadcrumb-item.active {
+  color: var(--text-strong, #101828);
+  font-weight: 500;
+}
+
+.topbar-breadcrumb-nav .breadcrumb-item:not(:last-child)::after {
+  content: "/";
+  margin-left: 8px;
+  color: var(--border-strong, #D0D5DD);
+  font-weight: 400;
+}
+
 /* ── Central Global Search Bar ── */
 .topbar-global-search {
   display: flex;

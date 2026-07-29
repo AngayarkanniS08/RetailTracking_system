@@ -56,6 +56,7 @@
 
             if (response.ok && data.success) {
                 document.cookie = "auth_uid=" + data.user.id + "; path=/; max-age=86400; SameSite=Lax";
+                document.cookie = "auth_token=" + data.token + "; path=/; max-age=86400; SameSite=Lax";
                 localStorage.setItem('auth_token', data.token);
                 if (data.user) {
                     localStorage.setItem('auth_user', JSON.stringify(data.user));

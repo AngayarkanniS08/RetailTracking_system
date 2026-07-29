@@ -80,10 +80,12 @@ $router->get('/products/history', [ProductController::class, 'history'], [AuthMi
 $router->get('/vendors',         [VendorController::class, 'index'],    [AuthMiddleware::class]);
 $router->get('/vendors/history', [VendorController::class, 'history'],  [AuthMiddleware::class]);
 $router->get('/customers',       [CustomerController::class, 'index'],  [AuthMiddleware::class]);
+$router->get('/customer-bills',  [CustomerController::class, 'bills'],  [AuthMiddleware::class]);
 $router->get('/reports',         [ReportsController::class, 'index'],    [AuthMiddleware::class]);
 $router->get('/daily-sales',     [ReportsController::class, 'daily'],    [AuthMiddleware::class]);
 $router->get('/system/health',   [HealthController::class, 'index'],    [AuthMiddleware::class]);
 $router->get('/settings/backup', [SettingsController::class, 'backup'],  [AuthMiddleware::class]);
+$router->get('/backup',          [SettingsController::class, 'backup'],  [AuthMiddleware::class]);
 
 // 4. Dispatch Request
 $router->dispatch($request);

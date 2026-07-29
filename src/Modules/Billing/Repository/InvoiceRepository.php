@@ -261,6 +261,11 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             $where[] = "payment_status = ?";
             $params[] = $filters['payment_status'];
         }
+        if (!empty($filters['customer_id'])) {
+            $idx++;
+            $where[] = "customer_id = ?::uuid";
+            $params[] = $filters['customer_id'];
+        }
 
         $whereSql = $where ? 'AND ' . implode(' AND ', $where) : '';
 

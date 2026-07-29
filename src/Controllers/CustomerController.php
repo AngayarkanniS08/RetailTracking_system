@@ -15,4 +15,17 @@ class CustomerController
             'currentRoute' => '/customers',
         ]);
     }
+
+    public function bills(Request $request): void
+    {
+        $customerId = $request->get('customer_id') ?? $_GET['customer_id'] ?? '';
+        $name       = $request->get('name') ?? $_GET['name'] ?? 'Customer';
+
+        View::render('customer/bills', [
+            'pageTitle'    => 'Billing History — ' . htmlspecialchars($name),
+            'currentRoute' => '/customers',
+            'customerId'   => $customerId,
+            'customerName' => $name,
+        ]);
+    }
 }

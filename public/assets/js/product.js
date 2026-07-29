@@ -6,20 +6,31 @@
     // ============================================
     const API_BASE = `${window.location.protocol}//${window.location.hostname}:8081`;
 
-    async function apiRequest(path, options = {}) {
+    function getAuthToken() {
         const token = localStorage.getItem('auth_token');
+        if (token) return token;
+        const match = document.cookie.match(new RegExp('(^| )auth_token=([^;]+)'));
+        return match ? match[2] : '';
+    }
+
+    async function apiRequest(path, options = {}) {
+        const token = getAuthToken();
         const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
         const headers = {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
             ...options.headers,
         };
-        const res = await fetch(url, { ...options, headers });
+        const res = await fetch(url, { ...options, credentials: 'include', headers });
         if (res.status === 401) {
-            localStorage.removeItem('auth_token');
-            alert('Your session has expired. Please log in again to continue.');
-            window.location.href = '/login';
-            throw new Error('Session expired (401)');
+            const hasAuthCookie = document.cookie.includes('auth_uid=') || document.cookie.includes('auth_token=');
+            if (!hasAuthCookie) {
+                localStorage.removeItem('auth_token');
+                if (window.notify) window.notify.error('Your session has expired. Please log in again to continue.');
+                else alert('Your session has expired. Please log in again to continue.');
+                window.location.href = '/login';
+                throw new Error('Session expired (401)');
+            }
         }
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -30,10 +41,28 @@
     window.apiRequest = apiRequest;
 
     // ============================================
+    // HTML Escaping Helper for XSS Security
+    // ============================================
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, m => {
+            switch (m) {
+                case '&': return '&amp;';
+                case '<': return '&lt;';
+                case '>': return '&gt;';
+                case '"': return '&quot;';
+                case "'": return '&#39;';
+                default: return m;
+            }
+        });
+    }
+
+    // ============================================
     // Global state
     // ============================================
     let categories = [];
     let products   = [];
+    let productSubcategories = [];
     let activeCategoryFilter = 'all';
 
     // ============================================
@@ -45,7 +74,7 @@
             const catList = Array.isArray(data) ? data : (data?.data || []);
             categories = catList;
             renderCategoryTabs();
-            populateCategoryDropdowns();    // product-add modal
+            populateCategoryCombobox();   // product-add modal combobox
             populateSubcategoryDropdown();  // sub-category section in manage modal
             updateStats();
         } catch (e) {
@@ -138,20 +167,34 @@
         }
         
         if (filtered.length === 0) {
-            if (tableContainer) tableContainer.style.display = 'none';
-            if (emptyState) {
-                emptyState.style.display = 'block';
-                const titleEl = document.getElementById('emptyStateTitle');
-                const subEl = document.getElementById('emptyStateSub');
+            if (tableContainer) tableContainer.style.display = 'block';
+            if (emptyState) emptyState.style.display = 'none';
 
-                if (products.length === 0) {
-                    if (titleEl) titleEl.textContent = 'No Products in Catalog';
-                    if (subEl) subEl.textContent = 'Your inventory catalog is currently empty. Get started by adding your first product or category.';
-                } else {
-                    if (titleEl) titleEl.textContent = 'No Matching Products';
-                    if (subEl) subEl.textContent = 'No products match your search query or active filter. Try resetting your search or filter.';
-                }
-            }
+            const title = products.length === 0 ? 'No Products in Catalog' : 'No Matching Products';
+            const subtitle = products.length === 0 
+                ? 'Your inventory catalog is currently empty. Get started by adding your first product or category.'
+                : 'No products match your search query or active filter. Try resetting your search or filter.';
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="padding: 0;">
+                        <div class="empty-state" style="padding: 4rem 1.5rem; text-align: center;">
+                            <div class="empty-state-badge" style="width: 52px; height: 52px; border-radius: 50%; background: var(--bg-hover, #f1f5f9); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: var(--muted, #64748b);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22" x2="12" y2="12"></line>
+                                </svg>
+                            </div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--text-strong, #0f172a);">${escapeHtml(title)}</h3>
+                            <p style="color: var(--muted, #64748b); max-width: 420px; margin: 0 auto 20px auto; font-size: 0.875rem; line-height: 1.5;">${escapeHtml(subtitle)}</p>
+                            <div style="display: flex; justify-content: center; gap: 12px;">
+                                <button class="btn btn-outline btn-sm" onclick="resetProductModal(); openModal('addProductModal')">+ Add Product</button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
@@ -289,30 +332,30 @@
         if (elSubcategories) elSubcategories.innerText = subCount;
     }
 
-    /** Populates the Category dropdown inside the "Add Product" modal */
-    function populateCategoryDropdowns() {
-        const catSelect = document.getElementById('pmProductCategory');
-        if (!catSelect) return;
-        
-        catSelect.innerHTML = '';
-        categories.forEach(cat => {
-            const opt = document.createElement('option');
-            opt.value = cat.id;
-            opt.textContent = cat.name;
-            catSelect.appendChild(opt);
-        });
+    /** Populates the Category combobox inside the "Add Product" modal */
+    function populateCategoryCombobox(filtered) {
+        const dropdown = document.getElementById('categoryDropdown');
+        if (!dropdown) return;
+        const items = filtered || categories;
+        dropdown.innerHTML = items.map(cat =>
+            `<div class="combobox-item" data-value="${cat.id}">${cat.name}</div>`
+        ).join('');
+    }
 
-        // Also trigger subcategory load for the first category
-        if (categories.length > 0) {
-            loadSubcategoriesIntoProductModal(catSelect.value);
-        }
+    /** Populates the Subcategory combobox inside the "Add Product" modal */
+    function populateSubcategoryCombobox(list) {
+        const dropdown = document.getElementById('subcategoryDropdown');
+        if (!dropdown) return;
+        dropdown.innerHTML = (list || []).map(sub =>
+            `<div class="combobox-item" data-value="${sub.id}">${sub.name}</div>`
+        ).join('');
     }
 
     /** Populates the "Select Category" dropdown in the Manage Modal subcategory section */
     function populateSubcategoryDropdown() {
         const select = document.getElementById('pmSubCatParent');
         if (!select) return;
-        
+
         select.innerHTML = '';
         categories.forEach(cat => {
             const opt = document.createElement('option');
@@ -324,27 +367,18 @@
 
     /** Loads subcategories for the selected category into the product add modal */
     async function loadSubcategoriesIntoProductModal(categoryId) {
-        const subSelect = document.getElementById('pmProductSubcategory');
-        if (!subSelect || !categoryId) return;
+        const subInput = document.getElementById('pmProductSubcategoryInput');
+        const subHidden = document.getElementById('pmProductSubcategoryId');
+        if (subInput) subInput.value = '';
+        if (subHidden) subHidden.value = '';
+        productSubcategories = [];
+        populateSubcategoryCombobox([]);
+        if (!categoryId) return;
 
         try {
             const data = await window.apiRequest(`/api/subcategories?category_id=${categoryId}`);
-            
-            subSelect.innerHTML = '';
-            
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = 'No Subcategory';
-            subSelect.appendChild(defaultOpt);
-
-            if (data && !data.error && data.length > 0) {
-                data.forEach(sub => {
-                    const opt = document.createElement('option');
-                    opt.value = sub.id;
-                    opt.textContent = sub.name;
-                    subSelect.appendChild(opt);
-                });
-            }
+            productSubcategories = (data && !data.error && Array.isArray(data)) ? data : [];
+            populateSubcategoryCombobox(productSubcategories);
         } catch (e) {
             console.error('Error loading subcategories:', e);
         }
@@ -359,16 +393,8 @@
         renderProductTable();
     };
 
-    /** Called from Category dropdown change in Add Product modal */
-    // Attaching directly to element instead of global window object
+    // ── Product search filter ──
     document.addEventListener('DOMContentLoaded', () => {
-        const pmProductCategory = document.getElementById('pmProductCategory');
-        if (pmProductCategory) {
-            pmProductCategory.addEventListener('change', (e) => {
-                loadSubcategoriesIntoProductModal(e.target.value);
-            });
-        }
-
         const pmSearch = document.getElementById('pmSearch');
         if (pmSearch) {
             pmSearch.addEventListener('input', renderProductTable);
@@ -379,7 +405,8 @@
     window.saveCategory = async function() {
         const name = document.getElementById('pmCategoryName').value.trim();
         if (!name) {
-            alert('Please enter a category name');
+            if (window.notify) window.notify.warning('Please enter a category name');
+            else showToast('Please enter a category name', 'warn');
             return;
         }
         try {
@@ -389,14 +416,16 @@
             });
             if (data && data.success) {
                 document.getElementById('pmCategoryName').value = '';
+                if (window.notify) window.notify.success('Category added successfully');
                 await loadCategories();  // refreshes tabs + both dropdowns
                 await loadProducts();    // update per-category counts in tabs
-                window.closeModal('addCategoryModal');
             } else {
-                alert(data?.error || 'Failed to add category');
+                if (window.notify) window.notify.error(data?.error || 'Failed to add category');
+                else showToast(data?.error || 'Failed to add category', 'danger');
             }
         } catch (e) {
-            alert(e.message || 'Error adding category');
+            if (window.notify) window.notify.error(e.message || 'Error adding category');
+            else showToast(e.message || 'Error adding category', 'danger');
         }
     };
 
@@ -405,11 +434,13 @@
         const subName    = document.getElementById('pmSubCategoryName').value.trim();
 
         if (!categoryId) {
-            alert('Please select a parent category');
+            if (window.notify) window.notify.warning('Please select a parent category');
+            else showToast('Please select a parent category', 'warn');
             return;
         }
         if (!subName) {
-            alert('Please enter a subcategory name');
+            if (window.notify) window.notify.warning('Please enter a subcategory name');
+            else showToast('Please enter a subcategory name', 'warn');
             return;
         }
 
@@ -421,32 +452,30 @@
 
             if (data && data.success) {
                 document.getElementById('pmSubCategoryName').value = '';
-                alert('Subcategory added successfully');
+                if (window.notify) window.notify.success('Subcategory added successfully');
+                else showToast('Subcategory added successfully', 'ok');
                 // Refresh subcategory list in product modal if matching category is selected
-                const prodCat = document.getElementById('pmProductCategory');
-                if (prodCat && prodCat.value === categoryId) {
+                const prodCatHidden = document.getElementById('pmProductCategoryId');
+                if (prodCatHidden && prodCatHidden.value === categoryId) {
                     loadSubcategoriesIntoProductModal(categoryId);
                 }
             } else {
-                alert(data?.error || 'Failed to add subcategory');
+                if (window.notify) window.notify.error(data?.error || 'Failed to add subcategory');
+                else showToast(data?.error || 'Failed to add subcategory', 'danger');
             }
         } catch (e) {
-            alert(e.message || 'Error adding subcategory');
+            if (window.notify) window.notify.error(e.message || 'Error adding subcategory');
+            else showToast(e.message || 'Error adding subcategory', 'danger');
         }
     };
 
-    // Helpers for retrieving category and subcategory values from dropdowns or comboboxes
+    // Helpers for retrieving category and subcategory values from comboboxes
     function getSelectedCategory() {
-        const sel = document.getElementById('pmProductCategory');
-        if (sel && sel.value) return sel.value;
         const hidden = document.getElementById('pmProductCategoryId');
-        if (hidden && hidden.value) return hidden.value;
-        return '';
+        return (hidden && hidden.value) ? hidden.value : '';
     }
 
     function setSelectedCategory(catId, catName) {
-        const sel = document.getElementById('pmProductCategory');
-        if (sel) sel.value = catId || '';
         const hidden = document.getElementById('pmProductCategoryId');
         if (hidden) hidden.value = catId || '';
         const input = document.getElementById('pmProductCategoryInput');
@@ -454,20 +483,116 @@
     }
 
     function getSelectedSubcategory() {
-        const sel = document.getElementById('pmProductSubcategory');
-        if (sel && sel.value) return sel.value;
         const hidden = document.getElementById('pmProductSubcategoryId');
-        if (hidden && hidden.value) return hidden.value;
-        return null;
+        return (hidden && hidden.value) ? hidden.value : null;
     }
 
     function setSelectedSubcategory(subId, subName) {
-        const sel = document.getElementById('pmProductSubcategory');
-        if (sel) sel.value = subId || '';
         const hidden = document.getElementById('pmProductSubcategoryId');
         if (hidden) hidden.value = subId || '';
         const input = document.getElementById('pmProductSubcategoryInput');
         if (input) input.value = subName || '';
+    }
+
+    // ── Searchable Combobox ──────────────────────────────────────────────────
+    function setupCombobox(inputId, dropdownId, hiddenId, sourceFn, onSelect) {
+        const input = document.getElementById(inputId);
+        const dropdown = document.getElementById(dropdownId);
+        const hidden = document.getElementById(hiddenId);
+        if (!input || !dropdown) return;
+
+        let selectedIndex = -1;
+
+        function showFiltered() {
+            const q = input.value.toLowerCase().trim();
+            const items = (sourceFn() || []);
+            const container = input.closest('.combobox');
+            if (!q) {
+                dropdown.innerHTML = items.map((item, i) =>
+                    `<div class="combobox-item" data-index="${i}" data-value="${item.id}">${item.name}</div>`
+                ).join('');
+            } else {
+                const filtered = items.filter(item => item.name.toLowerCase().includes(q));
+                dropdown.innerHTML = filtered.map((item, i) =>
+                    `<div class="combobox-item" data-index="${i}" data-value="${item.id}">${item.name}</div>`
+                ).join('');
+            }
+            selectedIndex = -1;
+            if (dropdown.children.length > 0) {
+                dropdown.classList.add('show');
+                if (container) container.classList.add('is-open');
+            } else {
+                dropdown.classList.remove('show');
+                if (container) container.classList.remove('is-open');
+            }
+        }
+
+        function hideDropdown() {
+            dropdown.classList.remove('show');
+            const container = input.closest('.combobox');
+            if (container) container.classList.remove('is-open');
+        }
+
+        function selectItem(el) {
+            const id = el.dataset.value;
+            const name = el.textContent;
+            input.value = name;
+            if (hidden) hidden.value = id;
+            hideDropdown();
+            if (onSelect) onSelect(id);
+        }
+
+        input.addEventListener('click', showFiltered);
+        input.addEventListener('focus', showFiltered);
+        input.addEventListener('input', showFiltered);
+
+        input.addEventListener('blur', () => {
+            setTimeout(hideDropdown, 200);
+        });
+
+        input.addEventListener('keydown', (e) => {
+            const items = dropdown.querySelectorAll('.combobox-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    e.preventDefault();
+                    selectItem(items[selectedIndex]);
+                    return;
+                }
+            } else if (e.key === 'Escape') {
+                hideDropdown();
+                selectedIndex = -1;
+            }
+            items.forEach((el, i) => {
+                el.classList.toggle('highlighted', i === selectedIndex);
+            });
+        });
+
+        dropdown.addEventListener('mousedown', (e) => {
+            const item = e.target.closest('.combobox-item');
+            if (item) {
+                e.preventDefault();
+                selectItem(item);
+                input.focus();
+            }
+        });
+    }
+
+    function initComboboxes() {
+        setupCombobox(
+            'pmProductCategoryInput', 'categoryDropdown', 'pmProductCategoryId',
+            () => categories,
+            (id) => loadSubcategoriesIntoProductModal(id)
+        );
+        setupCombobox(
+            'pmProductSubcategoryInput', 'subcategoryDropdown', 'pmProductSubcategoryId',
+            () => productSubcategories
+        );
     }
 
     window.saveProduct = async function() {
@@ -479,7 +604,8 @@
         const gst           = parseFloat(document.getElementById('pmProductGst')?.value) || 0;
 
         if (!name || !categoryId || !unit) {
-            alert('Product name, category, and unit are required');
+            if (window.notify) window.notify.warning('Product name, category, and unit are required');
+            else showToast('Product name, category, and unit are required', 'warn');
             return;
         }
 
@@ -497,15 +623,18 @@
             });
 
             if (data && (data.success || data.id || data.product)) {
+                if (window.notify) window.notify.success('Product added successfully');
                 await loadProducts();
                 await loadCategories();
                 window.resetProductModal();
                 if (window.closeModal) window.closeModal('addProductModal');
             } else {
-                alert(data?.error || 'Failed to add product');
+                if (window.notify) window.notify.error(data?.error || 'Failed to add product');
+                else showToast(data?.error || 'Failed to add product', 'danger');
             }
         } catch (e) {
-            alert(e.message || 'Error adding product');
+            if (window.notify) window.notify.error(e.message || 'Error adding product');
+            else showToast(e.message || 'Error adding product', 'danger');
         }
     };
 
@@ -534,14 +663,17 @@
                     confirmBtn.textContent = 'Deleting...';
                     const data = await window.apiRequest(`/api/products/${pendingDeleteProductId}`, { method: 'DELETE' });
                     if (data && data.success) {
+                        if (window.notify) window.notify.success('Product deleted successfully');
                         if (window.closeModal) window.closeModal('deleteProductModal');
                         await loadProducts();
                         await loadCategories();
                     } else {
-                        alert(data?.error || 'Failed to delete product');
+                        if (window.notify) window.notify.error(data?.error || 'Failed to delete product');
+                        else showToast(data?.error || 'Failed to delete product', 'danger');
                     }
                 } catch (e) {
-                    alert('Error deleting product');
+                    if (window.notify) window.notify.error('Error deleting product');
+                    else showToast('Error deleting product', 'danger');
                 } finally {
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete Product`;
@@ -580,6 +712,10 @@
 
         setSelectedCategory('', '');
         setSelectedSubcategory('', '');
+        productSubcategories = [];
+        const subDropdown = document.getElementById('subcategoryDropdown');
+        if (subDropdown) subDropdown.innerHTML = '';
+        populateCategoryCombobox();
     };
 
     // Global variable to track which product is being edited
@@ -589,7 +725,8 @@
     window.editProduct = async function(productId) {
         const product = products.find(p => p.id === productId);
         if (!product) {
-            alert('Product not found');
+            if (window.notify) window.notify.error('Product not found');
+            else showToast('Product not found', 'danger');
             return;
         }
         editingProductId = productId;
@@ -614,6 +751,7 @@
         
         setSelectedCategory(product.category_id, product.category_name);
         setSelectedSubcategory(product.subcategory_id, product.subcategory_name);
+        loadSubcategoriesIntoProductModal(product.category_id);
 
         if (window.openModal) {
             window.openModal('addProductModal');
@@ -634,7 +772,8 @@
         const gst           = parseFloat(document.getElementById('pmProductGst')?.value) || 0;
         
         if (!name || !categoryId || !unit) {
-            alert('Product name, category, and unit are required');
+            if (window.notify) window.notify.warning('Product name, category, and unit are required');
+            else showToast('Product name, category, and unit are required', 'warn');
             return;
         }
         
@@ -652,14 +791,17 @@
             });
             
             if (data && (data.success || data.id || data.product)) {
+                if (window.notify) window.notify.success('Product updated successfully');
                 await loadProducts();
                 if (window.closeModal) window.closeModal('addProductModal');
                 window.resetProductModal();
             } else {
-                alert(data?.error || 'Failed to update product');
+                if (window.notify) window.notify.error(data?.error || 'Failed to update product');
+                else showToast(data?.error || 'Failed to update product', 'danger');
             }
         } catch (e) {
-            alert(e.message || 'Error updating product');
+            if (window.notify) window.notify.error(e.message || 'Error updating product');
+            else showToast(e.message || 'Error updating product', 'danger');
         }
     };
 
@@ -669,6 +811,7 @@
     async function initProductMaster() {
         await loadCategories();
         await loadProducts();
+        initComboboxes();
     }
 
     if (document.readyState === 'loading') {

@@ -14,6 +14,7 @@
     (function() {
       var saved = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme-mode', saved);
+      document.documentElement.setAttribute('data-bs-theme', saved);
 
       window.switchTab = window.switchTab || function(sectionId) {
         document.querySelectorAll('.view-section').forEach(function(el) {

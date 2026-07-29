@@ -239,9 +239,10 @@ class CustomerController
                 'balance' => $balance,
                 'entries' => $entriesArr
             ]);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            error_log('CustomerController::ledger error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to load ledger']);
+            echo json_encode(['error' => 'Failed to load ledger: ' . $e->getMessage()]);
         }
     }
 }

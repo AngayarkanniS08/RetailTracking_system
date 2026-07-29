@@ -9,6 +9,7 @@ use Exception;
 class Database
 {
     private static ?PDO $connection = null;
+    private static ?string $currentUserId = null;
 
     public static function getConnection(): PDO
     {
@@ -26,6 +27,14 @@ class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
+
+            if (self::$currentUserId !== null) {
+                try {
+                    self::$connection->exec("SET app.current_user_id = " . self::$connection->quote(self::$currentUserId));
+                } catch (\Throwable $e) {
+                    // Ignore session var errors
+                }
+            }
         }
 
         return self::$connection;
@@ -33,10 +42,13 @@ class Database
 
     public static function setCurrentUser(string $userId): void
     {
-        try {
-            self::getConnection()->exec("SET app.current_user_id = " . self::getConnection()->quote($userId));
-        } catch (\Throwable $e) {
-            // Ignore session var set errors if RLS table session is optional
+        self::$currentUserId = $userId;
+        if (self::$connection !== null) {
+            try {
+                self::$connection->exec("SET app.current_user_id = " . self::$connection->quote($userId));
+            } catch (\Throwable $e) {
+                // Ignore session var errors
+            }
         }
     }
 }

@@ -256,7 +256,7 @@ class CustomerService
         $db = \Config\Database::getConnection();
         $stmt = $db->prepare("
             SELECT balance FROM customer_ledger
-            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id')::uuid
+            WHERE customer_id = ? AND user_id = current_setting('app.current_user_id', true)::uuid
             ORDER BY created_at DESC
             LIMIT 1
             FOR UPDATE

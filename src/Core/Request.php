@@ -36,6 +36,12 @@ class Request
         return $this->query[$key] ?? $default;
     }
 
+    public function query(?string $key = null, $default = null)
+    {
+        if ($key === null) return $this->query;
+        return $this->query[$key] ?? $default;
+    }
+
     public function post(string $key, $default = null)
     {
         return $this->body[$key] ?? $default;

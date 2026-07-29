@@ -10,11 +10,23 @@
             <div id="lowStockBannerItems"></div>
           </div>
 
-          <!-- Search -->
-          <div class="pos-search-area" style="align-items: center; margin-bottom: 0.8rem; position: relative;">
-            <input type="text" id="posSearch" class="input-field" style="flex:1"
-              placeholder="Search by Product Name, ID, or Batch..." onkeyup="onPOSSearchKeyup(event)">
-            <div id="posSearchDropdown" class="pos-search-dropdown" style="display:none;"></div>
+          <!-- Search & Billing Options Bar -->
+          <div class="pos-search-area" style="display: flex; align-items: center; gap: 12px; margin-bottom: 0.8rem; position: relative;">
+            <div style="flex: 1; position: relative;">
+              <input type="text" id="posSearch" class="input-field" style="width: 100%;"
+                placeholder="Search by Product Name, ID, or Batch..." onkeyup="onPOSSearchKeyup(event)">
+              <div id="posSearchDropdown" class="pos-search-dropdown" style="display:none;"></div>
+            </div>
+
+            <!-- Billing Info (Relocated next to Search Field) -->
+            <div class="bbb-left" style="width: auto; flex-shrink: 0; display: flex; align-items: center; gap: 12px;">
+              <label class="bbb-gst-toggle">
+                <input type="checkbox" id="enableGstToggle" checked onchange="calculateCart(true)">
+                Generate Tax Invoice (Apply GST)
+              </label>
+              <span>Sale: <strong id="cartSubtotal">₹0.00</strong></span>
+              <span>GST: <strong id="cartGst">₹0.00</strong></span>
+            </div>
           </div>
 
           <!-- Data Grid with empty rows -->
@@ -55,23 +67,12 @@
 
           <!-- Cart Summary (bottom bar) -->
           <div class="billing-bottom-bar">
-            <div class="bbb-left">
-              <label class="bbb-gst-toggle">
-                <input type="checkbox" id="enableGstToggle" checked onchange="calculateCart(true)">
-                Generate Tax Invoice (Apply GST)
-              </label>
-              <span class="bbb-sep">|</span>
-              <span>Sale: <strong id="cartSubtotal">₹0.00</strong></span>
-              <span class="bbb-sep">|</span>
-              <span>GST: <strong id="cartGst">₹0.00</strong></span>
-              <span class="bbb-sep">|</span>
+            <div class="bbb-right">
+              <span style="font-size:1.2rem; font-weight:700;">Total: <span id="cartTotal">₹0.00</span></span>
               <span class="bbb-discount-wrap">
                 <span class="bbb-label">Discount</span>
                 <input type="number" id="cartDiscountInput" class="bbb-input bbb-input-discount" placeholder="0" min="0" oninput="calculateCart()">
               </span>
-            </div>
-            <div class="bbb-right">
-              <span style="font-size:1.2rem; font-weight:700;">Total: <span id="cartTotal">₹0.00</span></span>
               <div class="customer-search-combobox">
                 <input type="text" id="customerSearchInput" class="input-field" placeholder="Customer name or phone..."
                        autocomplete="off" onkeyup="onCustomerSearchKeyup(event)" onfocus="onCustomerSearchKeyup({key:''})">
@@ -110,3 +111,5 @@
             </div>
           </div>
         </section>
+
+<script type="module" src="/public/assets/js/pages/billing.js?v=<?= time(); ?>"></script>

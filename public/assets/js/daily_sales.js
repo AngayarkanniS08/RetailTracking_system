@@ -207,8 +207,16 @@ function confirmDeleteInvoice(invoiceId) {
 
 function cancelInvoice(invoiceId) {
     window.apiRequest('/api/invoices/' + invoiceId + '/cancel', { method: 'POST' })
-        .then(function() { closeModal('deleteBillModal'); initDayToDaySelling(); })
-        .catch(function(err) { alert('Failed to delete: ' + err.message); });
+        .then(function() {
+            if (window.notify) window.notify.success('Invoice cancelled successfully');
+            else showToast('Invoice cancelled successfully', 'ok');
+            closeModal('deleteBillModal');
+            initDayToDaySelling();
+        })
+        .catch(function(err) {
+            if (window.notify) window.notify.error('Failed to delete: ' + err.message);
+            else showToast('Failed to delete: ' + err.message, 'danger');
+        });
 }
 
 function formatNumber(n) {
@@ -273,7 +281,8 @@ function openReturnModal(invoiceId) {
             openModal('returnItemsModal');
         })
         .catch(function(err) {
-            alert('Failed to load invoice: ' + err.message);
+            if (window.notify) window.notify.error('Failed to load invoice: ' + err.message);
+            else showToast('Failed to load invoice: ' + err.message, 'danger');
         });
 }
 
@@ -305,7 +314,8 @@ function submitReturn() {
     var reason = document.getElementById('returnReason').value.trim();
 
     if (!reason || reason.length < 3) {
-        alert('Please enter a return reason (min 3 characters)');
+        if (window.notify) window.notify.warning('Please enter a return reason (min 3 characters)');
+        else showToast('Please enter a return reason (min 3 characters)', 'warn');
         return;
     }
 
@@ -327,7 +337,8 @@ function submitReturn() {
     });
 
     if (items.length === 0) {
-        alert('No items selected for return');
+        if (window.notify) window.notify.warning('No items selected for return');
+        else showToast('No items selected for return', 'warn');
         return;
     }
 
@@ -344,12 +355,20 @@ function submitReturn() {
     })
     .then(function(data) {
         closeModal('returnItemsModal');
-        if (data && data.warning) alert(data.warning);
-        if (data && data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
+        if (window.notify) window.notify.success('Return processed successfully');
+        if (data && data.warning) {
+            if (window.notify) window.notify.warning(data.warning);
+            else showToast(data.warning, 'warn');
+        }
+        if (data && data.stock_warning) {
+            if (window.notify) window.notify.warning('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
+            else showToast('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.', 'warn');
+        }
         initDayToDaySelling();
     })
     .catch(function(err) {
-        alert('Return failed: ' + err.message);
+        if (window.notify) window.notify.error('Return failed: ' + err.message);
+        else showToast('Return failed: ' + err.message, 'danger');
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Return'; }
         if (closeBtn) closeBtn.style.pointerEvents = '';
         if (modal) modal.style.pointerEvents = '';

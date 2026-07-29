@@ -78,7 +78,7 @@ export async function apiRequest(path, options = {}) {
 
     let response;
     try {
-      response = await fetch(url, { ...options, headers });
+      response = await fetch(url, { ...options, credentials: 'include', headers });
     } catch (networkErr) {
       logger.error('api:network', url, networkErr);
       throw networkErr;
@@ -124,3 +124,5 @@ export async function apiRequest(path, options = {}) {
 
   return data;
 }
+
+window.apiRequest = apiRequest;

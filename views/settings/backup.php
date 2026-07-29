@@ -97,3 +97,5 @@
     <div id="scheduleNote" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--muted);">Scheduled backups run on the server even when you're not logged in.</div>
   </div>
 </div>
+
+<script src="/public/assets/js/backup.js?v=<?= time(); ?>"></script>

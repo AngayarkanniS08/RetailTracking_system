@@ -11,7 +11,7 @@ import { initRouter, switchTab } from './core/router.js';
 import { initSidebar } from './ui/sidebar.js';
 import { initModals, openModal, closeModal } from './ui/modal.js';
 import { logoutUser } from './core/auth.js';
-import { showToast } from './ui/toast.js';
+import { showToast, notify } from './ui/toast.js';
 import { initAuthPage } from './pages/auth.js';
 
 // Page-specific modules
@@ -21,12 +21,27 @@ import { initSystemHealthPage } from './pages/system-health.js';
 import { initVendorsPage } from './pages/vendors.js';
 import { initCustomerCredit } from './pages/customers.js';
 
+import { apiRequest } from './core/api.js';
+import { getToken } from './core/storage.js';
+
 // Expose core global helpers for HTML inline attribute handlers (backward compatibility)
+window.apiRequest = apiRequest;
+window.getToken = getToken;
+window.fetchWithAuth = async function (url, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+  return fetch(url, { ...options, headers, credentials: 'same-origin' });
+};
 window.logoutUser = logoutUser;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.switchTab = switchTab;
 window.showToast = showToast;
+window.notify = notify;
 window.setTheme = setAppTheme;
 
 /**

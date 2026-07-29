@@ -5,11 +5,11 @@
 import { apiRequest } from '../core/api.js';
 
 export async function fetchBackupsApi() {
-  return apiRequest('/api/backup/list');
+  return apiRequest('/api/backup/files');
 }
 
 export async function createBackupApi() {
-  return apiRequest('/api/backup/create', { method: 'POST' });
+  return apiRequest('/api/backup/start', { method: 'POST' });
 }
 
 export async function restoreBackupApi(filename) {

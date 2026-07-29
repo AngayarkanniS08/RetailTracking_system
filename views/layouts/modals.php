@@ -192,13 +192,13 @@
         <input type="text" id="custPhone" class="input-field" placeholder="10-digit number">
       </div>
 
-      <div class="d-flex" style="gap:10px;">
-        <div class="input-group" style="flex:1;">
-          <label class="input-label">Credit Limit (₹) <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+      <div class="d-flex" style="display: flex; flex-direction: row; align-items: flex-start; gap: 20px; width: 100%;">
+        <div class="input-group" style="flex: 1; margin-bottom: 0;">
+          <label class="input-label">Credit Limit (₹) <span style="display: block; margin-top: 2px; color:var(--muted); font-weight:400;">(optional)</span></label>
           <input type="number" id="custCreditLimit" class="input-field" placeholder="0" min="0">
         </div>
-        <div class="input-group" style="flex:1;">
-          <label class="input-label">Opening Balance (₹) <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+        <div class="input-group" style="flex: 1; margin-bottom: 0;">
+          <label class="input-label">Opening Balance (₹) <span style="display: block; margin-top: 2px; color:var(--muted); font-weight:400;">(optional)</span></label>
           <input type="number" id="custOpeningBalance" class="input-field" placeholder="0" min="0">
         </div>
       </div>
@@ -224,7 +224,8 @@
       <input type="hidden" id="payCustId">
       <div class="input-group">
         <label class="input-label">Amount Received (₹)</label>
-        <input type="number" id="payAmount" class="input-field" placeholder="Enter amount" min="0" step="1">
+        <input type="number" id="payAmount" class="input-field" placeholder="Enter amount" min="0" step="1" oninput="onPayAmountInput()">
+        <div id="payLimitFeedback" style="font-size:0.78rem; margin-top:5px; min-height:16px;"></div>
       </div>
       <div class="input-group">
         <label class="input-label">Notes (optional)</label>
@@ -234,7 +235,81 @@
     </div>
   </div>
 
+  <!-- Customer Bills Modal -->
+  <div class="modal-overlay" id="customerBillsModal">
+    <div class="modal-content" style="max-width: 780px; width: 92%;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="custBillsModalTitle">Customer Billing History</div>
+          <div id="custBillsSubtitle" style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">View all billing invoices and payment transactions</div>
+        </div>
+        <button class="close-btn" onclick="closeModal('customerBillsModal')">&times;</button>
+      </div>
+      <div id="custBillsModalBody" style="max-height: 420px; overflow-y: auto; margin-top: 1rem;">
+        <div style="padding: 2rem; text-align: center; color: var(--muted);">Loading billing history...</div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+        <button class="btn btn-outline" onclick="closeModal('customerBillsModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credit Return Modal -->
+  <div class="modal-overlay" id="creditReturnModal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Record Credit Return</div>
+          <div style="font-size: 0.8rem; color: var(--muted); margin-top: 2px;">Reduce customer outstanding for returned goods</div>
+        </div>
+        <button class="close-btn" onclick="closeModal('creditReturnModal')">&times;</button>
+      </div>
+
+      <!-- Customer Info Banner -->
+      <div style="margin: 1rem 0; padding: 0.9rem 1rem; background: rgba(239,68,68,0.07); border-radius: var(--radius-md); border: 1px solid rgba(239,68,68,0.25);">
+        <div style="font-size: 0.78rem; color: var(--muted); margin-bottom: 2px;">Customer</div>
+        <div id="returnCustName" style="font-weight: 700; color: var(--text-strong); font-size: 1.05rem;">-</div>
+        <div style="margin-top: 8px; font-size: 0.82rem;">
+          Current Outstanding: <strong id="returnCustBalance" style="color: var(--danger, #ef4444);">-</strong>
+        </div>
+      </div>
+
+      <input type="hidden" id="returnCustId">
+
+      <div class="input-group">
+        <label class="input-label">Select Invoice / Bill Reference <span style="color:var(--danger);">*</span></label>
+        <select id="returnInvoiceSelect" class="input-field" onchange="window.onReturnInvoiceSelectChange(this)">
+          <option value="">Loading customer invoices...</option>
+        </select>
+        <div id="manualInvoiceGroup" style="display:none; margin-top:8px;">
+          <input type="text" id="returnInvoiceManual" class="input-field" placeholder="Enter manual invoice number or reference">
+        </div>
+        <input type="hidden" id="returnInvoiceRef">
+        <div id="returnInvoiceInfo" style="font-size: 0.75rem; color: var(--muted); margin-top: 5px; min-height: 16px;"></div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Return Amount (&#8377;) <span style="color:var(--danger);">*</span></label>
+        <input type="number" id="returnAmount" class="input-field" placeholder="0.00" min="0" step="0.01">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Reason / Notes (optional)</label>
+        <input type="text" id="returnNotes" class="input-field" placeholder="e.g. Damaged goods, wrong item">
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 0.5rem;">
+        <button class="btn btn-outline btn-block" onclick="closeModal('creditReturnModal')">Cancel</button>
+        <button id="processReturnBtn" class="btn btn-block" onclick="processReturn()"
+                style="background: var(--danger, #ef4444); color: #fff; border: none; font-weight: 600;">
+          Process Return
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Add Stock Entry Modal -->
+
   <div class="modal-overlay" id="addStockEntryModal">
     <div class="modal-content">
       <div class="modal-header">

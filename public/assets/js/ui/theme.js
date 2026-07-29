@@ -9,6 +9,7 @@ import { emit, Events } from '../core/events.js';
 /** Apply theme to the HTML root element */
 function applyTheme(mode) {
   document.documentElement.setAttribute('data-theme-mode', mode);
+  document.documentElement.setAttribute('data-bs-theme', mode);
 }
 
 /**
@@ -38,7 +39,7 @@ export function setAppTheme(mode) {
 
 /** Sync .theme-btn active states */
 function syncButtons(mode) {
-  document.querySelectorAll('.theme-btn[data-theme]').forEach((btn) => {
+  document.querySelectorAll('.theme-btn[data-theme], .topbar-theme-btn[data-theme]').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.theme === mode);
   });
 }

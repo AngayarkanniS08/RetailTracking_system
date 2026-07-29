@@ -116,10 +116,11 @@
   transition: all 0.2s var(--ease-out);
 }
 
-.combobox.is-open .combobox-dropdown {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
+.combobox.is-open .combobox-dropdown,
+.combobox-dropdown.show {
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
   border-color: var(--accent);
   box-shadow: var(--shadow-lg), var(--shadow-glow);
 }
@@ -140,7 +141,8 @@
 }
 
 .combobox-item:hover,
-.combobox-item.selected {
+.combobox-item.selected,
+.combobox-item.highlighted {
   background: var(--accent);
   color: var(--accent-foreground);
 }

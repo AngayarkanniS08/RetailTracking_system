@@ -245,9 +245,41 @@ class ApiRoutes
             AuthMiddleware::authenticate(900);
             (new \Modules\Customer\Controller\Api\CustomerController())->pay($params['id']);
         });
+        $router->add('POST', '/api/customers/{id}/credit-payments', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Customer\Controller\Api\CustomerController())->pay($params['id']);
+        });
         $router->add('GET', '/api/customers/{id}/ledger', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Customer\Controller\Api\CustomerController())->ledger($params['id']);
+        });
+
+        // ── Credit Sale / Return / Limit ────────────────────────────
+        $router->add('POST', '/api/customers/{id}/credit-sale', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Customer\Controller\Api\CreditController())->recordCreditSale($params['id']);
+        });
+        $router->add('POST', '/api/customers/{id}/credit-return', function (array $params): void {
+            AuthMiddleware::authenticate(900);
+            (new \Modules\Customer\Controller\Api\CreditController())->recordReturn($params['id']);
+        });
+        $router->add('GET', '/api/customers/{id}/credit-check', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Customer\Controller\Api\CreditController())->checkCreditLimit($params['id']);
+        });
+
+        // ── Ledger Endpoints ─────────────────────────────────────────
+        $router->add('GET', '/api/customers/{id}/ledger/entries', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Customer\Controller\Api\LedgerController())->entries($params['id']);
+        });
+        $router->add('GET', '/api/customers/{id}/ledger/summary', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Customer\Controller\Api\LedgerController())->summary($params['id']);
+        });
+        $router->add('GET', '/api/customers/{id}/ledger/balance', function (array $params): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Customer\Controller\Api\LedgerController())->balance($params['id']);
         });
 
         // ── Dashboard / Reports ──────────────────────────────────────────
@@ -292,6 +324,9 @@ class ApiRoutes
         $router->add('POST', '/api/backup/start', function (): void {
             (new BackupController())->start();
         });
+        $router->add('POST', '/api/backup/create', function (): void {
+            (new BackupController())->start();
+        });
         $router->add('GET', '/api/backup/status/{id}', function (array $params): void {
             (new BackupController())->status($params['id']);
         });
@@ -299,6 +334,9 @@ class ApiRoutes
             (new BackupController())->currentStatus();
         });
         $router->add('GET', '/api/backup/files', function (): void {
+            (new BackupController())->files();
+        });
+        $router->add('GET', '/api/backup/list', function (): void {
             (new BackupController())->files();
         });
         $router->add('POST', '/api/backup/restore', function (): void {

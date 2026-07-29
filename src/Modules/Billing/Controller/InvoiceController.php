@@ -48,6 +48,9 @@ class InvoiceController
         if (!empty($_GET['payment_status'])) {
             $filters['payment_status'] = $_GET['payment_status'];
         }
+        if (!empty($_GET['customer_id'])) {
+            $filters['customer_id'] = $_GET['customer_id'];
+        }
 
         $searchTerm = $_GET['search'] ?? '';
         $dateFrom = $_GET['date_from'] ?? '';
@@ -92,7 +95,8 @@ class InvoiceController
             }
 
             echo $json;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            error_log('InvoiceController::index error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             http_response_code(500);
             echo json_encode(['error' => 'Failed to load invoices: ' . $e->getMessage()]);
         }

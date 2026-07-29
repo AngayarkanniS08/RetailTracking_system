@@ -3,7 +3,10 @@
    Applied when: html[data-theme-mode="light"]
    ============================================================= */
 
-:root[data-theme-mode="light"] {
+:root[data-theme-mode="light"],
+:root[data-bs-theme="light"],
+html[data-theme-mode="light"],
+html[data-bs-theme="light"] {
   --background: #f6f8fb;       /* Level 0: Soft background */
   --sidebar-bg: #fcfcfd;        /* Level 1: Off-canvas sidebar */
   --sidebar-hover: #f4f6fa;

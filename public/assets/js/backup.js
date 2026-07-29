@@ -1,5 +1,30 @@
 // ── Backup & Restore ─────────────────────────────────────────────────────────
 
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:8081`;
+const apiRequest = window.apiRequest || async function(path, options = {}) {
+    const token = localStorage.getItem('auth_token');
+    const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+    };
+    const res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+        localStorage.removeItem('auth_token');
+        if (window.notify) window.notify.error('Your session has expired. Please log in again to continue.');
+        else alert('Your session has expired. Please log in again to continue.');
+        window.location.href = '/login';
+        throw new Error('Session expired (401)');
+    }
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'API request failed');
+    }
+    return res.json();
+};
+window.apiRequest = apiRequest;
+
 let _backupPollTimer = null;
 let _restorePollTimer = null;
 
@@ -72,7 +97,8 @@ async function startBackup() {
             pollBackupStatus(result.job_id);
         }
     } catch (e) {
-        alert('Failed to start backup: ' + e.message);
+        if (window.notify) window.notify.error('Failed to start backup: ' + e.message);
+        else showToast('Failed to start backup: ' + e.message, 'danger');
         btn.disabled = false;
         btn.textContent = 'Start Backup';
     }
@@ -223,7 +249,8 @@ async function executeRestore() {
             msg.textContent = '✓ Restore completed successfully. Data has been restored.';
         }
     } catch (e) {
-        alert('Restore failed: ' + e.message);
+        if (window.notify) window.notify.error('Restore failed: ' + e.message);
+        else showToast('Restore failed: ' + e.message, 'danger');
         btn.disabled = false;
         btn.textContent = 'Restore Data';
     }
@@ -308,10 +335,12 @@ async function saveBackupConfig() {
             method: 'PUT',
             body: JSON.stringify(payload)
         });
-        alert('Backup settings saved.');
+        if (window.notify) window.notify.success('Backup settings saved.');
+        else showToast('Backup settings saved.', 'ok');
         loadBackupConfig();
     } catch (e) {
-        alert('Failed to save settings: ' + e.message);
+        if (window.notify) window.notify.error('Failed to save settings: ' + e.message);
+        else showToast('Failed to save settings: ' + e.message, 'danger');
     }
 }
 
@@ -334,7 +363,8 @@ async function connectGoogleDrive() {
             }, 1000);
         }
     } catch (e) {
-        alert('Failed to connect: ' + e.message);
+        if (window.notify) window.notify.error('Failed to connect: ' + e.message);
+        else showToast('Failed to connect: ' + e.message, 'danger');
     }
 }
 
@@ -347,7 +377,8 @@ async function handleAuthCode(code) {
         });
         loadBackupConfig();
     } catch (e) {
-        alert('Failed to exchange auth code: ' + e.message);
+        if (window.notify) window.notify.error('Failed to exchange auth code: ' + e.message);
+        else showToast('Failed to exchange auth code: ' + e.message, 'danger');
     }
 }
 
@@ -376,6 +407,19 @@ function stopPolling(type) {
         clearInterval(window[timer]);
         window[timer] = null;
     }
+}
+
+// Bind to window for inline HTML onclick handlers
+window.startBackup = startBackup;
+window.loadRestoreFiles = loadRestoreFiles;
+window.connectGoogleDrive = connectGoogleDrive;
+window.saveBackupConfig = saveBackupConfig;
+window.loadBackupPage = loadBackupPage;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadBackupPage);
+} else {
+    loadBackupPage();
 }
 
 

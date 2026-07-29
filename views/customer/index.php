@@ -1,12 +1,15 @@
 <!-- 
   FEATURE DOCUMENTATION: Customer Credit (Kadan) View
-  Modernized Enterprise UX matching reference screenshot layout.
+  Full credit management: limit bar, outstanding, collect payment, return, bills history.
 -->
 <section id="credit_kadan" class="view-section active">
   
-  <!-- Page Header Row: Title on Left, Search + Add Customer Button on Right -->
+  <!-- Page Header Row -->
   <div class="page-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px;">
-    <h1 style="font-size: 1.4rem; font-weight: 700; color: var(--text-strong); margin: 0; letter-spacing: -0.02em;">Customer Credit (Kadan)</h1>
+    <div>
+      <h1 style="font-size: 1.4rem; font-weight: 700; color: var(--text-strong); margin: 0 0 2px 0; letter-spacing: -0.02em;">Customer Credit (Kadan)</h1>
+      <p style="font-size: 0.82rem; color: var(--muted); margin: 0;" id="creditHeaderCount">Loading...</p>
+    </div>
     
     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
       <!-- Search Input -->
@@ -19,7 +22,7 @@
                oninput="onCreditSearchInput()" style="padding-left: 36px; height: 38px; font-size: 0.85rem; border-radius: var(--radius-md);" />
       </div>
 
-      <!-- Add Customer Action Button -->
+      <!-- Add Customer Button -->
       <button class="btn btn-primary" onclick="openModal('addCustomerModal')" style="display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px; font-weight: 600; font-size: 0.85rem; border-radius: var(--radius-md);">
         <span>+</span> Add Customer
       </button>
@@ -28,20 +31,18 @@
 
   <!-- Data Card Container -->
   <div class="card-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); padding: 0;">
-
-    
     <div class="table-container" style="overflow-x: auto;">
       <table id="creditTable" class="data-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
         <thead>
           <tr style="background: var(--surface-container-low); border-bottom: 1px solid var(--border); text-align: left;">
             <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">ID</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">DATE</th>
             <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">CUSTOMER NAME</th>
             <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">PHONE</th>
             <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL PURCHASES</th>
             <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL PAID</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">OUTSTANDING BALANCE</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">BILLS CLEARED</th>
+            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">OUTSTANDING</th>
+            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">CREDIT LIMIT</th>
+            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">STATUS</th>
             <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">ACTION</th>
           </tr>
         </thead>
@@ -51,7 +52,7 @@
       </table>
     </div>
 
-    <!-- Empty State Component (Matching Reference Image) -->
+    <!-- Empty State -->
     <div id="creditEmptyState" class="empty-state-card" style="padding: 64px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
       <div class="empty-icon-circle" style="width: 56px; height: 56px; border-radius: 50%; background: var(--surface-container-low); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid var(--border);">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--muted);">
@@ -72,3 +73,8 @@
 
   <div id="creditPaginationControls" class="pagination" style="display:none; margin-top: 16px;"></div>
 </section>
+
+<script type="module">
+  import { initCustomerCredit } from '/public/assets/js/pages/customers.js?v=<?= time(); ?>';
+  initCustomerCredit();
+</script>

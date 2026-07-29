@@ -3,7 +3,10 @@
    Applied when: html[data-theme-mode="dark"]
    ============================================================= */
 
-:root[data-theme-mode="dark"] {
+:root[data-theme-mode="dark"],
+:root[data-bs-theme="dark"],
+html[data-theme-mode="dark"],
+html[data-bs-theme="dark"] {
   --background: #090d16;       /* Level 0: Deep canvas */
   --sidebar-bg: #0d131f;        /* Level 1: Off-canvas sidebar */
   --sidebar-hover: #182232;

@@ -97,8 +97,27 @@
   margin-bottom: 0;
 }
 
-.d-flex {
+.input-group label.input-label span,
+.input-group label span {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  color: var(--muted, #64748b);
+}
+
+.d-flex,
+.modal-content .d-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
   margin-top: 0;
+  margin-bottom: 0;
+}
+
+.modal-content .d-flex .input-group {
+  flex: 1;
   margin-bottom: 0;
 }
 
