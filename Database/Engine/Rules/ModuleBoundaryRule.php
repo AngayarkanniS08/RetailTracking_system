@@ -58,6 +58,11 @@ class ModuleBoundaryRule implements RuleInterface
             $absolutePath = $plan['absolute_path'] ?? '';
             $file         = $plan['relative_path'] ?? '';
 
+            // Infrastructure / system modules (Security, Settings, _schema) perform cross-cutting DDL by design
+            if (in_array($module, ['Security', '_schema', 'Settings'], true)) {
+                continue;
+            }
+
             if (!file_exists($absolutePath)) {
                 continue;
             }
