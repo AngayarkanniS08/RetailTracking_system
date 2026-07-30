@@ -1,11 +1,14 @@
 /* =============================================================
-   system-health.css — Enterprise Telemetry & Monitoring Dashboard
+   system-health.css — Hyper-Precision Enterprise Monitoring Dashboard
    ============================================================= */
 
 #system_health {
   padding: 0;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  letter-spacing: -0.01em;
 }
 
+/* ── 1. The Clean Line Grid ── */
 .health-kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -24,6 +27,86 @@
   }
 }
 
+/* ── 2. Tabular Numbers & Vertical Alignment Protocol ── */
+.tabular-nums, .mono-num {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-family: var(--mono, "JetBrains Mono", monospace);
+}
+
+.health-matrix-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.health-matrix-table th {
+  padding: 12px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  vertical-align: middle;
+}
+
+.health-matrix-table td {
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.05));
+  transition: background-color 0.2s ease;
+}
+
+.health-matrix-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.health-matrix-table tbody tr:hover {
+  background-color: var(--surface-container-high, rgba(255, 255, 255, 0.03));
+}
+
+/* ── 3. Stateful Semantic Badges ── */
+.badge-emerald {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-amber {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #f59e0b !important;
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-rose {
+  background: rgba(244, 63, 94, 0.12) !important;
+  color: #f43f5e !important;
+  border: 1px solid rgba(244, 63, 94, 0.25) !important;
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── 4. Pulse Indicator & Live Telemetry ── */
 .live-dot {
   animation: pulse-dot 2s infinite ease-in-out;
 }
@@ -35,9 +118,10 @@
 }
 
 .event-item {
-  transition: background 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .event-item:hover {
-  background: var(--surface-container-high) !important;
+  background-color: var(--surface-container-high, rgba(255, 255, 255, 0.04)) !important;
+  transform: translateX(2px);
 }
