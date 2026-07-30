@@ -1,170 +1,310 @@
 <!-- 
-  FEATURE DOCUMENTATION: Dashboard
-  - Key KPIs: High-level metrics including "Today's Sales", "Month's Sales", "Outstanding Credit", and "Total Inventory Value".
-  - Visual Analytics: Circular gauges showing "Today's Selling Status" and "Outstanding Credit vs Collected".
-  - Progress Bar: Indicating "Stock Level & Health Status".
+  ENTERPRISE DASHBOARD UI/UX — Retail Management System
+  Strict 5-Second Executive Decision Architecture
 -->
 <section id="dashboard" class="view-section active">
-  <div class="page-title" style="margin-bottom: 2rem;">Dashboard</div>
 
-  <!-- Time Period Summary Cards (Sales) -->
-  <div class="label-sm" style="margin-bottom: 0.75rem;">📊 Sales History Summary</div>
-  <div class="grid-12">
-    <div class="time-card today col-span-4" onclick="switchTab('day_to_day_selling')">
-      <div class="time-card-icon">📅</div>
-      <div class="time-card-label">Today</div>
-      <div class="time-card-revenue" id="tcTodayRev">₹0.00</div>
-      <div class="time-card-meta">
-        <span>🧾 <strong id="tcTodayBills">0</strong> bills</span>
-        <span>📊 Avg: <strong id="tcTodayAvg">₹0</strong></span>
+  <!-- 1. Executive Dashboard Header & Global Filter Bar -->
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <h1 class="dash-title">Dashboard</h1>
+      <div class="dash-subtitle">
+        <span class="store-badge">🏢 Main Store</span>
+        <span class="pulse-indicator"></span>
+        <span class="live-status">Live Analytics</span>
       </div>
     </div>
-    <div class="time-card week col-span-4" onclick="switchTab('day_to_day_selling')">
-      <div class="time-card-icon">📊</div>
-      <div class="time-card-label">This Week</div>
-      <div class="time-card-revenue" id="tcWeekRev">₹0.00</div>
-      <div class="time-card-meta">
-        <span>🧾 <strong id="tcWeekBills">0</strong> bills</span>
-        <span>📊 Avg: <strong id="tcWeekAvg">₹0</strong></span>
+
+    <div class="dash-header-right">
+      <!-- Global Date Selector (Single Dashboard Filter) -->
+      <div class="global-filter-container">
+        <label for="dashGlobalFilter" class="filter-label">Period:</label>
+        <select id="dashGlobalFilter" class="global-filter-select">
+          <option value="today" selected>Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="quarter">This Quarter</option>
+          <option value="year">This Year</option>
+        </select>
       </div>
-    </div>
-    <div class="time-card month col-span-4" onclick="switchTab('day_to_day_selling')">
-      <div class="time-card-icon">📆</div>
-      <div class="time-card-label">This Month</div>
-      <div class="time-card-revenue" id="tcMonthRev">₹0.00</div>
-      <div class="time-card-meta">
-        <span>🧾 <strong id="tcMonthBills">0</strong> bills</span>
-        <span>📊 Avg: <strong id="tcMonthAvg">₹0</strong></span>
+
+      <div class="header-actions">
+        <button class="btn btn-primary btn-sm" onclick="switchTab('billing')">
+          <span>+ New Sale</span>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="switchTab('inventory')">
+          <span>+ Add Stock</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Purchase Time Period Summary Cards (Vendor) -->
-  <div class="label-sm" style="margin-bottom: 0.75rem; margin-top: 2rem;">📊 Purchase Vendor Summary</div>
-  <div class="grid-12">
-    <div class="time-card week col-span-6" onclick="switchTab('vendorhistory')" style="cursor: pointer;">
-      <div class="time-card-icon">📊</div>
-      <div class="time-card-label">This Week</div>
-      <div class="time-card-revenue" id="pcWeekAmount">₹0.00</div>
-      <div class="time-card-meta">
-        <span>🧾 <strong id="pcWeekPurchases">0</strong> purchases</span>
-        <span>💰 Paid: <strong id="pcWeekPaid">₹0</strong></span>
+  <!-- 2. Executive KPI Hero Row (4 Cards Only) -->
+  <div class="dash-kpi-grid">
+    <!-- KPI 1: Revenue -->
+    <div class="kpi-card kpi-revenue">
+      <div class="kpi-header">
+        <span class="kpi-label">Revenue</span>
+        <span class="kpi-icon">💰</span>
+      </div>
+      <div class="kpi-value" id="kpiRevenue">₹0.00</div>
+      <div class="kpi-footer">
+        <span class="kpi-trend trend-up" id="kpiRevTrend">↑ 0%</span>
+        <span class="kpi-comparison" id="kpiRevComp">vs prev period</span>
       </div>
     </div>
-    <div class="time-card month col-span-6" onclick="switchTab('vendorhistory')" style="cursor: pointer;">
-      <div class="time-card-icon">📆</div>
-      <div class="time-card-label">This Month</div>
-      <div class="time-card-revenue" id="pcMonthAmount">₹0.00</div>
-      <div class="time-card-meta">
-        <span>🧾 <strong id="pcMonthPurchases">0</strong> purchases</span>
-        <span>💰 Paid: <strong id="pcMonthPaid">₹0</strong></span>
+
+    <!-- KPI 2: Bills & Orders -->
+    <div class="kpi-card kpi-bills">
+      <div class="kpi-header">
+        <span class="kpi-label">Completed Bills</span>
+        <span class="kpi-icon">🧾</span>
+      </div>
+      <div class="kpi-value" id="kpiBills">0</div>
+      <div class="kpi-footer">
+        <span class="kpi-meta">Avg Ticket: <strong id="kpiAvgTicket">₹0.00</strong></span>
+      </div>
+    </div>
+
+    <!-- KPI 3: Gross Profit Margin -->
+    <div class="kpi-card kpi-profit">
+      <div class="kpi-header">
+        <span class="kpi-label">Gross Profit</span>
+        <span class="kpi-icon">📈</span>
+      </div>
+      <div class="kpi-value" id="kpiProfit">₹0.00</div>
+      <div class="kpi-footer">
+        <span class="kpi-badge badge-success" id="kpiProfitMargin">0% Margin</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Outstanding Customer Credit -->
+    <div class="kpi-card kpi-credit">
+      <div class="kpi-header">
+        <span class="kpi-label">Outstanding Credit</span>
+        <span class="kpi-icon">💳</span>
+      </div>
+      <div class="kpi-value text-warn" id="kpiCredit">₹0.00</div>
+      <div class="kpi-footer">
+        <span class="kpi-meta" id="kpiCreditMeta">Pending Customer Receivables</span>
       </div>
     </div>
   </div>
 
-  <!-- Row 2: High Selling, Normal Selling, Low Selling -->
-  <div class="grid-12" style="margin-top: 2rem;">
-    <div class="card-panel col-span-4">
-      <div class="card-header" style="color: var(--ok);">🔥
-        High Selling <span
-          style="font-size:0.7rem; color:var(--muted); float:right; display:flex; gap:8px; align-items:center;"><span
-            onclick="event.stopPropagation(); openModal('lowStockAlertModal')"
-            style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span></span>
+  <!-- 3. Interactive Sales & Purchases Chart Section -->
+  <div class="dash-chart-card card-panel">
+    <div class="card-header chart-header">
+      <div class="chart-title">
+        <span class="chart-icon">📊</span>
+        <span>Sales & Revenue Trend Comparison</span>
       </div>
-      <table class="data-table" style="font-size: 0.9rem;" id="highSellingTable">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Qty Sold</th>
-            <th>Revenue</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="card-panel col-span-4">
-      <div class="card-header" style="color: var(--accent-2);">⚖️
-        Normal Selling</div>
-      <table class="data-table" style="font-size: 0.9rem;" id="normalSellingTable">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Qty Sold</th>
-            <th>Revenue</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="card-panel col-span-4">
-      <div class="card-header" style="color: var(--warn);">📉
-        Low Selling <span
-          style="font-size:0.7rem; color:var(--muted); float:right; display:flex; gap:8px; align-items:center;"><span
-            onclick="event.stopPropagation(); openModal('lowStockAlertModal')"
-            style="color:var(--warn); cursor:pointer;" title="Set Low Stock Alert">🔔</span></span>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot dot-this-week"></span> Current Period</span>
+        <span class="legend-item"><span class="legend-dot dot-last-week"></span> Previous Period</span>
       </div>
-      <table class="data-table" style="font-size: 0.9rem;" id="lowSellingTable">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>Qty Sold</th>
-            <th>Revenue</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    </div>
+    <div class="canvas-wrapper">
+      <canvas id="salesComparisonChart" height="240"></canvas>
     </div>
   </div>
 
-  <!-- Row 3: Old Stock & Weekly Sales Comparison Canvas Chart -->
-  <div class="grid-12" style="margin-top: 2rem;">
-    <div class="card-panel col-span-6">
-      <div class="card-header" style="color: var(--danger); padding: var(--space-md) var(--space-lg); border-bottom: 1px solid var(--border);">📦 Old Stock Items</div>
-      <div id="oldStockContainer">
-        <table class="data-table" style="font-size: 0.9rem;" id="oldStockTable">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Batch</th>
-              <th>Age (days)</th>
-              <th>Qty</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Canvas Weekly Sales Comparison Chart (Pure JS Task 3) -->
-    <div class="card-panel col-span-6">
-      <div class="card-header" style="color: var(--accent); padding: var(--space-md) var(--space-lg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-        <span>📊 Weekly Sales Comparison</span>
-        <div style="display: flex; gap: 12px; font-size: 0.75rem; font-weight: 500;">
-          <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #10b981; border-radius: 2px; display: inline-block;"></span> This Week</span>
-          <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #3b82f6; border-radius: 2px; display: inline-block;"></span> Last Week</span>
+  <!-- 4. Filtered Business Summaries (Sales & Purchase Rows) -->
+  <div class="dash-summary-grid">
+    <!-- Filtered Sales Summary Widget -->
+    <div class="card-panel summary-card">
+      <div class="card-header summary-header">
+        <div class="summary-title">
+          <span>🛍️ Sales Summary</span>
+          <span class="period-chip" id="salesSummaryChip">Today</span>
         </div>
       </div>
-      <div class="canvas-wrapper" style="padding: var(--space-md); position: relative; width: 100%; box-sizing: border-box; display: flex; justify-content: center; align-items: center;">
-        <canvas id="salesComparisonChart" style="width: 100%; max-height: 240px; border-radius: var(--radius-md);"></canvas>
+      <div class="summary-body">
+        <div class="summary-metric-row">
+          <div class="metric-item">
+            <div class="metric-label">Filtered Revenue</div>
+            <div class="metric-val" id="sumSalesRev">₹0.00</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Bills Billed</div>
+            <div class="metric-val" id="sumSalesBills">0</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Avg Bill Value</div>
+            <div class="metric-val" id="sumSalesAvg">₹0.00</div>
+          </div>
+        </div>
+        <div class="summary-chips-row">
+          <div class="summary-chip">Today: <strong id="chipTodayRev">₹0.00</strong></div>
+          <div class="summary-chip">Week: <strong id="chipWeekRev">₹0.00</strong></div>
+          <div class="summary-chip">Month: <strong id="chipMonthRev">₹0.00</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtered Purchase Summary Widget -->
+    <div class="card-panel summary-card">
+      <div class="card-header summary-header">
+        <div class="summary-title">
+          <span>📦 Purchase & Vendor Summary</span>
+          <span class="period-chip" id="purchaseSummaryChip">This Month</span>
+        </div>
+      </div>
+      <div class="summary-body">
+        <div class="summary-metric-row">
+          <div class="metric-item">
+            <div class="metric-label">Total Purchased</div>
+            <div class="metric-val" id="sumPurAmount">₹0.00</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Paid to Vendors</div>
+            <div class="metric-val text-ok" id="sumPurPaid">₹0.00</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Pending Payables</div>
+            <div class="metric-val text-warn" id="sumPurPending">₹0.00</div>
+          </div>
+        </div>
+        <div class="summary-chips-row">
+          <div class="summary-chip">Purchases Count: <strong id="chipPurCount">0</strong></div>
+          <div class="summary-chip">Avg Order: <strong id="chipPurAvg">₹0.00</strong></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Global Dashboard Empty State CTA Container (Task 2) -->
-  <div id="dashboardEmptyState" class="card-panel col-span-12" style="display: none; padding: var(--space-2xl); text-align: center; margin-top: 2rem;">
-    <div style="max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: var(--space-md);">
-      <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--surface-container-low); display: flex; align-items: center; justify-content: center;">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 5. Unified Tabbed Product Performance Component -->
+  <div class="card-panel product-perf-card">
+    <div class="card-header perf-header">
+      <div class="perf-title-group">
+        <span class="perf-icon">📦</span>
+        <span class="perf-title">Product Performance</span>
+      </div>
+
+      <!-- Single Filter Tabs -->
+      <div class="perf-tabs" role="tablist">
+        <button class="perf-tab active" data-tab="all" role="tab" aria-selected="true">All Products</button>
+        <button class="perf-tab" data-tab="high" role="tab" aria-selected="false">🔥 High Selling</button>
+        <button class="perf-tab" data-tab="normal" role="tab" aria-selected="false">⚖️ Normal</button>
+        <button class="perf-tab" data-tab="low" role="tab" aria-selected="false">📉 Low Selling</button>
+      </div>
+
+      <!-- Inline Search -->
+      <div class="perf-search-container">
+        <input type="text" id="prodPerfSearch" class="input-field perf-search-input" placeholder="Filter product name..." />
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table" id="productPerformanceTable">
+        <thead>
+          <tr>
+            <th>Product Name</th>
+            <th>Qty Sold</th>
+            <th>Revenue</th>
+            <th>Sales Rank / Velocity</th>
+            <th>Stock Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="productPerformanceBody">
+          <!-- Dynamically populated rows -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 6. Inventory Health & Credit Breakdown Row -->
+  <div class="dash-bottom-grid">
+    <!-- Inventory Health Summary -->
+    <div class="card-panel widget-card">
+      <div class="card-header">
+        <div class="widget-title">
+          <span>🩺 Inventory Health</span>
+        </div>
+        <button class="btn btn-link btn-xs" onclick="switchTab('inventory')">View All</button>
+      </div>
+      <div class="widget-body">
+        <div class="health-grid">
+          <div class="health-item item-danger">
+            <div class="health-val" id="invOutStockCount">0</div>
+            <div class="health-lbl">Out of Stock</div>
+          </div>
+          <div class="health-item item-warn">
+            <div class="health-val" id="invLowStockCount">0</div>
+            <div class="health-lbl">Low Stock</div>
+          </div>
+          <div class="health-item item-ok">
+            <div class="health-val" id="invHealthyCount">0</div>
+            <div class="health-lbl">Healthy Stock</div>
+          </div>
+          <div class="health-item item-info">
+            <div class="health-val" id="invTotalValue">₹0</div>
+            <div class="health-lbl">Catalog Stock Value</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outstanding Customer Credit Summary -->
+    <div class="card-panel widget-card">
+      <div class="card-header">
+        <div class="widget-title">
+          <span>💳 Outstanding Credit Ledger</span>
+        </div>
+        <button class="btn btn-link btn-xs" onclick="switchTab('credit_student')">Manage Credits</button>
+      </div>
+      <div class="widget-body">
+        <div class="credit-summary-box">
+          <div class="credit-main-val" id="creditTotalBalance">₹0.00</div>
+          <div class="credit-sub-text">Total pending receivables from active customers</div>
+          <div class="credit-action-row">
+            <button class="btn btn-outline btn-sm" onclick="switchTab('credit_student')">View Customer Statements</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Priority Alert Center -->
+  <div class="card-panel alert-center-card">
+    <div class="card-header">
+      <div class="widget-title">
+        <span>🚨 Priority Alert Center</span>
+      </div>
+    </div>
+    <div class="alert-center-body" id="priorityAlertCenterList">
+      <div class="alert-item alert-info">
+        <div class="alert-icon">ℹ️</div>
+        <div class="alert-content">
+          <div class="alert-title">Dashboard Live Diagnostics Operational</div>
+          <div class="alert-desc">All database parameters and inventory velocity algorithms are connected.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Actionable Empty State Container -->
+  <div id="dashboardEmptyState" class="card-panel dashboard-empty-card" style="display: none;">
+    <div class="empty-state-content">
+      <div class="empty-icon-wrapper">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75">
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
           <line x1="3" y1="6" x2="21" y2="6"></line>
           <path d="M16 10a4 4 0 0 1-8 0"></path>
         </svg>
       </div>
-      <h3 style="margin: 0; font-size: var(--font-xl); color: var(--text-strong);">No sales recorded yet</h3>
-      <p style="margin: 0; font-size: var(--font-md); color: var(--muted); line-height: 1.5;">No sales yet. Add a product to get started and begin tracking retail inventory, billing, and day-to-day analytics.</p>
-      <a href="/products" class="btn btn-primary" style="margin-top: var(--space-xs); padding: 10px 24px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-        <span>📦 Go to Product Master</span>
-      </a>
+      <h3 class="empty-title">No transactions recorded for this period</h3>
+      <p class="empty-desc">Create your first sale invoice or purchase order to generate live financial and inventory intelligence.</p>
+      <div class="empty-actions">
+        <button class="btn btn-primary" onclick="switchTab('billing')">
+          <span>+ Create Invoice</span>
+        </button>
+        <button class="btn btn-outline" onclick="switchTab('product')">
+          <span>📦 Go to Product Master</span>
+        </button>
+      </div>
     </div>
   </div>
+
 </section>

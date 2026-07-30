@@ -1,28 +1,147 @@
 /* =============================================================
-   dashboard.css — Dashboard Page Component Styles
+   dashboard.css — Enterprise Dashboard UI/UX Design System
+   8-Point Spacing Grid | Executive 5-Second Hierarchy
    ============================================================= */
 
-/* ── Time Period Cards (Today / Week / Month) ── */
-.time-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md); /* 8px radius */
-  padding: var(--space-3); /* 24px internal padding */
+#dashboard {
+  padding: 0;
+}
+
+/* ── 1. Dashboard Header & Global Filter Bar ── */
+#dashboard .dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+#dashboard .dash-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#dashboard .dash-title {
+  font-size: 1.75rem; /* 28px */
+  font-weight: 700;
+  color: var(--text-strong, #0f172a);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+#dashboard .dash-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#dashboard .store-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+  background: var(--surface-container-low, #f8fafc);
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+#dashboard .pulse-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+#dashboard .live-status {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted, #64748b);
+}
+
+#dashboard .dash-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Global Date Filter Component */
+#dashboard .global-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border-strong, #cbd5e1);
+  padding: 6px 14px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+#dashboard .filter-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted, #64748b);
+}
+
+#dashboard .global-filter-select {
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+  outline: none;
+  cursor: pointer;
+  padding-right: 4px;
+}
+
+#dashboard .header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+
+/* ── 2. Executive KPI Grid (4 Cards Row) ── */
+#dashboard .dash-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+#dashboard .kpi-card {
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
   position: relative;
   overflow: hidden;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.time-card:hover {
+#dashboard .kpi-card:hover {
   transform: translateY(-2px);
-  background: var(--surface-container-low);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: var(--accent, #2563eb);
 }
 
-.time-card::before {
+#dashboard .kpi-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -31,34 +150,457 @@
   height: 3px;
 }
 
-.time-card.today::before  { background: linear-gradient(90deg, #10b981, #34d399); }
-.time-card.week::before   { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-.time-card.month::before  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+#dashboard .kpi-revenue::before { background: linear-gradient(90deg, #10b981, #34d399); }
+#dashboard .kpi-bills::before   { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+#dashboard .kpi-profit::before  { background: linear-gradient(90deg, #059669, #10b981); }
+#dashboard .kpi-credit::before  { background: linear-gradient(90deg, #d97706, #fbbf24); }
 
-.time-card-icon {
-  font-size: 1.25rem;
-  margin-bottom: var(--space-1);
+#dashboard .kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.time-card-label {
-  font-size: 0.75rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+#dashboard .kpi-label {
+  font-size: 0.78rem;
   font-weight: 600;
+  color: var(--muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.time-card-revenue {
-  font-size: 1.75rem; /* 28px */
+#dashboard .kpi-icon {
+  font-size: 1.1rem;
+}
+
+#dashboard .kpi-value {
+  font-size: 1.85rem; /* 30px */
   font-weight: 700;
-  color: var(--text-strong);
-  margin: var(--space-1) 0;
+  color: var(--text-strong, #0f172a);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+#dashboard .kpi-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+#dashboard .kpi-trend {
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+#dashboard .trend-up {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+#dashboard .trend-down {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+#dashboard .kpi-comparison {
+  color: var(--muted, #64748b);
+}
+
+#dashboard .kpi-meta {
+  color: var(--muted, #64748b);
+}
+
+#dashboard .badge-success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+
+/* ── 3. Interactive Chart Card ── */
+#dashboard .dash-chart-card {
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+#dashboard .chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border, #f1f5f9);
+}
+
+#dashboard .chart-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+}
+
+#dashboard .chart-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted, #64748b);
+}
+
+#dashboard .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#dashboard .legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+#dashboard .dot-this-week { background: #10b981; }
+#dashboard .dot-last-week { background: #2563eb; }
+
+#dashboard .canvas-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+
+/* ── 4. Summary Grid (Sales & Purchase Cards) ── */
+#dashboard .dash-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+#dashboard .summary-card {
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+#dashboard .summary-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border, #f1f5f9);
+}
+
+#dashboard .summary-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+}
+
+#dashboard .period-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent, #2563eb);
+  background: rgba(37, 99, 235, 0.08);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+#dashboard .summary-metric-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#dashboard .metric-item {
+  background: var(--surface-container-low, #f8fafc);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #f1f5f9);
+}
+
+#dashboard .metric-label {
+  font-size: 0.72rem;
+  color: var(--muted, #64748b);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+#dashboard .metric-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-strong, #0f172a);
   font-variant-numeric: tabular-nums;
 }
 
-.time-card-meta {
+#dashboard .summary-chips-row {
   display: flex;
-  gap: var(--space-2);
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--muted, #64748b);
+}
+
+#dashboard .summary-chip {
+  background: var(--surface-container-low, #f8fafc);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+
+/* ── 5. Tabbed Product Performance Component ── */
+#dashboard .product-perf-card {
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+#dashboard .perf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border, #f1f5f9);
+  margin-bottom: 16px;
+}
+
+#dashboard .perf-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#dashboard .perf-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+}
+
+#dashboard .perf-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-container-low, #f1f5f9);
+  padding: 3px;
+  border-radius: 8px;
+}
+
+#dashboard .perf-tab {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
   font-size: 0.8rem;
-  color: var(--muted);
+  font-weight: 600;
+  color: var(--muted, #64748b);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+#dashboard .perf-tab:hover {
+  color: var(--text-strong, #0f172a);
+}
+
+#dashboard .perf-tab.active {
+  background: var(--surface-container, #ffffff);
+  color: var(--accent, #2563eb);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+#dashboard .perf-search-input {
+  height: 34px;
+  font-size: 0.8rem;
+  width: 200px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong, #cbd5e1);
+}
+
+
+/* ── 6. Inventory Health & Credit Grid ── */
+#dashboard .dash-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+#dashboard .widget-card {
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+#dashboard .widget-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+}
+
+#dashboard .health-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+#dashboard .health-item {
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+#dashboard .item-danger { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); }
+#dashboard .item-warn   { background: rgba(217, 119, 6, 0.08); border: 1px solid rgba(217, 119, 6, 0.2); }
+#dashboard .item-ok     { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); }
+#dashboard .item-info   { background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2); }
+
+#dashboard .health-val {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-strong, #0f172a);
+}
+
+#dashboard .health-lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted, #64748b);
+  margin-top: 4px;
+}
+
+#dashboard .credit-summary-box {
+  margin-top: 12px;
+  background: var(--surface-container-low, #f8fafc);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+#dashboard .credit-main-val {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--warn, #d97706);
+}
+
+#dashboard .credit-sub-text {
+  font-size: 0.78rem;
+  color: var(--muted, #64748b);
+  margin: 4px 0 12px 0;
+}
+
+
+/* ── 7. Priority Alert Center ── */
+#dashboard .alert-center-card {
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+#dashboard .alert-center-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+#dashboard .alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+#dashboard .alert-info { background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.15); }
+#dashboard .alert-warn { background: rgba(217, 119, 6, 0.06); border: 1px solid rgba(217, 119, 6, 0.15); }
+#dashboard .alert-danger { background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.15); }
+
+#dashboard .alert-icon { font-size: 1.1rem; flex-shrink: 0; }
+#dashboard .alert-title { font-size: 0.85rem; font-weight: 600; color: var(--text-strong, #0f172a); }
+#dashboard .alert-desc { font-size: 0.78rem; color: var(--muted, #64748b); margin-top: 2px; }
+
+
+/* ── 8. Empty State Card ── */
+#dashboard .dashboard-empty-card {
+  background: var(--surface-container, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+#dashboard .empty-state-content {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#dashboard .empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--surface-container-low, #f1f5f9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+#dashboard .empty-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+  margin: 0 0 8px 0;
+}
+
+#dashboard .empty-desc {
+  font-size: 0.85rem;
+  color: var(--muted, #64748b);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+#dashboard .empty-actions {
+  display: flex;
+  gap: 12px;
+}
+
+
+/* ── Responsive Layout Overrides ── */
+@media (max-width: 1200px) {
+  #dashboard .dash-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  #dashboard .dash-kpi-grid { grid-template-columns: 1fr; }
+  #dashboard .dash-summary-grid,
+  #dashboard .dash-bottom-grid { grid-template-columns: 1fr; }
+  #dashboard .health-grid { grid-template-columns: repeat(2, 1fr); }
+  #dashboard .perf-header { flex-direction: column; align-items: flex-start; }
+  #dashboard .perf-search-input { width: 100%; }
 }

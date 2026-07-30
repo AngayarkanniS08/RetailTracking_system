@@ -36,7 +36,8 @@ class DashboardController
         AuthMiddleware::authenticate();
 
         try {
-            $data = $this->dashboardService->getSalesSummary();
+            $period = $_GET['period'] ?? 'today';
+            $data = $this->dashboardService->getSalesSummary($period);
             echo json_encode($data);
         } catch (\Exception $e) {
             error_log('DashboardController::stats - ' . $e->getMessage());
