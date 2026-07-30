@@ -17,20 +17,23 @@ class BatchRepository implements BatchRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT 
-                id, 
-                product_id, 
-                batch_number, 
-                vendor_name, 
-                initial_qty, 
-                remaining_qty AS quantity, 
-                cost_price AS purchase_price, 
-                selling_price, 
-                retail_price, 
-                created_at, 
-                updated_at
-            FROM public.inventory_batches
-            WHERE user_id = current_setting('app.current_user_id')::uuid
-            ORDER BY created_at DESC
+                b.id, 
+                b.product_id, 
+                p.name AS product_name,
+                p.display_id,
+                b.batch_number, 
+                b.vendor_name, 
+                b.initial_qty, 
+                b.remaining_qty AS quantity, 
+                b.cost_price AS purchase_price, 
+                b.selling_price, 
+                b.retail_price, 
+                b.created_at, 
+                b.updated_at
+            FROM public.inventory_batches b
+            LEFT JOIN public.products p ON p.id = b.product_id
+            WHERE b.user_id = current_setting('app.current_user_id')::uuid
+            ORDER BY b.created_at DESC
         ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -40,19 +43,22 @@ class BatchRepository implements BatchRepositoryInterface
     {
         $stmt = $this->db->prepare("
             SELECT 
-                id, 
-                product_id, 
-                batch_number, 
-                vendor_name, 
-                initial_qty, 
-                remaining_qty AS quantity, 
-                cost_price AS purchase_price, 
-                selling_price, 
-                retail_price, 
-                created_at, 
-                updated_at
-            FROM public.inventory_batches
-            WHERE id = ? AND user_id = current_setting('app.current_user_id')::uuid
+                b.id, 
+                b.product_id, 
+                p.name AS product_name,
+                p.display_id,
+                b.batch_number, 
+                b.vendor_name, 
+                b.initial_qty, 
+                b.remaining_qty AS quantity, 
+                b.cost_price AS purchase_price, 
+                b.selling_price, 
+                b.retail_price, 
+                b.created_at, 
+                b.updated_at
+            FROM public.inventory_batches b
+            LEFT JOIN public.products p ON p.id = b.product_id
+            WHERE b.id = ? AND b.user_id = current_setting('app.current_user_id')::uuid
         ");
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -218,6 +224,8 @@ class BatchRepository implements BatchRepositoryInterface
             SELECT 
                 b.id, 
                 b.product_id, 
+                p.name AS product_name,
+                p.display_id,
                 b.batch_number,
                 b.vendor_name, 
                 b.initial_qty, 

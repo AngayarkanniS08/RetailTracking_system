@@ -211,6 +211,12 @@ class ApiRoutes
             (new \Modules\Billing\Controller\InvoiceController())->receipt($params['id']);
         });
 
+        // ── Cart Calculation ──────────────────────────────────────────
+        $router->add('POST', '/api/billing/calculate', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Billing\Controller\Api\CartCalculationController())->calculate();
+        });
+
         // ── POS Search ──────────────────────────────────────────────
         $router->add('GET', '/api/pos/search', function (): void {
             AuthMiddleware::authenticate();

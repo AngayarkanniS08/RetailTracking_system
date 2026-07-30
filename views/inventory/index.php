@@ -20,8 +20,8 @@
                   <input type="hidden" id="invSubCatFilter" value="">
                   <div id="invSubCatDropdown" class="combobox-dropdown"></div>
               </div>
-              <button class="btn btn-primary inv-btn-add" onclick="openModal('addStockModal')">Add Stock</button>
-              <button class="btn btn-outline inv-btn-alert" onclick="openLowStockAlertModal()">SET ALERT</button>
+              <button class="btn btn-primary inv-btn-add" data-modal="addStockModal">Add Stock</button>
+              <button class="btn btn-outline inv-btn-alert" data-modal-alert>SET ALERT</button>
             </div>
           </div>
           <!-- Inventory Stats -->
@@ -61,7 +61,7 @@
               </div>
               <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-strong); margin: 0 0 6px 0;">No inventory batches recorded</h3>
               <p style="font-size: 0.88rem; color: var(--muted); margin: 0 0 20px 0; max-width: 360px; line-height: 1.4;">Add new stock batches to manage inventory levels, costs, and selling prices.</p>
-              <button class="btn btn-outline btn-sm" onclick="openModal('addStockModal')" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md);">
+              <button class="btn btn-outline btn-sm" data-modal="addStockModal" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md);">
                 <span>+</span> Add First Item
               </button>
             </div>

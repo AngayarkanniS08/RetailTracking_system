@@ -44,18 +44,7 @@ class AuthMiddleware
         }
 
         if (!isset($matches[1]) || empty($matches[1])) {
-            if (!empty($_COOKIE['auth_uid'])) {
-                $userId = $_COOKIE['auth_uid'];
-                \Config\Database::setCurrentUser($userId);
-                return (object)[
-                    'iat' => time(),
-                    'data' => (object)[
-                        'user_id' => $userId,
-                        'username' => 'session_user'
-                    ]
-                ];
-            }
-            self::sendError('no_token', 'No token provided');
+            self::sendError('no_token', 'No authorization token provided');
         }
 
         $token = $matches[1];

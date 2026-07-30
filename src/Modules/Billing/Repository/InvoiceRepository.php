@@ -283,15 +283,22 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         $paginatedParams[] = $offset;
 
         $stmt = $this->db->prepare("
-            SELECT id, user_id, invoice_number, customer_id,
-                   customer_name_snapshot, customer_phone_snapshot,
-                   subtotal, discount_amount, total_gst, round_off, grand_total,
-                   amount_paid, balance_due, invoice_status, payment_status,
-                   billed_at, created_at
-            FROM invoices
-            WHERE user_id = current_setting('app.current_user_id', true)::uuid
+            SELECT i.id, i.user_id, i.invoice_number, i.customer_id,
+                   i.customer_name_snapshot, i.customer_phone_snapshot,
+                   i.subtotal, i.discount_amount, i.total_gst, i.round_off, i.grand_total,
+                   i.amount_paid, i.balance_due, i.invoice_status, i.payment_status,
+                   i.billed_at, i.created_at,
+                   COALESCE(
+                       (SELECT string_agg(p.name || ' (x' || CAST(ii.quantity AS integer) || ')', ', ')
+                        FROM public.invoice_items ii
+                        JOIN public.products p ON p.id = ii.product_id
+                        WHERE ii.invoice_id = i.id),
+                       '1 item'
+                   ) AS items_summary
+            FROM invoices i
+            WHERE i.user_id = current_setting('app.current_user_id', true)::uuid
             $whereSql
-            ORDER BY billed_at DESC
+            ORDER BY i.billed_at DESC
             LIMIT ? OFFSET ?
         ");
         $stmt->execute($paginatedParams);
@@ -312,6 +319,7 @@ class InvoiceRepository implements InvoiceRepositoryInterface
             'balanceDue' => (float)$r['balance_due'],
             'invoiceStatus' => $r['invoice_status'],
             'paymentStatus' => $r['payment_status'],
+            'itemsSummary' => $r['items_summary'] ?? '1 item',
             'billedAt' => $r['billed_at'],
             'createdAt' => $r['created_at']
         ], $rows);

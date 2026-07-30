@@ -106,6 +106,20 @@ class PosSearchController
         }
     }
 
+    public static function invalidateProductCache(string $productId = ''): void
+    {
+        try {
+            $valkey = ValkeyCache::getClient();
+            if (!$valkey) return;
+            $keys = $valkey->keys('pos:search:*');
+            if (!empty($keys)) {
+                $valkey->del($keys);
+            }
+        } catch (\Throwable $e) {
+            error_log('Valkey cache invalidation error: ' . $e->getMessage());
+        }
+    }
+
     public function flushCache(): void
     {
         AuthMiddleware::authenticate();

@@ -21,7 +21,7 @@
     <div class="modal-content" style="max-width: 520px; width: 95%; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 20px;">
       <div class="modal-header" style="padding-bottom: 12px; border-bottom: 1px solid var(--border, #eaecf0); margin: 0;">
         <div class="modal-title" style="font-size: 18px; font-weight: 600; color: var(--text-strong, #101828);">🔔 Set Low Stock Alert</div>
-        <button class="close-btn" onclick="closeModal('lowStockAlertModal')">&times;</button>
+        <button class="close-btn" data-modal-close>&times;</button>
       </div>
       
       <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 0;">
@@ -30,23 +30,21 @@
           <select id="alertProductSelect" class="input-field" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;"></select>
         </div>
         
-        <!-- Row 1: Lead Time & Daily Sales Qty -->
         <div style="display: flex; flex-direction: row; gap: 16px; align-items: flex-end;">
           <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
             <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Lead Time (days)</label>
-            <input type="number" id="alertLeadTime" class="input-field" placeholder="e.g. 5" min="0" oninput="calculateReorderPoint()" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+            <input type="number" id="alertLeadTime" class="input-field" placeholder="e.g. 5" min="0" data-recalc style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
           </div>
           <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
             <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Daily Sale Qty</label>
-            <input type="number" id="alertDailySale" class="input-field" placeholder="e.g. 3" min="0" oninput="calculateReorderPoint()" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+            <input type="number" id="alertDailySale" class="input-field" placeholder="e.g. 3" min="0" data-recalc style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
           </div>
         </div>
 
-        <!-- Row 2: Emergency Stock & Editable Calculated Threshold -->
         <div style="display: flex; flex-direction: row; gap: 16px; align-items: flex-end;">
           <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
             <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Emergency Stock</label>
-            <input type="number" id="alertEmergencyStock" class="input-field" placeholder="e.g. 10" min="0" oninput="calculateReorderPoint()" style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
+            <input type="number" id="alertEmergencyStock" class="input-field" placeholder="e.g. 10" min="0" data-recalc style="height: 40px; border-radius: 8px; padding: 10px 14px; font-size: 14px; border: 1px solid var(--border, #d0d5dd); box-shadow: 0px 1px 2px rgba(16, 24, 40, 0.05); width: 100%; box-sizing: border-box;">
           </div>
           <div class="input-group" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
             <label class="input-label" style="font-size: 14px; font-weight: 500; color: var(--text-primary, #344054); margin: 0;">Reorder Point (Qty)</label>
@@ -58,7 +56,7 @@
       </div>
 
       <div class="modal-footer" style="margin-top: 8px;">
-        <button class="btn btn-primary btn-block" onclick="saveLowStockAlert()" style="height: 40px; font-weight: 600; border-radius: 8px;">Set Alert</button>
+        <button class="btn btn-primary btn-block" data-save-alert style="height: 40px; font-weight: 600; border-radius: 8px;">Set Alert</button>
       </div>
     </div>
   </div>
@@ -67,98 +65,97 @@
   <!-- Add Stock Modal -->
   <div class="modal-overlay" id="addStockModal">
     <div class="modal-content" style="max-width: 720px; width: 95%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; padding: 0;">
-      <div class="modal-header" style="padding: 1.5rem 2rem; margin-bottom: 0; border-bottom: 1px solid var(--border); background: var(--card); z-index: 10;">
-        <div class="modal-title" id="addStockModalTitle">Add New Stock Batch</div>
-        <button class="close-btn" onclick="closeModal('addStockModal')">&times;</button>
+      <div class="modal-header" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); background: var(--card);">
+        <div class="modal-title" id="addStockModalTitle" style="font-size: 20px;">Add New Stock Batch</div>
+        <button class="close-btn" data-modal-close style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: var(--bg-100); border: none; font-size: 1.25rem; color: var(--muted); cursor: pointer; line-height: 1;">&times;</button>
       </div>
-      <div style="padding: 2rem; overflow-y: auto; flex: 1;">
-        <div class="input-group">
-          <label class="input-label">Select Product</label>
-          <div class="combobox" id="stockProductCombobox" style="width: 100%;">
-            <input type="text" id="stockProductInput" class="input-field" placeholder="Type to search product..." autocomplete="off">
+
+      <div style="padding: 24px; overflow-y: auto; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="input-group" style="grid-column: span 2;">
+          <label class="input-label" style="font-weight: 500;">Select Product</label>
+          <div class="combobox" id="stockProductCombobox" style="width: 100%; position: relative;">
+            <input type="text" id="stockProductInput" class="input-field" placeholder="Click or type to select product..." autocomplete="off" style="padding-right: 32px;">
+            <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 0.75rem;">▼</span>
             <input type="hidden" id="stockProduct" value="">
             <div id="stockProductDropdown" class="combobox-dropdown"></div>
           </div>
         </div>
-      <div class="input-group">
-        <label class="input-label">Vendor Name</label>
-        <input type="text" id="stockVendor" class="input-field" placeholder="e.g. Metro Wholesale">
-      </div><div class="input-group">
-        <label class="input-label">Batch ID/Number</label>
-        <input type="text" id="stockBatchId" class="input-field" placeholder="e.g. Metro Wholesale">
-      </div>
 
-      <div class="segment-control" style="margin-bottom: 20px;">
-        <div class="segment-item active" id="segWholesale" onclick="setPricingMode('wholesale')">📦 Wholesale Mode</div>
-        <div class="segment-item" id="segRetail" onclick="setPricingMode('retail')">✂️ Retail Mode</div>
-      </div>
-      
-      <div class="pricing-container" id="pricingGrid" style="display:grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
+        <div class="segment-control" style="grid-column: span 2; display: flex; background: #f1f5f9; border-radius: 10px; padding: 4px;">
+          <div class="segment-item active" id="segWholesale" data-segment="wholesale" style="flex: 1; padding: 10px 16px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.15s; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: var(--text-strong);">📦 Wholesale Mode</div>
+          <div class="segment-item" id="segRetail" data-segment="retail" style="flex: 1; padding: 10px 16px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.15s; background: transparent; color: var(--muted);">✂️ Retail Mode</div>
+        </div>
 
-        <!-- Wholesale Column -->
-        <div style="background: var(--bg-100); padding: 12px; border-radius: 8px; border: 1px solid var(--bg-hover);">
-          <div style="font-size: 0.75rem; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; display:flex; align-items:center; gap:5px;">
-            📦 Wholesale (Full Unit)
+        <!-- Wholesale Pricing Section -->
+        <div id="wholesalePricing" style="grid-column: span 2; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+          <div class="grid-header" style="font-size: 0.8rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">📦 Wholesale Pricing</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="input-group">
+              <label class="input-label" style="font-weight: 500;">Base Purchase Price (₹)</label>
+              <input type="number" id="stockPP" class="input-field" placeholder="0.00" data-calc-trigger="profit" data-calc-section="wholesale" style="padding: 12px; border-radius: 8px;">
+            </div>
+            <div class="input-group">
+              <label class="input-label" style="font-weight: 500;">Wholesale Profit (₹)</label>
+              <input type="number" id="stockProfit" class="input-field" placeholder="0.00" data-calc-trigger="sp" data-calc-section="wholesale" style="padding: 12px; border-radius: 8px;">
+            </div>
+            <div class="input-group" style="grid-column: span 2;">
+              <label class="input-label" style="font-weight: 500;">Wholesale Selling Price (₹)</label>
+              <input type="number" id="stockSP" class="input-field" placeholder="0.00" data-calc-trigger="profit" data-calc-section="wholesale" style="padding: 12px; border-radius: 8px;">
+            </div>
           </div>
-          <div class="input-group">
-            <label class="input-label">Base Purchase Price</label>
-            <input type="number" id="stockPP" class="input-field" placeholder="0.00" oninput="calculateInventoryMath('profit')">
-          </div>
-          <div class="input-group">
-            <label class="input-label">Wholesale Profit (₹)</label>
-            <input type="number" id="stockProfit" class="input-field" placeholder="0.00" oninput="calculateInventoryMath('sp')">
-          </div>
-          <div class="input-group">
-            <label class="input-label">Wholesale Selling P.</label>
-            <input type="number" id="stockSP" class="input-field" placeholder="0.00" oninput="calculateInventoryMath('profit')">
-          </div>
-          <div id="invGstDisplay" style="font-size: 0.7rem; color: var(--muted); margin-top:5px;">
-            <span id="invGstRateText">GST (0%): ₹0.00</span><br>
+          <div id="invGstDisplay" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: var(--muted);">
+            <span id="invGstRateText">GST: ₹0.00</span> &middot;
             <strong id="invTotalText" style="color:var(--ok)">Total: ₹0.00</strong>
           </div>
         </div>
 
-        <!-- Retail Column -->
-        <div id="retailColumn" style="background: var(--bg-100); padding: 12px; border-radius: 8px; border: 1px solid var(--bg-hover); display: none;">
-
-          <div style="font-size: 0.75rem; font-weight: 700; color: var(--warn); text-transform: uppercase; margin-bottom: 10px; display:flex; align-items:center; gap:5px;">
-            ✂️ Retail (Loose/Per Unit)
+        <!-- Retail Pricing Section (hidden by default) -->
+        <div id="retailPricing" style="grid-column: span 2; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: none;">
+          <div class="grid-header" style="font-size: 0.8rem; font-weight: 700; color: var(--warn); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">✂️ Retail Pricing</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="input-group">
+              <label class="input-label" style="font-weight: 500;">Unit Cost (₹)</label>
+              <input type="number" id="retailBasePrice" class="input-field" placeholder="0.00" data-calc-trigger="profit" data-calc-section="retail" style="padding: 12px; border-radius: 8px;">
+            </div>
+            <div class="input-group">
+              <label class="input-label" style="font-weight: 500;">Retail Profit / Unit (₹)</label>
+              <input type="number" id="retailProfit" class="input-field" placeholder="0.00" data-calc-trigger="sp" data-calc-section="retail" style="padding: 12px; border-radius: 8px;">
+            </div>
+            <div class="input-group" style="grid-column: span 2;">
+              <label class="input-label" style="font-weight: 500;">Retail Selling Price / Unit (₹)</label>
+              <input type="number" id="retailSP" class="input-field" placeholder="0.00" data-calc-trigger="profit" data-calc-section="retail" style="padding: 12px; border-radius: 8px;">
+            </div>
           </div>
-          <div class="input-group">
-            <label class="input-label">Unit Cost (Auto)</label>
-            <input type="number" id="retailBasePrice" class="input-field" placeholder="0.00" oninput="calculateRetailMath('profit')">
-          </div>
-          <div class="input-group">
-            <label class="input-label">Retail Profit / Unit (₹)</label>
-            <input type="number" id="retailProfit" class="input-field" placeholder="0.00" oninput="calculateRetailMath('sp')">
-          </div>
-          <div class="input-group">
-            <label class="input-label">Retail Selling P. / Unit</label>
-            <input type="number" id="retailSP" class="input-field" placeholder="0.00" oninput="calculateRetailMath('profit')">
-          </div>
-          <div id="retailGstDisplay" style="font-size: 0.7rem; color: var(--muted); margin-top:5px;">
-            <span id="retailGstRateText">GST (0%): ₹0.00</span><br>
+          <div id="retailGstDisplay" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: var(--muted);">
+            <span id="retailGstRateText">GST: ₹0.00</span> &middot;
             <strong id="retailTotalText" style="color:var(--warn)">Total: ₹0.00</strong>
           </div>
         </div>
-      </div>
 
-      <div class="input-group">
-        <label class="input-label">Stock Quantity (Total Units)</label>
-        <input type="number" id="stockQty" class="input-field" placeholder="0" oninput="calculateInventoryMath('profit')">
-      </div>
-
-      <div class="input-group">
-        <label class="input-label">Date</label>
-        <input type="date" id="stockDate" class="input-field">
-      </div>
-      <div style="padding: 0 2rem 2rem 2rem; margin-top: auto; border-top: 1px solid var(--border); background: var(--card); display: flex; gap: 10px;">
-        <button class="btn btn-outline btn-block" onclick="closeModal('addStockModal')" style="margin-top: 1.5rem;">Cancel</button>
-        <button class="btn btn-primary btn-block" id="addStockModalBtn" onclick="saveStock()" style="margin-top: 1.5rem;">Save Batch Entry</button>
-      </div>
+        <div class="input-group">
+          <label class="input-label" style="font-weight: 500;">Vendor Name</label>
+          <input type="text" id="stockVendor" class="input-field" placeholder="e.g. Metro Wholesale" style="padding: 12px; border-radius: 8px;">
         </div>
+        <div class="input-group">
+          <label class="input-label" style="font-weight: 500;">Batch ID/Number</label>
+          <input type="text" id="stockBatchId" class="input-field" placeholder="e.g. BATCH-001" style="padding: 12px; border-radius: 8px;">
+        </div>
+        <div class="input-group">
+          <label class="input-label" style="font-weight: 500;">Stock Quantity (Units)</label>
+          <input type="number" id="stockQty" class="input-field" placeholder="0" style="padding: 12px; border-radius: 8px;">
+        </div>
+        <div class="input-group">
+          <label class="input-label" style="font-weight: 500;">Date</label>
+          <input type="date" id="stockDate" class="input-field" style="padding: 12px; border-radius: 8px;">
+        </div>
+      </div>
+
+      <div style="padding: 16px 24px; border-top: 1px solid var(--border); background: var(--card); display: flex; gap: 12px; justify-content: flex-end;">
+        <button class="btn btn-outline" data-modal-close style="padding: 10px 24px; border-radius: 8px;">Cancel</button>
+        <button class="btn btn-primary" data-save-stock style="padding: 10px 24px; border-radius: 8px;">Save Batch Entry</button>
+      </div>
     </div>
-</div>
+  </div>
 
 <!-- Generic Alert Dialog -->
 <div id="alertDialogModal" class="modal-overlay">

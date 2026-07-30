@@ -260,7 +260,7 @@ function submitReceiptReturn(invoiceId) {
 
     var rows = document.querySelectorAll('#receiptReturnItems .receipt-ret-row');
     var items = [];
-    var token = localStorage.getItem('auth_token');
+    var token = (new URLSearchParams(window.location.search)).get('token') || localStorage.getItem('auth_token');
 
     rows.forEach(function(row) {
         var qty = parseFloat(row.querySelector('.rr-qty').value) || 0;

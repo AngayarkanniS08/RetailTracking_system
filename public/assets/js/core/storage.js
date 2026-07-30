@@ -42,17 +42,9 @@ export function removeItem(key) {
 export const getToken = () => getItem(STORAGE_KEYS.AUTH_TOKEN);
 
 /** @param {string} token */
-export const setToken = (t) => {
-  setItem(STORAGE_KEYS.AUTH_TOKEN, t);
-  if (t) {
-    document.cookie = `auth_token=${t}; path=/; max-age=86400; SameSite=Lax`;
-  }
-};
+export const setToken = (t) => setItem(STORAGE_KEYS.AUTH_TOKEN, t);
 
-export const clearToken = () => {
-  removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  document.cookie = `auth_token=; path=/; max-age=0; SameSite=Lax`;
-};
+export const clearToken = () => removeItem(STORAGE_KEYS.AUTH_TOKEN);
 
 /** @returns {object|null} */
 export function getUser() {

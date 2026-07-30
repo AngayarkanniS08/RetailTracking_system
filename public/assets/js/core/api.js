@@ -5,7 +5,7 @@
 
 import { API_BASE } from './config.js';
 import { getToken, setToken, setUser } from './storage.js';
-import { logoutUser, setAuthCookie } from './auth.js';
+import { logoutUser } from './auth.js';
 import { logger } from './logger.js';
 
 /** Singleton promise to prevent parallel refresh races */
@@ -36,8 +36,7 @@ async function refreshToken() {
 
       setToken(data.token);
 
-      if (data.user?.user_id) {
-        setAuthCookie(data.user.user_id);
+      if (data.user) {
         setUser(data.user);
       }
 

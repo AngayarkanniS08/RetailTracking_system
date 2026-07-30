@@ -43,7 +43,24 @@ class AuthController
 
     public function logout(Request $request): void
     {
-        setcookie('auth_uid', '', time() - 3600, '/');
+        // Expire HttpOnly cookies server-side.
+        // Must match the same path/httponly flags used when they were set.
+        $expired = [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+        setcookie('auth_token', '', $expired);
+        setcookie('auth_uid',   '', $expired);
+
+        // Respond 200 for fetch() calls from JS, then redirect if browser navigates directly
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true]);
+            return;
+        }
+
         Response::redirect('/login');
     }
 }

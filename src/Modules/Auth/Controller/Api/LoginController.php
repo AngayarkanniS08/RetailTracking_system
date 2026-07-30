@@ -46,6 +46,19 @@ class LoginController
             $user = $this->service->login($dto);
             $jwt = $this->jwtService->generateToken($user);
 
+            setcookie('auth_token', $jwt, [
+                'expires'  => time() + 86400,
+                'path'     => '/',
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+            setcookie('auth_uid', $user['id'], [
+                'expires'  => time() + 86400,
+                'path'     => '/',
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ]);
+
             echo json_encode([
                 'success' => true,
                 'token' => $jwt,

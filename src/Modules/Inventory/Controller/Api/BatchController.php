@@ -146,6 +146,7 @@ class BatchController
             ];
 
             $batch = $this->service->createBatch($batchData);
+            \Modules\Billing\Controller\Api\PosSearchController::invalidateProductCache($productId);
             http_response_code(201);
             echo json_encode(['success' => true, 'batch' => $batch]);
         } catch (Exception $e) {

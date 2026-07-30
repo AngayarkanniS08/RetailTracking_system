@@ -21,6 +21,7 @@ import { initInventoryPage } from './pages/inventory.js';
 import { initSystemHealthPage } from './pages/system-health.js';
 import { initVendorsPage } from './pages/vendors.js';
 import { initCustomerCredit } from './pages/customers.js';
+import { initDayToDaySelling } from './pages/daily_sales.js';
 
 import { API_BASE } from './core/config.js';
 import { apiRequest } from './core/api.js';
@@ -46,6 +47,17 @@ window.switchTab = switchTab;
 window.showToast = showToast;
 window.notify = notify;
 window.setTheme = setAppTheme;
+
+// Delegated modal triggers (no inline onclick needed)
+document.addEventListener('click', (e) => {
+  const modalBtn = e.target.closest('[data-modal]');
+  if (modalBtn) { e.preventDefault(); openModal(modalBtn.dataset.modal); return; }
+  const closeBtn = e.target.closest('[data-modal-close]');
+  if (closeBtn) {
+    const overlay = closeBtn.closest('.modal-overlay');
+    if (overlay?.id) closeModal(overlay.id);
+  }
+});
 
 /**
  * 🔔 Active Alerts Modal Handler (Notification System)
@@ -209,7 +221,7 @@ async function boot() {
     else if (id === 'vendor_list' || id === 'vendor_history') initVendorsPage();
     else if (id === 'credit_kadan' || id === 'customers') initCustomerCredit();
     else if (id === 'day_to_day_selling' || id === 'daily_sales') {
-      if (typeof window.initDayToDaySelling === 'function') window.initDayToDaySelling();
+      initDayToDaySelling();
     }
   }
 }

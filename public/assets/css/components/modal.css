@@ -161,6 +161,55 @@ label {
   border-radius: 3px;
 }
 
+/* ── Segment control toggle (pricing mode) ── */
+.segment-control {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.segment-item {
+  flex: 1;
+  padding: 10px 16px;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.segment-item:hover {
+  opacity: 0.85;
+}
+
+/* ── Pricing grid (wholesale / retail card) ── */
+#pricingGrid {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+#pricingGrid .grid-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+#pricingGrid .input-group input {
+  padding: 12px;
+  border-radius: 8px;
+}
+
+#pricingGrid .input-group label {
+  font-weight: 500;
+}
+
 /* ── Responsive modal ── */
 @media (max-width: 768px) {
   .modal-content {

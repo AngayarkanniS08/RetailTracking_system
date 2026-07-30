@@ -22,6 +22,137 @@ class InvoiceService
     }
 
     /**
+     * Calculate cart totals from raw items (no persistence).
+     * Frontend sends product_id + quantity; backend looks up prices, validates, computes totals.
+     *
+     * @throws ValidationException
+     */
+    public function calculateCart(array $items, float $billDiscount, bool $applyGst): array
+    {
+        if (empty($items)) {
+            throw new ValidationException('Cart is empty');
+        }
+        if ($billDiscount < 0) {
+            throw new ValidationException('Bill discount cannot be negative');
+        }
+
+        $calculatedItems = [];
+        $subtotal = 0;
+        $totalGst = 0;
+        $totalItemDiscount = 0;
+
+        foreach ($items as $i => $item) {
+            $productId = $item['product_id'] ?? '';
+            $quantity = max(0, (float)($item['quantity'] ?? 0));
+            $discount = max(0, (float)($item['discount_amount'] ?? 0));
+
+            if (empty($productId)) {
+                throw new ValidationException("Item #$i: product_id is required");
+            }
+            if ($quantity <= 0) {
+                throw new ValidationException("Item #$i: quantity must be positive");
+            }
+
+            $product = $this->repo->findProductById($productId);
+            if (!$product) {
+                throw new ValidationException("Product not found: $productId");
+            }
+
+            $batchId = $item['batch_id'] ?? null;
+            $batch = null;
+
+            if ($batchId) {
+                $batch = $this->repo->findBatchById($batchId);
+                if (!$batch) {
+                    throw new ValidationException("Batch not found: $batchId");
+                }
+            } else {
+                $batch = $this->repo->findAvailableBatch($productId, $quantity);
+                if (!$batch) {
+                    throw new ValidationException("No available stock for: {$product['name']}");
+                }
+                $batchId = $batch['id'];
+            }
+
+            if ((float)$batch['remaining_qty'] < $quantity) {
+                throw new ValidationException(
+                    "Insufficient stock for {$product['name']}. Available: {$batch['remaining_qty']}, requested: $quantity"
+                );
+            }
+
+            $unitPrice = (float)($batch['selling_price'] ?? 0);
+            if ($unitPrice <= 0) {
+                throw new ValidationException("Invalid price for {$product['name']}");
+            }
+
+            $lineSubtotal = $quantity * $unitPrice;
+            $maxDiscount = $lineSubtotal;
+            if ($discount > $maxDiscount) {
+                throw new ValidationException(
+                    "Item discount ₹$discount exceeds line total ₹$maxDiscount for {$product['name']}"
+                );
+            }
+
+            $gstRate = $applyGst ? (float)($product['gst_rate'] ?? 0) : 0;
+            $taxableBase = $lineSubtotal - $discount;
+            $gstAmount = round($taxableBase * ($gstRate / 100), 2);
+            $lineTotal = $taxableBase + $gstAmount;
+
+            $subtotal += $lineSubtotal;
+            $totalGst += $gstAmount;
+            $totalItemDiscount += $discount;
+
+            $calculatedItems[] = [
+                'product_id'    => $productId,
+                'product_name'  => $product['name'],
+                'batch_id'      => $batchId,
+                'batch_number'  => $batch['batch_number'] ?? '',
+                'unit'          => $product['unit'],
+                'hsn_code'      => $product['hsn_code'],
+                'unit_price'    => $unitPrice,
+                'quantity'      => $quantity,
+                'discount'      => $discount,
+                'gst_rate'      => $gstRate,
+                'gst_amount'    => $gstAmount,
+                'line_total'    => $lineTotal,
+            ];
+        }
+
+        if ($billDiscount > $subtotal) {
+            throw new ValidationException("Bill discount ₹$billDiscount exceeds subtotal ₹$subtotal");
+        }
+
+        // Apportion bill discount across items (reduces GST base)
+        $netSubtotal = $subtotal - $totalItemDiscount;
+        if ($billDiscount > 0 && $netSubtotal > 0) {
+            $totalGst = 0;
+            foreach ($calculatedItems as &$ci) {
+                $taxBase = $ci['line_total'] - $ci['gst_amount'] + $ci['discount'];
+                $prop = $taxBase / $netSubtotal;
+                $reducedBase = $taxBase - ($billDiscount * $prop);
+                $ci['gst_amount'] = round($reducedBase * ($ci['gst_rate'] / 100), 2);
+                $ci['line_total'] = $taxBase - ($billDiscount * $prop) + $ci['gst_amount'];
+                $totalGst += $ci['gst_amount'];
+            }
+            unset($ci);
+        }
+
+        $beforeRound = $netSubtotal - $billDiscount + $totalGst;
+        $grandTotal = round($beforeRound);
+        $roundOff = $grandTotal - $beforeRound;
+
+        return [
+            'items'         => $calculatedItems,
+            'subtotal'      => round($subtotal, 2),
+            'item_discount' => round($totalItemDiscount, 2),
+            'bill_discount' => $billDiscount,
+            'gst_total'     => round($totalGst, 2),
+            'round_off'     => round($roundOff, 2),
+            'grand_total'   => $grandTotal,
+        ];
+    }
+
+    /**
      * @throws ValidationException
      */
     public function createInvoice(InvoiceDTO $dto, string $userId): Invoice

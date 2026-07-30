@@ -102,6 +102,35 @@ class InvoiceController
         }
     }
 
+    public static function invalidateInvoiceCache(): void
+    {
+        try {
+            $valkey = ValkeyCache::getClient();
+            if (!$valkey) return;
+
+            // Use SCAN instead of KEYS — SCAN is non-blocking and production-safe.
+            // KEYS billing:* would block the Valkey server during full keyspace scans.
+            $cursor = null;
+            $keysToDelete = [];
+
+            do {
+                [$cursor, $batch] = $valkey->scan($cursor ?? 0, [
+                    'match' => 'billing:invoices:list:*',
+                    'count' => 100,
+                ]);
+                if (!empty($batch)) {
+                    $keysToDelete = array_merge($keysToDelete, $batch);
+                }
+            } while ((int)$cursor !== 0);
+
+            if (!empty($keysToDelete)) {
+                $valkey->del($keysToDelete);
+            }
+        } catch (\Throwable $e) {
+            error_log('Failed to invalidate invoice cache: ' . $e->getMessage());
+        }
+    }
+
     /**
      * POST /api/invoices
      */
@@ -144,6 +173,7 @@ class InvoiceController
         try {
             $userId = $user->data->user_id ?? '';
             $invoice = $this->service->createInvoice($dto, $userId);
+            self::invalidateInvoiceCache();
             http_response_code(201);
             echo json_encode([
                 'success' => true,
