@@ -92,23 +92,6 @@
     </div>
   </div>
 
-  <!-- 3. Interactive Sales & Purchases Chart Section -->
-  <div class="dash-chart-card card-panel">
-    <div class="card-header chart-header">
-      <div class="chart-title">
-        <span class="chart-icon">📊</span>
-        <span>Sales & Revenue Trend Comparison</span>
-      </div>
-      <div class="chart-legend">
-        <span class="legend-item"><span class="legend-dot dot-this-week"></span> Current Period</span>
-        <span class="legend-item"><span class="legend-dot dot-last-week"></span> Previous Period</span>
-      </div>
-    </div>
-    <div class="canvas-wrapper">
-      <canvas id="salesComparisonChart" height="240"></canvas>
-    </div>
-  </div>
-
   <!-- 4. Filtered Business Summaries (Sales & Purchase Rows) -->
   <div class="dash-summary-grid">
     <!-- Filtered Sales Summary Widget -->
