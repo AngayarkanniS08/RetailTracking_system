@@ -116,3 +116,62 @@ a.btn.btn-outline.btn-sm svg,
   cursor: not-allowed;
   pointer-events: none;
 }
+
+/* ── Action Buttons Container & Icon Button System ── */
+.action-buttons {
+  display: flex;
+  gap: var(--space-sm, 8px);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border, #e6eaf2);
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--surface-container, #ffffff);
+  color: var(--muted, #667085);
+  cursor: pointer;
+  transition: all var(--duration-fast, 0.15s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  box-shadow: var(--shadow-xs, 0 1px 2px 0 rgba(0, 0, 0, 0.03));
+}
+
+.btn-icon:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
+  border-color: var(--border-strong, #cbd5e1);
+  color: var(--text-strong, #0f172a);
+}
+
+.btn-icon:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Edit action variation */
+.btn-icon.edit-btn {
+  color: var(--muted-strong, #475569);
+}
+
+.btn-icon.edit-btn:hover {
+  background-color: var(--surface-container-low, #f1f5f9);
+  color: var(--accent, #2563eb);
+  border-color: var(--accent-subtle, rgba(37, 99, 235, 0.3));
+}
+
+/* Delete action variation (Destructive semantic warning) */
+.btn-icon.delete-btn {
+  color: var(--danger, #dc2626);
+}
+
+.btn-icon.delete-btn:hover {
+  background-color: var(--danger-subtle, rgba(220, 38, 38, 0.08));
+  color: var(--danger, #dc2626);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
