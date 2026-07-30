@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/public/assets/css/style.css?v=<?= time(); ?>">
   <link rel="stylesheet" href="/public/assets/css/pages/dashboard.css?v=<?= time(); ?>">
+  <link rel="stylesheet" href="/public/assets/css/pages/system-health.css?v=<?= time(); ?>">
   <script>
     // Inline script for flash-free theme detection & immediate global helpers
     (function() {
