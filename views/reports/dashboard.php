@@ -249,45 +249,6 @@
     </div>
   </div>
 
-  <!-- 7. Priority Alert Center -->
-  <div class="card-panel alert-center-card">
-    <div class="card-header">
-      <div class="widget-title">
-        <span>🚨 Priority Alert Center</span>
-      </div>
-    </div>
-    <div class="alert-center-body" id="priorityAlertCenterList">
-      <div class="alert-item alert-info">
-        <div class="alert-icon">ℹ️</div>
-        <div class="alert-content">
-          <div class="alert-title">Dashboard Live Diagnostics Operational</div>
-          <div class="alert-desc">All database parameters and inventory velocity algorithms are connected.</div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- 8. Actionable Empty State Container -->
-  <div id="dashboardEmptyState" class="card-panel dashboard-empty-card" style="display: none;">
-    <div class="empty-state-content">
-      <div class="empty-icon-wrapper">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <path d="M16 10a4 4 0 0 1-8 0"></path>
-        </svg>
-      </div>
-      <h3 class="empty-title">No transactions recorded for this period</h3>
-      <p class="empty-desc">Create your first sale invoice or purchase order to generate live financial and inventory intelligence.</p>
-      <div class="empty-actions">
-        <button class="btn btn-primary" onclick="switchTab('billing')">
-          <span>+ Create Invoice</span>
-        </button>
-        <button class="btn btn-outline" onclick="switchTab('product')">
-          <span>📦 Go to Product Master</span>
-        </button>
-      </div>
-    </div>
-  </div>
 
 </section>
