@@ -48,6 +48,7 @@ export class Cart {
     }
     this.syncToGrid();
     this.recalculate();
+    this._save();
   }
 
   updateItem(index, field, value) {
@@ -60,14 +61,16 @@ export class Cart {
             window.showToast(`Quantity capped at available stock limit (${maxStock} max).`, 'warning');
           }
           this.items[index].quantity = maxStock;
-          this.syncToGrid();
-          this.recalculate();
-          return;
+      this.syncToGrid();
+      this.recalculate();
+      this._save();
+      return;
         }
       }
       this.items[index][field] = value;
       this.syncToGrid();
       this.recalculate();
+      this._save();
     }
   }
 
@@ -75,16 +78,19 @@ export class Cart {
     this.items.splice(index, 1);
     this.syncToGrid();
     this.recalculate();
+    this._save();
   }
 
   setBillDiscount(value) {
     this.billDiscount = Math.max(0, parseFloat(value) || 0);
     this.recalculate();
+    this._save();
   }
 
   setGstEnabled(enabled) {
     this.enableGst = !!enabled;
     this.recalculate();
+    this._save();
   }
 
   async recalculate() {
@@ -127,6 +133,9 @@ export class Cart {
         this.items[index].batch_number = backendItem.batch_number || this.items[index].batch_number;
         this.items[index].hsn_code = backendItem.hsn_code || this.items[index].hsn_code;
         this.items[index].unit = backendItem.unit || this.items[index].unit;
+        this.items[index].gst_rate = backendItem.gst_rate || 0;
+        this.items[index].gst_amount = backendItem.gst_amount || 0;
+        this.items[index].line_total = backendItem.line_total || (backendItem.unit_price * backendItem.quantity);
       }
     });
     this.syncToGrid();
@@ -151,8 +160,8 @@ export class Cart {
         if (cells[3]) cells[3].textContent = item.discount_amount > 0 ? String(item.discount_amount) : '';
         if (cells[4]) cells[4].textContent = item.unit;
         if (cells[5]) cells[5].textContent = String(item.quantity);
-        if (cells[6]) { cells[6].dataset.value = ''; cells[6].textContent = ''; }
-        if (cells[7]) { cells[7].dataset.value = ''; cells[7].textContent = ''; }
+        if (cells[6]) { const gstRate = item.gst_rate || 0; cells[6].dataset.value = gstRate; cells[6].textContent = gstRate > 0 ? String(gstRate) : ''; }
+        if (cells[7]) { const lineTotal = item.line_total || (item.unit_price * item.quantity); cells[7].dataset.value = lineTotal; cells[7].textContent = lineTotal > 0 ? formatCurrency(lineTotal) : ''; }
       } else {
         for (let c = 0; c < cells.length; c++) {
           cells[c].textContent = '';
@@ -213,6 +222,43 @@ export class Cart {
     this.totals = null;
     this.syncToGrid();
     this.renderTotals();
+    this._clearStorage();
+  }
+
+  _save() {
+    if (typeof sessionStorage === 'undefined') return;
+    try {
+      sessionStorage.setItem('cart_items', JSON.stringify(this.items));
+      sessionStorage.setItem('cart_billDiscount', String(this.billDiscount));
+      sessionStorage.setItem('cart_enableGst', String(this.enableGst));
+    } catch (e) {}
+  }
+
+  _restore() {
+    if (typeof sessionStorage === 'undefined') return false;
+    try {
+      const savedItems = sessionStorage.getItem('cart_items');
+      const savedDiscount = sessionStorage.getItem('cart_billDiscount');
+      const savedGst = sessionStorage.getItem('cart_enableGst');
+      if (savedItems) {
+        this.items = JSON.parse(savedItems);
+        this.billDiscount = savedDiscount ? parseFloat(savedDiscount) : 0;
+        this.enableGst = savedGst !== 'false';
+        this.syncToGrid();
+        this.recalculate();
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  _clearStorage() {
+    if (typeof sessionStorage === 'undefined') return;
+    try {
+      sessionStorage.removeItem('cart_items');
+      sessionStorage.removeItem('cart_billDiscount');
+      sessionStorage.removeItem('cart_enableGst');
+    } catch (e) {}
   }
 
   get itemCount() {

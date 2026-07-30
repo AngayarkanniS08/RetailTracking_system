@@ -14,7 +14,10 @@ export function initBillingPage() {
     if (discountInput) discountInput.value = cart.billDiscount > 0 ? String(cart.billDiscount) : '';
   });
 
-  cart.recalculate();
+  const hasSaved = cart._restore();
+  if (!hasSaved) {
+    cart.recalculate();
+  }
 }
 
 /**
@@ -113,17 +116,37 @@ export function selectPOSProduct(batchId) {
 }
 
 /**
+ * Load all customers (no search query) for the dropdown on focus/tap.
+ */
+export async function loadAllCustomers() {
+  const dropdown = document.getElementById('customerSearchDropdown');
+  if (dropdown) {
+    dropdown.innerHTML = '<div class="cs-item" style="cursor:default;opacity:0.6;">Loading...</div>';
+    dropdown.classList.add('is-open');
+  }
+  try {
+    const data = await apiRequest('/api/customers?limit=100');
+    const results = data?.data || [];
+    renderCustomerDropdown(results, '');
+    return results;
+  } catch (err) {
+    console.error('Failed to load customers:', err);
+    if (dropdown) dropdown.classList.remove('is-open');
+    return [];
+  }
+}
+
+/**
  * Handle customer search.
  */
 export async function searchCustomers(query) {
   if (!query || query.length < 1) {
-    hideDropdown('customerSearchDropdown');
-    return [];
+    return loadAllCustomers();
   }
   try {
-    const data = await apiRequest(`/api/customers/search?q=${encodeURIComponent(query)}`);
-    const results = data?.results || data?.data || data || [];
-    renderCustomerDropdown(results);
+    const data = await apiRequest(`/api/customers?search=${encodeURIComponent(query)}&limit=100`);
+    const results = data?.data || [];
+    renderCustomerDropdown(results, query);
     return results;
   } catch (err) {
     console.error('Customer search error:', err);
@@ -131,30 +154,59 @@ export async function searchCustomers(query) {
   }
 }
 
-function renderCustomerDropdown(results) {
+function renderCustomerDropdown(results, query = '') {
   const dropdown = document.getElementById('customerSearchDropdown');
   if (!dropdown) return;
+
   if (!results || results.length === 0) {
-    dropdown.style.display = 'none';
+    dropdown.innerHTML = `
+      <div class="cs-item" style="cursor:default;opacity:0.55;text-align:center;padding:14px 0;">
+        <span>No customers found</span>
+      </div>
+    `;
+    dropdown.classList.add('is-open');
     return;
   }
-  dropdown.innerHTML = results.map(c => `
-    <div class="customer-search-item" data-id="${c.id || ''}"
-         data-name="${c.name || ''}" data-phone="${c.phone || ''}"
-         onclick="selectCustomer(this)">
-      <strong>${c.name || ''}</strong>
-      <span style="font-size:0.8rem;color:var(--muted);">${c.phone || ''}</span>
-    </div>
-  `).join('');
-  dropdown.style.display = 'block';
+
+  const header = `<div style="padding:6px 14px 4px;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;opacity:0.45;text-transform:uppercase;">${
+    query ? `Results for "${query}"` : `All Customers (${results.length})`
+  }</div>`;
+
+  const items = results.map((c, idx) => {
+    const name  = c.name  || '';
+    const phone = c.phone || '';
+    const balance = parseFloat(c.current_balance || 0);
+    const balanceBadge = balance !== 0
+      ? `<span style="font-size:0.72rem;padding:1px 7px;border-radius:20px;background:${
+          balance > 0 ? 'var(--success-muted,#16a34a22)' : 'var(--danger-muted,#dc262622)'
+        };color:${
+          balance > 0 ? 'var(--success,#16a34a)' : 'var(--danger,#dc2626)'
+        };">₹${Math.abs(balance).toFixed(2)}</span>`
+      : '';
+    return `
+      <div class="cs-item" role="option" aria-selected="false" tabindex="-1"
+           data-id="${c.id || ''}" data-name="${name}" data-phone="${phone}"
+           onclick="selectCustomer(this)">
+        <div class="cs-item-main">${highlightMatch(name, query)} ${balanceBadge}</div>
+        <div class="cs-item-sub">${phone || '—'}</div>
+      </div>`;
+  }).join('');
+
+  dropdown.innerHTML = header + items;
+  dropdown.classList.add('is-open');
 }
 
 export function selectCustomer(el) {
-  const id = el.dataset.id;
-  const name = el.dataset.name;
+  const id    = el.dataset.id;
+  const name  = el.dataset.name;
   const phone = el.dataset.phone;
-  document.getElementById('billCustomerId').value = id || '';
-  document.getElementById('customerSearchInput').value = name || phone || '';
+  const input = document.getElementById('customerSearchInput');
+  const hiddenId = document.getElementById('billCustomerId');
+  if (hiddenId)  hiddenId.value = id || '';
+  if (input) {
+    input.value = name || phone || '';
+    input.dataset.selectedId = id || '';
+  }
   hideDropdown('customerSearchDropdown');
 }
 
@@ -205,10 +257,12 @@ export async function processCheckout() {
 
 function hideDropdown(id) {
   const el = document.getElementById(id);
-  if (el) el.style.display = 'none';
+  if (!el) return;
+  el.classList.remove('is-open');
 }
 
 function highlightMatch(text, query) {
+  if (!query || typeof query !== 'string') return text;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return text;
   return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
@@ -221,6 +275,7 @@ window.addItemToCart = addItemToCart;
 window.processCheckout = processCheckout;
 window.selectPOSProduct = selectPOSProduct;
 window.selectCustomer = selectCustomer;
+window.loadAllCustomers = loadAllCustomers;
 
 window.checkout = processCheckout;
 
@@ -264,8 +319,32 @@ window.onPOSSearchKeyup = debounce((e) => {
 }, 300);
 
 window.onCustomerSearchKeyup = debounce((e) => {
-  searchCustomers(e.target.value);
-}, 300);
+  if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'].includes(e.key)) return;
+  const val = e?.target?.value?.trim();
+  if (val && val.length >= 1) {
+    searchCustomers(val);
+  } else {
+    loadAllCustomers();
+  }
+}, 250);
+
+window.onCustomerSearchFocus = () => {
+  const input = document.getElementById('customerSearchInput');
+  const val = input?.value?.trim();
+  if (val && val.length >= 1) {
+    searchCustomers(val);
+  } else {
+    loadAllCustomers();
+  }
+};
+
+// Close customer dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.customer-search-combobox');
+  if (wrap && !wrap.contains(e.target)) {
+    hideDropdown('customerSearchDropdown');
+  }
+}, true);
 
 window.onGstToggle = (enabled) => {
   toggleGst(enabled);

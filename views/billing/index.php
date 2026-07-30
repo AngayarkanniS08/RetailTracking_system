@@ -66,7 +66,7 @@
       </span>
       <div class="customer-search-combobox">
         <input type="text" id="customerSearchInput" class="input-field" placeholder="Customer name or phone..."
-               autocomplete="off" onkeyup="onCustomerSearchKeyup(event)" onfocus="onCustomerSearchKeyup({key:''})">
+               autocomplete="off" onkeyup="onCustomerSearchKeyup(event)" onfocus="onCustomerSearchFocus()" onclick="onCustomerSearchFocus()">
         <input type="hidden" id="billCustomerId" value="">
         <div id="customerSearchDropdown" class="customer-search-dropdown"></div>
       </div>
