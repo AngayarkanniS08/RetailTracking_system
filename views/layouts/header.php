@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/public/assets/css/style.css?v=<?= time(); ?>">
   <link rel="stylesheet" href="/public/assets/css/pages/dashboard.css?v=<?= time(); ?>">
   <link rel="stylesheet" href="/public/assets/css/pages/system-health.css?v=<?= time(); ?>">
+  <link rel="stylesheet" href="/public/assets/css/pages/backup.css?v=<?= time(); ?>">
   <script>
     // Inline script for flash-free theme detection & immediate global helpers
     (function() {

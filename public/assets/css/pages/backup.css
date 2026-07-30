@@ -1,0 +1,417 @@
+/* =============================================================
+   backup.css — Enterprise Backup Operations Dashboard
+   ============================================================= */
+
+#backup {
+  padding: 0;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  letter-spacing: -0.01em;
+}
+
+/* ── 12-Column Grid System ── */
+.bkp-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.25rem;
+}
+
+.bkp-col-3  { grid-column: span 3; }
+.bkp-col-4  { grid-column: span 4; }
+.bkp-col-6  { grid-column: span 6; }
+.bkp-col-8  { grid-column: span 8; }
+.bkp-col-12 { grid-column: span 12; }
+
+@media (max-width: 1280px) {
+  .bkp-col-3  { grid-column: span 6; }
+  .bkp-col-4  { grid-column: span 6; }
+  .bkp-col-8  { grid-column: span 12; }
+}
+
+@media (max-width: 768px) {
+  .bkp-grid { grid-template-columns: 1fr; }
+  .bkp-col-3, .bkp-col-4, .bkp-col-6,
+  .bkp-col-8, .bkp-col-12 { grid-column: span 1; }
+}
+
+/* ── KPI Stat Cards ── */
+.bkp-kpi {
+  padding: 1.1rem 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid transparent;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bkp-kpi:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px 0 rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+.bkp-kpi-label {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.bkp-kpi-val {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.1;
+}
+
+.bkp-kpi-sub {
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Semantic Status Badges ── */
+.badge-emerald-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.badge-amber-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.badge-rose-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(244, 63, 94, 0.12);
+  color: #f43f5e;
+  border: 1px solid rgba(244, 63, 94, 0.22);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* ── Card Panel Reset ── */
+.bkp-card {
+  padding: 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.06);
+}
+
+.bkp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.bkp-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.bkp-card-meta {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ── Operations Panel Buttons ── */
+.bkp-ops-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.bkp-op-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0.9rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-container-low, rgba(255,255,255,0.02));
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.bkp-op-btn:hover {
+  border-color: var(--accent, #3b82f6);
+  background: rgba(59, 130, 246, 0.06);
+  transform: translateY(-1px);
+  color: var(--accent, #3b82f6);
+}
+
+.bkp-op-btn.primary {
+  background: var(--accent, #3b82f6);
+  border-color: var(--accent, #3b82f6);
+  color: #fff;
+  grid-column: span 2;
+  padding: 1rem;
+  font-size: 0.9rem;
+}
+
+.bkp-op-btn.primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.bkp-op-btn.primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.bkp-op-btn .op-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+/* ── History Table ── */
+.bkp-history-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.bkp-history-table th {
+  padding: 9px 12px;
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  text-align: left;
+}
+
+.bkp-history-table td {
+  padding: 11px 12px;
+  font-size: 0.83rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.15s ease;
+}
+
+.bkp-history-table tbody tr:hover {
+  background-color: var(--surface-container-high, rgba(255,255,255,0.03));
+}
+
+.bkp-history-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Weekly Heatmap ── */
+.bkp-week-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.bkp-day-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.bkp-day-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: default;
+  transition: transform 0.12s ease;
+}
+
+.bkp-day-dot:hover { transform: scale(1.15); }
+.bkp-day-dot.ok     { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.bkp-day-dot.fail   { background: rgba(244, 63, 94, 0.2); color: #f43f5e; }
+.bkp-day-dot.skip   { background: rgba(148, 163, 184, 0.1); color: var(--muted); }
+
+/* ── Storage Progress Bar ── */
+.bkp-storage-bar-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-container-low, rgba(255,255,255,0.06));
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.bkp-storage-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4);
+  transition: width 0.4s ease;
+}
+
+/* ── Compact Settings Grid ── */
+.bkp-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.bkp-setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bkp-setting-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bkp-setting-val {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Google Drive Status Card ── */
+.bkp-drive-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-container-low, rgba(255,255,255,0.02));
+  transition: border-color 0.2s ease;
+}
+
+.bkp-drive-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.bkp-drive-card.connected { border-color: rgba(16, 185, 129, 0.3); }
+.bkp-drive-card.disconnected { border-color: rgba(244, 63, 94, 0.25); }
+
+/* ── Duration Chart Bars ── */
+.bkp-dur-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.bkp-dur-bar-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  width: 32px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.bkp-dur-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-container-low, rgba(255,255,255,0.06));
+  overflow: hidden;
+}
+
+.bkp-dur-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+  transition: width 0.35s ease;
+}
+
+.bkp-dur-bar-val {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  width: 38px;
+  flex-shrink: 0;
+}
+
+/* ── Retention Policy Compact Display ── */
+.bkp-retention-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.bkp-retention-row:last-child { border-bottom: none; }
+
+/* ── Live Pulse ── */
+.bkp-live-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: bkp-pulse 2s infinite ease-in-out;
+}
+
+@keyframes bkp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(1.2); }
+}
+
+/* ── Config Form Modal-style collapsible ── */
+.bkp-config-section {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
