@@ -8,22 +8,20 @@
         <section id="inventory" class="view-section active">
           <div class="card-header">
             <span>Inventory & Batches</span>
-            <div class="d-flex" style="gap: 8px; align-items: center;">
-              <input type="text" id="invSearch" class="input-field" placeholder="Search batches..."
-                style="width: 180px; padding: 5px 10px; font-size: 0.82rem; height: 32px;" oninput="handleSearchInput()">
-              <div class="combobox" id="invCatCombobox" style="width: auto; min-width: 150px;">
-                  <input type="text" id="invCatInput" class="input-field" placeholder="All Categories" autocomplete="off" style="height: 32px; font-size: 0.82rem;">
+            <div class="d-flex" style="gap: 10px; align-items: center;">
+              <input type="text" id="invSearch" class="input-field" placeholder="Search batches..." oninput="handleSearchInput()">
+              <div class="combobox" id="invCatCombobox">
+                  <input type="text" id="invCatInput" class="input-field" placeholder="All Categories" autocomplete="off">
                   <input type="hidden" id="invCatFilter" value="">
                   <div id="invCatDropdown" class="combobox-dropdown"></div>
               </div>
-              <div class="combobox" id="invSubCatCombobox" style="width: auto; min-width: 150px;">
-                  <input type="text" id="invSubCatInput" class="input-field" placeholder="All Subcategories" autocomplete="off" style="height: 32px; font-size: 0.82rem;">
+              <div class="combobox" id="invSubCatCombobox">
+                  <input type="text" id="invSubCatInput" class="input-field" placeholder="All Subcategories" autocomplete="off">
                   <input type="hidden" id="invSubCatFilter" value="">
                   <div id="invSubCatDropdown" class="combobox-dropdown"></div>
               </div>
-              <button class="btn btn-primary btn-sm" style="padding: 5px 12px; font-size: 0.82rem; height: 32px; font-weight: 500;" onclick="openModal('addStockModal')">+ Add New Stock</button>
-              <button class="btn btn-outline btn-sm" onclick="openLowStockAlertModal()"
-                style="color:var(--warn); border-color:var(--warn); padding: 5px 12px; font-size: 0.82rem; height: 32px; font-weight: 500; white-space: nowrap;">🔔 Set Alert</button>
+              <button class="btn btn-primary inv-btn-add" onclick="openModal('addStockModal')">Add Stock</button>
+              <button class="btn btn-outline inv-btn-alert" onclick="openLowStockAlertModal()">SET ALERT</button>
             </div>
           </div>
           <!-- Inventory Stats -->
