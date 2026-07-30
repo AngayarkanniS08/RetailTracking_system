@@ -21,6 +21,7 @@ import { initSystemHealthPage } from './pages/system-health.js';
 import { initVendorsPage } from './pages/vendors.js';
 import { initCustomerCredit } from './pages/customers.js';
 
+import { API_BASE } from './core/config.js';
 import { apiRequest } from './core/api.js';
 import { getToken } from './core/storage.js';
 
@@ -29,12 +30,13 @@ window.apiRequest = apiRequest;
 window.getToken = getToken;
 window.fetchWithAuth = async function (url, options = {}) {
   const token = getToken();
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
   const headers = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
-  return fetch(url, { ...options, headers, credentials: 'same-origin' });
+  return fetch(fullUrl, { ...options, headers, credentials: 'include' });
 };
 window.logoutUser = logoutUser;
 window.openModal = openModal;
@@ -62,9 +64,7 @@ window.openActiveAlertsModal = async function () {
   `;
 
   try {
-    const res = await window.fetchWithAuth('/api/dashboard/stock-intel');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
+    const data = await apiRequest('/api/dashboard/stock-intel');
 
     const lowStock = data.low_selling || [];
     let alertCount = 0;
