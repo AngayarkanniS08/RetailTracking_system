@@ -362,6 +362,12 @@ class ApiRoutes
         $router->add('GET', '/api/health', function (): void {
             (new \Modules\Health\Controller\HealthController())->health();
         });
+        $router->add('GET', '/api/telemetry', function (): void {
+            (new \Modules\Health\Controller\HealthController())->telemetry();
+        });
+        $router->add('GET', '/api/telemetry/history', function (): void {
+            (new \Modules\Health\Controller\HealthController())->telemetryHistory();
+        });
         $router->add('GET', '/metrics', function (): void {
             (new \Modules\Health\Controller\HealthController())->metrics();
         });
