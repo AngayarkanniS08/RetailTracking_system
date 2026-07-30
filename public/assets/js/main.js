@@ -17,6 +17,7 @@ import { initAuthPage } from './pages/auth.js';
 // Page-specific modules
 import { initDashboardPage } from './pages/dashboard.js';
 import { initBillingPage } from './pages/billing.js';
+import { initInventoryPage } from './pages/inventory.js';
 import { initSystemHealthPage } from './pages/system-health.js';
 import { initVendorsPage } from './pages/vendors.js';
 import { initCustomerCredit } from './pages/customers.js';
@@ -202,6 +203,7 @@ async function boot() {
   if (activeSection) {
     const id = activeSection.id;
     if (id === 'dashboard') initDashboardPage();
+    else if (id === 'inventory') initInventoryPage();
     else if (id === 'billing_pos') initBillingPage();
     else if (id === 'system_health') initSystemHealthPage();
     else if (id === 'vendor_list' || id === 'vendor_history') initVendorsPage();

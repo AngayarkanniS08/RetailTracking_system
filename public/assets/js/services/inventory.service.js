@@ -6,7 +6,9 @@ import { apiRequest } from '../core/api.js';
 
 export async function fetchInventoryItemsApi(params = {}) {
   const query = new URLSearchParams(params).toString();
-  return apiRequest(`/api/inventory?${query}`);
+  const url = query ? `/api/inventory/batches?${query}` : '/api/inventory/batches';
+  const res = await apiRequest(url);
+  return res.data || res.batches || (Array.isArray(res) ? res : []);
 }
 
 export async function updateStockApi(productId, adjustmentData) {
