@@ -26,6 +26,18 @@
 /* ── Bootstrap 5 Badge & Pill Utility Classes ── */
 .rounded-pill { border-radius: 50rem !important; }
 
+.bg-primary   { background-color: rgb(13, 110, 253) !important; color: #fff !important; }
+.bg-secondary { background-color: rgb(108, 117, 125) !important; color: #fff !important; }
+.bg-success   { background-color: rgb(25, 135, 84) !important; color: #fff !important; }
+.bg-danger    { background-color: rgb(220, 53, 69) !important; color: #fff !important; }
+.bg-warning   { background-color: rgb(255, 193, 7) !important; color: #000 !important; }
+.bg-info      { background-color: rgb(13, 202, 240) !important; color: #000 !important; }
+.bg-light     { background-color: rgb(248, 249, 250) !important; color: #000 !important; }
+.bg-dark      { background-color: rgb(33, 37, 41) !important; color: #fff !important; }
+
+.text-dark  { color: #000 !important; }
+.text-white { color: #fff !important; }
+
 .text-bg-primary   { color: #fff !important; background-color: rgb(13, 110, 253) !important; }
 .text-bg-secondary { color: #fff !important; background-color: rgb(108, 117, 125) !important; }
 .text-bg-success   { color: #fff !important; background-color: rgb(25, 135, 84) !important; }

@@ -73,8 +73,30 @@ export function renderSalesTimeline(invoices = []) {
     const paymentMode = (inv.paymentStatus || inv.payment_mode || 'cash').toUpperCase();
     const status = (inv.invoiceStatus || inv.invoice_status || 'completed').toUpperCase();
 
-    const modeBadgeClass = paymentMode === 'CREDIT' ? 'badge-warning' : 'badge-success';
-    const statusBadgeClass = status === 'CANCELLED' ? 'badge-danger' : 'badge-success';
+    const getPaymentBadge = (mode) => {
+      switch (mode) {
+        case 'CREDIT': return 'bg-warning text-dark';
+        case 'CARD':   return 'bg-primary';
+        case 'UPI':    return 'bg-info text-dark';
+        case 'CASH':   return 'bg-success';
+        default:       return 'bg-secondary';
+      }
+    };
+
+    const getStatusBadge = (st) => {
+      switch (st) {
+        case 'CANCELLED': return 'bg-danger';
+        case 'PENDING':
+        case 'PARTIAL':   return 'bg-warning text-dark';
+        case 'RETURNED':  return 'bg-secondary';
+        case 'COMPLETED':
+        case 'PAID':
+        default:          return 'bg-success';
+      }
+    };
+
+    const paymentBadgeClass = getPaymentBadge(paymentMode);
+    const statusBadgeClass  = getStatusBadge(status);
 
     return `
       <tr style="border-bottom: 1px solid var(--border);">
@@ -87,10 +109,10 @@ export function renderSalesTimeline(invoices = []) {
         <td style="padding: 14px 16px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted);">${itemsText}</td>
         <td style="padding: 14px 16px; font-weight: 700; color: var(--text-strong);">${formatCurrency(grandTotal)}</td>
         <td style="padding: 14px 16px;">
-          <span class="badge ${modeBadgeClass}">${paymentMode}</span>
+          <span class="badge rounded-pill ${paymentBadgeClass}">${paymentMode}</span>
         </td>
         <td style="padding: 14px 16px;">
-          <span class="badge ${statusBadgeClass}">${status}</span>
+          <span class="badge rounded-pill ${statusBadgeClass}">${status}</span>
         </td>
         <td style="padding: 14px 16px; text-align: right;">
           <button onclick="openReceipt('${inv.id}')" class="btn btn-xs btn-outline" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor:pointer;">Print Receipt</button>
@@ -120,6 +142,7 @@ export function renderKPISummary(invoices = []) {
 }
 
 window.initDayToDaySelling = initDayToDaySelling;
+window.renderSalesTimeline = renderSalesTimeline;
 window.onSalesSearchInput = function () {
   const searchInput = document.getElementById('salesSearch');
   if (!searchInput) return;

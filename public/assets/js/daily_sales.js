@@ -152,13 +152,19 @@ function renderSalesTimeline() {
                 + '<td style="padding:14px 16px; color:var(--muted);">-</td>'
                 + '<td style="padding:14px 16px; color:var(--muted);">' + g.count + ' orders</td>'
                 + '<td style="padding:14px 16px; font-weight:700; color:var(--success);">\u20b9' + formatNumber(g.total) + '</td>'
-                + '<td style="padding:14px 16px; color:var(--muted);">Cash</td>'
-                + '<td style="padding:14px 16px;"><span class="badge badge-success" style="padding: 2px 6px; font-size: 0.72rem;">Completed</span></td>'
+                + '<td style="padding:14px 16px;"><span class="badge rounded-pill bg-success">CASH</span></td>'
+                + '<td style="padding:14px 16px;"><span class="badge rounded-pill bg-success">COMPLETED</span></td>'
                 + '<td style="padding:14px 16px; text-align:right;"><span style="font-size:0.75rem; color:var(--accent); text-decoration:underline;">View Details</span></td>'
             + '</tr>';
 
         g.invoices.forEach(function(inv) {
             var isCompletable = inv.invoiceStatus === 'completed';
+            var pMode = (inv.paymentMode || inv.payment_mode || 'CASH').toUpperCase();
+            var st    = (inv.invoiceStatus || inv.invoice_status || 'COMPLETED').toUpperCase();
+
+            var modeBg = pMode === 'CREDIT' ? 'bg-warning text-dark' : (pMode === 'CARD' ? 'bg-primary' : (pMode === 'UPI' ? 'bg-info text-dark' : 'bg-success'));
+            var stBg   = st === 'CANCELLED' ? 'bg-danger' : (st === 'PENDING' || st === 'PARTIAL' ? 'bg-warning text-dark' : 'bg-success');
+
             tbody.innerHTML += ''
                 + '<tr class="bill-row ' + cls + '" style="display:none; background:var(--card); border-bottom: 1px solid var(--border);">'
                     + '<td style="padding: 12px 16px 12px 28px; color: var(--muted); font-size: 0.8rem;">' + (inv.billedAt ? new Date(inv.billedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '-') + '</td>'
@@ -166,8 +172,8 @@ function renderSalesTimeline() {
                     + '<td style="padding: 12px 16px; color: var(--text-strong);">' + escHtml(inv.customerNameSnapshot || inv.customerName || 'Walk-in Customer') + '</td>'
                     + '<td style="padding: 12px 16px; color: var(--muted);">' + (inv.itemsCount || inv.items?.length || 1) + ' items</td>'
                     + '<td style="padding: 12px 16px; font-weight:600; color:var(--success);">\u20b9' + formatNumber(inv.grandTotal) + '</td>'
-                    + '<td style="padding: 12px 16px; color: var(--muted); font-size: 0.8rem;">' + escHtml(inv.paymentMode || 'Cash') + '</td>'
-                    + '<td style="padding: 12px 16px;"><span class="badge badge-success" style="padding: 2px 6px; font-size: 0.72rem;">Completed</span></td>'
+                    + '<td style="padding: 12px 16px;"><span class="badge rounded-pill ' + modeBg + '">' + escHtml(pMode) + '</span></td>'
+                    + '<td style="padding: 12px 16px;"><span class="badge rounded-pill ' + stBg + '">' + escHtml(st) + '</span></td>'
                     + '<td style="padding: 12px 16px; text-align:right;">'
                         + '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')" style="font-size:0.75rem; padding:3px 8px;">View</button>'
                         + (isCompletable ? '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openReturnModal(\'' + inv.id + '\')" style="margin-left:6px; font-size:0.75rem; padding:3px 8px;">Return</button>' : '')
