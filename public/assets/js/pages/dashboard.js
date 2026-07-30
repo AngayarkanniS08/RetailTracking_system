@@ -25,10 +25,11 @@ function displayCount(value, suffix = '') {
 }
 
 const STOCK_STATUS_MAP = {
-  in_stock: { label: 'In Stock', color: 'var(--ok)' },
-  low_stock: { label: 'Low Stock', color: 'var(--danger)' },
-  out_of_stock: { label: 'Out of Stock', color: 'var(--danger)' },
-  unknown: { label: 'Unknown', color: 'var(--muted)' },
+  in_stock: { label: 'In Stock', badgeClass: 'bg-success' },
+  healthy: { label: 'Healthy Stock', badgeClass: 'bg-success' },
+  low_stock: { label: 'Low Stock', badgeClass: 'bg-warning text-dark' },
+  out_of_stock: { label: 'Out of Stock', badgeClass: 'bg-danger' },
+  unknown: { label: 'Unknown', badgeClass: 'bg-secondary' },
 };
 
 const state = {
@@ -286,8 +287,9 @@ async function fetchStockIntelData() {
 }
 
 function renderStockStatusCell(status) {
-  const s = STOCK_STATUS_MAP[status] || STOCK_STATUS_MAP.unknown;
-  return `<span style="color: ${s.color}; font-weight: 600;">${s.label}</span>`;
+  const key = (status || '').toLowerCase().replace(/\s+/g, '_');
+  const s = STOCK_STATUS_MAP[key] || STOCK_STATUS_MAP[status] || STOCK_STATUS_MAP.unknown;
+  return `<span class="badge rounded-pill ${s.badgeClass}">${s.label}</span>`;
 }
 
 function renderTabbedProductPerformance() {
@@ -297,9 +299,9 @@ function renderTabbedProductPerformance() {
   const data = state.stockIntelData || {};
   let products = [];
 
-  const highList = (data.high_selling || []).map(p => ({ ...p, rank: 'High', badgeClass: 'badge-success' }));
-  const normalList = (data.normal_selling || []).map(p => ({ ...p, rank: 'Normal', badgeClass: 'badge-info' }));
-  const lowList = (data.low_selling || []).map(p => ({ ...p, rank: 'Low', badgeClass: 'badge-warn' }));
+  const highList = (data.high_selling || []).map(p => ({ ...p, rank: 'High Selling', badgeClass: 'bg-success' }));
+  const normalList = (data.normal_selling || []).map(p => ({ ...p, rank: 'Normal', badgeClass: 'bg-info text-dark' }));
+  const lowList = (data.low_selling || []).map(p => ({ ...p, rank: 'Low Selling', badgeClass: 'bg-warning text-dark' }));
 
   if (state.activeProductTab === 'high') products = highList;
   else if (state.activeProductTab === 'normal') products = normalList;
@@ -327,7 +329,7 @@ function renderTabbedProductPerformance() {
     const qty = item.qty_sold;
     const rev = item.revenue;
     const rank = item.rank || 'Normal';
-    const badgeClass = item.badgeClass || 'badge-info';
+    const badgeClass = item.badgeClass || 'bg-info text-dark';
     const stockStatus = item.stock_status || 'unknown';
 
     return `
@@ -335,7 +337,7 @@ function renderTabbedProductPerformance() {
         <td style="font-weight: 600; color: var(--text-strong);">${name}</td>
         <td style="font-variant-numeric: tabular-nums;">${displayCount(qty, ' pcs')}</td>
         <td style="font-weight: 600; font-variant-numeric: tabular-nums;">${displayCurrency(rev)}</td>
-        <td><span class="kpi-badge ${badgeClass}">${rank} Selling</span></td>
+        <td><span class="badge rounded-pill ${badgeClass}">${rank}</span></td>
         <td>${renderStockStatusCell(stockStatus)}</td>
         <td style="text-align: right;">
           <a href="/products" class="btn btn-outline btn-xs" style="padding: 3px 8px; font-size: 0.72rem;">View Item</a>
