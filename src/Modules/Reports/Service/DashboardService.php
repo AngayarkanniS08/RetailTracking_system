@@ -50,6 +50,8 @@ class DashboardService
         $todayStart = $now->setTime(0, 0, 0);
         $dayOfWeek = (int) $now->format('N');
         $weekStart = $now->modify('-' . ($dayOfWeek - 1) . ' days')->setTime(0, 0, 0);
+        $thisWeekEnd = $weekStart->modify('+7 days');
+        $lastWeekStart = $weekStart->modify('-7 days');
         $monthStart = $now->modify('first day of this month')->setTime(0, 0, 0);
 
         $today = $this->repo->getSalesSummary('today', $todayStart);
@@ -69,9 +71,14 @@ class DashboardService
             ? round((($currentSales->revenue - $prevSales->revenue) / $prevSales->revenue) * 100, 1)
             : ($currentSales->revenue > 0 ? 100.0 : 0.0);
 
-        $estimatedCost = $currentPurchase->amount > 0 ? $currentPurchase->amount : ($currentSales->revenue * 0.76);
-        $grossProfit   = max(0, $currentSales->revenue - $estimatedCost);
-        $profitMargin  = $currentSales->revenue > 0 ? round(($grossProfit / $currentSales->revenue) * 100, 1) : 0.0;
+        // Profit: only calculable when purchase data exists; otherwise null
+        $hasCostData = $currentPurchase->amount > 0;
+        $grossProfit  = $hasCostData ? max(0, $currentSales->revenue - $currentPurchase->amount) : null;
+        $profitMargin = $hasCostData && $currentSales->revenue > 0 ? round(($grossProfit / $currentSales->revenue) * 100, 1) : null;
+
+        // Real chart data (this week vs last week daily revenue)
+        $thisWeekData = $this->repo->getWeeklyChartData($weekStart, $thisWeekEnd);
+        $lastWeekData = $this->repo->getWeeklyChartData($lastWeekStart, $weekStart);
 
         return [
             'period' => $period,
@@ -104,18 +111,19 @@ class DashboardService
                 'pending' => max(0, $currentPurchase->amount - $currentPurchase->paid),
                 'avg_purchase' => $currentPurchase->count > 0 ? round($currentPurchase->amount / $currentPurchase->count, 2) : 0,
             ],
-            'today'             => ['revenue' => $today->revenue, 'bills' => $today->bills, 'avg' => $today->avg],
-            'week'              => ['revenue' => $week->revenue, 'bills' => $week->bills, 'avg' => $week->avg],
-            'month'             => ['revenue' => $month->revenue, 'bills' => $month->bills, 'avg' => $month->avg],
-            'purchase_week'     => ['amount' => $purchaseWeek->amount, 'count' => $purchaseWeek->count, 'paid' => $purchaseWeek->paid],
-            'purchase_month'    => ['amount' => $purchaseMonth->amount, 'count' => $purchaseMonth->count, 'paid' => $purchaseMonth->paid],
-            'total_bills'       => $this->repo->getTotalBills(),
+            'today'              => ['revenue' => $today->revenue, 'bills' => $today->bills, 'avg' => $today->avg],
+            'week'               => ['revenue' => $week->revenue, 'bills' => $week->bills, 'avg' => $week->avg],
+            'month'              => ['revenue' => $month->revenue, 'bills' => $month->bills, 'avg' => $month->avg],
+            'purchase_week'      => ['amount' => $purchaseWeek->amount, 'count' => $purchaseWeek->count, 'paid' => $purchaseWeek->paid],
+            'purchase_month'     => ['amount' => $purchaseMonth->amount, 'count' => $purchaseMonth->count, 'paid' => $purchaseMonth->paid],
+            'total_bills'        => $this->repo->getTotalBills(),
             'outstanding_credit' => $this->repo->getOutstandingCredit(),
-            'stock_value'       => $this->repo->getStockValue(),
+            'stock_value'        => $this->repo->getStockValue(),
             'chartData' => [
-                'thisWeek' => [1200, 1800, 2400, 1500, 3200, 4100, 2800],
-                'lastWeek' => [900, 1400, 1900, 2100, 2500, 3100, 2200],
-            ]
+                'labels'   => $thisWeekData['labels'],
+                'thisWeek' => $thisWeekData['values'],
+                'lastWeek' => $lastWeekData['values'],
+            ],
         ];
     }
 }

@@ -22,11 +22,12 @@ class StockIntelligenceService
         $avgVelocity = $this->repo->getCatalogAvgVelocity();
 
         $map = fn($items) => array_map(fn($m) => [
-            'product_id' => $m->productId,
-            'name'       => $m->name,
-            'qty_sold'   => $m->qtySold,
-            'revenue'    => $m->revenue,
-            'velocity'   => $m->velocity,
+            'product_id'  => $m->productId,
+            'name'        => $m->name,
+            'qty_sold'    => $m->qtySold,
+            'revenue'     => $m->revenue,
+            'velocity'    => $m->velocity,
+            'stock_status' => $m->stockStatus,
         ], $items);
 
         $mapOld = fn($items) => array_map(fn($m) => [
@@ -39,13 +40,35 @@ class StockIntelligenceService
             'velocity'    => $m->velocity,
         ], $items);
 
+        $health = $this->repo->getInventoryHealthCounts();
+
+        $hasInventory = $health['total_products'] > 0;
+        $hasAlerts = $health['out_of_stock'] > 0 || $health['low_stock'] > 0 || count($oldStock) > 0;
+
+        if (!$hasInventory) {
+            $alertStatus = 'no_data';
+        } elseif ($hasAlerts) {
+            $alertStatus = 'has_alerts';
+        } else {
+            $alertStatus = 'healthy';
+        }
+
         return [
-            'high_selling'  => $map($highSelling),
-            'low_selling'   => $map($lowSelling),
-            'normal_selling' => $map($normalSelling),
-            'new_products'  => $map($newProducts),
-            'old_stock'     => $mapOld($oldStock),
-            'avg_velocity'  => $avgVelocity,
+            'high_selling'    => $map($highSelling),
+            'low_selling'     => $map($lowSelling),
+            'normal_selling'  => $map($normalSelling),
+            'new_products'    => $map($newProducts),
+            'old_stock'       => $mapOld($oldStock),
+            'avg_velocity'    => $avgVelocity,
+            'inventory_health' => [
+                'total_products'  => $health['total_products'],
+                'out_of_stock'    => $health['out_of_stock'],
+                'low_stock'       => $health['low_stock'],
+                'healthy_count'   => max(0, $health['total_products'] - $health['out_of_stock'] - $health['low_stock']),
+            ],
+            'alert_summary' => [
+                'status' => $alertStatus,
+            ],
         ];
     }
 }

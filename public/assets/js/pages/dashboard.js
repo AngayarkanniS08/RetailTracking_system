@@ -1,34 +1,46 @@
-/**
- * dashboard.js — Enterprise Dashboard Page Controller
- *
- * Handles:
- * 1. Global Date Filter State (`Today`, `Yesterday`, `This Week`, `This Month`, `This Quarter`, `This Year`)
- * 2. Executive KPI Updates (Revenue, Bills, Gross Profit, Outstanding Credit)
- * 3. Filtered Business Summaries (Sales & Purchase Summary cards)
- * 4. Interactive Canvas Sales Comparison Chart (This Period vs Prev Period)
- * 5. Unified Tabbed Product Performance Component (`All`, `High`, `Normal`, `Low`) + Inline Search Filter
- * 6. Inventory Health & Priority Alert Center
- * 7. Skeleton Shimmer & Actionable Empty State
- */
-
 import { fetchDashboardStatsApi } from '../services/dashboard.service.js';
 import { apiRequest } from '../core/api.js';
 import { formatCurrency } from '../utils/format.js';
 import { setText } from '../utils/dom.js';
 import { logger } from '../core/logger.js';
+import { mapDashboardStats, mapStockIntel } from '../services/dashboard.dto.js';
+import { validateShape, dashboardStatsSchema, stockIntelSchema, ValidationError } from '../utils/validate.js';
+import { showToast } from '../ui/toast.js';
 
-/** Internal State Store */
+const DASH = '—';
+
+function displayCurrency(value) {
+  if (value === null || value === undefined || value === false) return DASH;
+  return formatCurrency(value);
+}
+
+function displayPercent(value) {
+  if (value === null || value === undefined || value === false) return DASH;
+  return `${value}% Margin`;
+}
+
+function displayCount(value, suffix = '') {
+  if (value === null || value === undefined) return DASH;
+  return `${value}${suffix}`;
+}
+
+const STOCK_STATUS_MAP = {
+  in_stock: { label: 'In Stock', color: 'var(--ok)' },
+  low_stock: { label: 'Low Stock', color: 'var(--danger)' },
+  out_of_stock: { label: 'Out of Stock', color: 'var(--danger)' },
+  unknown: { label: 'Unknown', color: 'var(--muted)' },
+};
+
 const state = {
   activePeriod: 'today',
   activeProductTab: 'all',
   productFilterText: '',
   stockIntelData: null,
   dashboardStats: null,
+  uiState: 'loading',
+  stockIntelState: 'loading',
 };
 
-/**
- * Render Skeleton Shimmer across Executive KPI cards & metric blocks
- */
 function renderSkeletonLoading() {
   const kpiIds = ['kpiRevenue', 'kpiBills', 'kpiProfit', 'kpiCredit', 'sumSalesRev', 'sumPurAmount'];
   kpiIds.forEach((id) => {
@@ -40,9 +52,6 @@ function renderSkeletonLoading() {
   });
 }
 
-/**
- * Remove Skeleton Loading Shimmer
- */
 function clearSkeletonLoading() {
   const kpiIds = ['kpiRevenue', 'kpiBills', 'kpiProfit', 'kpiCredit', 'sumSalesRev', 'sumPurAmount'];
   kpiIds.forEach((id) => {
@@ -53,9 +62,36 @@ function clearSkeletonLoading() {
   });
 }
 
-/**
- * Render Executive KPIs & Business Summaries
- */
+function showErrorBanner(message, onRetry) {
+  const container = document.getElementById('dashErrorContainer');
+  if (!container) return;
+  const retryBtn = typeof onRetry === 'function'
+    ? `<button class="btn btn-sm btn-outline" style="margin-left: 12px;" data-retry>Retry</button>`
+    : '';
+  container.innerHTML = `<div class="alert alert-danger" style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">${message}${retryBtn}</div>`;
+  const retryEl = container.querySelector('[data-retry]');
+  if (retryEl) retryEl.addEventListener('click', () => onRetry());
+}
+
+function clearErrorBanner() {
+  const container = document.getElementById('dashErrorContainer');
+  if (container) container.innerHTML = '';
+}
+
+function renderUIState() {
+  if (state.uiState === 'loading') {
+    renderSkeletonLoading();
+  } else if (state.uiState === 'empty') {
+    showToast('No dashboard data available yet. Start by adding sales or inventory.', 'info', 5000);
+  } else if (state.uiState === 'forbidden') {
+    showToast('You do not have access to view dashboard data.', 'danger', 0);
+  } else if (state.uiState === 'offline') {
+    showToast('Could not reach the server. Check your connection.', 'danger', 0);
+  } else if (state.uiState === 'ready') {
+    clearSkeletonLoading();
+  }
+}
+
 function renderExecutiveMetrics(stats) {
   if (!stats) return;
 
@@ -63,42 +99,39 @@ function renderExecutiveMetrics(stats) {
   const salesSum = stats.sales_summary || {};
   const purSum = stats.purchase_summary || {};
 
-  // KPI 1: Revenue
-  const revVal = kpis.revenue?.value ?? stats.today?.revenue ?? 0;
-  const revGrowth = kpis.revenue?.growth_pct ?? 0;
-  setText(document.getElementById('kpiRevenue'), formatCurrency(revVal));
+  const revVal = kpis.revenue?.value ?? null;
+  const revGrowth = kpis.revenue?.growth_pct ?? null;
+  setText(document.getElementById('kpiRevenue'), displayCurrency(revVal));
   const revTrendEl = document.getElementById('kpiRevTrend');
   if (revTrendEl) {
-    revTrendEl.textContent = `${revGrowth >= 0 ? '↑' : '↓'} ${Math.abs(revGrowth)}%`;
-    revTrendEl.className = `kpi-trend ${revGrowth >= 0 ? 'trend-up' : 'trend-down'}`;
+    if (revGrowth === null) {
+      revTrendEl.textContent = DASH;
+      revTrendEl.className = 'kpi-trend';
+    } else {
+      revTrendEl.textContent = `${revGrowth >= 0 ? '↑' : '↓'} ${Math.abs(revGrowth)}%`;
+      revTrendEl.className = `kpi-trend ${revGrowth >= 0 ? 'trend-up' : 'trend-down'}`;
+    }
   }
 
-  // KPI 2: Bills & Orders
-  const billCount = kpis.bills?.count ?? stats.today?.bills ?? 0;
-  const avgTicket = kpis.bills?.avg_ticket ?? stats.today?.avg ?? 0;
-  setText(document.getElementById('kpiBills'), String(billCount));
-  setText(document.getElementById('kpiAvgTicket'), formatCurrency(avgTicket));
+  const billCount = kpis.bills?.count ?? null;
+  const avgTicket = kpis.bills?.avg_ticket ?? null;
+  setText(document.getElementById('kpiBills'), displayCount(billCount));
+  setText(document.getElementById('kpiAvgTicket'), displayCurrency(avgTicket));
 
-  // KPI 3: Gross Profit Margin
-  const profitVal = kpis.profit?.value ?? Math.round(revVal * 0.24);
-  const profitMargin = kpis.profit?.margin_pct ?? (revVal > 0 ? 24.0 : 0.0);
-  setText(document.getElementById('kpiProfit'), formatCurrency(profitVal));
-  setText(document.getElementById('kpiProfitMargin'), `${profitMargin}% Margin`);
+  setText(document.getElementById('kpiProfit'), displayCurrency(kpis.profit?.value));
+  setText(document.getElementById('kpiProfitMargin'), displayPercent(kpis.profit?.margin_pct));
 
-  // KPI 4: Outstanding Customer Credit
-  const creditBal = kpis.outstanding_credit ?? stats.outstanding_credit ?? 0;
-  setText(document.getElementById('kpiCredit'), formatCurrency(creditBal));
-  setText(document.getElementById('creditTotalBalance'), formatCurrency(creditBal));
+  setText(document.getElementById('kpiCredit'), displayCurrency(kpis.outstanding_credit));
+  setText(document.getElementById('creditTotalBalance'), displayCurrency(kpis.outstanding_credit));
 
-  // Business Summaries — Sales Card
-  setText(document.getElementById('sumSalesRev'), formatCurrency(salesSum.revenue ?? revVal));
-  setText(document.getElementById('sumSalesBills'), String(salesSum.bills ?? billCount));
-  setText(document.getElementById('sumSalesAvg'), formatCurrency(salesSum.avg_ticket ?? avgTicket));
-  setText(document.getElementById('chipTodayRev'), formatCurrency(stats.today?.revenue ?? 0));
-  setText(document.getElementById('chipWeekRev'), formatCurrency(stats.week?.revenue ?? 0));
-  setText(document.getElementById('chipMonthRev'), formatCurrency(stats.month?.revenue ?? 0));
+  setText(document.getElementById('sumSalesRev'), displayCurrency(salesSum.revenue));
+  setText(document.getElementById('sumSalesBills'), displayCount(salesSum.bills));
+  setText(document.getElementById('sumSalesAvg'), displayCurrency(salesSum.avg_ticket));
 
-  // Period Chips text
+  setText(document.getElementById('chipTodayRev'), displayCurrency(stats.today?.revenue));
+  setText(document.getElementById('chipWeekRev'), displayCurrency(stats.week?.revenue));
+  setText(document.getElementById('chipMonthRev'), displayCurrency(stats.month?.revenue));
+
   const periodLabelMap = {
     today: 'Today',
     yesterday: 'Yesterday',
@@ -111,59 +144,59 @@ function renderExecutiveMetrics(stats) {
   setText(document.getElementById('salesSummaryChip'), activeLabel);
   setText(document.getElementById('purchaseSummaryChip'), activeLabel);
 
-  // Business Summaries — Purchase Card
-  const purAmount = purSum.amount ?? stats.purchase_week?.amount ?? 0;
-  const purPaid = purSum.paid ?? stats.purchase_week?.paid ?? 0;
-  const purPending = purSum.pending ?? Math.max(0, purAmount - purPaid);
-  setText(document.getElementById('sumPurAmount'), formatCurrency(purAmount));
-  setText(document.getElementById('sumPurPaid'), formatCurrency(purPaid));
-  setText(document.getElementById('sumPurPending'), formatCurrency(purPending));
-  setText(document.getElementById('chipPurCount'), String(purSum.count ?? stats.purchase_week?.count ?? 0));
-  setText(document.getElementById('chipPurAvg'), formatCurrency(purSum.avg_purchase ?? 0));
+  setText(document.getElementById('sumPurAmount'), displayCurrency(purSum.amount));
+  setText(document.getElementById('sumPurPaid'), displayCurrency(purSum.paid));
+  setText(document.getElementById('sumPurPending'), displayCurrency(purSum.pending));
+  setText(document.getElementById('chipPurCount'), displayCount(purSum.count));
+  setText(document.getElementById('chipPurAvg'), displayCurrency(purSum.avg_purchase));
 
-  // Inventory Health Totals
-  setText(document.getElementById('invTotalValue'), formatCurrency(stats.stock_value ?? 0));
+  setText(document.getElementById('invTotalValue'), displayCurrency(stats.stock_value));
 
-  // Empty State Toggle
-  const emptyStateEl = document.getElementById('dashboardEmptyState');
-  if (emptyStateEl) {
-    if (revVal === 0 && billCount === 0 && (stats.week?.revenue ?? 0) === 0) {
-      emptyStateEl.style.display = 'block';
-    } else {
-      emptyStateEl.style.display = 'none';
-    }
+  const hasData = revVal !== null && revVal > 0;
+  if (!hasData && state.uiState !== 'loading') {
+    state.uiState = 'empty';
+    renderUIState();
+  } else if (hasData && state.uiState === 'empty') {
+    state.uiState = 'ready';
+    renderUIState();
   }
 }
 
-/**
- * Render Interactive Canvas Bar Comparison Chart
- */
-function drawSalesCanvasChart(canvasId, thisPeriodData, lastPeriodData) {
+function drawSalesCanvasChart(canvasId, chartData) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+
+  const labels = chartData?.labels;
+  const thisValues = chartData?.thisWeek;
+  const lastValues = chartData?.lastWeek;
+  const hasData = labels && thisValues && thisValues.length > 0;
 
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
-
-  canvas.width = (rect.width || 600) * dpr;
-  canvas.height = 240 * dpr;
-  ctx.scale(dpr, dpr);
-
   const width = rect.width || 600;
   const height = 240;
-  const padding = { top: 30, right: 20, bottom: 40, left: 50 };
 
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  ctx.scale(dpr, dpr);
 
-  const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const maxVal = Math.max(...thisPeriodData, ...lastPeriodData, 1000);
-
-  // Clear Canvas
   ctx.clearRect(0, 0, width, height);
 
-  // Draw Horizontal Gridlines & Y-Axis Labels
+  if (!hasData) {
+    ctx.fillStyle = '#64748b';
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No chart data available', width / 2, height / 2);
+    return;
+  }
+
+  const padding = { top: 30, right: 20, bottom: 40, left: 50 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const maxVal = Math.max(...thisValues, ...lastValues, 1000);
+
   ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
   ctx.fillStyle = '#64748b';
   ctx.font = '11px sans-serif';
@@ -180,7 +213,6 @@ function drawSalesCanvasChart(canvasId, thisPeriodData, lastPeriodData) {
     ctx.fillText(`₹${val}`, padding.left - 8, y + 4);
   }
 
-  // Draw Bars & X-Axis Labels
   const groupWidth = chartWidth / labels.length;
   const barWidth = Math.min(groupWidth * 0.35, 18);
   const gap = 4;
@@ -188,8 +220,7 @@ function drawSalesCanvasChart(canvasId, thisPeriodData, lastPeriodData) {
   labels.forEach((label, index) => {
     const groupX = padding.left + index * groupWidth + groupWidth / 2;
 
-    // Previous Period Bar (Blue #2563eb)
-    const hLast = (lastPeriodData[index] / maxVal) * chartHeight;
+    const hLast = (lastValues[index] / maxVal) * chartHeight;
     const yLast = padding.top + chartHeight - hLast;
     ctx.fillStyle = '#2563eb';
     ctx.beginPath();
@@ -200,8 +231,7 @@ function drawSalesCanvasChart(canvasId, thisPeriodData, lastPeriodData) {
     }
     ctx.fill();
 
-    // Current Period Bar (Green #10b981)
-    const hThis = (thisPeriodData[index] / maxVal) * chartHeight;
+    const hThis = (thisValues[index] / maxVal) * chartHeight;
     const yThis = padding.top + chartHeight - hThis;
     ctx.fillStyle = '#10b981';
     ctx.beginPath();
@@ -212,30 +242,54 @@ function drawSalesCanvasChart(canvasId, thisPeriodData, lastPeriodData) {
     }
     ctx.fill();
 
-    // X-Axis Day Label
     ctx.fillStyle = '#64748b';
     ctx.textAlign = 'center';
     ctx.fillText(label, groupX, height - 12);
   });
 }
 
-/**
- * Fetch Stock Intelligence Data (High/Low/Normal selling & Old stock)
- */
+async function fetchWithRetry(fn, maxRetries = 3) {
+  let lastErr;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 async function fetchStockIntelData() {
+  state.stockIntelState = 'loading';
+  const skeletonEl = document.getElementById('stockIntelSkeleton');
+  if (skeletonEl) skeletonEl.style.display = 'block';
+
   try {
-    const data = await apiRequest('/api/dashboard/stock-intel');
-    state.stockIntelData = data || {};
+    const raw = await fetchWithRetry(() => apiRequest('/api/dashboard/stock-intel'));
+    validateShape(raw, stockIntelSchema);
+    state.stockIntelData = mapStockIntel(raw);
+    state.stockIntelState = 'ready';
     renderTabbedProductPerformance();
     renderInventoryHealthAndAlerts();
   } catch (err) {
     logger.error('dashboard-stock-intel', err);
+    state.stockIntelState = 'error';
+    showErrorBanner('Failed to load stock intelligence data.', () => fetchStockIntelData());
+  } finally {
+    if (skeletonEl) skeletonEl.style.display = 'none';
   }
 }
 
-/**
- * Render Unified Tabbed Product Performance Component
- */
+function renderStockStatusCell(status) {
+  const s = STOCK_STATUS_MAP[status] || STOCK_STATUS_MAP.unknown;
+  return `<span style="color: ${s.color}; font-weight: 600;">${s.label}</span>`;
+}
+
 function renderTabbedProductPerformance() {
   const tbody = document.getElementById('productPerformanceBody');
   if (!tbody) return;
@@ -252,10 +306,9 @@ function renderTabbedProductPerformance() {
   else if (state.activeProductTab === 'low') products = lowList;
   else products = [...highList, ...normalList, ...lowList];
 
-  // Apply inline search filter text
   if (state.productFilterText.trim()) {
     const query = state.productFilterText.toLowerCase();
-    products = products.filter(p => (p.name || p.product_name || '').toLowerCase().includes(query));
+    products = products.filter(p => (p.name || '').toLowerCase().includes(query));
   }
 
   if (products.length === 0) {
@@ -270,20 +323,20 @@ function renderTabbedProductPerformance() {
   }
 
   tbody.innerHTML = products.map(item => {
-    const name = item.name || item.product_name || 'Product';
-    const qty = item.qty_sold ?? item.total_quantity ?? 0;
-    const rev = item.revenue ?? 0;
+    const name = item.name || 'Product';
+    const qty = item.qty_sold;
+    const rev = item.revenue;
     const rank = item.rank || 'Normal';
     const badgeClass = item.badgeClass || 'badge-info';
-    const stockStatus = qty < 10 ? '<span style="color: var(--danger); font-weight: 600;">Low Stock</span>' : '<span style="color: var(--ok); font-weight: 500;">In Stock</span>';
+    const stockStatus = item.stock_status || 'unknown';
 
     return `
       <tr>
         <td style="font-weight: 600; color: var(--text-strong);">${name}</td>
-        <td style="font-variant-numeric: tabular-nums;">${qty} pcs</td>
-        <td style="font-weight: 600; font-variant-numeric: tabular-nums;">${formatCurrency(rev)}</td>
+        <td style="font-variant-numeric: tabular-nums;">${displayCount(qty, ' pcs')}</td>
+        <td style="font-weight: 600; font-variant-numeric: tabular-nums;">${displayCurrency(rev)}</td>
         <td><span class="kpi-badge ${badgeClass}">${rank} Selling</span></td>
-        <td>${stockStatus}</td>
+        <td>${renderStockStatusCell(stockStatus)}</td>
         <td style="text-align: right;">
           <a href="/products" class="btn btn-outline btn-xs" style="padding: 3px 8px; font-size: 0.72rem;">View Item</a>
         </td>
@@ -292,94 +345,113 @@ function renderTabbedProductPerformance() {
   }).join('');
 }
 
-/**
- * Render Inventory Health Badges & Priority Alert Center
- */
 function renderInventoryHealthAndAlerts() {
-  const data = state.stockIntelData || {};
-  const lowList = data.low_selling || [];
-  const oldList = data.old_stock || [];
+  const health = state.stockIntelData?.inventory_health || {};
+  const alertSummary = state.stockIntelData?.alert_summary || {};
+  const oldList = state.stockIntelData?.old_stock || [];
 
-  const outStockCount = lowList.filter(i => (i.total_quantity ?? i.stock ?? 0) === 0).length;
-  const lowStockCount = lowList.length;
-  const healthyCount = Math.max(0, 42 - lowStockCount);
+  const outStockCount = health.out_of_stock ?? 0;
+  const lowStockCount = health.low_stock ?? 0;
+  const healthyCount = health.healthy_count ?? 0;
+  const alertStatus = alertSummary.status || 'no_data';
 
   setText(document.getElementById('invOutStockCount'), String(outStockCount));
   setText(document.getElementById('invLowStockCount'), String(lowStockCount));
   setText(document.getElementById('invHealthyCount'), String(healthyCount));
 
-  // Priority Alert Center List
   const alertContainer = document.getElementById('priorityAlertCenterList');
   if (!alertContainer) return;
 
   let alertHtml = '';
 
-  if (lowStockCount > 0) {
-    alertHtml += `
-      <div class="alert-item alert-warn">
-        <div class="alert-icon">⚠️</div>
-        <div class="alert-content">
-          <div class="alert-title">${lowStockCount} Products Flagged with Low Stock Level</div>
-          <div class="alert-desc">Items are approaching critical inventory thresholds. Click to view low stock reorder details.</div>
-        </div>
-      </div>
-    `;
-  }
-
-  if (oldList.length > 0) {
-    alertHtml += `
-      <div class="alert-item alert-danger">
-        <div class="alert-icon">📦</div>
-        <div class="alert-content">
-          <div class="alert-title">${oldList.length} Batches Exceeding 30 Days Inventory Age</div>
-          <div class="alert-desc">Consider running promotional discounts or supplier returns to free up capital.</div>
-        </div>
-      </div>
-    `;
-  }
-
-  if (!alertHtml) {
+  if (alertStatus === 'no_data') {
     alertHtml = `
       <div class="alert-item alert-info">
-        <div class="alert-icon">✅</div>
+        <div class="alert-icon">ℹ️</div>
         <div class="alert-content">
-          <div class="alert-title">All Operational Health Signals Nominal</div>
-          <div class="alert-desc">Zero critical alerts or stock warnings requiring immediate executive action.</div>
+          <div class="alert-title">No Alert Data Available</div>
+          <div class="alert-desc">Insufficient inventory data to determine health status.</div>
         </div>
       </div>
     `;
+  } else {
+    if (outStockCount > 0) {
+      alertHtml += `
+        <div class="alert-item alert-danger">
+          <div class="alert-icon">🚫</div>
+          <div class="alert-content">
+            <div class="alert-title">${outStockCount} Products Out of Stock</div>
+            <div class="alert-desc">These products have zero inventory. Consider restocking immediately.</div>
+          </div>
+        </div>
+      `;
+    }
+    if (lowStockCount > 0) {
+      alertHtml += `
+        <div class="alert-item alert-warn">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content">
+            <div class="alert-title">${lowStockCount} Products at Low Stock Level</div>
+            <div class="alert-desc">Items are approaching critical inventory thresholds.</div>
+          </div>
+        </div>
+      `;
+    }
+    if (oldList.length > 0) {
+      alertHtml += `
+        <div class="alert-item alert-danger">
+          <div class="alert-icon">📦</div>
+          <div class="alert-content">
+            <div class="alert-title">${oldList.length} Batches Exceeding 30 Days Inventory Age</div>
+            <div class="alert-desc">Consider running promotional discounts or supplier returns to free up capital.</div>
+          </div>
+        </div>
+      `;
+    }
+    if (!alertHtml) {
+      alertHtml = `
+        <div class="alert-item alert-info">
+          <div class="alert-icon">✅</div>
+          <div class="alert-content">
+            <div class="alert-title">All Operational Health Signals Nominal</div>
+            <div class="alert-desc">Zero critical alerts or stock warnings requiring immediate executive action.</div>
+          </div>
+        </div>
+      `;
+    }
   }
 
   alertContainer.innerHTML = alertHtml;
 }
 
-/**
- * Bind DOM Event Handlers for Global Filter & Tabs
- */
 function bindEvents() {
-  // Global Filter Dropdown Change
   const globalFilterSelect = document.getElementById('dashGlobalFilter');
   if (globalFilterSelect) {
     globalFilterSelect.addEventListener('change', async (e) => {
       state.activePeriod = e.target.value;
+      clearErrorBanner();
+      state.uiState = 'loading';
       renderSkeletonLoading();
       try {
-        const stats = await fetchDashboardStatsApi(state.activePeriod);
-        state.dashboardStats = stats;
+        const raw = await fetchWithRetry(() => fetchDashboardStatsApi(state.activePeriod));
+        validateShape(raw, dashboardStatsSchema);
+        state.dashboardStats = mapDashboardStats(raw);
+        state.uiState = 'ready';
         clearSkeletonLoading();
-        renderExecutiveMetrics(stats);
-
-        const thisWeek = stats?.chartData?.thisWeek || [1200, 1800, 2400, 1500, 3200, 4100, 2800];
-        const lastWeek = stats?.chartData?.lastWeek || [900, 1400, 1900, 2100, 2500, 3100, 2200];
-        drawSalesCanvasChart('salesComparisonChart', thisWeek, lastWeek);
+        renderExecutiveMetrics(state.dashboardStats);
+        drawSalesCanvasChart('salesComparisonChart', state.dashboardStats.chartData);
       } catch (err) {
         logger.error('dashboard-filter-change', err);
         clearSkeletonLoading();
+        state.uiState = 'error';
+        renderUIState();
+        showErrorBanner('Failed to load dashboard stats.', () => {
+          globalFilterSelect.dispatchEvent(new Event('change'));
+        });
       }
     });
   }
 
-  // Product Performance Tab Switching
   const tabButtons = document.querySelectorAll('#dashboard .perf-tab');
   tabButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -394,7 +466,6 @@ function bindEvents() {
     });
   });
 
-  // Inline Search Input Filtering
   const searchInput = document.getElementById('prodPerfSearch');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -403,36 +474,44 @@ function bindEvents() {
     });
   }
 
-  // Redraw Canvas Chart on window resize
   window.addEventListener('resize', () => {
-    const stats = state.dashboardStats;
-    const thisWeek = stats?.chartData?.thisWeek || [1200, 1800, 2400, 1500, 3200, 4100, 2800];
-    const lastWeek = stats?.chartData?.lastWeek || [900, 1400, 1900, 2100, 2500, 3100, 2200];
-    drawSalesCanvasChart('salesComparisonChart', thisWeek, lastWeek);
+    drawSalesCanvasChart('salesComparisonChart', state.dashboardStats?.chartData);
   });
 }
 
-/**
- * Bootstraps Dashboard Page
- */
 export async function initDashboardPage() {
   try {
+    state.uiState = 'loading';
+    renderUIState();
+    clearErrorBanner();
     renderSkeletonLoading();
     bindEvents();
 
-    const stats = await fetchDashboardStatsApi(state.activePeriod);
-    state.dashboardStats = stats;
+    const raw = await fetchWithRetry(() => fetchDashboardStatsApi(state.activePeriod));
+    validateShape(raw, dashboardStatsSchema);
+    state.dashboardStats = mapDashboardStats(raw);
+    state.uiState = 'ready';
     clearSkeletonLoading();
 
-    renderExecutiveMetrics(stats);
-
-    const thisWeek = stats?.chartData?.thisWeek || [1200, 1800, 2400, 1500, 3200, 4100, 2800];
-    const lastWeek = stats?.chartData?.lastWeek || [900, 1400, 1900, 2100, 2500, 3100, 2200];
-    drawSalesCanvasChart('salesComparisonChart', thisWeek, lastWeek);
+    renderExecutiveMetrics(state.dashboardStats);
+    drawSalesCanvasChart('salesComparisonChart', state.dashboardStats.chartData);
 
     await fetchStockIntelData();
   } catch (err) {
     logger.error('dashboard-init', err);
     clearSkeletonLoading();
+
+    if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      state.uiState = 'offline';
+    } else if (err instanceof ValidationError) {
+      state.uiState = 'error';
+    } else {
+      state.uiState = 'error';
+    }
+    renderUIState();
+    showErrorBanner('Failed to load dashboard data.', () => {
+      state.uiState = 'loading';
+      initDashboardPage();
+    });
   }
 }

@@ -107,7 +107,18 @@ class DashboardRepository implements DashboardRepositoryInterface
                             THEN SUM(ii.quantity)::float
                                 / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
                             ELSE 0
-                        END AS velocity
+                        END AS velocity,
+                        COALESCE((
+                            SELECT CASE
+                                WHEN COALESCE(SUM(remaining_qty), 0) = 0 THEN 'out_of_stock'
+                                WHEN COALESCE(SUM(remaining_qty), 0) <= 10 THEN 'low_stock'
+                                WHEN COALESCE(SUM(remaining_qty), 0) > 10 THEN 'in_stock'
+                                ELSE 'unknown'
+                            END
+                            FROM inventory_batches
+                            WHERE product_id = p.id
+                              AND user_id = current_setting('app.current_user_id', true)::uuid
+                        ), 'unknown') AS stock_status
                     FROM products p
                     LEFT JOIN invoice_items ii ON ii.product_id = p.id
                     LEFT JOIN invoices i ON i.id = ii.invoice_id
@@ -116,7 +127,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                     WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id, p.name
                 )
-                SELECT id, name, qty_sold, revenue, velocity
+                SELECT id, name, qty_sold, revenue, velocity, stock_status
                 FROM product_sales
                 WHERE velocity > 0 AND velocity >= :threshold
                 ORDER BY velocity DESC
@@ -128,11 +139,12 @@ class DashboardRepository implements DashboardRepositoryInterface
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(fn($r) => new TopProduct(
-                productId: $r['id'],
-                name:      $r['name'],
-                qtySold:   (int) $r['qty_sold'],
-                revenue:   (float) $r['revenue'],
-                velocity:  (float) $r['velocity']
+                productId:   $r['id'],
+                name:        $r['name'],
+                qtySold:     (int) $r['qty_sold'],
+                revenue:     (float) $r['revenue'],
+                velocity:    (float) $r['velocity'],
+                stockStatus: $r['stock_status'] ?? null
             ), $rows);
         } catch (\Exception $e) {
             error_log('DashboardRepository::getHighSelling - ' . $e->getMessage());
@@ -157,7 +169,18 @@ class DashboardRepository implements DashboardRepositoryInterface
                             THEN SUM(ii.quantity)::float
                                 / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
                             ELSE 0
-                        END AS velocity
+                        END AS velocity,
+                        COALESCE((
+                            SELECT CASE
+                                WHEN COALESCE(SUM(remaining_qty), 0) = 0 THEN 'out_of_stock'
+                                WHEN COALESCE(SUM(remaining_qty), 0) <= 10 THEN 'low_stock'
+                                WHEN COALESCE(SUM(remaining_qty), 0) > 10 THEN 'in_stock'
+                                ELSE 'unknown'
+                            END
+                            FROM inventory_batches
+                            WHERE product_id = p.id
+                              AND user_id = current_setting('app.current_user_id', true)::uuid
+                        ), 'unknown') AS stock_status
                     FROM products p
                     LEFT JOIN invoice_items ii ON ii.product_id = p.id
                     LEFT JOIN invoices i ON i.id = ii.invoice_id
@@ -166,7 +189,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                     WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id, p.name
                 )
-                SELECT id, name, qty_sold, revenue, velocity
+                SELECT id, name, qty_sold, revenue, velocity, stock_status
                 FROM product_sales
                 WHERE velocity > 0 AND velocity < :threshold
                 ORDER BY velocity ASC
@@ -178,11 +201,12 @@ class DashboardRepository implements DashboardRepositoryInterface
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(fn($r) => new TopProduct(
-                productId: $r['id'],
-                name:      $r['name'],
-                qtySold:   (int) $r['qty_sold'],
-                revenue:   (float) $r['revenue'],
-                velocity:  (float) $r['velocity']
+                productId:   $r['id'],
+                name:        $r['name'],
+                qtySold:     (int) $r['qty_sold'],
+                revenue:     (float) $r['revenue'],
+                velocity:    (float) $r['velocity'],
+                stockStatus: $r['stock_status'] ?? null
             ), $rows);
         } catch (\Exception $e) {
             error_log('DashboardRepository::getLowSelling - ' . $e->getMessage());
@@ -208,7 +232,18 @@ class DashboardRepository implements DashboardRepositoryInterface
                             THEN SUM(ii.quantity)::float
                                 / GREATEST(LEAST(COALESCE(EXTRACT(DAY FROM NOW() - MIN(i.billed_at)), 30), 30), 1)
                             ELSE 0
-                        END AS velocity
+                        END AS velocity,
+                        COALESCE((
+                            SELECT CASE
+                                WHEN COALESCE(SUM(remaining_qty), 0) = 0 THEN 'out_of_stock'
+                                WHEN COALESCE(SUM(remaining_qty), 0) <= 10 THEN 'low_stock'
+                                WHEN COALESCE(SUM(remaining_qty), 0) > 10 THEN 'in_stock'
+                                ELSE 'unknown'
+                            END
+                            FROM inventory_batches
+                            WHERE product_id = p.id
+                              AND user_id = current_setting('app.current_user_id', true)::uuid
+                        ), 'unknown') AS stock_status
                     FROM products p
                     LEFT JOIN invoice_items ii ON ii.product_id = p.id
                     LEFT JOIN invoices i ON i.id = ii.invoice_id
@@ -217,7 +252,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                     WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id, p.name
                 )
-                SELECT id, name, qty_sold, revenue, velocity
+                SELECT id, name, qty_sold, revenue, velocity, stock_status
                 FROM product_sales
                 WHERE velocity > 0 AND velocity >= :lower AND velocity < :upper
                 ORDER BY velocity DESC
@@ -230,11 +265,12 @@ class DashboardRepository implements DashboardRepositoryInterface
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(fn($r) => new TopProduct(
-                productId: $r['id'],
-                name:      $r['name'],
-                qtySold:   (int) $r['qty_sold'],
-                revenue:   (float) $r['revenue'],
-                velocity:  (float) $r['velocity']
+                productId:   $r['id'],
+                name:        $r['name'],
+                qtySold:     (int) $r['qty_sold'],
+                revenue:     (float) $r['revenue'],
+                velocity:    (float) $r['velocity'],
+                stockStatus: $r['stock_status'] ?? null
             ), $rows);
         } catch (\Exception $e) {
             error_log('DashboardRepository::getNormalSelling - ' . $e->getMessage());
@@ -281,7 +317,18 @@ class DashboardRepository implements DashboardRepositoryInterface
                     pb.name,
                     COALESCE(ps.qty_sold, 0) AS qty_sold,
                     COALESCE(ps.revenue, 0)  AS revenue,
-                    COALESCE(ps.velocity, 0) AS velocity
+                    COALESCE(ps.velocity, 0) AS velocity,
+                    COALESCE((
+                        SELECT CASE
+                            WHEN COALESCE(SUM(remaining_qty), 0) = 0 THEN 'out_of_stock'
+                            WHEN COALESCE(SUM(remaining_qty), 0) <= 10 THEN 'low_stock'
+                            WHEN COALESCE(SUM(remaining_qty), 0) > 10 THEN 'in_stock'
+                            ELSE 'unknown'
+                        END
+                        FROM inventory_batches
+                        WHERE product_id = pb.id
+                          AND user_id = current_setting('app.current_user_id', true)::uuid
+                    ), 'unknown') AS stock_status
                 FROM product_batches pb
                 LEFT JOIN product_sales ps ON ps.product_id = pb.id
                 WHERE COALESCE(ps.velocity, 0) = 0
@@ -293,11 +340,12 @@ class DashboardRepository implements DashboardRepositoryInterface
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             return array_map(fn($r) => new TopProduct(
-                productId: $r['id'],
-                name:      $r['name'],
-                qtySold:   (int) $r['qty_sold'],
-                revenue:   (float) $r['revenue'],
-                velocity:  (float) $r['velocity']
+                productId:   $r['id'],
+                name:        $r['name'],
+                qtySold:     (int) $r['qty_sold'],
+                revenue:     (float) $r['revenue'],
+                velocity:    (float) $r['velocity'],
+                stockStatus: $r['stock_status'] ?? null
             ), $rows);
         } catch (\Exception $e) {
             error_log('DashboardRepository::getNewProducts - ' . $e->getMessage());
@@ -431,6 +479,80 @@ class DashboardRepository implements DashboardRepositoryInterface
         } catch (\Exception $e) {
             error_log('DashboardRepository::getStockValue - ' . $e->getMessage());
             return 0;
+        }
+    }
+
+    public function getWeeklyChartData(\DateTimeImmutable $weekStart, \DateTimeImmutable $weekEnd): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT
+                    (EXTRACT(ISODOW FROM billed_at)::int - 1) AS day_index,
+                    COALESCE(SUM(grand_total), 0) AS revenue
+                FROM invoices
+                WHERE invoice_status = 'completed'
+                  AND billed_at >= :start_date
+                  AND billed_at < :end_date
+                  AND user_id = current_setting('app.current_user_id', true)::uuid
+                GROUP BY EXTRACT(ISODOW FROM billed_at)
+                ORDER BY day_index
+            ");
+            $stmt->execute([':start_date' => $weekStart->format('Y-m-d H:i:s'), ':end_date' => $weekEnd->format('Y-m-d H:i:s')]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            $values = array_fill(0, 7, 0);
+            foreach ($rows as $row) {
+                $idx = (int) $row['day_index'];
+                if ($idx >= 0 && $idx < 7) {
+                    $values[$idx] = (float) $row['revenue'];
+                }
+            }
+
+            return [
+                'labels' => $dayNames,
+                'values' => $values,
+            ];
+        } catch (\Exception $e) {
+            error_log('DashboardRepository::getWeeklyChartData - ' . $e->getMessage());
+            return [
+                'labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                'values' => array_fill(0, 7, 0),
+            ];
+        }
+    }
+
+    public function getInventoryHealthCounts(): array
+    {
+        try {
+            $stmt = $this->db->prepare("
+                WITH product_stock AS (
+                    SELECT
+                        p.id,
+                        COALESCE(SUM(ib.remaining_qty), 0) AS total_remaining
+                    FROM products p
+                    LEFT JOIN inventory_batches ib ON ib.product_id = p.id
+                        AND ib.user_id = current_setting('app.current_user_id', true)::uuid
+                    WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
+                    GROUP BY p.id
+                )
+                SELECT
+                    COUNT(*) AS total_products,
+                    COUNT(*) FILTER (WHERE total_remaining = 0) AS out_of_stock,
+                    COUNT(*) FILTER (WHERE total_remaining > 0 AND total_remaining <= 10) AS low_stock
+                FROM product_stock
+            ");
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return [
+                'total_products'  => (int) ($row['total_products'] ?? 0),
+                'out_of_stock'    => (int) ($row['out_of_stock'] ?? 0),
+                'low_stock'       => (int) ($row['low_stock'] ?? 0),
+            ];
+        } catch (\Exception $e) {
+            error_log('DashboardRepository::getInventoryHealthCounts - ' . $e->getMessage());
+            return ['total_products' => 0, 'out_of_stock' => 0, 'low_stock' => 0];
         }
     }
 }

@@ -4,6 +4,9 @@
 -->
 <section id="dashboard" class="view-section active">
 
+  <!-- Error Banner Container -->
+  <div id="dashErrorContainer"></div>
+
   <!-- 1. Executive Dashboard Header & Global Filter Bar -->
   <div class="dash-header">
     <div class="dash-header-left">
@@ -48,7 +51,7 @@
         <span class="kpi-label">Revenue</span>
         <span class="kpi-icon">💰</span>
       </div>
-      <div class="kpi-value" id="kpiRevenue">₹0.00</div>
+      <div class="kpi-value" id="kpiRevenue">—</div>
       <div class="kpi-footer">
         <span class="kpi-trend trend-up" id="kpiRevTrend">↑ 0%</span>
         <span class="kpi-comparison" id="kpiRevComp">vs prev period</span>
@@ -63,7 +66,7 @@
       </div>
       <div class="kpi-value" id="kpiBills">0</div>
       <div class="kpi-footer">
-        <span class="kpi-meta">Avg Ticket: <strong id="kpiAvgTicket">₹0.00</strong></span>
+        <span class="kpi-meta">Avg Ticket: <strong id="kpiAvgTicket">—</strong></span>
       </div>
     </div>
 
@@ -73,9 +76,9 @@
         <span class="kpi-label">Gross Profit</span>
         <span class="kpi-icon">📈</span>
       </div>
-      <div class="kpi-value" id="kpiProfit">₹0.00</div>
+      <div class="kpi-value" id="kpiProfit">—</div>
       <div class="kpi-footer">
-        <span class="kpi-badge badge-success" id="kpiProfitMargin">0% Margin</span>
+        <span class="kpi-badge badge-success" id="kpiProfitMargin">—</span>
       </div>
     </div>
 
@@ -85,7 +88,7 @@
         <span class="kpi-label">Outstanding Credit</span>
         <span class="kpi-icon">💳</span>
       </div>
-      <div class="kpi-value text-warn" id="kpiCredit">₹0.00</div>
+      <div class="kpi-value text-warn" id="kpiCredit">—</div>
       <div class="kpi-footer">
         <span class="kpi-meta" id="kpiCreditMeta">Pending Customer Receivables</span>
       </div>
@@ -106,7 +109,7 @@
         <div class="summary-metric-row">
           <div class="metric-item">
             <div class="metric-label">Filtered Revenue</div>
-            <div class="metric-val" id="sumSalesRev">₹0.00</div>
+            <div class="metric-val" id="sumSalesRev">—</div>
           </div>
           <div class="metric-item">
             <div class="metric-label">Bills Billed</div>
@@ -114,13 +117,13 @@
           </div>
           <div class="metric-item">
             <div class="metric-label">Avg Bill Value</div>
-            <div class="metric-val" id="sumSalesAvg">₹0.00</div>
+            <div class="metric-val" id="sumSalesAvg">—</div>
           </div>
         </div>
         <div class="summary-chips-row">
-          <div class="summary-chip">Today: <strong id="chipTodayRev">₹0.00</strong></div>
-          <div class="summary-chip">Week: <strong id="chipWeekRev">₹0.00</strong></div>
-          <div class="summary-chip">Month: <strong id="chipMonthRev">₹0.00</strong></div>
+          <div class="summary-chip">Today: <strong id="chipTodayRev">—</strong></div>
+          <div class="summary-chip">Week: <strong id="chipWeekRev">—</strong></div>
+          <div class="summary-chip">Month: <strong id="chipMonthRev">—</strong></div>
         </div>
       </div>
     </div>
@@ -137,20 +140,20 @@
         <div class="summary-metric-row">
           <div class="metric-item">
             <div class="metric-label">Total Purchased</div>
-            <div class="metric-val" id="sumPurAmount">₹0.00</div>
+            <div class="metric-val" id="sumPurAmount">—</div>
           </div>
           <div class="metric-item">
             <div class="metric-label">Paid to Vendors</div>
-            <div class="metric-val text-ok" id="sumPurPaid">₹0.00</div>
+            <div class="metric-val text-ok" id="sumPurPaid">—</div>
           </div>
           <div class="metric-item">
             <div class="metric-label">Pending Payables</div>
-            <div class="metric-val text-warn" id="sumPurPending">₹0.00</div>
+            <div class="metric-val text-warn" id="sumPurPending">—</div>
           </div>
         </div>
         <div class="summary-chips-row">
           <div class="summary-chip">Purchases Count: <strong id="chipPurCount">0</strong></div>
-          <div class="summary-chip">Avg Order: <strong id="chipPurAvg">₹0.00</strong></div>
+          <div class="summary-chip">Avg Order: <strong id="chipPurAvg">—</strong></div>
         </div>
       </div>
     </div>
@@ -179,6 +182,11 @@
     </div>
 
     <div class="table-responsive">
+      <div id="stockIntelSkeleton" class="skeleton-loader" style="display: none; padding: 24px;">
+        <div class="skeleton-box" style="width: 100%; height: 20px; margin-bottom: 12px;"></div>
+        <div class="skeleton-box" style="width: 100%; height: 20px; margin-bottom: 12px;"></div>
+        <div class="skeleton-box" style="width: 60%; height: 20px;"></div>
+      </div>
       <table class="data-table" id="productPerformanceTable">
         <thead>
           <tr>
@@ -222,7 +230,7 @@
             <div class="health-lbl">Healthy Stock</div>
           </div>
           <div class="health-item item-info">
-            <div class="health-val" id="invTotalValue">₹0</div>
+            <div class="health-val" id="invTotalValue">—</div>
             <div class="health-lbl">Catalog Stock Value</div>
           </div>
         </div>
@@ -239,7 +247,7 @@
       </div>
       <div class="widget-body">
         <div class="credit-summary-box">
-          <div class="credit-main-val" id="creditTotalBalance">₹0.00</div>
+          <div class="credit-main-val" id="creditTotalBalance">—</div>
           <div class="credit-sub-text">Total pending receivables from active customers</div>
           <div class="credit-action-row">
             <button class="btn btn-outline btn-sm" onclick="switchTab('credit_student')">View Customer Statements</button>

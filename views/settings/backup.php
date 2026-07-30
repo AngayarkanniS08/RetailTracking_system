@@ -310,4 +310,12 @@
 
 </div>
 
+<script src="/public/assets/js/backup/backup-constants.js?v=<?= time(); ?>"></script>
+<script src="/public/assets/js/backup/backup-events.js?v=<?= time(); ?>"></script>
+<script src="/public/assets/js/backup/backup-logger.js?v=<?= time(); ?>"></script>
+<script src="/public/assets/js/backup/backup-repository.js?v=<?= time(); ?>"></script>
+<script src="/public/assets/js/backup/backup-service.js?v=<?= time(); ?>"></script>
+<script src="/public/assets/js/backup/backup-renderer.js?v=<?= time(); ?>"></script>
+<script src="/public/assets/js/backup/backup-poller.js?v=<?= time(); ?>"></script>
+<script src="/public/assets/js/backup/backup-controller.js?v=<?= time(); ?>"></script>
 <script src="/public/assets/js/backup.js?v=<?= time(); ?>"></script>

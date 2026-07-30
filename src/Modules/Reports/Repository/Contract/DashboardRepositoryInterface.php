@@ -19,4 +19,6 @@ interface DashboardRepositoryInterface
     public function getOutstandingCredit(): float;
     public function getStockValue(): float;
     public function getCatalogAvgVelocity(): float;
+    public function getWeeklyChartData(\DateTimeImmutable $weekStart, \DateTimeImmutable $weekEnd): array;
+    public function getInventoryHealthCounts(): array;
 }
