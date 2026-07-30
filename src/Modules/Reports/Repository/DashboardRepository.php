@@ -26,7 +26,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             FROM invoices
             WHERE billed_at >= ?
               AND invoice_status = 'completed'
-              AND user_id = current_setting('app.current_user_id')::uuid
+              AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$startDate->format('Y-m-d H:i:s')]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -51,7 +51,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                 COALESCE(SUM(amount_paid), 0)  AS paid
             FROM vendor_purchases
             WHERE purchase_date >= ?
-              AND user_id = current_setting('app.current_user_id')::uuid
+              AND user_id = current_setting('app.current_user_id', true)::uuid
         ");
         $stmt->execute([$startDate->format('Y-m-d H:i:s')]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -77,7 +77,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                     JOIN invoices i ON i.id = ii.invoice_id
                         AND i.invoice_status = 'completed'
                         AND i.billed_at >= NOW() - INTERVAL '30 days'
-                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id
                     HAVING SUM(ii.quantity) > 0
                 ) vel
@@ -113,7 +113,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                     LEFT JOIN invoices i ON i.id = ii.invoice_id
                         AND i.invoice_status = 'completed'
                         AND i.billed_at >= NOW() - INTERVAL '30 days'
-                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id, p.name
                 )
                 SELECT id, name, qty_sold, revenue, velocity
@@ -163,7 +163,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                     LEFT JOIN invoices i ON i.id = ii.invoice_id
                         AND i.invoice_status = 'completed'
                         AND i.billed_at >= NOW() - INTERVAL '30 days'
-                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id, p.name
                 )
                 SELECT id, name, qty_sold, revenue, velocity
@@ -214,7 +214,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                     LEFT JOIN invoices i ON i.id = ii.invoice_id
                         AND i.invoice_status = 'completed'
                         AND i.billed_at >= NOW() - INTERVAL '30 days'
-                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                    WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id, p.name
                 )
                 SELECT id, name, qty_sold, revenue, velocity
@@ -254,8 +254,8 @@ class DashboardRepository implements DashboardRepositoryInterface
                     FROM products p
                     JOIN inventory_batches ib ON ib.product_id = p.id
                         AND ib.remaining_qty > 0
-                        AND ib.user_id = current_setting('app.current_user_id')::uuid
-                    WHERE p.user_id = current_setting('app.current_user_id')::uuid
+                        AND ib.user_id = current_setting('app.current_user_id', true)::uuid
+                    WHERE p.user_id = current_setting('app.current_user_id', true)::uuid
                     GROUP BY p.id, p.name
                     HAVING MAX(EXTRACT(DAY FROM NOW() - ib.created_at)) < 30
                 ),
@@ -321,12 +321,12 @@ class DashboardRepository implements DashboardRepositoryInterface
                         ib.remaining_qty::int  AS qty,
                         ib.original_quantity::int AS original_qty,
                         CASE WHEN ib.original_quantity > 0
-                            THEN ROUND((ib.remaining_qty::float / ib.original_quantity) * 100, 1)
+                            THEN ROUND((ib.remaining_qty::numeric / ib.original_quantity) * 100, 1)
                             ELSE 100
                         END AS remaining_pct
                     FROM inventory_batches ib
                     JOIN products p ON p.id = ib.product_id
-                    WHERE ib.user_id = current_setting('app.current_user_id')::uuid
+                    WHERE ib.user_id = current_setting('app.current_user_id', true)::uuid
                       AND ib.remaining_qty > 0
                 ),
                 product_velocity AS (
@@ -389,7 +389,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                 SELECT COUNT(*)
                 FROM invoices
                 WHERE invoice_status = 'completed'
-                  AND user_id = current_setting('app.current_user_id')::uuid
+                  AND user_id = current_setting('app.current_user_id', true)::uuid
             ");
             $stmt->execute();
             return (int) $stmt->fetchColumn();
@@ -407,7 +407,7 @@ class DashboardRepository implements DashboardRepositoryInterface
                 FROM invoices
                 WHERE invoice_status = 'completed'
                   AND balance_due > 0
-                  AND user_id = current_setting('app.current_user_id')::uuid
+                  AND user_id = current_setting('app.current_user_id', true)::uuid
             ");
             $stmt->execute();
             return (float) $stmt->fetchColumn();
@@ -423,7 +423,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             $stmt = $this->db->prepare("
                 SELECT COALESCE(SUM(remaining_qty * cost_price), 0)
                 FROM inventory_batches
-                WHERE user_id = current_setting('app.current_user_id')::uuid
+                WHERE user_id = current_setting('app.current_user_id', true)::uuid
                   AND remaining_qty > 0
             ");
             $stmt->execute();
