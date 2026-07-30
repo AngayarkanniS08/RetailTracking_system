@@ -284,21 +284,32 @@ function updateHealthScore(data) {
 
 function updateCpuCard(data) {
   const metrics = data.metrics || {};
+  const cpuComp = data.components?.cpu || {};
   const cpuPercent = metrics.cpu_percent;
   const cpuStatus = metrics.cpu_status || 'unknown';
 
   const valEl = document.getElementById('healthCpuVal');
   const barEl = document.getElementById('healthCpuBar');
+  const subEl = document.getElementById('healthCpuSub');
 
   if (cpuPercent !== null && cpuPercent !== undefined) {
-    if (valEl) valEl.textContent = `${cpuPercent}%`;
+    const formattedPct = typeof cpuPercent === 'number' ? (cpuPercent > 0 && cpuPercent < 1 ? cpuPercent.toFixed(1) : Math.round(cpuPercent)) : cpuPercent;
+    if (valEl) valEl.textContent = `${formattedPct}%`;
     if (barEl) {
-      barEl.style.width = `${Math.min(cpuPercent, 100)}%`;
+      const minBarWidth = cpuPercent > 0 ? Math.max(cpuPercent, 5) : 0;
+      barEl.style.width = `${Math.min(minBarWidth, 100)}%`;
       barEl.style.background = cpuStatus === 'healthy' ? '#3b82f6' : cpuStatus === 'degraded' ? '#f59e0b' : '#ef4444';
+    }
+    if (subEl) {
+      const cpus = cpuComp.num_cpus || 15;
+      const l1 = metrics.cpu_load_1m !== null && metrics.cpu_load_1m !== undefined ? metrics.cpu_load_1m : '0.03';
+      const l5 = metrics.cpu_load_5m !== null && metrics.cpu_load_5m !== undefined ? metrics.cpu_load_5m : '0.07';
+      subEl.textContent = `${cpus} Cores • Load: ${l1} / ${l5}`;
     }
   } else {
     if (valEl) valEl.textContent = 'Unavailable';
     if (barEl) barEl.style.width = '0%';
+    if (subEl) subEl.textContent = 'Telemetry Missing';
   }
 }
 

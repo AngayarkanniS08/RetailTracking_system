@@ -44,6 +44,7 @@
       <div style="margin-top: 8px; width: 100%; background: var(--surface-container-low); height: 6px; border-radius: 3px; overflow: hidden;">
         <div id="healthCpuBar" style="width: 0%; height: 100%; background: var(--accent, #3b82f6); border-radius: 3px; transition: width 0.3s ease;"></div>
       </div>
+      <div style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;" class="tabular-nums" id="healthCpuSub">Collecting data...</div>
     </div>
 
     <div class="card-panel kpi-card" style="padding: 1.25rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); border-left: 4px solid #8b5cf6; box-shadow: var(--shadow-sm);">
