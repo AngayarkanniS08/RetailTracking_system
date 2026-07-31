@@ -775,7 +775,7 @@ async function onCustomerSearchKeyup(e) {
     try {
         const url = term
             ? `/api/customers?search=${encodeURIComponent(term)}&page=${_custSearchState.page}&limit=8`
-            : '/api/customers?limit=8';
+            : `/api/customers?page=${_custSearchState.page}&limit=8`;
         const res = await window.apiRequest(url);
         const customers = Array.isArray(res) ? res : (res.data || []);
         if (!customers.length) { dropdown.classList.remove('is-open'); return; }
