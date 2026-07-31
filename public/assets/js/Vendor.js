@@ -526,6 +526,10 @@ async function saveEditPurchase() {
         alert('Invalid purchase');
         return;
     }
+    if (!purchaseDate) {
+        alert('Please select a purchase date');
+        return;
+    }
     if (baseAmount < 0 || amountPaid < 0) {
         alert('Amounts cannot be negative');
         return;
@@ -535,6 +539,7 @@ async function saveEditPurchase() {
     const items = [];
     let hasError = false;
     let totalGst = 0;
+    let computedBase = 0;
     itemRows.forEach(row => {
         const productId = row.querySelector('input[name*="product_id"]')?.value || '';
         const quantity = parseFloat(row.querySelector('input[placeholder="Qty"]')?.value) || 0;
@@ -548,6 +553,11 @@ async function saveEditPurchase() {
             hasError = true;
             return;
         }
+        if (unitPrice < 0 || gstRate < 0) {
+            hasError = true;
+            return;
+        }
+        computedBase += quantity * unitPrice;
         totalGst += quantity * unitPrice * (gstRate / 100);
         items.push({
             product_id: productId,
@@ -558,11 +568,18 @@ async function saveEditPurchase() {
     });
 
     if (hasError || items.length === 0) {
-        alert('Please fill all item fields correctly');
+        alert('Please fill all item fields correctly (quantity must be positive, prices/GST cannot be negative)');
         return;
     }
-    if (amountPaid > baseAmount + totalGst) {
-        alert('Amount paid cannot exceed total amount');
+    const totalAmount = computedBase + totalGst;
+
+    // Mirror the backend validation in the frontend so users get immediate feedback
+    if (Math.abs(baseAmount - computedBase) > 0.01) {
+        alert(`Base amount does not match sum of line items. Expected ₹${computedBase.toFixed(2)} but got ₹${baseAmount.toFixed(2)}`);
+        return;
+    }
+    if (amountPaid > totalAmount + 0.01) {
+        alert(`Amount paid cannot exceed total amount (₹${totalAmount.toFixed(2)})`);
         return;
     }
 
@@ -592,7 +609,13 @@ async function saveEditPurchase() {
         }
     } catch (err) {
         console.error('Update error:', err);
-        alert('Network error. Please try again.');
+        // apiRequest throws Error(data.error) for non-2xx responses, so surface
+        // the server's validation message instead of a generic network error
+        if (err && err.message && err.message !== 'Failed to fetch' && !err.message.includes('NetworkError')) {
+            alert(err.message);
+        } else {
+            alert('Network error. Please check your connection and try again.');
+        }
     } finally {
         btn.disabled = false;
         btn.innerText = originalText;
@@ -1042,7 +1065,11 @@ async function saveQuickPurchase() {
         }
     } catch (err) {
         console.error(err);
-        alert('Network error');
+        if (err && err.message && err.message !== 'Failed to fetch' && !err.message.includes('NetworkError')) {
+            alert(err.message);
+        } else {
+            alert('Network error. Please check your connection and try again.');
+        }
     } finally {
         btn.disabled = false;
         btn.innerText = 'Save Purchase';
