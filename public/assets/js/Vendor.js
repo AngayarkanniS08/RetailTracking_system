@@ -338,6 +338,10 @@ function viewVendorHistory(vendorId) {
 // 6. Record payment
 // ============================================
 async function recordPayment(purchaseId) {
+    if (!purchaseId) {
+        alert('Purchase ID is missing');
+        return;
+    }
     try {
         const data = await window.apiRequest(`/api/purchases/${purchaseId}`);
         if (!data || data.error) {
@@ -346,6 +350,12 @@ async function recordPayment(purchaseId) {
         }
         const totalAmount = data.totalAmount || ((data.baseAmount || 0) + (data.totalGst || 0));
         const balance = totalAmount - (data.amountPaid || 0);
+
+        if (data.status === 'paid' || balance <= 0) {
+            alert('This purchase is already fully paid');
+            return;
+        }
+
         document.getElementById('vpPurchaseId').value = purchaseId;
         document.getElementById('vpVendorId').value = data.vendorId || '';
         document.getElementById('vpVendorName').value = data.vendorName || '';
@@ -353,8 +363,11 @@ async function recordPayment(purchaseId) {
         document.getElementById('vpPaymentDate').value = new Date().toISOString().slice(0, 10);
         const balanceSpan = document.getElementById('slBalanceText');
         balanceSpan.dataset.originalBalance = balance;
+        balanceSpan.dataset.totalAmount = totalAmount;
         balanceSpan.textContent = 'Balance After Payment: ₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('slAmountPaying').oninput = function() {
+        const amountInput = document.getElementById('slAmountPaying');
+        amountInput.max = balance;
+        amountInput.oninput = function() {
             const entered = parseFloat(this.value) || 0;
             const orig = parseFloat(balanceSpan.dataset.originalBalance) || 0;
             const remaining = Math.max(0, orig - entered);
@@ -363,7 +376,7 @@ async function recordPayment(purchaseId) {
         openModal('vendorPaymentModal');
     } catch (err) {
         console.error(err);
-        alert('Error loading purchase details');
+        alert(err?.message && err.message !== 'Failed to fetch' ? err.message : 'Error loading purchase details');
     }
 }
 
@@ -379,7 +392,20 @@ async function submitVendorPayment() {
         alert('Please enter a valid positive amount');
         return;
     }
-    const paymentDate = document.getElementById('vpPaymentDate').value || new Date().toISOString().split('T')[0];
+    const balance = parseFloat(document.getElementById('slBalanceText')?.dataset.originalBalance) || 0;
+    if (balance <= 0) {
+        alert('This purchase is already fully paid');
+        return;
+    }
+    if (payAmount > balance) {
+        alert('Payment would exceed total amount. Balance remaining: ₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
+        return;
+    }
+    const paymentDate = document.getElementById('vpPaymentDate').value;
+    if (!paymentDate) {
+        alert('Please select a payment date');
+        return;
+    }
     try {
         const response = await window.apiRequest(`/api/purchases/${purchaseId}/pay`, {
             method: 'POST',
@@ -399,7 +425,13 @@ async function submitVendorPayment() {
         }
     } catch (err) {
         console.error(err);
-        alert('Network error');
+        // apiRequest throws Error(data.error) for non-2xx responses, so surface
+        // the server's validation message instead of a generic network error
+        if (err && err.message && err.message !== 'Failed to fetch' && !err.message.includes('NetworkError')) {
+            alert(err.message);
+        } else {
+            alert('Network error. Please check your connection and try again.');
+        }
     }
 }
 
