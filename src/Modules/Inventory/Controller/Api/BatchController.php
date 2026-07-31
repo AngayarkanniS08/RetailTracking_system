@@ -147,6 +147,7 @@ class BatchController
 
             $batch = $this->service->createBatch($batchData);
             \Modules\Billing\Controller\Api\PosSearchController::invalidateProductCache($productId);
+            (new \Modules\Notification\Cache\NotificationCacheService())->invalidateInventory();
             http_response_code(201);
             echo json_encode(['success' => true, 'batch' => $batch]);
         } catch (Exception $e) {
@@ -235,6 +236,7 @@ class BatchController
 
             $success = $this->service->updateBatch($id, $batchData);
             if ($success) {
+                (new \Modules\Notification\Cache\NotificationCacheService())->invalidateInventory();
                 echo json_encode(['success' => true]);
             } else {
                 http_response_code(404);

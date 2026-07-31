@@ -1,5 +1,5 @@
 import { apiRequest } from '../core/api.js';
-import { formatCurrency, formatDate } from '../utils/format.js';
+import { formatCurrency, formatDate, escapeHtml } from '../utils/format.js';
 import { logger } from '../core/logger.js';
 import { getToken } from '../core/storage.js';
 import { API_BASE } from '../core/config.js';
@@ -124,12 +124,17 @@ export function renderSalesTimeline(invoices = []) {
   }
 
   tbody.innerHTML = groups.map(g => {
+    const safeDate = escapeHtml(g.date);
+    const formattedDate = escapeHtml(formatDate(g.date));
+    const invoiceCount = escapeHtml(g.invoiceCount);
+    const paidCount = escapeHtml(g.paidCount);
+    const creditCount = escapeHtml(g.creditCount);
     const detailUrl = `/daily-sales/detail?date=${encodeURIComponent(g.date)}`;
     return `
       <tr style="border-bottom: 1px solid var(--border);">
         <td style="padding: 14px 16px; font-weight: 600;">
-          <a href="${detailUrl}" title="View all ${g.invoiceCount} invoice(s) generated on ${formatDate(g.date)}" style="color: var(--accent); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
-            ${formatDate(g.date)}
+          <a href="${detailUrl}" title="View all ${invoiceCount} invoice(s) generated on ${formattedDate}" style="color: var(--accent); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+            ${formattedDate}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.7;">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
               <polyline points="15 3 21 3 21 9"></polyline>
@@ -138,14 +143,14 @@ export function renderSalesTimeline(invoices = []) {
           </a>
         </td>
         <td style="padding: 14px 16px;">
-          <span class="badge rounded-pill bg-primary">${g.invoiceCount}</span>
+          <span class="badge rounded-pill bg-primary">${invoiceCount}</span>
         </td>
         <td style="padding: 14px 16px; font-weight: 700; color: var(--text-strong);">${formatCurrency(g.totalSales)}</td>
         <td style="padding: 14px 16px;">
-          <span class="badge rounded-pill bg-success">${g.paidCount} Paid</span>
+          <span class="badge rounded-pill bg-success">${paidCount} Paid</span>
         </td>
         <td style="padding: 14px 16px;">
-          <span class="badge rounded-pill bg-warning text-dark">${g.creditCount} Credit / Pending</span>
+          <span class="badge rounded-pill bg-warning text-dark">${creditCount} Credit / Pending</span>
         </td>
       </tr>
     `;

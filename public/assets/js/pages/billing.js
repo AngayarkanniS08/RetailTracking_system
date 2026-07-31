@@ -1,9 +1,10 @@
 import { Cart } from '../services/cart.js';
 import { apiRequest } from '../core/api.js';
 import { showToast } from '../ui/toast.js';
+import { escapeHtml } from '../utils/format.js';
 
 let cart;
-const _searchCache = {};
+const _searchCache = new Map();
 
 export function initBillingPage() {
   cart = new Cart();
@@ -80,7 +81,9 @@ export async function searchProducts(query) {
   try {
     const data = await apiRequest(`/api/pos/search?q=${encodeURIComponent(query)}&page=1`);
     const results = data?.results || data?.data || data || [];
-    results.forEach(p => { _searchCache[p.batch_id] = p; });
+    results.forEach(p => {
+      if (p && p.batch_id) _searchCache.set(String(p.batch_id), p);
+    });
     renderSearchDropdown(results, query);
     return results;
   } catch (err) {
@@ -98,17 +101,26 @@ function renderSearchDropdown(results, query) {
     return;
   }
 
-  dropdown.innerHTML = results.map(p => `
-    <div class="pos-search-item" onclick="selectPOSProduct('${p.batch_id}')">
-      <strong>${highlightMatch(p.product_name || '', query)}</strong>
-      <span>Batch: ${p.batch_number || ''} | ₹${p.selling_price || 0} | Stock: ${p.quantity || p.remaining_qty || 0}</span>
-    </div>
-  `).join('');
+  dropdown.innerHTML = results.map(p => {
+    const batchId = escapeHtml(p.batch_id || '');
+    const productName = highlightMatch(p.product_name || '', query);
+    const batchNumber = escapeHtml(p.batch_number || '');
+    const price = escapeHtml(p.selling_price || 0);
+    const stock = escapeHtml(p.quantity || p.remaining_qty || 0);
+
+    return `
+      <div class="pos-search-item" onclick="selectPOSProduct('${batchId}')">
+        <strong>${productName}</strong>
+        <span>Batch: ${batchNumber} | ₹${price} | Stock: ${stock}</span>
+      </div>
+    `;
+  }).join('');
   dropdown.style.display = 'block';
 }
 
 export function selectPOSProduct(batchId) {
-  const product = _searchCache[batchId];
+  if (!batchId || typeof batchId !== 'string') return;
+  const product = _searchCache.get(batchId);
   if (!product) return;
   addItemToCart(product);
   hideDropdown('posSearchDropdown');
@@ -168,13 +180,15 @@ function renderCustomerDropdown(results, query = '') {
     return;
   }
 
+  const safeQueryHeader = escapeHtml(query);
   const header = `<div style="padding:6px 14px 4px;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;opacity:0.45;text-transform:uppercase;">${
-    query ? `Results for "${query}"` : `All Customers (${results.length})`
+    query ? `Results for "${safeQueryHeader}"` : `All Customers (${results.length})`
   }</div>`;
 
-  const items = results.map((c, idx) => {
-    const name  = c.name  || '';
-    const phone = c.phone || '';
+  const items = results.map((c) => {
+    const id    = escapeHtml(c.id || '');
+    const name  = escapeHtml(c.name || '');
+    const phone = escapeHtml(c.phone || '');
     const balance = parseFloat(c.current_balance || 0);
     const balanceBadge = balance !== 0
       ? `<span style="font-size:0.72rem;padding:1px 7px;border-radius:20px;background:${
@@ -185,9 +199,9 @@ function renderCustomerDropdown(results, query = '') {
       : '';
     return `
       <div class="cs-item" role="option" aria-selected="false" tabindex="-1"
-           data-id="${c.id || ''}" data-name="${name}" data-phone="${phone}"
+           data-id="${id}" data-name="${name}" data-phone="${phone}"
            onclick="selectCustomer(this)">
-        <div class="cs-item-main">${highlightMatch(name, query)} ${balanceBadge}</div>
+        <div class="cs-item-main">${highlightMatch(c.name || '', query)} ${balanceBadge}</div>
         <div class="cs-item-sub">${phone || '—'}</div>
       </div>`;
   }).join('');

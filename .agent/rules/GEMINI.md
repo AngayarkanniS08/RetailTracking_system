@@ -108,6 +108,8 @@ When user's prompt is NOT in English:
 **ALL code MUST follow `@[skills/clean-code]` rules. No exceptions.**
 
 - **Code**: Concise, direct, no over-engineering. Self-documenting.
+- **XSS Prevention**: ALWAYS use `escapeHtml()` from `../utils/format.js` when interpolating variables into `innerHTML` or template literals. Never render unescaped user inputs directly.
+- **Prototype Safety**: ALWAYS use `Map` objects instead of plain `{}` for dynamic lookup caches using user inputs (`_cache.set(key, val)`).
 - **Testing**: Mandatory. Pyramid (Unit > Int > E2E) + AAA Pattern.
 - **Performance**: Measure first. Adhere to 2025 standards (Core Web Vitals).
 - **Infra/Safety**: 5-Phase Deployment. Verify secrets security.

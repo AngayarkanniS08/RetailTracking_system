@@ -48,18 +48,6 @@
 .text-bg-light     { color: #000 !important; background-color: rgb(248, 249, 250) !important; }
 .text-bg-dark      { color: #fff !important; background-color: rgb(33, 37, 41) !important; }
 
-/* ── Stock intelligence badges ── */
-.si-badge {
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.si-badge.high { background: var(--ok-subtle);     color: var(--ok);     border: 1px solid var(--ok); }
-.si-badge.low  { background: var(--warn-subtle);   color: var(--warn);   border: 1px solid var(--warn); }
-.si-badge.old  { background: var(--danger-subtle); color: var(--danger); border: 1px solid var(--danger); }
-
 /* ── Price mode badge ── */
 .price-mode-badge {
   display: inline-block;

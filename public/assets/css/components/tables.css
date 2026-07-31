@@ -244,6 +244,36 @@ tr:hover td {
   text-align: left;
 }
 
+/* ── Inventory table: centered, modern layout ── */
+/* Constrain height so the sticky header has a scroll context */
+#inventory .table-container {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Center all header and body cells */
+#inventoryTable th,
+#inventoryTable td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Sticky header retains context while scrolling the table */
+#inventoryTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--surface-container-low);
+}
+
+/* Action buttons: centered with comfortable spacing */
+#inventoryTable .inventory-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 /* ── Table Header Filter Dropdown Styling ── */
 .th-filter-select {
   appearance: none !important;

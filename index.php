@@ -79,7 +79,6 @@ $router->get('/dashboard',       [DashboardController::class, 'index'], [AuthMid
 $router->get('/billing',         [BillingController::class, 'index'],   [AuthMiddleware::class]);
 $router->get('/inventory',       [InventoryController::class, 'index'], [AuthMiddleware::class]);
 $router->get('/products',        [ProductController::class, 'index'],   [AuthMiddleware::class]);
-$router->get('/products/history', [ProductController::class, 'history'], [AuthMiddleware::class]);
 $router->get('/vendors',         [VendorController::class, 'index'],    [AuthMiddleware::class]);
 $router->get('/vendors/history', [VendorController::class, 'history'],  [AuthMiddleware::class]);
 $router->get('/vendors/history/detail', [VendorController::class, 'historyDetail'], [AuthMiddleware::class]);

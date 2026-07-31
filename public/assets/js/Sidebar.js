@@ -13,7 +13,6 @@ const sections = [
     'vendor_list',
     'vendorhistory',
     'stockintel',
-    'product_history',
     'system_health'
 ];
 
@@ -28,7 +27,6 @@ const sectionUrlMap = {
     'vendor_list': '/vendors',
     'vendorhistory': '/vendor-history',
     'stockintel': '/stock-intel',
-    'product_history': '/product-history',
     'system_health': '/system-health'
 };
 

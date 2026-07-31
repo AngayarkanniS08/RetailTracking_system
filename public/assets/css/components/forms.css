@@ -56,3 +56,118 @@
   color: var(--muted);
   pointer-events: none;
 }
+
+/* ── Stock restock / details modal ── */
+.stock-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stock-pill {
+  background: var(--bg-elevated, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pill-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted, #64748b);
+}
+
+.pill-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-strong, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill-value.highlight {
+  color: var(--warn, #d97706);
+}
+
+/* ── Field group with label row + helper text ── */
+.field-group {
+  margin-top: 16px;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+}
+
+.required {
+  color: var(--danger, #dc2626);
+  margin-left: 2px;
+}
+
+.autofill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ok, #16a34a);
+  background: var(--ok-subtle, rgba(22, 163, 74, 0.1));
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.helper-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: var(--muted, #64748b);
+  line-height: 1.45;
+  margin-top: 8px;
+}
+
+.helper-text i {
+  margin-top: 1px;
+}
+
+/* ── Pagination controls (inventory) ── */
+.pagination-btn {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-strong, #0f172a);
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  transition: all var(--duration-fast, 0.15s);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: var(--accent, #2563eb);
+  color: var(--accent, #2563eb);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.82rem;
+  color: var(--muted, #64748b);
+}

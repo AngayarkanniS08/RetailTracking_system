@@ -60,10 +60,9 @@ class AlertController
                 return;
             }
 
-            // Map input payload to AlertDTO
             $dto = new AlertDTO($productId, $dailySales, $leadTime, $emergencyStock);
-
             $alert = $this->service->saveAlert($dto);
+            (new \Modules\Notification\Cache\NotificationCacheService())->invalidateInventory();
 
             // Immediately evaluate alert trigger state based on current stock
             $db = \Config\Database::getConnection();
@@ -98,6 +97,7 @@ class AlertController
 
         try {
             $success = $this->service->disableAlert($productId);
+            (new \Modules\Notification\Cache\NotificationCacheService())->invalidateInventory();
             echo json_encode(['success' => $success]);
         } catch (Exception $e) {
             http_response_code(500);

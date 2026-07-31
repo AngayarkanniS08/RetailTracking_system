@@ -76,10 +76,6 @@
             $breadcrumbs[] = ['name' => 'System', 'url' => '#', 'active' => false];
             $breadcrumbs[] = ['name' => 'Backup & Restore', 'url' => '/backup', 'active' => true];
             break;
-          case '/products/history':
-            $breadcrumbs[] = ['name' => 'Insights', 'url' => '#', 'active' => false];
-            $breadcrumbs[] = ['name' => 'Product History', 'url' => '/products/history', 'active' => true];
-            break;
           default:
             $breadcrumbs[] = ['name' => 'Page', 'url' => $uri, 'active' => true];
             break;
@@ -109,9 +105,7 @@
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <span id="topbarAlertBadge" class="topbar-alert-badge">
-            3<span class="visually-hidden"> unread notifications</span>
-          </span>
+          <span id="topbarAlertBadge" class="topbar-alert-badge hidden" aria-label="No unread notifications"></span>
         </div>
 
         <!-- User Menu Dropdown Container -->

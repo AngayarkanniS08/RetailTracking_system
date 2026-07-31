@@ -6,6 +6,7 @@ import {
   createCustomerApi,
   recordCreditPaymentApi,
 } from '../services/credit.service.js';
+import { escapeHtml } from '../utils/format.js';
 
 
 let _customers = [];
@@ -114,13 +115,19 @@ export function renderCreditTable() {
         <div style="font-size:0.7rem; color:var(--muted); margin-top:3px;">₹${available.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})} available</div>
       </div>` : `<span style="font-size:0.78rem; color:var(--muted);">No limit</span>`;
 
+    const safeShortId = escapeHtml(shortId);
+    const safeName = escapeHtml(c.name || 'Unknown');
+    const safePhone = escapeHtml(c.phone || '-');
+    const safeCustId = escapeHtml(c.id || c.customerId || '');
+    const escapedNameAttr = (c.name || 'Customer').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
     const tr = document.createElement('tr');
     tr.style.borderBottom = '1px solid var(--border)';
     tr.style.transition = 'background 0.15s';
     tr.innerHTML = `
-      <td style="padding: 14px 16px; font-family: var(--font-mono, monospace); font-weight: 600; color: var(--accent); white-space:nowrap;">#${shortId}</td>
-      <td style="padding: 14px 16px; font-weight: 600; color: var(--text-strong);">${c.name || 'Unknown'}</td>
-      <td style="padding: 14px 16px; color: var(--muted); white-space:nowrap;">${c.phone || '-'}</td>
+      <td style="padding: 14px 16px; font-family: var(--font-mono, monospace); font-weight: 600; color: var(--accent); white-space:nowrap;">#${safeShortId}</td>
+      <td style="padding: 14px 16px; font-weight: 600; color: var(--text-strong);">${safeName}</td>
+      <td style="padding: 14px 16px; color: var(--muted); white-space:nowrap;">${safePhone}</td>
       <td style="padding: 14px 16px; font-weight: 500; white-space:nowrap;">₹${totalPurchases.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td style="padding: 14px 16px; color: var(--success, #10b981); font-weight: 500; white-space:nowrap;">₹${totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td style="padding: 14px 16px; color: ${isCleared ? 'var(--muted)' : 'var(--danger,#ef4444)'}; font-weight: 700; white-space:nowrap;">₹${outstandingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
@@ -131,9 +138,9 @@ export function renderCreditTable() {
         </span>
       </td>
       <td style="padding: 14px 16px; text-align: right; white-space:nowrap;">
-        <button class="btn btn-sm btn-outline" onclick="viewCustomerBills('${c.id || c.customerId}', '${(c.name || 'Customer').replace(/'/g, "\\'")}')" style="padding: 4px 10px; font-size: 0.78rem; margin-right: 4px;">Bills</button>
-        <button class="btn btn-sm btn-outline" onclick="openPaymentModal('${c.id || c.customerId}')" style="padding: 4px 10px; font-size: 0.78rem; margin-right: 4px;">Collect</button>
-        <button class="btn btn-sm" onclick="openReturnModal('${c.id || c.customerId}', '${(c.name || 'Customer').replace(/'/g, "\\'")}')" style="padding: 4px 10px; font-size: 0.78rem; background: rgba(239,68,68,0.1); color: var(--danger,#ef4444); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); font-weight:600;">Return</button>
+        <button class="btn btn-sm btn-outline" onclick="viewCustomerBills('${safeCustId}', '${escapedNameAttr}')" style="padding: 4px 10px; font-size: 0.78rem; margin-right: 4px;">Bills</button>
+        <button class="btn btn-sm btn-outline" onclick="openPaymentModal('${safeCustId}')" style="padding: 4px 10px; font-size: 0.78rem; margin-right: 4px;">Collect</button>
+        <button class="btn btn-sm" onclick="openReturnModal('${safeCustId}', '${escapedNameAttr}')" style="padding: 4px 10px; font-size: 0.78rem; background: rgba(239,68,68,0.1); color: var(--danger,#ef4444); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); font-weight:600;">Return</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -369,11 +376,13 @@ window.openReturnModal = async function (customerId, customerName, invoiceRef) {
       } else {
         let opts = `<option value="">-- Select an Invoice (${invoices.length} available) --</option>`;
         invoices.forEach(inv => {
-          const num = inv.invoice_number || `#INV-${(inv.id || '').substring(0, 6).toUpperCase()}`;
+          const invId = escapeHtml(inv.id || '');
+          const rawNum = inv.invoice_number || `#INV-${(inv.id || '').substring(0, 6).toUpperCase()}`;
+          const num = escapeHtml(rawNum);
           const amt = Number(inv.grand_total || inv.total_amount || 0);
-          const date = inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-IN') : '';
+          const date = escapeHtml(inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-IN') : '');
           const selected = (invoiceRef && (inv.id === invoiceRef || inv.invoice_number === invoiceRef)) ? 'selected' : '';
-          opts += `<option value="${inv.id}" data-num="${num}" data-amount="${amt}" ${selected}>${num} — ₹${amt.toLocaleString('en-IN',{minimumFractionDigits:2})} (${date})</option>`;
+          opts += `<option value="${invId}" data-num="${num}" data-amount="${amt}" ${selected}>${num} — ₹${amt.toLocaleString('en-IN',{minimumFractionDigits:2})} (${date})</option>`;
         });
         opts += `<option value="__manual__">✏️ Other / Enter Manually...</option>`;
         selectEl.innerHTML = opts;

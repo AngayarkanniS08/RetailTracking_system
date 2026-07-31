@@ -14,7 +14,7 @@ use Database\Seeders\BaseSeeder;
  */
 class CatalogSeeder extends BaseSeeder
 {
-    private const USER_ID = 'e165e33e-0b13-4db9-93bb-79858a78a74a';
+    private const USER_ID = '5f6fc75c-b91c-4641-b17f-3cc41da540e5';
 
     public function module(): string
     {

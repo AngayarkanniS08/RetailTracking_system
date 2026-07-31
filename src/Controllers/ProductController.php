@@ -15,12 +15,4 @@ class ProductController
             'currentRoute' => '/products',
         ]);
     }
-
-    public function history(Request $request): void
-    {
-        View::render('product/history', [
-            'pageTitle'    => 'Product History',
-            'currentRoute' => '/products/history',
-        ]);
-    }
 }

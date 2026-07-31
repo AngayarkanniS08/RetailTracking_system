@@ -1,14 +1,17 @@
   <!-- MODALS -->
 
-  <!-- Active Low Stock Alerts Modal -->
+  <!-- Active Notifications Modal -->
   <div class="modal-overlay" id="activeAlertsModal">
-    <div class="modal-content" style="max-width: 520px; width: 95%; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 20px;">
-      <div class="modal-header" style="padding-bottom: 12px; border-bottom: 1px solid var(--border, #eaecf0); margin: 0;">
-        <div class="modal-title" style="font-size: 18px; font-weight: 600; color: var(--text-strong, #101828);">⚠️ Active Low Stock Alerts</div>
-        <button class="close-btn" onclick="closeModal('activeAlertsModal')">&times;</button>
+    <div class="modal-content" style="max-width: 560px; width: 95%; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 20px;">
+      <div class="modal-header" style="display:flex; align-items:center; justify-content:space-between; padding-bottom: 12px; border-bottom: 1px solid var(--border, #eaecf0); margin: 0;">
+        <div class="modal-title" style="font-size: 18px; font-weight: 600; color: var(--text-strong, #101828);">🔔 Notifications</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" id="notificationsMarkAllBtn" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px;">Mark all read</button>
+          <button class="close-btn" onclick="closeModal('activeAlertsModal')">&times;</button>
+        </div>
       </div>
-      <div id="activeAlertsModalList" style="display: flex; flex-direction: column; gap: 12px; margin: 0;">
-        <!-- Loaded dynamically -->
+      <div id="activeAlertsModalList" style="display: flex; flex-direction: column; gap: 12px; margin: 0; max-height: 60vh; overflow-y: auto;">
+        <!-- Loaded dynamically by NotificationRenderer -->
       </div>
       <div class="modal-footer" style="margin-top: 8px;">
         <button class="btn btn-outline btn-block" onclick="closeModal('activeAlertsModal')">Close</button>
@@ -784,6 +787,67 @@
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Stock Details Modal -->
+  <div class="modal-overlay" id="stockDetailsModal" role="dialog" aria-modal="true" aria-labelledby="sdTitle">
+    <div class="modal-content" style="max-width: 480px; width: 95%; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <div class="modal-title" id="sdTitle">
+          <i class="ti ti-package"></i>
+          Batch Details
+        </div>
+        <button class="close-btn" onclick="closeModal('stockDetailsModal')" aria-label="Close modal">&times;</button>
+      </div>
+
+      <div class="stock-row">
+        <div class="stock-pill">
+          <span class="pill-label">Product</span>
+          <span class="pill-value" id="sdProduct">-</span>
+        </div>
+        <div class="stock-pill">
+          <span class="pill-label">Batch</span>
+          <span class="pill-value" id="sdBatch">-</span>
+        </div>
+        <div class="stock-pill">
+          <span class="pill-label">Vendor</span>
+          <span class="pill-value" id="sdVendor">-</span>
+        </div>
+      </div>
+
+      <div class="stock-row" style="margin-top: 12px;">
+        <div class="stock-pill">
+          <span class="pill-label">Stock Qty</span>
+          <span class="pill-value" id="sdQty">-</span>
+        </div>
+        <div class="stock-pill">
+          <span class="pill-label">Status</span>
+          <span class="pill-value" id="sdStatus">-</span>
+        </div>
+        <div class="stock-pill">
+          <span class="pill-label">Stock Value</span>
+          <span class="pill-value highlight" id="sdValue">-</span>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-top: 12px;">
+        <div class="label-row">
+          <label class="field-label">Restock recommendation</label>
+        </div>
+        <p class="helper-text" id="sdRecommendation" style="margin-top: 4px;">-</p>
+      </div>
+
+      <div id="sdMeta" style="margin-top: 8px;"></div>
+
+      <hr class="divider" />
+
+      <div class="modal-actions" style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button class="btn btn-outline" id="sdEditBtn" onclick="editBatch(this.dataset.batchId)">Edit Batch</button>
+        <button class="btn btn-primary" id="sdRestockBtn" onclick="openRestockForBatch(this.dataset.batchId)" style="display: inline-flex; align-items: center; gap: 6px;">
+          <i class="ti ti-check"></i> Place restock order
+        </button>
+      </div>
     </div>
   </div>
 

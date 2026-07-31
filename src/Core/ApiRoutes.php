@@ -14,7 +14,7 @@ use Modules\Product\Controller\Api\CategoryController;
 use Modules\Product\Controller\Api\SubcategoryController;
 use Modules\Product\Controller\Api\ProductController;
 use Modules\Product\Controller\Api\UnitController;
-use Modules\Inventory\Controller\Api\BatchController;
+use Modules\Inventory\Controller\Api\InventoryController;
 use Modules\Backup\Controller\BackupController;
 use Modules\Backup\Controller\BackupConfigController;
 
@@ -116,18 +116,36 @@ class ApiRoutes
             (new UnitController())->index();
         });
 
-        // ── Inventory Batches ──────────────────────────────────────
+        // ── Inventory (enterprise module API) ─────────────────────
+        // NOTE: specific sub-paths (categories/subcategories/batches/alerts)
+        // MUST be registered before the parametric /api/inventory/{id} route.
+        $router->add('GET', '/api/inventory', function (): void {
+            (new InventoryController())->index();
+        });
+        $router->add('POST', '/api/inventory', function (): void {
+            (new InventoryController())->store();
+        });
+        $router->add('GET', '/api/inventory/categories', function (): void {
+            AuthMiddleware::authenticate();
+            (new CategoryController())->index();
+        });
+        $router->add('GET', '/api/inventory/subcategories', function (): void {
+            AuthMiddleware::authenticate();
+            (new SubcategoryController())->index();
+        });
+        // Backward-compatible aliases for the legacy batch endpoints
         $router->add('GET', '/api/inventory/batches', function (): void {
-            (new BatchController())->index();
+            (new InventoryController())->index();
         });
         $router->add('POST', '/api/inventory/batches', function (): void {
-            (new BatchController())->store();
+            (new InventoryController())->store();
         });
         $router->add('PUT', '/api/inventory/batches/{id}', function (array $params): void {
-            (new BatchController())->update($params['id']);
+            (new InventoryController())->update($params['id']);
         });
 
         // ── Product Alerts ──────────────────────────────────────────
+        // Static sub-paths must stay above the parametric /{id} routes.
         $router->add('GET', '/api/inventory/alerts', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Inventory\Controller\Api\AlertController())->index();
@@ -139,6 +157,16 @@ class ApiRoutes
         $router->add('PATCH', '/api/inventory/alerts/{productId}/disable', function (array $params): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Inventory\Controller\Api\AlertController())->disable($params['productId']);
+        });
+
+        $router->add('GET', '/api/inventory/{id}', function (array $params): void {
+            (new InventoryController())->show($params['id']);
+        });
+        $router->add('PUT', '/api/inventory/{id}', function (array $params): void {
+            (new InventoryController())->update($params['id']);
+        });
+        $router->add('POST', '/api/inventory/{id}/restock', function (array $params): void {
+            (new InventoryController())->restock($params['id']);
         });
 
         // ── Purchases & Vendors ──────────────────────────────────────
@@ -292,6 +320,20 @@ class ApiRoutes
             (new \Modules\Customer\Controller\Api\LedgerController())->balance($params['id']);
         });
 
+        // ── Notifications (Notification Platform) ──────────────────────────
+        $router->add('GET', '/api/notifications', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Notification\Controller\Api\NotificationController())->index();
+        });
+        $router->add('POST', '/api/notifications/read', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Notification\Controller\Api\NotificationController())->markRead();
+        });
+        $router->add('POST', '/api/notifications/read-all', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Notification\Controller\Api\NotificationController())->markAllRead();
+        });
+
         // ── Dashboard / Reports ──────────────────────────────────────────
         $router->add('GET', '/api/dashboard/stats', function (): void {
             AuthMiddleware::authenticate();
@@ -306,28 +348,6 @@ class ApiRoutes
         $router->add('GET', '/api/daily-register/detail', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\DailyRegisterDetailController())->show();
-        });
-
-        // ── Product History ─────────────────────────────────────────
-        $router->add('GET', '/api/products/with-stock', function (): void {
-            AuthMiddleware::authenticate();
-            (new \Modules\Reports\Controller\Api\ProductHistoryController())->productsWithStock();
-        });
-        $router->add('GET', '/api/products/{id}/history', function (array $params): void {
-            AuthMiddleware::authenticate();
-            (new \Modules\Reports\Controller\Api\ProductHistoryController())->show($params['id']);
-        });
-        $router->add('GET', '/api/products/{id}/daily-sales', function (array $params): void {
-            AuthMiddleware::authenticate();
-            (new \Modules\Reports\Controller\Api\ProductHistoryController())->dailySales($params['id']);
-        });
-        $router->add('POST', '/api/products/{id}/daily-sales', function (array $params): void {
-            AuthMiddleware::authenticate(900);
-            (new \Modules\Reports\Controller\Api\ProductHistoryController())->storeDailySale($params['id']);
-        });
-        $router->add('DELETE', '/api/products/daily-sales/{saleId}', function (array $params): void {
-            AuthMiddleware::authenticate(900);
-            (new \Modules\Reports\Controller\Api\ProductHistoryController())->destroyDailySale($params['saleId']);
         });
 
         // ── Backup / Restore ─────────────────────────────────────────

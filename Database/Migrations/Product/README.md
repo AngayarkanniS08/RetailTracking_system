@@ -8,7 +8,6 @@ The **Product** module owns catalog domain data including categories, subcategor
   - `categories`
   - `subcategories`
   - `products`
-  - `product_daily_sales`
 - Foreign Keys:
   - `fk_subcategories_category_id` -> `categories(id)`
   - `fk_products_category_id` -> `categories(id)`

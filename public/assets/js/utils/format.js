@@ -35,12 +35,25 @@ export function formatCurrency(amount) {
 }
 
 /**
+ * Normalize Postgres-style timestamps ("YYYY-MM-DD HH:MM:SS.micro+00")
+ * into a browser-parseable ISO string ("YYYY-MM-DDTHH:MM:SS.micro+00").
+ */
+function toDate(value) {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().replace(' ', 'T');
+    return new Date(normalized);
+  }
+  return new Date(value);
+}
+
+/**
  * Format a date string or Date object to "DD Mon YYYY".
  * @param {string|Date} value
  * @returns {string}
  */
 export function formatDate(value) {
-  const d = value instanceof Date ? value : new Date(value);
+  const d = toDate(value);
   return isNaN(d.getTime()) ? 'Invalid date' : DATE_FORMATTER.format(d);
 }
 
@@ -50,7 +63,7 @@ export function formatDate(value) {
  * @returns {string}
  */
 export function formatDateTime(value) {
-  const d = value instanceof Date ? value : new Date(value);
+  const d = toDate(value);
   return isNaN(d.getTime()) ? 'Invalid date' : DATETIME_FORMATTER.format(d);
 }
 
@@ -72,4 +85,19 @@ export function truncate(str, max = 30) {
  */
 export function titleCase(str) {
   return str?.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase()) ?? '';
+}
+
+/**
+ * Safely escape HTML special characters to prevent XSS vulnerabilities.
+ * @param {string|number|null|undefined} str
+ * @returns {string}
+ */
+export function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

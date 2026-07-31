@@ -193,6 +193,22 @@
   right: -2px !important;
 }
 
+/* Hidden badge — must win over the display:flex !important rule above. */
+#topbarAlertBadge.hidden,
+.topbar-alert-badge.hidden {
+  display: none !important;
+}
+
+/* Unread dot shown on notification cards */
+.notification-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 /* ── Avatar & User Menu Dropdown System ── */
 .user-menu-dropdown-container {
   position: relative;

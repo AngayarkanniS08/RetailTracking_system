@@ -1,6 +1,6 @@
 import { fetchDashboardStatsApi } from '../services/dashboard.service.js';
 import { apiRequest } from '../core/api.js';
-import { formatCurrency } from '../utils/format.js';
+import { formatCurrency, escapeHtml } from '../utils/format.js';
 import { setText } from '../utils/dom.js';
 import { logger } from '../core/logger.js';
 import { mapDashboardStats, mapStockIntel } from '../services/dashboard.dto.js';
@@ -325,11 +325,11 @@ function renderTabbedProductPerformance() {
   }
 
   tbody.innerHTML = products.map(item => {
-    const name = item.name || 'Product';
+    const name = escapeHtml(item.name || 'Product');
     const qty = item.qty_sold;
     const rev = item.revenue;
-    const rank = item.rank || 'Normal';
-    const badgeClass = item.badgeClass || 'bg-info text-dark';
+    const rank = escapeHtml(item.rank || 'Normal');
+    const badgeClass = escapeHtml(item.badgeClass || 'bg-info text-dark');
     const stockStatus = item.stock_status || 'unknown';
 
     return `

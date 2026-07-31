@@ -7,7 +7,7 @@
         <section id="vendor_list" class="view-section active">
           <div class="card-header">
             <span>Vendor List</span>
-            <div class="d-flex" style="gap: 10px;">
+            <div class="d-flex">
               <input type="text" id="vendorSearch" class="input-field" placeholder="Search purchases..." style="width: 200px;"
                 onkeyup="loadPurchases(1)">
               <button class="btn btn-primary btn-sm" onclick="openModal('addStockEntryModal'); loadProductsForVendor();">+ New Purchase</button>

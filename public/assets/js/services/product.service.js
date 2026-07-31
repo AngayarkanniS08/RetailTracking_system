@@ -32,7 +32,3 @@ export async function deleteProductApi(id) {
 export async function fetchCategoriesApi() {
   return apiRequest('/api/categories');
 }
-
-export async function fetchProductHistoryApi(productId) {
-  return apiRequest(`/api/products/${productId}/history`);
-}

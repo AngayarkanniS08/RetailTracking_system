@@ -175,3 +175,22 @@ a.btn.btn-outline.btn-sm svg,
   border-color: rgba(220, 38, 38, 0.3);
 }
 
+/* Extra-small button (table row actions) */
+.btn-xs {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+}
+
+/* Restock action variation (positive semantic accent) */
+.btn-icon.restock-btn {
+  color: var(--ok, #16a34a);
+}
+
+.btn-icon.restock-btn:hover {
+  background-color: var(--ok-subtle, rgba(22, 163, 74, 0.08));
+  color: var(--ok, #16a34a);
+  border-color: rgba(22, 163, 74, 0.3);
+}
+

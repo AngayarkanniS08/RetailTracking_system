@@ -58,3 +58,9 @@
 {"timestamp":"2026-07-31T11:26:28Z","level":"info","message":"Running seeder: Database\\Seeders\\Product\\CatalogSeeder","executed_by":"dhanasurya"}
 {"timestamp":"2026-07-31T11:26:28Z","level":"info","message":"All seeders complete.","executed_by":"dhanasurya"}
 {"timestamp":"2026-07-31T14:32:33Z","level":"info","message":"No orphaned migrations found. Everything is consistent.","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T15:37:48Z","level":"info","message":"Running seeder: Database\\Seeders\\Auth\\UsersSeeder","executed_by":"unknown"}
+{"timestamp":"2026-07-31T15:37:48Z","level":"info","message":"Running seeder: Database\\Seeders\\Product\\CatalogSeeder","executed_by":"unknown"}
+{"timestamp":"2026-07-31T15:37:48Z","level":"info","message":"All seeders complete.","executed_by":"unknown"}
+{"timestamp":"2026-07-31T15:40:24Z","level":"info","message":"Running seeder: Database\\Seeders\\Auth\\UsersSeeder","executed_by":"unknown"}
+{"timestamp":"2026-07-31T15:40:24Z","level":"info","message":"Running seeder: Database\\Seeders\\Product\\CatalogSeeder","executed_by":"unknown"}
+{"timestamp":"2026-07-31T15:40:24Z","level":"info","message":"All seeders complete.","executed_by":"unknown"}

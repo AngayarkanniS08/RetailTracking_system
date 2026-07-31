@@ -32,16 +32,16 @@
             <div class="table-container" style="overflow-x: auto;">
               <table id="inventoryTable" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                 <thead>
-                  <tr style="background: var(--surface-container-low); border-bottom: 1px solid var(--border); text-align: left;">
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Batch ID</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Date</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Vendor</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Product</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Cost P.</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Sell P. (Base)</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Stock Qty</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">Status</th>
-                    <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Action</th>
+                  <tr style="background: var(--surface-container-low); border-bottom: 1px solid var(--border);">
+                    <th>Batch ID</th>
+                    <th>Date</th>
+                    <th>Vendor</th>
+                    <th>Product</th>
+                    <th>Cost P.</th>
+                    <th>Sell P. (Base)</th>
+                    <th>Stock Qty</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>

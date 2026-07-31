@@ -7,7 +7,7 @@
 import { fetchVendorsApi } from '../services/vendor.service.js';
 import { fetchProductsApi } from '../services/product.service.js';
 import { apiRequest } from '../core/api.js';
-import { formatCurrency } from '../utils/format.js';
+import { formatCurrency, escapeHtml } from '../utils/format.js';
 import { logger } from '../core/logger.js';
 import { showToast } from '../ui/toast.js';
 
@@ -91,19 +91,26 @@ function renderVendorListTable(vendors) {
   if (elBalance) elBalance.textContent = formatCurrency(balanceDueSum);
 
   if (tbody) {
-    tbody.innerHTML = vendors.map((v) => `
-      <tr>
-        <td class="t-name" style="font-weight: 600; color: var(--text-strong);">${v.name ?? 'Unknown Vendor'}</td>
-        <td>${v.contact_phone || v.phone || '—'}</td>
-        <td>${v.total_orders ?? 0}</td>
-        <td class="tabular-nums">${formatCurrency(v.total_amount ?? 0)}</td>
-        <td class="tabular-nums text-ok" style="font-weight: 500;">${formatCurrency(v.total_paid ?? 0)}</td>
-        <td class="tabular-nums text-danger" style="font-weight: 600;">${formatCurrency(v.balance_due ?? 0)}</td>
-        <td style="text-align: right;">
-          <button class="btn btn-xs btn-outline" onclick="openVendorHistory('${v.id}')">History</button>
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = vendors.map((v) => {
+      const name = escapeHtml(v.name ?? 'Unknown Vendor');
+      const phone = escapeHtml(v.contact_phone || v.phone || '—');
+      const totalOrders = escapeHtml(v.total_orders ?? 0);
+      const safeId = escapeHtml(v.id || '');
+
+      return `
+        <tr>
+          <td class="t-name" style="font-weight: 600; color: var(--text-strong);">${name}</td>
+          <td>${phone}</td>
+          <td>${totalOrders}</td>
+          <td class="tabular-nums">${formatCurrency(v.total_amount ?? 0)}</td>
+          <td class="tabular-nums text-ok" style="font-weight: 500;">${formatCurrency(v.total_paid ?? 0)}</td>
+          <td class="tabular-nums text-danger" style="font-weight: 600;">${formatCurrency(v.balance_due ?? 0)}</td>
+          <td style="text-align: right;">
+            <button class="btn btn-xs btn-outline" onclick="openVendorHistory('${safeId}')">History</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
   }
 }
 
@@ -126,7 +133,12 @@ export async function loadProductsForVendor() {
     const optionsHtml = (!products || products.length === 0)
       ? '<option value="">No products available</option>'
       : '<option value="">Select Product...</option>' +
-        products.map((p) => `<option value="${p.id}">${p.name} (${p.unit || 'pcs'})</option>`).join('');
+        products.map((p) => {
+          const pid = escapeHtml(p.id || '');
+          const pname = escapeHtml(p.name || '');
+          const punit = escapeHtml(p.unit || 'pcs');
+          return `<option value="${pid}">${pname} (${punit})</option>`;
+        }).join('');
 
     selects.forEach(select => {
       select.innerHTML = optionsHtml;

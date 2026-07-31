@@ -50,9 +50,28 @@ class BatchService
         $stats = $this->repo->getStats($search, $categoryId, $subcategoryId);
         
         $totalPages = ceil($result['total'] / $limit);
+
+        $enrichedData = array_map(function ($item) {
+            $qty = (float)($item['quantity'] ?? $item['stock_qty'] ?? 0);
+            $threshold = (float)($item['min_threshold'] ?? 10);
+            if ($qty <= 0) {
+                $item['stock_status'] = 'OUT_OF_STOCK';
+                $item['status_text'] = 'Out of Stock';
+                $item['status_badge_class'] = 'bg-danger';
+            } elseif ($qty <= $threshold) {
+                $item['stock_status'] = 'LOW_STOCK';
+                $item['status_text'] = 'Low Stock';
+                $item['status_badge_class'] = 'bg-warning text-dark';
+            } else {
+                $item['stock_status'] = 'IN_STOCK';
+                $item['status_text'] = 'In Stock';
+                $item['status_badge_class'] = 'bg-success';
+            }
+            return $item;
+        }, $result['data']);
         
         return [
-            'data' => $result['data'],
+            'data' => $enrichedData,
             'pagination' => [
                 'current_page' => $page,
                 'total_pages'  => max(1, $totalPages),

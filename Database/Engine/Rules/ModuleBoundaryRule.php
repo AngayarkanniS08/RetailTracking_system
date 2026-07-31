@@ -33,7 +33,6 @@ class ModuleBoundaryRule implements RuleInterface
         'categories'         => 'Product',
         'subcategories'      => 'Product',
         'products'           => 'Product',
-        'product_daily_sales'=> 'Product',
         'customer_credits'   => 'Customer',
         'customer_payments'  => 'Customer',
         'bills'              => 'Billing',

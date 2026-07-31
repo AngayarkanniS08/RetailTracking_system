@@ -35,7 +35,6 @@ class FreshRunner
         'users'                     => 'Auth',
 
         // Product
-        'product_daily_sales'       => 'Product',
         'products'                  => 'Product',
         'subcategories'             => 'Product',
         'categories'                => 'Product',
