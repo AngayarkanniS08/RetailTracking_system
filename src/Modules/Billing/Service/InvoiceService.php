@@ -548,6 +548,11 @@ class InvoiceService
         ];
     }
 
+    public function getDailyProducts(?string $dateFrom = null, ?string $dateTo = null, ?string $search = null): array
+    {
+        return $this->repo->getDailyProducts($dateFrom, $dateTo, $search);
+    }
+
     public function getCustomerBalance(string $customerId): float
     {
         return $this->repo->getCustomerBalance($customerId);

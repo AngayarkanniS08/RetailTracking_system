@@ -319,6 +319,55 @@ class InvoiceRepository implements InvoiceRepositoryInterface
         ];
     }
 
+    public function getDailyProducts(?string $dateFrom = null, ?string $dateTo = null, ?string $search = null): array
+    {
+        $params = [];
+        $where = ["i.invoice_status = 'completed'"];
+
+        if (!empty($dateFrom)) {
+            $where[] = "DATE(i.billed_at AT TIME ZONE 'UTC') >= ?";
+            $params[] = $dateFrom;
+        }
+        if (!empty($dateTo)) {
+            $where[] = "DATE(i.billed_at AT TIME ZONE 'UTC') <= ?";
+            $params[] = $dateTo;
+        }
+        if (!empty($search)) {
+            $where[] = "(i.invoice_number ILIKE ? OR i.customer_name_snapshot ILIKE ?)";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        $stmt = $this->db->prepare("
+            SELECT DATE(i.billed_at AT TIME ZONE 'UTC') AS sale_date,
+                   ii.product_name_snapshot AS product_name,
+                   SUM(ii.quantity) AS qty
+            FROM invoice_items ii
+            JOIN invoices i ON i.id = ii.invoice_id
+            WHERE i.user_id = current_setting('app.current_user_id', true)::uuid
+              AND $whereSql
+            GROUP BY DATE(i.billed_at AT TIME ZONE 'UTC'), ii.product_name_snapshot
+            ORDER BY sale_date DESC, qty DESC
+        ");
+        $stmt->execute($params);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $daily = [];
+        foreach ($rows as $row) {
+            $date = $row['sale_date'];
+            if (!isset($daily[$date])) {
+                $daily[$date] = [];
+            }
+            $daily[$date][] = [
+                'name' => $row['product_name'],
+                'qty' => (float)$row['qty']
+            ];
+        }
+        return $daily;
+    }
+
     public function updateInvoiceStatus(string $id, string $status): bool
     {
         $stmt = $this->db->prepare("

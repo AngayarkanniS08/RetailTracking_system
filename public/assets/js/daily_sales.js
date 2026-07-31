@@ -1,6 +1,7 @@
 // Daily Sales Timeline
 
 var _tlGroups = {};
+var _tlDailyProducts = {};
 var _tlPage = 1;
 var _tlTotalPages = 1;
 var _tlPerPage = 6;
@@ -9,23 +10,35 @@ var _tlSearchTimer = null;
 
 function initDayToDaySelling() {
     _tlGroups = {};
+    _tlDailyProducts = {};
     _tlPage = 1;
     _tlTotalPages = 1;
     var tbody = document.querySelector('#salesTimelineTable tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted);">Loading...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted);">Loading...</td></tr>';
 
     var url = '/api/invoices?limit=5000';
     if (_tlSearchTerm) url += '&search=' + encodeURIComponent(_tlSearchTerm);
+    var productsUrl = '/api/invoices/daily-products';
+    if (_tlSearchTerm) productsUrl += '?search=' + encodeURIComponent(_tlSearchTerm);
 
-    window.apiRequest(url).then(function(data) {
-        var invoices = data.invoices || data.data || data || [];
-        _tlGroups = groupInvoicesByDate(invoices);
+    Promise.all([
+        window.apiRequest(productsUrl).then(function(prodData) {
+            var daily = prodData.data || {};
+            Object.keys(daily).forEach(function(date) {
+                _tlDailyProducts[date] = daily[date] || [];
+            });
+        }),
+        window.apiRequest(url).then(function(data) {
+            var invoices = data.invoices || data.data || data || [];
+            _tlGroups = groupInvoicesByDate(invoices);
+        })
+    ]).then(function() {
         renderSalesTimeline();
         renderPagination();
     }).catch(function(err) {
         console.error('Sales Timeline error:', err);
         var tbody = document.querySelector('#salesTimelineTable tbody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">Failed to load sales data</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:2rem;">Failed to load sales data</td></tr>';
     });
 }
 
@@ -103,7 +116,7 @@ function renderSalesTimeline() {
     _tlTotalPages = Math.max(1, Math.ceil(dates.length / _tlPerPage));
 
     if (dates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">No sales found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:2rem;">No sales found</td></tr>';
         return;
     }
 
@@ -123,6 +136,7 @@ function renderSalesTimeline() {
                 + '<td style="font-weight:600">' + g.count + '</td>'
                 + '<td style="font-weight:600;color:var(--ok)">\u20b9' + formatNumber(g.total) + '</td>'
                 + '<td style="color:var(--muted-strong)">\u20b9' + formatNumber(avg) + '</td>'
+                + '<td style="max-width:340px;">' + renderDailyProductBadges(dateStr) + '</td>'
                 + '<td style="text-align:right">-</td>'
             + '</tr>';
 
@@ -148,6 +162,15 @@ function toggleSalesBills(cls) {
     rows.forEach(function(row) {
         row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
     });
+}
+
+function renderDailyProductBadges(dateStr) {
+    var products = _tlDailyProducts[dateStr] || [];
+    if (!products.length) return '-';
+    return products.map(function(p) {
+        return '<span class="badge" style="background:var(--accent-subtle);color:var(--accent);margin:2px 4px 2px 0;display:inline-block;">'
+            + escHtml(p.name) + ' <strong>' + formatNumber(p.qty) + '</strong></span>';
+    }).join('');
 }
 
 function viewInvoiceReceipt(invoiceId) {

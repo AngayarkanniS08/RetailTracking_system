@@ -26,6 +26,7 @@ interface InvoiceRepositoryInterface {
     public function createInvoice(Invoice $invoice): Invoice;
     public function findInvoiceById(string $id, bool $withItems = false): ?Invoice;
     public function findAllInvoices(int $page, int $limit, array $filters = []): array;
+    public function getDailyProducts(?string $dateFrom = null, ?string $dateTo = null, ?string $search = null): array;
     public function updateInvoiceStatus(string $id, string $status): bool;
 
     // ── Invoice items ──────────────────────────────────────

@@ -298,6 +298,26 @@ class InvoiceController
     }
 
     /**
+     * GET /api/invoices/daily-products
+     */
+    public function dailyProducts(): void
+    {
+        header('Content-Type: application/json');
+        AuthMiddleware::authenticate();
+
+        try {
+            $dateFrom = $_GET['date_from'] ?? null;
+            $dateTo = $_GET['date_to'] ?? null;
+            $search = $_GET['search'] ?? null;
+            $daily = $this->service->getDailyProducts($dateFrom, $dateTo, $search);
+            echo json_encode(['data' => $daily]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to load daily products']);
+        }
+    }
+
+    /**
      * GET /api/invoices/{id}/receipt
      */
     public function receipt(string $id): void
