@@ -184,7 +184,7 @@ class PurchaseService
     public function getPurchases(int $page = 1, int $limit = 10, array $filters = []): array
     {
         $result = $this->repo->findAllPurchases($page, $limit, $filters);
-        $stats = $this->repo->getGlobalPurchaseStats();
+        $stats = $this->repo->getGlobalPurchaseStats($filters);
         $pagination = ArrayHelper::getPaginationMeta($page, $limit, $result['total']);
         
         return [
