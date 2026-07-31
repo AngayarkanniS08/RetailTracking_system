@@ -23,4 +23,12 @@ class ReportsController
             'currentRoute' => '/daily-sales',
         ]);
     }
+
+    public function dailyDetail(Request $request): void
+    {
+        View::render('reports/daily_register_detail', [
+            'pageTitle'    => 'Daily Register Detail',
+            'currentRoute' => '/daily-sales',
+        ]);
+    }
 }

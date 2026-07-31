@@ -355,32 +355,49 @@
     </div>
   </div>
 
-  <!-- Vendor Payment Modal -->
+  <!-- Vendor Payment Modal (Settle workflow) -->
   <div class="modal-overlay" id="vendorPaymentModal">
     <div class="modal-content">
       <div class="modal-header">
-        <div class="modal-title">Pay Vendor</div>
-        <button class="close-btn" onclick="closeModal('vendorPaymentModal')">&times;</button>
+        <div class="modal-title">Settle Vendor Purchase</div>
+        <button class="close-btn" onclick="closeModal('vendorPaymentModal')" aria-label="Close settlement">&times;</button>
       </div>
       <input type="hidden" id="vpPurchaseId">
       <input type="hidden" id="vpVendorId">
-      <div class="input-group">
-        <label class="input-label">Vendor Name</label>
-        <input type="text" id="vpVendorName" class="input-field" readonly>
+
+      <!-- Purchase Summary -->
+      <div style="margin: 1rem 0; padding: 1rem; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+          <span style="font-size: 0.72rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em;">Purchase</span>
+          <span id="vpPurchaseRef" style="font-size: 0.75rem; color: var(--muted); font-family: monospace;">—</span>
+        </div>
+        <div id="vpVendorName" style="font-weight: 600; color: var(--text-strong); font-size: 1.05rem;">-</div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.85rem;">
+          <span style="color: var(--muted);">Total: <strong id="vpTotalAmount" class="tabular-nums">₹0.00</strong></span>
+          <span style="color: var(--muted);">Paid: <strong id="vpPaidAmount" class="tabular-nums">₹0.00</strong></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">
+          <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-strong);">Outstanding</span>
+          <span id="vpOutstandingAmount" style="font-size: 1.35rem; font-weight: 800; color: var(--warning, #d97706);">₹0.00</span>
+        </div>
       </div>
+
       <div class="input-group">
-        <label class="input-label">Amount Paying now</label>
-        <input type="number" id="slAmountPaying" class="input-field" placeholder="e.g. 3000" min="0">
+        <label class="input-label" for="slAmountPaying">Amount Paying now</label>
+        <input type="number" id="slAmountPaying" class="input-field" placeholder="e.g. 3000" min="0" step="0.01" autofocus onkeydown="if(event.key==='Enter'){event.preventDefault(); submitVendorPayment();}">
       </div>
       <div id="slBalancedisplay"
         style="margin-top:-10px; margin-bottom:15px; font-size: 0.8rem; color: var(--muted); display:flex; justify-content:space-between; padding: 0 5px;">
-        <span id="slBalanceText">Balance After Payment: ₹0.00</span>
+        <span id="slBalanceText" role="status" aria-live="polite">Balance After Payment: ₹0.00</span>
       </div>
       <div class="input-group" style="flex:1;">
-        <label class="input-label">Payment Date</label>
-        <input type="date" id="vpPaymentDate" class="input-field">
+        <label class="input-label" for="vpPaymentDate">Payment Date</label>
+        <input type="date" id="vpPaymentDate" class="input-field" onkeydown="if(event.key==='Enter'){event.preventDefault(); submitVendorPayment();}">
       </div>
-      <button class="btn btn-primary btn-block" onclick="submitVendorPayment()">Record Payment</button>
+      <button class="btn btn-primary btn-block" id="submitVendorPaymentBtn" onclick="submitVendorPayment()" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+        <span id="submitVendorPaymentLabel">Record Payment</span>
+        <span id="submitVendorPaymentSpinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+      </button>
     </div>
   </div>
 

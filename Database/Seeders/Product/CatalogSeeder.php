@@ -28,6 +28,7 @@ class CatalogSeeder extends BaseSeeder
 
     protected function seed(): void
     {
+        $this->pdo->exec("SET app.current_user_id = '" . self::USER_ID . "'");
         $this->seedCategories();
     }
 

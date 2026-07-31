@@ -1,5 +1,13 @@
 {
     "require": {
         "google/apiclient": "^2.19"
+    },
+    "autoload": {
+        "psr-4": {
+            "Core\\": "src/Core/",
+            "Controllers\\": "src/Controllers/",
+            "Modules\\": "src/Modules/",
+            "Config\\": "src/Config/"
+        }
     }
 }

@@ -22,6 +22,9 @@ import { initSystemHealthPage } from './pages/system-health.js';
 import { initVendorsPage } from './pages/vendors.js';
 import { initCustomerCredit } from './pages/customers.js';
 import { initDayToDaySelling } from './pages/daily_sales.js';
+import { initDailyRegisterDetail } from './pages/daily_register_detail.js';
+import { initVendorHistorySummary } from './pages/vendor_history.js';
+import { initVendorHistoryDetail } from './pages/vendor_history_detail.js';
 
 import { API_BASE } from './core/config.js';
 import { apiRequest } from './core/api.js';
@@ -218,10 +221,16 @@ async function boot() {
     else if (id === 'inventory') initInventoryPage();
     else if (id === 'billing_pos') initBillingPage();
     else if (id === 'system_health') initSystemHealthPage();
-    else if (id === 'vendor_list' || id === 'vendor_history') initVendorsPage();
+    else if (id === 'vendor_list' || id === 'vendor_history' || id === 'vendorhistory') initVendorsPage();
     else if (id === 'credit_kadan' || id === 'customers') initCustomerCredit();
     else if (id === 'day_to_day_selling' || id === 'daily_sales') {
       initDayToDaySelling();
+    } else if (id === 'daily_register_detail_section' || id === 'daily_register_detail') {
+      initDailyRegisterDetail();
+    } else if (id === 'vendor_history_summary') {
+      initVendorHistorySummary();
+    } else if (id === 'vendor_history_detail') {
+      initVendorHistoryDetail();
     }
   }
 }

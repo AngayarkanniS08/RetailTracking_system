@@ -1,15 +1,13 @@
-/**
- * daily_sales.js — Day to Day Selling page controller
- * Fetches invoices from /api/invoices, updates KPI cards, renders timeline table, and handles live search.
- */
-
 import { apiRequest } from '../core/api.js';
 import { formatCurrency, formatDate } from '../utils/format.js';
 import { logger } from '../core/logger.js';
 import { getToken } from '../core/storage.js';
 import { API_BASE } from '../core/config.js';
 
-let _cachedInvoices = [];
+let _allInvoices = [];
+let _currentPage = 1;
+let _totalPages = 1;
+const PER_PAGE = 200;
 
 window.openReceipt = function (invoiceId) {
   const token = getToken();
@@ -18,37 +16,105 @@ window.openReceipt = function (invoiceId) {
 };
 
 export async function initDayToDaySelling() {
-  const table = document.getElementById('salesTimelineTable');
-  const tbody = table?.querySelector('tbody');
+  _allInvoices = [];
+  _currentPage = 1;
+  _totalPages = 1;
+  await loadPage(1, true);
+}
+
+async function loadPage(page, replace = false) {
+  const tbody = document.querySelector('#salesTimelineTable tbody');
   const emptyState = document.getElementById('salesEmptyState');
+  const loadMoreBtn = document.getElementById('salesLoadMore');
 
   try {
-    const res = await apiRequest('/api/invoices?limit=100');
+    const res = await apiRequest(`/api/invoices?page=${page}&limit=${PER_PAGE}`);
     const invoices = Array.isArray(res) ? res : (res?.data || res?.invoices || []);
-    _cachedInvoices = invoices;
+    const pagination = res?.pagination || {};
 
-    renderSalesTimeline(invoices);
-    renderKPISummary(invoices);
+    if (replace) {
+      _allInvoices = invoices;
+    } else {
+      _allInvoices = _allInvoices.concat(invoices);
+    }
+
+    _currentPage = pagination?.current_page || page;
+    _totalPages = pagination?.total_pages || 1;
+
+    renderSalesTimeline(_allInvoices);
+    renderKPISummary(_allInvoices);
+
+    if (loadMoreBtn) {
+      const hasMore = _currentPage < _totalPages;
+      loadMoreBtn.style.display = hasMore ? 'inline-flex' : 'none';
+      loadMoreBtn.disabled = false;
+      loadMoreBtn.textContent = hasMore
+        ? `Load More (${_currentPage}/${_totalPages})`
+        : 'All loaded';
+    }
+
+    if (emptyState) emptyState.style.display = invoices.length === 0 ? 'flex' : 'none';
   } catch (err) {
-    logger.error('daily_sales', 'Failed to load day-to-day sales:', err);
+    logger.error('daily_sales', 'Failed to load invoices:', err);
     if (emptyState) emptyState.style.display = 'flex';
   }
+}
+
+window.loadMoreSales = async function () {
+  const btn = document.getElementById('salesLoadMore');
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+  await loadPage(_currentPage + 1, false);
+};
+
+export function groupInvoicesByDate(invoices = []) {
+  const groups = new Map();
+
+  invoices.forEach(inv => {
+    const dateStr = inv.billedAt || inv.created_at || inv.billed_at || '';
+    const dateKey = dateStr ? new Date(dateStr).toLocaleDateString('en-CA') : '';
+    if (!dateKey) return;
+
+    if (!groups.has(dateKey)) {
+      groups.set(dateKey, {
+        date: dateKey,
+        invoiceCount: 0,
+        totalSales: 0,
+        paidCount: 0,
+        creditCount: 0,
+      });
+    }
+
+    const g = groups.get(dateKey);
+    g.invoiceCount += 1;
+    g.totalSales += parseFloat(inv.grandTotal ?? inv.grand_total) || 0;
+
+    const status = (inv.invoiceStatus || inv.invoice_status || '').toUpperCase();
+    if (status === 'CANCELLED') return;
+
+    const payment = (inv.paymentStatus || inv.payment_mode || '').toUpperCase();
+    if (payment === 'PAID' || payment === 'CASH' || payment === 'CARD' || payment === 'UPI') {
+      g.paidCount += 1;
+    } else {
+      g.creditCount += 1;
+    }
+  });
+
+  return Array.from(groups.values()).sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export function renderSalesTimeline(invoices = []) {
   const tableContainer = document.querySelector('#salesTimelineTable')?.closest('.table-container');
   const tbody = document.querySelector('#salesTimelineTable tbody');
-  const emptyState = document.getElementById('salesEmptyState');
 
   if (tableContainer) tableContainer.style.display = 'block';
-
   if (!tbody) return;
 
-  if (!invoices || invoices.length === 0) {
-    if (emptyState) emptyState.style.display = 'none';
+  const groups = groupInvoicesByDate(invoices);
+
+  if (groups.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; padding: 48px 24px; color: var(--muted);">
+        <td colspan="5" style="text-align: center; padding: 48px 24px; color: var(--muted);">
           <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; color: var(--text-strong);">No sales records found</div>
           <div style="font-size: 0.82rem;">Sales completed through POS Billing will appear here in real-time.</div>
         </td>
@@ -57,65 +123,29 @@ export function renderSalesTimeline(invoices = []) {
     return;
   }
 
-  if (emptyState) emptyState.style.display = 'none';
-
-  tbody.innerHTML = invoices.map(inv => {
-    const dateStr = inv.billedAt || inv.created_at || inv.billed_at || '';
-    const formattedDate = dateStr ? formatDate(dateStr) : '—';
-    const invNumber = inv.invoiceNumber || inv.invoice_number || ('INV-' + String(inv.id).slice(0, 8));
-    const customer = inv.customerName || inv.customer_name_snapshot || 'Walk-in Customer';
-    const itemsText = inv.itemsSummary || inv.items_summary || (
-      Array.isArray(inv.items) && inv.items.length > 0
-        ? inv.items.map(i => `${i.product_name || i.productName || 'Item'} (x${i.quantity || 1})`).join(', ')
-        : '1 item'
-    );
-    const grandTotal = inv.grandTotal ?? inv.grand_total ?? 0;
-    const paymentMode = (inv.paymentStatus || inv.payment_mode || 'cash').toUpperCase();
-    const status = (inv.invoiceStatus || inv.invoice_status || 'completed').toUpperCase();
-
-    const getPaymentBadge = (mode) => {
-      switch (mode) {
-        case 'CREDIT': return 'bg-warning text-dark';
-        case 'CARD':   return 'bg-primary';
-        case 'UPI':    return 'bg-info text-dark';
-        case 'CASH':   return 'bg-success';
-        default:       return 'bg-secondary';
-      }
-    };
-
-    const getStatusBadge = (st) => {
-      switch (st) {
-        case 'CANCELLED': return 'bg-danger';
-        case 'PENDING':
-        case 'PARTIAL':   return 'bg-warning text-dark';
-        case 'RETURNED':  return 'bg-secondary';
-        case 'COMPLETED':
-        case 'PAID':
-        default:          return 'bg-success';
-      }
-    };
-
-    const paymentBadgeClass = getPaymentBadge(paymentMode);
-    const statusBadgeClass  = getStatusBadge(status);
-
+  tbody.innerHTML = groups.map(g => {
+    const detailUrl = `/daily-sales/detail?date=${encodeURIComponent(g.date)}`;
     return `
       <tr style="border-bottom: 1px solid var(--border);">
-        <td style="padding: 14px 16px; font-weight: 500; color: var(--text-strong);">${formattedDate}</td>
-        <td style="padding: 14px 16px; font-weight: 600; color: var(--accent);">${invNumber}</td>
-        <td style="padding: 14px 16px;">
-          <div style="font-weight: 600; color: var(--text-strong);">${customer}</div>
-          <div style="font-size: 0.75rem; color: var(--muted);">${inv.customerPhone || inv.customer_phone_snapshot || ''}</div>
+        <td style="padding: 14px 16px; font-weight: 600;">
+          <a href="${detailUrl}" title="View all ${g.invoiceCount} invoice(s) generated on ${formatDate(g.date)}" style="color: var(--accent); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+            ${formatDate(g.date)}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.7;">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
         </td>
-        <td style="padding: 14px 16px; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted);">${itemsText}</td>
-        <td style="padding: 14px 16px; font-weight: 700; color: var(--text-strong);">${formatCurrency(grandTotal)}</td>
         <td style="padding: 14px 16px;">
-          <span class="badge rounded-pill ${paymentBadgeClass}">${paymentMode}</span>
+          <span class="badge rounded-pill bg-primary">${g.invoiceCount}</span>
+        </td>
+        <td style="padding: 14px 16px; font-weight: 700; color: var(--text-strong);">${formatCurrency(g.totalSales)}</td>
+        <td style="padding: 14px 16px;">
+          <span class="badge rounded-pill bg-success">${g.paidCount} Paid</span>
         </td>
         <td style="padding: 14px 16px;">
-          <span class="badge rounded-pill ${statusBadgeClass}">${status}</span>
-        </td>
-        <td style="padding: 14px 16px; text-align: right;">
-          <button onclick="openReceipt('${inv.id}')" class="btn btn-xs btn-outline" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor:pointer;">Print Receipt</button>
+          <span class="badge rounded-pill bg-warning text-dark">${g.creditCount} Credit / Pending</span>
         </td>
       </tr>
     `;
@@ -143,12 +173,13 @@ export function renderKPISummary(invoices = []) {
 
 window.initDayToDaySelling = initDayToDaySelling;
 window.renderSalesTimeline = renderSalesTimeline;
+window.groupInvoicesByDate = groupInvoicesByDate;
 window.onSalesSearchInput = function () {
   const searchInput = document.getElementById('salesSearch');
   if (!searchInput) return;
   const query = searchInput.value.toLowerCase().trim();
 
-  const filtered = _cachedInvoices.filter(inv => {
+  const filtered = _allInvoices.filter(inv => {
     const num = (inv.invoiceNumber || inv.invoice_number || '').toLowerCase();
     const cust = (inv.customerName || inv.customer_name_snapshot || '').toLowerCase();
     const phone = (inv.customerPhone || inv.customer_phone_snapshot || '').toLowerCase();

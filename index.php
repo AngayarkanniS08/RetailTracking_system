@@ -32,17 +32,20 @@ foreach ($autoloadPaths as $path) {
 
 // Fallback PSR-4 Autoloader for src/ directory
 spl_autoload_register(function ($class) {
-    $prefix = 'Core\\';
-    if (str_starts_with($class, $prefix)) {
-        $file = __DIR__ . '/src/Core/' . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
-        if (file_exists($file)) require_once $file;
-        return;
-    }
-    $prefixController = 'Controllers\\';
-    if (str_starts_with($class, $prefixController)) {
-        $file = __DIR__ . '/src/Controllers/' . str_replace('\\', '/', substr($class, strlen($prefixController))) . '.php';
-        if (file_exists($file)) require_once $file;
-        return;
+    $prefixes = [
+        'Core\\' => __DIR__ . '/src/Core/',
+        'Controllers\\' => __DIR__ . '/src/Controllers/',
+        'Modules\\' => __DIR__ . '/src/Modules/',
+        'Config\\' => __DIR__ . '/src/Config/'
+    ];
+    foreach ($prefixes as $prefix => $baseDir) {
+        if (str_starts_with($class, $prefix)) {
+            $file = $baseDir . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+            if (file_exists($file)) {
+                require_once $file;
+                return;
+            }
+        }
     }
 });
 
@@ -79,10 +82,12 @@ $router->get('/products',        [ProductController::class, 'index'],   [AuthMid
 $router->get('/products/history', [ProductController::class, 'history'], [AuthMiddleware::class]);
 $router->get('/vendors',         [VendorController::class, 'index'],    [AuthMiddleware::class]);
 $router->get('/vendors/history', [VendorController::class, 'history'],  [AuthMiddleware::class]);
+$router->get('/vendors/history/detail', [VendorController::class, 'historyDetail'], [AuthMiddleware::class]);
 $router->get('/customers',       [CustomerController::class, 'index'],  [AuthMiddleware::class]);
 $router->get('/customer-bills',  [CustomerController::class, 'bills'],  [AuthMiddleware::class]);
 $router->get('/reports',         [ReportsController::class, 'index'],    [AuthMiddleware::class]);
 $router->get('/daily-sales',     [ReportsController::class, 'daily'],    [AuthMiddleware::class]);
+$router->get('/daily-sales/detail', [ReportsController::class, 'dailyDetail'], [AuthMiddleware::class]);
 $router->get('/system/health',   [HealthController::class, 'index'],    [AuthMiddleware::class]);
 $router->get('/settings/backup', [SettingsController::class, 'backup'],  [AuthMiddleware::class]);
 $router->get('/backup',          [SettingsController::class, 'backup'],  [AuthMiddleware::class]);

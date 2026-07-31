@@ -114,7 +114,7 @@ class InventoryPage {
           <td class="tabular-nums">${formatCurrency(item.selling_price ?? 0)}</td>
           <td style="font-weight: 600;">${qty} ${item.unit || ''}</td>
           <td>
-            <span class="badge ${this._statusBadge(qty, item.min_threshold ?? 10)}">
+            <span class="badge rounded-pill ${this._statusBadge(qty, item.min_threshold ?? 10)}">
               ${this._statusText(qty, item.min_threshold ?? 10)}
             </span>
           </td>
@@ -127,9 +127,9 @@ class InventoryPage {
   }
 
   _statusBadge(qty, threshold) {
-    if (qty <= 0) return 'badge-danger';
-    if (qty <= threshold) return 'badge-warning';
-    return 'badge-success';
+    if (qty <= 0) return 'bg-danger';
+    if (qty <= threshold) return 'bg-warning text-dark';
+    return 'bg-success';
   }
 
   _statusText(qty, threshold) {

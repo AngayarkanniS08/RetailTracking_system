@@ -13,6 +13,104 @@
   margin-bottom: 1.5rem;
 }
 
+/* ── Vendor History Table Layout ── */
+#vendorhistory .card-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+#historyPaginationControls {
+  padding: 14px 16px;
+}
+
+.vendor-history-table {
+  overflow-x: auto;
+}
+
+.vendor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  background: var(--card);
+}
+
+.vendor-table th {
+  background: var(--surface-container-low);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.vendor-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text-strong);
+}
+
+.vendor-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.vendor-table tbody tr:hover td {
+  background: var(--surface-container-low);
+}
+
+.vendor-table .vh-th-amount,
+.vendor-table .vh-amounts {
+  text-align: right;
+}
+
+.vendor-table .vh-amounts {
+  white-space: nowrap;
+}
+
+.vh-vendor {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.vh-date {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.vh-phone {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.vh-items {
+  max-width: 320px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.vh-total {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.vh-paid {
+  font-size: 0.75rem;
+  color: var(--ok);
+}
+
+.status-badge {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 /* ── Vendor Table Styling & Visual Hierarchy ── */
 #vendorPurchaseTable th {
   background: var(--surface-container-low);

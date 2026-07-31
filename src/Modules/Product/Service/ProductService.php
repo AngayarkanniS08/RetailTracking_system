@@ -7,7 +7,7 @@ use Modules\Auth\Validation\ValidationException;
 
 use Modules\Product\Repository\Contract\CategoryRepositoryInterface;
 use App\Common\Helpers\ArrayHelper;
-use Core\Cache\ValkeyCache;
+use Core\Cache\CacheInvalidationService;
 
 class ProductService
 {
@@ -33,17 +33,12 @@ class ProductService
     }
 
     private function invalidateProductSearchCache(): void {
-    try {
-        $valkey = ValkeyCache::getClient();
-        // Scan for keys (use a pattern; be careful with large key sets)
-        $keys = $valkey->keys('products:search:*');
-        if ($keys) {
-            $valkey->del($keys);
-        }
-    } catch (\Exception $e) {
-        error_log('Cache invalidation failed: ' . $e->getMessage());
+        $service = new CacheInvalidationService();
+        $service->invalidatePattern(
+            'products:search:*',
+            ['operation' => 'productMutation', 'source' => 'ProductService']
+        );
     }
-}
 
 
     /**

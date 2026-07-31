@@ -44,6 +44,34 @@ hr{border:none;border-top:1px dashed #000;margin:4px 0}
 .barcode-text{text-align:center;margin-top:10px;letter-spacing:2px;font-size:10px}
 .barcode{height:40px;margin:6px auto;width:85%;background:repeating-linear-gradient(to right,#000 0px,#000 2px,#fff 2px,#fff 4px,#000 4px,#000 5px,#fff 5px,#fff 7px)}
 .footer{text-align:center;margin-top:6px;line-height:16px;font-size:10px}
+
+/* ── Modern Return Component (no-print) ── */
+.no-print{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:12px;align-items:stretch;width:380px;font-family:Inter,system-ui,-apple-system,sans-serif}
+.no-print>button{width:100%}
+.btn-return-toggle{padding:10px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background-color .2s}
+.btn-return-toggle:hover{background:#4f46e5}
+.btn-print{padding:12px 24px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background-color .2s}
+.btn-print:hover{background:#4f46e5}
+#receiptReturnSection{display:none;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;max-height:70vh;overflow-y:auto;font-size:13px;color:#1f2937;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1)}
+#receiptReturnSection .rr-header{font-size:14px;font-weight:700;color:#111827;margin-bottom:12px}
+.rr-list-header{display:grid;grid-template-columns:2fr 80px 100px;gap:12px;padding:6px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;background:#f3f4f6;border-radius:8px 8px 0 0;position:sticky;top:0;z-index:1}
+#receiptReturnItems{display:flex;flex-direction:column;gap:8px}
+.receipt-ret-row{display:grid;grid-template-columns:2fr 80px 100px;gap:12px;align-items:center;padding:12px;background:#f8fafc;border:1px solid #eef2f7;border-radius:10px}
+.receipt-ret-row .rr-info{min-width:0}
+.receipt-ret-row .rr-name{font-weight:600;font-size:12px;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.receipt-ret-row .rr-meta{font-size:11px;color:#6b7280}
+.receipt-ret-row input{width:100%;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#111827;font-size:12px;text-align:center;padding:6px 8px;box-sizing:border-box}
+.receipt-ret-row input:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.15)}
+.rr-empty{color:#6b7280;text-align:center;padding:16px}
+.rr-reason-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;margin-top:12px}
+.badge-pill{display:inline-block;padding:.35em .65em;font-size:.75em;font-weight:700;border-radius:50rem;background-color:#f8f9fa;color:#212529;border:1px solid #dee2e6;cursor:pointer;transition:background-color .2s,border-color .2s;white-space:nowrap}
+.badge-pill:hover{background-color:#e2e6ea;border-color:#ced4da}
+#receiptRetReason{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#111827;font-size:12px;margin-top:12px;box-sizing:border-box}
+#receiptRetReason:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.15)}
+.btn-process-return{width:100%;margin-top:10px;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background-color .2s}
+.btn-process-return:hover{background:#dc2626}
+.btn-process-return:disabled{background:#fca5a5;cursor:not-allowed}
+
 @media print{body{background:#fff;padding:0}.bill{box-shadow:none}.no-print{display:none!important}}
 </style>
 </head>
@@ -182,12 +210,17 @@ $sgstLabel = 'SGST' . ($gstRateDisplay !== null ? ' @ ' . number_format($gstRate
 
 </div>
 
-<div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:999; display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-    <button onclick="toggleReturnSection()" style="padding:8px 16px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">
+<div class="no-print">
+    <button onclick="toggleReturnSection()" class="btn-return-toggle">
         ↩️ Return Items
     </button>
-    <div id="receiptReturnSection" style="display:none; width:360px; background:#1a1d27; border:1px solid #2a2d3a; border-radius:8px; padding:12px; max-height:420px; overflow-y:auto; font-size:12px; color:#e4e4e7;">
-        <div style="font-weight:700; margin-bottom:8px; color:#818cf8;">Return Items</div>
+    <div id="receiptReturnSection">
+        <div class="rr-header">Return Items</div>
+        <div class="rr-list-header">
+            <span>Item</span>
+            <span style="text-align:center;">Qty</span>
+            <span style="text-align:right;">Refund</span>
+        </div>
         <div id="receiptReturnItems">
             <?php $anyReturnable = false; ?>
             <?php foreach ($items as $item):
@@ -195,30 +228,30 @@ $sgstLabel = 'SGST' . ($gstRateDisplay !== null ? ' @ ' . number_format($gstRate
                 if ($ret <= 0) continue;
                 $anyReturnable = true;
             ?>
-            <div class="receipt-ret-row" style="display:flex; gap:6px; align-items:center; margin-bottom:6px; padding:6px; background:#13151d; border-radius:4px;" data-item-id="<?= $item->id ?>" data-unit-price="<?= $item->unitPrice ?>" data-max="<?= $ret ?>">
-                <div style="flex:1; min-width:0;">
-                    <div style="font-weight:500; font-size:11px;"><?= htmlspecialchars($item->productNameSnapshot ?: 'Item') ?></div>
-                    <div style="font-size:10px; color:#a0a0a8;">Sold: <?= number_format($item->quantity, 0) ?> × ₹<?= number_format($item->unitPrice, 2) ?></div>
+            <div class="receipt-ret-row" data-item-id="<?= $item->id ?>" data-unit-price="<?= $item->unitPrice ?>" data-max="<?= $ret ?>">
+                <div class="rr-info">
+                    <div class="rr-name"><?= htmlspecialchars($item->productNameSnapshot ?: 'Item') ?></div>
+                    <div class="rr-meta">Sold: <?= number_format($item->quantity, 0) ?> × ₹<?= number_format($item->unitPrice, 2) ?></div>
                 </div>
-                <input type="number" class="rr-qty" value="0" min="0" max="<?= $ret ?>" placeholder="Qty" style="width:55px; padding:3px 4px; border:1px solid #3a3d4a; border-radius:3px; background:#0e1015; color:#e4e4e7; font-size:11px; text-align:center;">
-                <input type="number" class="rr-refund" value="0" min="0" placeholder="₹" style="width:65px; padding:3px 4px; border:1px solid #3a3d4a; border-radius:3px; background:#0e1015; color:#e4e4e7; font-size:11px; text-align:right;">
+                <input type="number" class="rr-qty" value="0" min="0" max="<?= $ret ?>" placeholder="Qty">
+                <input type="number" class="rr-refund" value="0" min="0" placeholder="₹">
             </div>
             <?php endforeach; ?>
             <?php if (!$anyReturnable): ?>
-            <div style="color:#a0a0a8; text-align:center; padding:12px;">No returnable items</div>
+            <div class="rr-empty">No returnable items</div>
             <?php endif; ?>
         </div>
-        <div style="display:flex; gap:3px; flex-wrap:wrap; margin-top:6px;">
-          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Wrong size'">Wrong size</button>
-          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Damaged'">Damaged</button>
-          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Quality issue'">Quality</button>
-          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Wrong item'">Wrong item</button>
-          <button type="button" style="font-size:9px;padding:1px 6px;cursor:pointer;background:#2a2d3a;color:#e4e4e7;border:1px solid #3a3d4a;border-radius:3px;" onclick="document.getElementById('receiptRetReason').value='Changed mind'">Changed mind</button>
+        <div class="rr-reason-grid">
+          <button type="button" class="badge-pill" onclick="document.getElementById('receiptRetReason').value='Wrong size'">Wrong size</button>
+          <button type="button" class="badge-pill" onclick="document.getElementById('receiptRetReason').value='Damaged'">Damaged</button>
+          <button type="button" class="badge-pill" onclick="document.getElementById('receiptRetReason').value='Quality issue'">Quality</button>
+          <button type="button" class="badge-pill" onclick="document.getElementById('receiptRetReason').value='Wrong item'">Wrong item</button>
+          <button type="button" class="badge-pill" onclick="document.getElementById('receiptRetReason').value='Changed mind'">Changed mind</button>
         </div>
-        <input type="text" id="receiptRetReason" placeholder="Reason (min 3 chars)" style="width:100%; padding:4px 6px; border:1px solid #3a3d4a; border-radius:3px; background:#0e1015; color:#e4e4e7; font-size:11px; margin-top:4px;">
-        <button onclick="submitReceiptReturn('<?= $invoice->id ?>')" style="width:100%; margin-top:6px; padding:6px; background:#6366f1; color:#fff; border:none; border-radius:4px; font-size:12px; cursor:pointer;">Process Return</button>
+        <input type="text" id="receiptRetReason" placeholder="Reason (min 3 chars)">
+        <button id="processReturnBtn" onclick="submitReceiptReturn('<?= $invoice->id ?>')" class="btn-process-return">Process Return</button>
     </div>
-    <button onclick="window.print()" style="padding:10px 24px;background:#1a3a5a;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">
+    <button onclick="window.print()" class="btn-print">
         🖨️ Print
     </button>
 </div>
@@ -279,7 +312,7 @@ function submitReceiptReturn(invoiceId) {
         return;
     }
 
-    var btn = document.querySelector('#receiptReturnSection button');
+    var btn = document.getElementById('processReturnBtn');
     if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
 
     fetch('/api/invoices/' + invoiceId + '/return', {

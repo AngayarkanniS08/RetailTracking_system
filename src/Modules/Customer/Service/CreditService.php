@@ -200,16 +200,10 @@ class CreditService
 
     private function invalidateCache(): void
     {
-        try {
-            $valkey = \Core\Cache\ValkeyCache::getClient();
-            foreach (['credit:*', 'billing:invoices:*'] as $pattern) {
-                $keys = $valkey->keys($pattern);
-                if ($keys) {
-                    $valkey->del($keys);
-                }
-            }
-        } catch (\Exception $e) {
-            error_log('Valkey credit cache invalidation failed: ' . $e->getMessage());
-        }
+        $service = new \Core\Cache\CacheInvalidationService();
+        $service->invalidatePatterns(
+            ['credit:*', 'billing:invoices:*'],
+            ['operation' => 'creditMutation', 'source' => 'CreditService']
+        );
     }
 }

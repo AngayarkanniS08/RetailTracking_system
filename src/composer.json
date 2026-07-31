@@ -8,6 +8,7 @@
     "autoload": {
         "psr-4": {
             "Core\\": "Core/",
+            "Controllers\\": "Controllers/",
             "Modules\\": "Modules/",
             "Config\\": "../config/",
             "App\\Common\\Helpers\\": "helpers/"

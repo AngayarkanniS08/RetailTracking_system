@@ -16,16 +16,24 @@ import { clearToken, clearUser } from './storage.js';
  * Called on 401 when token refresh fails.
  */
 export async function logoutUser() {
-  // Clear localStorage
+  // 1. Clear localStorage
   clearToken();
   clearUser();
 
-  // Hit server logout route to clear HttpOnly cookies via Set-Cookie: max-age=0
+  // 2. Clear client document cookies
+  document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+  document.cookie = 'auth_uid=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+
+  // 3. Hit server logout route to clear HttpOnly cookies via Set-Cookie: max-age=0
   try {
     await fetch('/logout', { credentials: 'include' });
   } catch {
     // Ignore network errors — proceed to redirect regardless
   }
 
-  window.location.href = '/login';
+  // 4. Single deterministic redirect ONLY if not already on a guest route
+  const guestRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+  if (!guestRoutes.includes(window.location.pathname)) {
+    window.location.href = '/login';
+  }
 }

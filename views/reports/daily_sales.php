@@ -6,7 +6,10 @@
 
   <!-- Page Header Row: Title on Left, Search Input on Right -->
   <div class="page-header-row" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px;">
-    <h1 style="font-size: 1.4rem; font-weight: 700; color: var(--text-strong); margin: 0; letter-spacing: -0.02em;">Day to Day Selling</h1>
+    <div>
+      <h1 style="font-size: 1.4rem; font-weight: 700; color: var(--text-strong); margin: 0; letter-spacing: -0.02em;">Day to Day Selling</h1>
+      <div style="font-size: 0.82rem; color: var(--muted); margin-top: 4px;">Daily summary — click a date to view all invoices generated that day.</div>
+    </div>
     
     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
       <div class="search-input-wrapper" style="position: relative; width: 300px;">
@@ -14,7 +17,7 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" id="salesSearch" class="input-field" placeholder="Search by invoice number or date..."
+        <input type="text" id="salesSearch" class="input-field" placeholder="Search by invoice number, customer or phone..."
                oninput="onSalesSearchInput()" style="padding-left: 36px; height: 38px; font-size: 0.85rem; border-radius: var(--radius-md);" />
       </div>
     </div>
@@ -56,19 +59,24 @@
         <thead>
           <tr style="background: var(--surface-container-low); border-bottom: 1px solid var(--border); text-align: left;">
             <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">DATE</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">INVOICE #</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">CUSTOMER</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">ITEMS</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL AMOUNT</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">PAYMENT TYPE</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">STATUS</th>
-            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">ACTION</th>
+            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">INVOICES</th>
+            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL SALES</th>
+            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">PAID</th>
+            <th style="padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;">CREDIT / PENDING</th>
           </tr>
         </thead>
         <tbody>
           <!-- Rendered dynamically via daily_sales.js -->
         </tbody>
       </table>
+    </div>
+
+    <!-- Load More Pagination -->
+    <div style="display: flex; justify-content: center; padding: 0;">
+      <button id="salesLoadMore" class="btn btn-outline btn-sm" onclick="loadMoreSales()"
+              style="display: none; padding: 8px 24px; font-size: 0.85rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer;">
+        Load More
+      </button>
     </div>
 
     <!-- Empty State Container (Matching Reference Screenshot Design) -->

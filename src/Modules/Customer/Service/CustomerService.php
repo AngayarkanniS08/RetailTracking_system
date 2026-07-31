@@ -8,7 +8,7 @@ use Modules\Customer\Model\CreditPayment;
 use Modules\Customer\Model\CreditLedger;
 use Modules\Customer\Repository\Contract\CustomerRepositoryInterface;
 use Modules\Auth\Validation\ValidationException;
-use Core\Cache\ValkeyCache;
+use Core\Cache\CacheInvalidationService;
 
 class CustomerService
 {
@@ -130,6 +130,13 @@ class CustomerService
         $dataWithSummaries = [];
         foreach ($result['data'] as $customer) {
             $summary = $this->repo->getCustomerSummary($customer['id']);
+            $creditLimit = (float)($customer['credit_limit'] ?? 0);
+            $balance = (float)($summary['balance'] ?? 0);
+            $summary['credit_limit'] = $creditLimit;
+            $summary['available_credit'] = round(max(0, $creditLimit - $balance), 2);
+            $summary['credit_limit_remaining'] = round(max(0, $creditLimit - $balance), 2);
+            $summary['credit_limit_exceeded'] = $balance > $creditLimit;
+            $summary['outstanding_balance'] = max(0, $balance);
             $dataWithSummaries[] = array_merge($customer, $summary);
         }
 
@@ -308,16 +315,10 @@ class CustomerService
 
     private function invalidateCaches(): void
     {
-        try {
-            $valkey = ValkeyCache::getClient();
-            foreach (['credit:*', 'billing:invoices:*'] as $pattern) {
-                $keys = $valkey->keys($pattern);
-                if ($keys) {
-                    $valkey->del($keys);
-                }
-            }
-        } catch (\Exception $e) {
-            error_log('Valkey credit cache invalidation failed: ' . $e->getMessage());
-        }
+        $service = new CacheInvalidationService();
+        $service->invalidatePatterns(
+            ['credit:*', 'billing:invoices:*'],
+            ['operation' => 'customerMutation', 'source' => 'CustomerService']
+        );
     }
 }

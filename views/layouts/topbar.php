@@ -37,6 +37,13 @@
             $breadcrumbs[] = ['name' => 'Operations & Finance', 'url' => '#', 'active' => false];
             $breadcrumbs[] = ['name' => 'Day to Day Selling', 'url' => '/daily-sales', 'active' => true];
             break;
+          case '/daily-sales/detail':
+            $targetDate = trim($_GET['date'] ?? '');
+            $crumbTitle = !empty($targetDate) ? htmlspecialchars($targetDate) : 'Daily Detail';
+            $breadcrumbs[] = ['name' => 'Operations & Finance', 'url' => '#', 'active' => false];
+            $breadcrumbs[] = ['name' => 'Day to Day Selling', 'url' => '/daily-sales', 'active' => false];
+            $breadcrumbs[] = ['name' => $crumbTitle, 'url' => $_SERVER['REQUEST_URI'], 'active' => true];
+            break;
           case '/products':
             $breadcrumbs[] = ['name' => 'Goods & Supply', 'url' => '#', 'active' => false];
             $breadcrumbs[] = ['name' => 'Product Master', 'url' => '/products', 'active' => true];
@@ -52,6 +59,13 @@
           case '/vendors/history':
             $breadcrumbs[] = ['name' => 'Goods & Supply', 'url' => '#', 'active' => false];
             $breadcrumbs[] = ['name' => 'Vendor History', 'url' => '/vendors/history', 'active' => true];
+            break;
+          case '/vendors/history/detail':
+            $targetDate = trim($_GET['date'] ?? '');
+            $crumbTitle = !empty($targetDate) ? htmlspecialchars($targetDate) : 'Detail';
+            $breadcrumbs[] = ['name' => 'Goods & Supply', 'url' => '#', 'active' => false];
+            $breadcrumbs[] = ['name' => 'Vendor History', 'url' => '/vendors/history', 'active' => false];
+            $breadcrumbs[] = ['name' => $crumbTitle, 'url' => $_SERVER['REQUEST_URI'], 'active' => true];
             break;
           case '/system/health':
             $breadcrumbs[] = ['name' => 'System', 'url' => '#', 'active' => false];

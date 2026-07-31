@@ -84,6 +84,10 @@ export async function apiRequest(path, options = {}) {
     }
 
     if (response.status === 401) {
+      if (path.includes('login') || url.includes('login')) {
+        return response;
+      }
+
       if (!retryAllowed) {
         logoutUser();
         throw new Error('Session expired');

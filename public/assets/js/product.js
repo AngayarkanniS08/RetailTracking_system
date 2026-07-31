@@ -62,8 +62,10 @@
     // ============================================
     let categories = [];
     let products   = [];
+    let allSubcategories = [];
     let productSubcategories = [];
     let activeCategoryFilter = 'all';
+    let activeSubcategoryFilter = 'all';
 
     // ============================================
     // Fetch data from API (always re-fetches)
@@ -74,11 +76,24 @@
             const catList = Array.isArray(data) ? data : (data?.data || []);
             categories = catList;
             renderCategoryTabs();
+            populateCategoryHeaderFilter();
             populateCategoryCombobox();   // product-add modal combobox
             populateSubcategoryDropdown();  // sub-category section in manage modal
             updateStats();
         } catch (e) {
             console.error('Error loading categories:', e);
+        }
+    }
+
+    async function loadAllSubcategories() {
+        try {
+            const data = await window.apiRequest('/api/subcategories');
+            const subList = Array.isArray(data) ? data : (data?.data || []);
+            allSubcategories = subList;
+            populateSubcategoryHeaderFilter();
+            updateStats();
+        } catch (e) {
+            console.error('Error loading subcategories:', e);
         }
     }
 
@@ -94,6 +109,64 @@
             console.error('Error loading products:', e);
         }
     }
+
+    // ============================================
+    // Header Filter Dropdowns (Category & Subcategory)
+    // ============================================
+    function populateCategoryHeaderFilter() {
+        const select = document.getElementById('thCategoryFilter');
+        if (!select) return;
+        select.innerHTML = '<option value="all">All Categories</option>';
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            if (activeCategoryFilter === cat.id) opt.selected = true;
+            select.appendChild(opt);
+        });
+        select.value = activeCategoryFilter;
+    }
+
+    function populateSubcategoryHeaderFilter() {
+        const select = document.getElementById('thSubcategoryFilter');
+        if (!select) return;
+        select.innerHTML = '<option value="all">All Subcategories</option>';
+
+        let relevantSubs = allSubcategories;
+        if (activeCategoryFilter !== 'all') {
+            relevantSubs = allSubcategories.filter(s => s.category_id === activeCategoryFilter);
+        }
+
+        relevantSubs.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub.id;
+            opt.textContent = sub.name;
+            if (activeSubcategoryFilter === sub.id) opt.selected = true;
+            select.appendChild(opt);
+        });
+
+        // Ensure active filter value is valid
+        if (activeSubcategoryFilter !== 'all' && !relevantSubs.some(s => s.id === activeSubcategoryFilter)) {
+            activeSubcategoryFilter = 'all';
+        }
+
+        select.value = activeSubcategoryFilter;
+    }
+
+    window.onCategoryColumnFilterChange = function(val) {
+        activeCategoryFilter = val;
+        activeSubcategoryFilter = 'all';
+        populateCategoryHeaderFilter();
+        populateSubcategoryHeaderFilter();
+        renderCategoryTabs();
+        renderProductTable();
+    };
+
+    window.onSubcategoryColumnFilterChange = function(val) {
+        activeSubcategoryFilter = val;
+        populateSubcategoryHeaderFilter();
+        renderProductTable();
+    };
 
     // ============================================
     // Render UI
@@ -153,7 +226,10 @@
         
         let filtered = products;
         if (activeCategoryFilter !== 'all') {
-            filtered = filtered.filter(p => p.category_id === activeCategoryFilter);
+            filtered = filtered.filter(p => p.category_id === activeCategoryFilter || p.category_name === activeCategoryFilter);
+        }
+        if (activeSubcategoryFilter !== 'all') {
+            filtered = filtered.filter(p => p.subcategory_id === activeSubcategoryFilter || p.subcategory_name === activeSubcategoryFilter);
         }
         if (query) {
             filtered = filtered.filter(p => 
@@ -810,6 +886,7 @@
     // ============================================
     async function initProductMaster() {
         await loadCategories();
+        await loadAllSubcategories();
         await loadProducts();
         initComboboxes();
     }

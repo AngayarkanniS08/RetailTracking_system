@@ -281,6 +281,11 @@ class PurchaseController
     public function vendorHistory(string $vendorId): void
     {
         header('Content-Type: application/json');
+        if (empty($vendorId) || $vendorId === 'null' || $vendorId === 'undefined' || $vendorId === 'all') {
+            $this->allHistory();
+            return;
+        }
+
         $user = AuthMiddleware::authenticate();
         $userId = $user->data->user_id ?? null;
 
@@ -387,7 +392,40 @@ class PurchaseController
             echo $json;
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to load vendor history']);
+            echo json_encode(['error' => 'Failed to load vendor history: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * GET /api/vendors/history/detail
+     * Complete vendor purchase history for a single date (Asia/Kolkata timezone)
+     * with aggregate summary KPIs. Optional vendor_id scopes to one vendor.
+     */
+    public function historyDetail(): void
+    {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            http_response_code(405);
+            echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+            return;
+        }
+
+        AuthMiddleware::authenticate();
+
+        $vendorId = trim($_GET['vendor_id'] ?? '');
+        $date = $_GET['date'] ?? date('Y-m-d');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $date = date('Y-m-d');
+        }
+
+        try {
+            $data = $this->service->getHistoryDetail($vendorId !== '' ? $vendorId : null, $date);
+            echo json_encode(['status' => 'success', 'data' => $data]);
+        } catch (\Exception $e) {
+            error_log('PurchaseController::historyDetail - ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to load vendor history detail']);
         }
     }
 
@@ -510,16 +548,28 @@ class PurchaseController
         AuthMiddleware::authenticate();
 
         try {
-            $vendors = $this->service->getAllVendors();
+            $page = (int)($_GET['page'] ?? 1);
+            $limit = (int)($_GET['limit'] ?? 50);
+            $search = $_GET['search'] ?? $_GET['query'] ?? '';
+
+            $summaries = $this->service->getVendorSummaries($page, $limit, $search);
+            $items = $summaries['data'] ?? $summaries;
             $result = array_map(fn($v) => [
-                'id' => $v->id,
-                'name' => $v->name,
-                'contact_info' => $v->phone
-            ], $vendors);
+                'id' => $v['vendorId'] ?? ($v['id'] ?? null),
+                'name' => $v['vendorName'] ?? ($v['name'] ?? 'Unknown Vendor'),
+                'contact_info' => $v['vendorPhone'] ?? ($v['phone'] ?? ''),
+                'contact_phone' => $v['vendorPhone'] ?? ($v['phone'] ?? ''),
+                'phone' => $v['vendorPhone'] ?? ($v['phone'] ?? ''),
+                'total_orders' => $v['totalOrders'] ?? ($v['total_orders'] ?? 0),
+                'total_amount' => $v['totalBilled'] ?? ($v['total_amount'] ?? 0),
+                'total_paid' => $v['totalPaid'] ?? ($v['total_paid'] ?? 0),
+                'balance_due' => $v['balanceDue'] ?? ($v['balance_due'] ?? 0),
+            ], $items);
+
             echo json_encode($result);
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to load vendors']);
+            echo json_encode(['error' => 'Failed to load vendors: ' . $e->getMessage()]);
         }
     }
 

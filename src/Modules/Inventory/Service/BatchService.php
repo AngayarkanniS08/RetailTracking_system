@@ -2,7 +2,7 @@
 namespace Modules\Inventory\Service;
 
 use Modules\Inventory\Repository\Contract\BatchRepositoryInterface;
-use Core\Cache\ValkeyCache;
+use Core\Cache\CacheInvalidationService;
 
 class BatchService
 {
@@ -37,23 +37,11 @@ class BatchService
 
     private function invalidateCache(): void
     {
-        try {
-            $valkey = ValkeyCache::getClient();
-            $keys = $valkey->keys('reports:*');
-            if ($keys) {
-                $valkey->del($keys);
-            }
-            $batchKeys = $valkey->keys('inventory:batches:*');
-            if ($batchKeys) {
-                $valkey->del($batchKeys);
-            }
-            $posKeys = $valkey->keys('pos:search:*');
-            if ($posKeys) {
-                $valkey->del($posKeys);
-            }
-        } catch (\Exception $e) {
-            error_log('Valkey cache invalidation error: ' . $e->getMessage());
-        }
+        $service = new CacheInvalidationService();
+        $service->invalidatePatterns(
+            ['inventory:batches:*', 'pos:search:*'],
+            ['operation' => 'batchMutation', 'source' => 'BatchService']
+        );
     }
 
     public function getBatchesPaginated(int $page, int $limit, string $search = '', string $categoryId = '', string $subcategoryId = ''): array

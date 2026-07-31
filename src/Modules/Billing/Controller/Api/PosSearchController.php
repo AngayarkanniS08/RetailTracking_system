@@ -108,31 +108,24 @@ class PosSearchController
 
     public static function invalidateProductCache(string $productId = ''): void
     {
-        try {
-            $valkey = ValkeyCache::getClient();
-            if (!$valkey) return;
-            $keys = $valkey->keys('pos:search:*');
-            if (!empty($keys)) {
-                $valkey->del($keys);
-            }
-        } catch (\Throwable $e) {
-            error_log('Valkey cache invalidation error: ' . $e->getMessage());
-        }
+        $service = new \Core\Cache\CacheInvalidationService();
+        $service->invalidatePattern(
+            'pos:search:*',
+            ['operation' => 'invalidProductCache', 'source' => 'PosSearchController', 'product_id' => $productId]
+        );
     }
 
     public function flushCache(): void
     {
         AuthMiddleware::authenticate();
-        try {
-            $valkey = ValkeyCache::getClient();
-            $keys = $valkey->keys('pos:search:*');
-            if (!empty($keys)) {
-                $valkey->del($keys);
-            }
-            echo json_encode(['success' => true, 'flushed' => count($keys ?? [])]);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Failed to flush cache: ' . $e->getMessage()]);
-        }
+        $service = new \Core\Cache\CacheInvalidationService();
+        $result = $service->invalidatePattern(
+            'pos:search:*',
+            ['operation' => 'flushCache', 'source' => 'PosSearchController']
+        );
+        echo json_encode([
+            'success' => $result->success,
+            'flushed' => $result->deletedCount(),
+        ]);
     }
 }

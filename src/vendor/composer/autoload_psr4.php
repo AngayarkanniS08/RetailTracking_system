@@ -22,6 +22,7 @@ return array(
     'Google\\' => array($vendorDir . '/google/apiclient/src'),
     'Firebase\\JWT\\' => array($vendorDir . '/firebase/php-jwt/src'),
     'Core\\' => array($baseDir . '/Core'),
+    'Controllers\\' => array($baseDir . '/Controllers'),
     'Config\\' => array($baseDir . '/../config'),
     'App\\Common\\Helpers\\' => array($baseDir . '/helpers'),
 );

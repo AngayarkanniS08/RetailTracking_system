@@ -23,4 +23,12 @@ class VendorController
             'currentRoute' => '/vendors/history',
         ]);
     }
+
+    public function historyDetail(Request $request): void
+    {
+        View::render('vendor/history_detail', [
+            'pageTitle'    => 'Vendor History Detail',
+            'currentRoute' => '/vendors/history',
+        ]);
+    }
 }

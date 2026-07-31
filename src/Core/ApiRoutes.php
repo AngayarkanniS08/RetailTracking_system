@@ -176,6 +176,10 @@ class ApiRoutes
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->allHistory();
         });
+        $router->add('GET', '/api/vendors/history/detail', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Vendor\Controller\PurchaseController())->historyDetail();
+        });
         $router->add('GET', '/api/vendors/{id}/payments', function (array $params): void {
             AuthMiddleware::authenticate();
             (new \Modules\Vendor\Controller\PurchaseController())->vendorPayments($params['id']);
@@ -296,6 +300,12 @@ class ApiRoutes
         $router->add('GET', '/api/dashboard/stock-intel', function (): void {
             AuthMiddleware::authenticate();
             (new \Modules\Reports\Controller\Api\DashboardController())->stockIntel();
+        });
+
+        // ── Daily Register Detail ──────────────────────────────────
+        $router->add('GET', '/api/daily-register/detail', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Reports\Controller\Api\DailyRegisterDetailController())->show();
         });
 
         // ── Product History ─────────────────────────────────────────

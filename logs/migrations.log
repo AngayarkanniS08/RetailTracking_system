@@ -21,3 +21,40 @@
 {"timestamp":"2026-07-30T17:07:12Z","level":"info","message":"Validation passed: 7 rules checked, 0 issues.","executed_by":"dhanasurya"}
 {"timestamp":"2026-07-30T17:07:12Z","level":"info","message":"Validation passed. No issues found.","executed_by":"dhanasurya"}
 {"timestamp":"2026-07-30T17:07:25Z","level":"info","message":"Validation passed: 7 rules checked, 0 issues.","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:22:02Z","level":"info","message":"Validation passed: 7 rules checked, 0 issues.","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:22:02Z","level":"error","message":"Failed: users_schema.sql\n  Migration failed (rolled back): /Users/dhanasurya/developement/RetailTracking_system/Database/Engine/../Migrations/Auth/001_users_schema.sql\nSQL Error: SQLSTATE[42703]: Undefined column: 7 ERROR:  column \"is_active\" does not exist\nLINE 19: ...EXISTS idx_users_active ON users(is_active) WHERE is_active ...\n                                                              ^","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:23:06Z","level":"info","message":"Validation passed: 7 rules checked, 0 issues.","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:23:06Z","level":"info","message":"Applied: [Auth] users_schema.sql (3ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Auth","batch":2}
+{"timestamp":"2026-07-31T11:23:06Z","level":"error","message":"Failed: password_resets.sql\n  Migration failed (rolled back): /Users/dhanasurya/developement/RetailTracking_system/Database/Engine/../Migrations/Auth/002_password_resets.sql\nSQL Error: SQLSTATE[42804]: Datatype mismatch: 7 ERROR:  foreign key constraint \"password_resets_user_id_fkey\" cannot be implemented\nDETAIL:  Key columns \"user_id\" of the referencing table and \"id\" of the referenced table are of incompatible types: uuid and integer.","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Validation passed: 7 rules checked, 0 issues.","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Auth] users_schema.sql (4ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Auth","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Auth] password_resets.sql (5ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Auth","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] categories_schema.sql (3ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] subcategories_schema.sql (4ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] products_schema.sql (5ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] products_alert_columns.sql (1ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Dashboard] dashboard_schema.sql (14ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Dashboard","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Dashboard] add_vendor_name_to_batches.sql (1ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Dashboard","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Vendor] vendors.sql (7ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Vendor","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Vendor] add_gst_rate_to_purchase_items.sql (1ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Vendor","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Vendor] vendor_payments.sql (3ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Vendor","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Billing] billing_schema.sql (18ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Billing","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Vendor] add_base_amount_to_purchases.sql (2ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Vendor","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Customer] customer_credit_schema.sql (4ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Customer","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] product_daily_sales.sql (4ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] add_original_quantity.sql (0ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Settings] backup_schema.sql (3ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Settings","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] cascade_product_delete.sql (3ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Security] rls_security_hardening.sql (16ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Security","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] fix_nullable_product_fks.sql (0ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Product] add_display_id_to_products.sql (2ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Product","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [Health] telemetry_schema.sql (1ms)","executed_by":"dhanasurya","event":"migration.applied","module":"Health","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Applied: [_schema] create_migration_history (1ms)","executed_by":"dhanasurya","event":"migration.applied","module":"_schema","batch":2}
+{"timestamp":"2026-07-31T11:25:21Z","level":"info","message":"Completed: 23 migration(s) applied in 132ms.","executed_by":"dhanasurya","batch":2}
+{"timestamp":"2026-07-31T11:25:46Z","level":"info","message":"Running seeder: Database\\Seeders\\Auth\\UsersSeeder","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:25:46Z","level":"info","message":"Running seeder: Database\\Seeders\\Product\\CatalogSeeder","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:25:46Z","level":"error","message":"Seeder failed: Database\\Seeders\\Product\\CatalogSeeder\n  SQLSTATE[42501]: Insufficient privilege: 7 ERROR:  new row violates row-level security policy for table \"categories\"","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:26:28Z","level":"info","message":"Running seeder: Database\\Seeders\\Auth\\UsersSeeder","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:26:28Z","level":"info","message":"Running seeder: Database\\Seeders\\Product\\CatalogSeeder","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T11:26:28Z","level":"info","message":"All seeders complete.","executed_by":"dhanasurya"}
+{"timestamp":"2026-07-31T14:32:33Z","level":"info","message":"No orphaned migrations found. Everything is consistent.","executed_by":"dhanasurya"}

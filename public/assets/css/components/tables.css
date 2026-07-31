@@ -244,3 +244,36 @@ tr:hover td {
   text-align: left;
 }
 
+/* ── Table Header Filter Dropdown Styling ── */
+.th-filter-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  background-size: 12px !important;
+  padding-right: 28px !important;
+  padding-left: 10px !important;
+  border: 1px solid var(--border-strong, #d1d5db) !important;
+  border-radius: 6px !important;
+  background-color: var(--card, #ffffff) !important;
+  color: var(--text-strong, #374151) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  height: 32px !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  cursor: pointer !important;
+  min-width: 120px !important;
+}
+
+.th-filter-select:focus {
+  outline: none !important;
+  border-color: var(--accent, #3b82f6) !important;
+  box-shadow: 0 0 0 3px var(--accent-subtle, rgba(59, 130, 246, 0.1)) !important;
+}
+
+.th-filter-select:hover {
+  border-color: var(--border-hover, #9ca3af) !important;
+}
+
+

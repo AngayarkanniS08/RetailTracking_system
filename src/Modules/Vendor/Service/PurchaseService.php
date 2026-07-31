@@ -321,9 +321,54 @@ class PurchaseService
         return $this->repo->findAllVendorHistory($filters);
     }
 
+    /**
+     * Get complete vendor history for a single date (optionally for one vendor),
+     * along with aggregate summary KPIs for that date.
+     */
+    public function getHistoryDetail(?string $vendorId, string $date): array
+    {
+        if ($vendorId) {
+            $purchases = $this->repo->getVendorHistory($vendorId, ['date' => $date]);
+        } else {
+            $purchases = $this->repo->findAllVendorHistory(['date' => $date]);
+        }
+
+        $totalAmount = 0.0;
+        $totalPaid = 0.0;
+        $vendorNames = [];
+
+        foreach ($purchases as $p) {
+            $totalAmount += (float)($p['totalAmount'] ?? 0);
+            $totalPaid += (float)($p['amountPaid'] ?? 0);
+            if (!empty($p['vendorName'])) {
+                $vendorNames[$p['vendorName']] = true;
+            }
+        }
+
+        $purchaseCount = count($purchases);
+
+        return [
+            'date' => $date,
+            'summary' => [
+                'total_purchases' => $purchaseCount,
+                'total_amount' => round($totalAmount, 2),
+                'total_paid' => round($totalPaid, 2),
+                'balance_due' => round(max(0.0, $totalAmount - $totalPaid), 2),
+                'avg_purchase_value' => $purchaseCount > 0 ? round($totalAmount / $purchaseCount, 2) : 0.0,
+                'vendor_count' => count($vendorNames),
+            ],
+            'purchases' => $purchases,
+        ];
+    }
+
     public function getAllVendors(): array
     {
         return $this->repo->findAllVendors();
+    }
+
+    public function getVendorSummaries(int $page = 1, int $limit = 50, string $search = ''): array
+    {
+        return $this->repo->findAllPurchases($page, $limit, ['search' => $search]);
     }
 
     public function getVendorPayments(string $vendorId, array $filters = []): array

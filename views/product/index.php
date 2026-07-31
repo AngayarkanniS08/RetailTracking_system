@@ -52,8 +52,20 @@
           <tr style="background: var(--bg-hover, #f8fafc); border-bottom: 1px solid var(--border, #e2e8f0);">
             <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 14px 20px;">PRODUCT ID</th>
             <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 14px 20px;">PRODUCT NAME</th>
-            <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 14px 20px;">CATEGORY</th>
-            <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 14px 20px;">SUBCATEGORY</th>
+            <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 10px 16px; vertical-align: middle;">
+              <div style="display: flex; align-items: center; justify-content: flex-start;">
+                <select id="thCategoryFilter" class="input-field th-filter-select" aria-label="Category" onchange="onCategoryColumnFilterChange(this.value)">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+            </th>
+            <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 10px 16px; vertical-align: middle;">
+              <div style="display: flex; align-items: center; justify-content: flex-start;">
+                <select id="thSubcategoryFilter" class="input-field th-filter-select" aria-label="Subcategory" onchange="onSubcategoryColumnFilterChange(this.value)">
+                  <option value="all">All Subcategories</option>
+                </select>
+              </div>
+            </th>
             <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 14px 20px;">UNIT</th>
             <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 14px 20px;">HSN CODE</th>
             <th style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); padding: 14px 20px;">GST (%)</th>

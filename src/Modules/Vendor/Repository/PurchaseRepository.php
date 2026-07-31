@@ -432,16 +432,16 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $dateSql = '';
         $dateParams = [];
         if (!empty($filters['date'])) {
-            $dateSql = ' AND p.purchase_date::date = ?';
+            $dateSql = " AND (p.purchase_date AT TIME ZONE 'Asia/Kolkata')::date = ?";
             $dateParams[] = $filters['date'];
         } elseif (!empty($filters['month']) && !empty($filters['year'])) {
-            $dateSql = ' AND EXTRACT(MONTH FROM p.purchase_date) = ? AND EXTRACT(YEAR FROM p.purchase_date) = ?';
+            $dateSql = " AND EXTRACT(MONTH FROM (p.purchase_date AT TIME ZONE 'Asia/Kolkata')) = ? AND EXTRACT(YEAR FROM (p.purchase_date AT TIME ZONE 'Asia/Kolkata')) = ?";
             $dateParams[] = $filters['month'];
             $dateParams[] = $filters['year'];
         }
 
         $stmt = $this->db->prepare("
-            SELECT p.id, p.purchase_date, p.base_amount, p.total_amount, p.amount_paid,
+            SELECT p.id, p.purchase_date AT TIME ZONE 'Asia/Kolkata' AS purchase_date, p.base_amount, p.total_amount, p.amount_paid,
                 p.created_at,
                 v.name AS vendor_name, v.contact_info AS vendor_phone,
                 pi.product_id, pi.quantity, pi.unit_cost AS unit_price, pi.gst_rate,
@@ -554,16 +554,16 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         $dateSql = '';
         $dateParams = [];
         if (!empty($filters['date'])) {
-            $dateSql = ' AND p.purchase_date::date = ?';
+            $dateSql = " AND (p.purchase_date AT TIME ZONE 'Asia/Kolkata')::date = ?";
             $dateParams[] = $filters['date'];
         } elseif (!empty($filters['month']) && !empty($filters['year'])) {
-            $dateSql = ' AND EXTRACT(MONTH FROM p.purchase_date) = ? AND EXTRACT(YEAR FROM p.purchase_date) = ?';
+            $dateSql = " AND EXTRACT(MONTH FROM (p.purchase_date AT TIME ZONE 'Asia/Kolkata')) = ? AND EXTRACT(YEAR FROM (p.purchase_date AT TIME ZONE 'Asia/Kolkata')) = ?";
             $dateParams[] = $filters['month'];
             $dateParams[] = $filters['year'];
         }
 
         $stmt = $this->db->prepare("
-            SELECT p.id, p.vendor_id, p.purchase_date, p.base_amount, p.total_amount, p.amount_paid,
+            SELECT p.id, p.vendor_id, p.purchase_date AT TIME ZONE 'Asia/Kolkata' AS purchase_date, p.base_amount, p.total_amount, p.amount_paid,
                 p.created_at,
                 v.name AS vendor_name, v.contact_info AS vendor_phone,
                 pi.product_id, pi.quantity, pi.unit_cost AS unit_price,pi.gst_rate AS gst_rate,

@@ -10,7 +10,7 @@ use Modules\Billing\Model\StockMovement;
 use Modules\Billing\Model\CustomerLedger;
 use Modules\Billing\Repository\Contract\InvoiceRepositoryInterface;
 use Modules\Auth\Validation\ValidationException;
-use Core\Cache\ValkeyCache;
+use Core\Cache\CacheInvalidationService;
 
 class InvoiceService
 {
@@ -686,17 +686,15 @@ class InvoiceService
 
     private function invalidateCaches(): void
     {
-        try {
-            $valkey = ValkeyCache::getClient();
-            foreach (['billing:invoices:*', 'credit:*', 'reports:*', 'pos:search:*', 'inventory:batches:*'] as $pattern) {
-                $keys = $valkey->keys($pattern);
-                if ($keys) {
-                    $valkey->del($keys);
-                }
-            }
-        } catch (\Exception $e) {
-            error_log('Valkey billing cache invalidation failed: ' . $e->getMessage());
-        }
+        $service = new CacheInvalidationService();
+        $context = ['operation' => 'createInvoice', 'source' => 'InvoiceService'];
+        $patterns = [
+            'billing:invoices:*',
+            'credit:*',
+            'pos:search:*',
+            'inventory:batches:*',
+        ];
+        $service->invalidatePatterns($patterns, $context);
     }
 
     private function getOrCreateWalkinCustomer(string $userId): string
