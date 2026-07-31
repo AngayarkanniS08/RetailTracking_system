@@ -7,7 +7,7 @@
           <img src="public/assets/images/logo.png" alt="Pudheera Fashions Logo" style="width: 100%; height: auto; border-radius: 12px;">
         </div>
       </div>
-      <h2 style="text-align: center; color: white; margin-bottom: 1.5rem;">Create New Password</h2>
+      <h2 style="text-align: center; color: var(--card-foreground); margin-bottom: 1.5rem;">Create New Password</h2>
 
       <!-- Notice shown if token is missing in the URL query string -->
       <div id="tokenMissingNotice" class="auth-message error" style="display:none; margin-bottom:15px;">

@@ -573,11 +573,11 @@
         <div class="input-group" style="margin-top:1rem;">
           <label class="input-label">Reason <span style="color:var(--danger);">*</span></label>
           <style>
-            #returnReason::placeholder { color: #fff; }
-            .return-reason-btn { color: #fff; }
+            #returnReason::placeholder { color: var(--muted); }
+            .return-reason-btn { color: var(--secondary-foreground); }
             .return-reason-btn:hover,
             .return-reason-btn:focus,
-            .return-reason-btn:active { color: #fff; }
+            .return-reason-btn:active { color: var(--secondary-foreground); }
           </style>
           <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;">
             <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong size'">Wrong size</button>
@@ -606,7 +606,7 @@
       <div style="display:flex; gap:1rem;">
         <button class="btn btn-outline btn-block" onclick="closeModal('deleteBillModal')">Cancel</button>
         <button class="btn btn-block" id="deleteBillConfirmBtn"
-          style="background:var(--danger); color:white; border:none;" onclick="executeBillDelete()">Yes, Delete</button>
+          style="background:var(--danger); color:var(--destructive-foreground); border:none;" onclick="executeBillDelete()">Yes, Delete</button>
       </div>
     </div>
   </div>
