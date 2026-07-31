@@ -176,6 +176,9 @@ class InvoiceController
                 echo json_encode(['error' => 'This bill has been cancelled']);
                 return;
             }
+            if ($invoice->customerId) {
+                $invoice->customerBalance = $this->service->getCustomerBalance($invoice->customerId);
+            }
             echo json_encode($invoice);
         } catch (\Throwable $e) {
             http_response_code(500);
@@ -245,10 +248,15 @@ class InvoiceController
             $response = [
                 'success' => true,
                 'message' => 'Return processed successfully',
-                'returns' => $result['returns']
+                'returns' => $result['returns'],
+                'due_adjusted' => $result['due_adjusted'] ?? 0,
+                'net_refund' => $result['net_refund'] ?? 0
             ];
-            if (!empty($result['excess_refund'])) {
-                $response['warning'] = "Refund ₹" . number_format($result['excess_refund'], 2) . " more than outstanding balance. ₹" . number_format($result['excess_refund'], 2) . " cash to be returned to customer.";
+            if (!empty($result['due_adjusted'])) {
+                $response['message'] = "Return processed. ₹" . number_format($result['due_adjusted'], 2) . " of the refund was adjusted against the customer's outstanding due.";
+            }
+            if (!empty($result['net_refund'])) {
+                $response['message'] .= " Net refund returned to customer: ₹" . number_format($result['net_refund'], 2) . ".";
             }
             if (!empty($result['stock_warning'])) {
                 $response['stock_warning'] = $result['stock_warning'];

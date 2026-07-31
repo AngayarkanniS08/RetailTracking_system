@@ -477,12 +477,21 @@ class InvoiceService
 
             $this->repo->refreshStockList();
 
-            $excessRefund = 0;
+            $dueAdjusted = 0;
+            $netRefund = 0;
             if ($totalRefund > 0) {
                 $currentBalance = $this->repo->getCustomerBalance($invoice->customerId);
+                $outstandingDue = max($currentBalance, 0);
+                $netRefund = max($totalRefund - $outstandingDue, 0);
+                $dueAdjusted = min($outstandingDue, $totalRefund);
+
+                // When the customer already owes money, that due is absorbed by the
+                // return first, so only the net amount is actually paid back.
+                $creditAmount = $outstandingDue >= $totalRefund ? $totalRefund : $netRefund;
                 $newBalance = $currentBalance - $totalRefund;
-                if ($newBalance < 0) {
-                    $excessRefund = abs($newBalance);
+                $note = "Return on invoice {$invoice->invoiceNumber}: {$reason}";
+                if ($outstandingDue > 0) {
+                    $note .= " (due ₹" . number_format(min($outstandingDue, $totalRefund), 2) . " adjusted)";
                 }
 
                 $this->repo->addLedgerEntry(new CustomerLedger(
@@ -491,10 +500,10 @@ class InvoiceService
                     customerId: $invoice->customerId,
                     entryType: 'return',
                     debit: 0,
-                    credit: $totalRefund,
+                    credit: $creditAmount,
                     balance: max($newBalance, 0),
                     invoiceId: $invoiceId,
-                    notes: "Return on invoice {$invoice->invoiceNumber}: {$reason}",
+                    notes: $note,
                     createdAt: null
                 ));
             }
@@ -512,7 +521,8 @@ class InvoiceService
 
         return [
             'returns' => $savedReturns,
-            'excess_refund' => $excessRefund,
+            'due_adjusted' => $dueAdjusted ?? 0,
+            'net_refund' => $netRefund ?? 0,
             'stock_warning' => !empty($stockWarnings)
                 ? implode('; ', $stockWarnings)
                 : null
