@@ -77,7 +77,7 @@
         <input type="text" id="stockVendor" class="input-field" placeholder="e.g. Metro Wholesale">
       </div><div class="input-group">
         <label class="input-label">Batch ID/Number</label>
-        <input type="text" id="stockBatchId" class="input-field" placeholder="e.g. Metro Wholesale">
+        <input type="text" id="stockBatchId" class="input-field" placeholder="e.g. BAT-ELE-2026-0101">
       </div>
 
       <div class="segment-control" style="margin-bottom: 20px;">
