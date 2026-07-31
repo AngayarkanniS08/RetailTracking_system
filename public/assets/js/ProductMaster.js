@@ -461,13 +461,10 @@ window.saveSubcategory = async function () {
         if (data && data.success) {
             document.getElementById('pmSubCategoryName').value = '';
             alert('Subcategory added successfully');
-            // Refresh subcategory list in product modal if matching category is selected
-            const prodCat = document.getElementById('pmProductCategory');
-            if (prodCat && prodCat.value === categoryId) {
-                loadSubcategoriesIntoProductModal(categoryId);
-                // Also refresh the combobox (clears its cache)
-                if (typeof subcategoryCombobox !== 'undefined' && subcategoryCombobox) {
-                    delete subcategoryCombobox.cache[categoryId];
+            // Refresh the subcategory combobox in the product form so the newly
+            // added subcategory appears immediately for the affected category.
+            if (typeof subcategoryCombobox !== 'undefined' && subcategoryCombobox) {
+                if (subcategoryCombobox.currentCategoryId === categoryId) {
                     subcategoryCombobox.loadForCategory(categoryId);
                 }
             }
@@ -956,7 +953,6 @@ class SubcategoryCombobox {
         this.selectedIndex = -1;
         this.isOpen = false;
         this.currentCategoryId = null;
-        this.cache = {};             // categoryId -> subcategories array
 
         if (!this.input) return;
         this.initEventListeners();
@@ -981,24 +977,13 @@ class SubcategoryCombobox {
         }
         this.currentCategoryId = categoryId;
 
-        // Use cache if available
-        if (this.cache[categoryId]) {
-            this.allItems = this.cache[categoryId];
-            this.filteredItems = [...this.allItems];
-            this.input.placeholder = this.allItems.length ? "Type to search subcategory..." : "No subcategories";
-            this.hidden.value = '';
-            this.input.value = '';
-            if (this.isOpen) this.renderDropdown();
-            return;
-        }
-
-        // Fetch from API
+        // Always fetch fresh from the API — no caching — so newly added
+        // subcategories appear immediately in the product form.
         this.showLoading(true);
         try {
             const data = await window.apiRequest(`/api/subcategories?category_id=${categoryId}`);
             if (data && !data.error) {
                 this.allItems = data.map(item => ({ id: item.id, name: item.name }));
-                this.cache[categoryId] = this.allItems;
                 this.filteredItems = [...this.allItems];
                 this.input.placeholder = this.allItems.length ? "Type to search subcategory..." : "No subcategories";
                 this.hidden.value = '';
