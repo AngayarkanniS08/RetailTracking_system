@@ -283,7 +283,7 @@ function submitReceiptReturn(invoiceId) {
         if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Return failed'); });
         return r.json();
     }).then(function(data) {
-        if (data.warning) alert(data.warning);
+        if (data.message) alert(data.message);
         if (data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
         window.location.href = window.location.pathname + window.location.search + '&_=' + Date.now();
     }).catch(function(err) {
