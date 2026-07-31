@@ -313,6 +313,8 @@ function submitReturn() {
         if (data && data.warning) alert(data.warning);
         if (data && data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
         initDayToDaySelling();
+        if (typeof loadBatchesFromApi === 'function') loadBatchesFromApi(1);
+        if (typeof fetchAndRenderDbAlerts === 'function') fetchAndRenderDbAlerts();
     })
     .catch(function(err) {
         alert('Return failed: ' + err.message);

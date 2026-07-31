@@ -226,7 +226,13 @@ class BatchRepository implements BatchRepositoryInterface
                 b.selling_price, 
                 b.retail_price, 
                 b.created_at, 
-                b.updated_at
+                b.updated_at,
+                (
+                    SELECT COALESCE(SUM(b2.remaining_qty), 0)
+                    FROM public.inventory_batches b2
+                    WHERE b2.product_id = b.product_id
+                      AND b2.user_id    = b.user_id
+                ) AS product_total_stock
             " . $sql . "
             ORDER BY b.created_at DESC
             LIMIT ? OFFSET ?

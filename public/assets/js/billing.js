@@ -920,6 +920,7 @@ async function processCheckout() {
             }
 
             loadPOSData();
+            if (typeof fetchAndRenderDbAlerts === 'function') fetchAndRenderDbAlerts();
         }
     } catch (e) {
         if (receiptWin && !receiptWin.closed) receiptWin.close();
