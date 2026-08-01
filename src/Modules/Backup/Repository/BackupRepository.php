@@ -186,6 +186,19 @@ class BackupRepository implements BackupRepositoryInterface
         ]);
     }
 
+    public function failInFlightJobs(string $reason): int
+    {
+        $stmt = $this->db->prepare("
+            UPDATE backup_jobs
+            SET status = 'failed',
+                error_message = ?,
+                completed_at = now()
+            WHERE status IN ('pending', 'dump', 'uploading', 'downloading', 'restoring')
+        ");
+        $stmt->execute([$reason]);
+        return $stmt->rowCount();
+    }
+
     private function hydrateConfig(array $row): BackupConfig
     {
         return new BackupConfig(

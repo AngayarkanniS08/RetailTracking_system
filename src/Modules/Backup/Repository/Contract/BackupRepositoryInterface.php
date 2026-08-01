@@ -14,4 +14,5 @@ interface BackupRepositoryInterface
     public function getLatestJob(string $userId, string $jobType): ?BackupJob;
     public function getPendingJobs(): array;
     public function updateConfigBackupStatus(string $userId, string $status, ?\DateTime $backupAt = null): void;
+    public function failInFlightJobs(string $reason): int;
 }
