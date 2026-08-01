@@ -311,7 +311,6 @@ class ApiRoutes
             (new BackupConfigController())->get();
         });
         $router->add('PUT', '/api/backup/config', function (): void {
-            AuthMiddleware::authenticate();
             (new BackupConfigController())->update();
         });
         $router->add('POST', '/api/backup/start', function (): void {

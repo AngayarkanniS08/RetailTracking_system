@@ -54,11 +54,6 @@ class BackupConfigController
     {
         header('Content-Type: application/json');
         $userId = \Config\Database::getCurrentUser();
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Not authenticated']);
-            return;
-        }
         $input = json_decode(file_get_contents('php://input'), true);
 
         $dto = BackupConfigDTO::fromArray($input);
@@ -73,7 +68,14 @@ class BackupConfigController
             $this->driveService->saveTokens(['folder_id' => $newFolderId]);
         }
 
-        // Save to DB for backward compat with schedule/retention
+        // Save to DB for backward compat with schedule/retention.
+        // Requires a user (backup_config.user_id is NOT NULL + RLS); without one,
+        // the file-based tokens above are the source of truth.
+        if (!$userId) {
+            echo json_encode(['success' => true]);
+            return;
+        }
+
         try {
             $config = $this->repo->getConfig($userId);
             $currentGdriveToken = $config ? $config->gdriveRefreshToken : null;
