@@ -99,33 +99,54 @@ class CategoryController {
         }
     }
 
-    // DELETE /api/categories/{id}
+    // DELETE /api/categories/{id}?force=true|false
     public function destroy(string $id): void {
         header('Content-Type: application/json');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
             http_response_code(405);
-            echo json_encode(['error' => 'Method not allowed']);
+            echo json_encode(['success' => false, 'code' => 'METHOD_NOT_ALLOWED', 'message' => 'Method not allowed']);
             return;
         }
 
+        if (empty(trim($id))) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'code' => 'INVALID_REQUEST', 'message' => 'Invalid Category ID']);
+            return;
+        }
+
+        $forceParam = $_GET['force'] ?? false;
+        $force = in_array(strtolower((string)$forceParam), ['true', '1'], true);
+
         try {
-            $this->service->deleteCategory($id);
-            echo json_encode(['success' => true]);
+            $result = $this->service->deleteCategory($id, $force);
+            echo json_encode($result);
         } catch (ValidationException $e) {
-            http_response_code(404);
-            echo json_encode(['error' => $e->getMessage()]);
+            $statusCode = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 422;
+            http_response_code($statusCode);
+
+            $decoded = json_decode($e->getMessage(), true);
+            if (is_array($decoded)) {
+                echo json_encode(array_merge(['success' => false], $decoded));
+            } else {
+                echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            }
         } catch (PDOException $e) {
             if ($e->getCode() === '23503') {
-                http_response_code(422);
-                echo json_encode(['error' => 'Cannot delete because it is linked to other records.']);
+                http_response_code(409);
+                echo json_encode([
+                    'success' => false,
+                    'code' => 'CATEGORY_HAS_PRODUCTS',
+                    'message' => 'Category is currently assigned to products or other records and cannot be deleted.',
+                    'action' => 'Use force delete to remove the category and its products.'
+                ]);
             } else {
                 http_response_code(500);
-                echo json_encode(['error' => 'Database error']);
+                echo json_encode(['success' => false, 'code' => 'DATABASE_ERROR', 'message' => 'Database error']);
             }
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Internal server error']);
+            echo json_encode(['success' => false, 'code' => 'INTERNAL_ERROR', 'message' => 'Internal server error']);
         }
     }
 }

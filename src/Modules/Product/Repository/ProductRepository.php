@@ -167,6 +167,18 @@ class ProductRepository implements ProductRepositoryInterface {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    public function findByNameCategorySubcategory(string $name, string $categoryId, ?string $subcategoryId): ?array {
+        $stmt = $this->db->prepare(
+            "SELECT id FROM products
+             WHERE LOWER(name) = LOWER(?)
+               AND category_id = ?
+               AND subcategory_id IS NOT DISTINCT FROM ?
+               AND user_id = current_setting('app.current_user_id')::uuid"
+        );
+        $stmt->execute([$name, $categoryId, $subcategoryId ?: null]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
     public function create(string $name, string $categoryId, ?string $subcategoryId, string $unit, ?string $hsnCode, float $gstRate): array {
         $sql = "INSERT INTO products (name, category_id, subcategory_id, unit, hsn_code, gst_rate, user_id)
                 VALUES (?, ?, ?, ?, ?, ?, current_setting('app.current_user_id')::uuid)

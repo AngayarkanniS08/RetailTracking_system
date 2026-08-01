@@ -92,6 +92,74 @@ async function onPOSSearchKeyup(e) {
     }
 }
 
+/* Grid Row Helpers */
+const MAX_GRID_ROWS = 500;
+const MIN_GRID_ROWS = 8;
+
+/* Single Source of Truth for Sl. No numbering */
+function reindexSlNo() {
+    const tbody = document.querySelector('#billingGrid tbody');
+    if (!tbody) return;
+    const rows = tbody.children;
+    for (let i = 0; i < rows.length; i++) {
+        const cell = rows[i].cells[0];
+        if (cell) cell.textContent = i + 1;
+    }
+}
+
+/* Helper to create an unpopulated grid row matching baseline structure */
+function createNewGridRow() {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-batch-id', '');
+    tr.innerHTML = `
+        <td style="text-align:center; font-weight:600; color:var(--muted);"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td style="text-align:right" contenteditable="true"></td>
+        <td style="text-align:right" contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td style="text-align:right" contenteditable="true"></td>
+        <td style="text-align:right" contenteditable="true"></td>
+        <td style="text-align:right" contenteditable="true"></td>
+    `;
+    return tr;
+}
+
+/* Helper to append a new grid row & re-index */
+function appendGridRow() {
+    const tbody = document.querySelector('#billingGrid tbody');
+    if (!tbody) return null;
+    if (tbody.children.length >= MAX_GRID_ROWS) {
+        console.warn('Maximum billing grid rows reached (500).');
+        return null;
+    }
+    const tr = createNewGridRow();
+    tbody.appendChild(tr);
+    reindexSlNo();
+    return tr;
+}
+
+/* Helper to scroll container to target row */
+function scrollToRow(tr) {
+    if (!tr) return;
+    tr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* Helper to focus active cell in row */
+function focusRow(tr) {
+    if (!tr) return;
+    const grid = document.getElementById('billingGrid');
+    if (grid) {
+        grid.querySelectorAll('tbody tr').forEach(r => r.classList.remove('bg-active'));
+        grid.querySelectorAll('.cell-active').forEach(c => c.classList.remove('cell-active'));
+    }
+    tr.classList.add('bg-active');
+    const cells = tr.querySelectorAll('td');
+    if (cells[1]) {
+        cells[1].classList.add('cell-active');
+    }
+}
+
 /* Select a product from search → fill first empty row in billing grid */
 function selectPOSProduct(batchId) {
     // Try search cache first (handles newly added batches)
@@ -136,7 +204,7 @@ function selectPOSProduct(batchId) {
         if (rows[i].getAttribute('data-batch-id')) continue;
         const cells = rows[i].querySelectorAll('td');
         let isEmpty = true;
-        for (let j = 0; j < cells.length; j++) {
+        for (let j = 1; j < cells.length; j++) {
             if (cells[j].textContent.trim() !== '') { isEmpty = false; break; }
         }
         if (isEmpty) { targetRow = rows[i]; break; }
@@ -146,17 +214,17 @@ function selectPOSProduct(batchId) {
         for (let i = 0; i < rows.length; i++) {
             const cells = rows[i].querySelectorAll('td');
             let allEmpty = true;
-            for (let j = 0; j < cells.length; j++) {
+            for (let j = 1; j < cells.length; j++) {
                 if (cells[j].textContent.trim() !== '') { allEmpty = false; break; }
             }
             if (allEmpty) { targetRow = rows[i]; break; }
         }
+    }
+
+    // If no empty row found in existing grid, append a new row dynamically
+    if (!targetRow) {
+        targetRow = appendGridRow();
         if (!targetRow) return;
-        const oldBatchId = targetRow.getAttribute('data-batch-id');
-        if (oldBatchId && oldBatchId !== batchId) {
-            const oldIdx = cart.findIndex(c => c.batchId === oldBatchId);
-            if (oldIdx !== -1) cart.splice(oldIdx, 1);
-        }
     }
 
     const cells = targetRow.querySelectorAll('td');
@@ -170,14 +238,14 @@ function selectPOSProduct(batchId) {
     const tax = parseFloat(product.gst_rate) || 0;
 
     targetRow.setAttribute('data-batch-id', batchId);
-    cells[0].textContent = batch.batch_number || batch.id;    // Batch No
-    cells[1].textContent = product.name;                      // Particulars
-    cells[2].innerHTML = `<span class="row-price-val">${price.toFixed(2)}</span> <span class="row-price-mode">${priceMode === 'wholesale' ? 'W' : 'R'}</span>`;
-    cells[3].textContent = '0.00';                            // Discount
-    cells[4].textContent = product.unit || 'Nos';             // Unit
-    cells[5].textContent = qty.toFixed(2);                    // Qty
-    cells[6].textContent = tax.toFixed(1);                    // GST (%)
-    cells[7].textContent = amount.toFixed(2);                 // Amount
+    cells[1].textContent = batch.batch_number || batch.id;    // Batch No
+    cells[2].textContent = product.name;                      // Particulars
+    cells[3].innerHTML = `<span class="row-price-val">${price.toFixed(2)}</span> <span class="row-price-mode">${priceMode === 'wholesale' ? 'W' : 'R'}</span>`;
+    cells[4].textContent = '0.00';                            // Discount
+    cells[5].textContent = product.unit || 'Nos';             // Unit
+    cells[6].textContent = qty.toFixed(2);                    // Qty
+    cells[7].textContent = tax.toFixed(1);                    // GST (%)
+    cells[8].textContent = amount.toFixed(2);                 // Amount
 
     const existing = cart.find(c => c.batchId === batchId);
     if (existing) {
@@ -198,9 +266,8 @@ function selectPOSProduct(batchId) {
     }
     calculateCart();
 
-    rows.forEach(r => r.classList.remove('bg-active'));
-    targetRow.classList.add('bg-active');
-    cells[0].classList.add('cell-active');
+    focusRow(targetRow);
+    scrollToRow(targetRow);
 
     // Clear search & refocus search bar
     const searchInput = document.getElementById('posSearch');
@@ -237,7 +304,7 @@ function togglePriceMode(force) {
         const batch = posBatches.find(b => b.id === bid);
         if (!batch) return;
         const cells = tr.querySelectorAll('td');
-        const qty = parseFloat(cells[5].textContent) || 0;
+        const qty = parseFloat(cells[6].textContent) || 0;
         if (qty === 0) return;
 
         const retailPrice = parseFloat(batch.retail_price);
@@ -247,8 +314,8 @@ function togglePriceMode(force) {
             : (retailPrice || sellingPrice);
         const newAmount = qty * newPrice;
 
-        cells[2].textContent = newPrice.toFixed(2);
-        cells[7].textContent = newAmount.toFixed(2);
+        cells[3].textContent = newPrice.toFixed(2);
+        cells[8].textContent = newAmount.toFixed(2);
 
         const item = cart.find(function(c) { return c.batchId === bid; });
         if (item) {
@@ -267,7 +334,7 @@ function toggleRowPriceMode(tr, mode) {
     const batch = posBatches.find(b => b.id === bid);
     if (!batch) return;
     const cells = tr.querySelectorAll('td');
-    const qty = parseFloat(cells[5].textContent) || 0;
+    const qty = parseFloat(cells[6].textContent) || 0;
     if (qty === 0) return;
 
     const retailPrice = parseFloat(batch.retail_price);
@@ -277,8 +344,8 @@ function toggleRowPriceMode(tr, mode) {
         : (retailPrice || sellingPrice);
     const newAmount = qty * newPrice;
 
-    cells[2].innerHTML = `<span class="row-price-val">${newPrice.toFixed(2)}</span> <span class="row-price-mode">${mode === 'wholesale' ? 'W' : 'R'}</span>`;
-    cells[7].textContent = newAmount.toFixed(2);
+    cells[3].innerHTML = `<span class="row-price-val">${newPrice.toFixed(2)}</span> <span class="row-price-mode">${mode === 'wholesale' ? 'W' : 'R'}</span>`;
+    cells[8].textContent = newAmount.toFixed(2);
 
     const item = cart.find(function(c) { return c.batchId === bid; });
     if (item) {
@@ -295,7 +362,7 @@ document.addEventListener('keydown', function(e) {
     if (!td) return;
     const tr = td.closest('tr');
     if (!tr) return;
-    if (tr.closest('#billingGrid') && Array.from(tr.cells).indexOf(td) === 2) {
+    if (tr.closest('#billingGrid') && Array.from(tr.cells).indexOf(td) === 3) {
         e.preventDefault();
         toggleRowPriceMode(tr, key === 'w' ? 'wholesale' : 'retail');
     }
@@ -351,7 +418,7 @@ document.addEventListener('keydown', function(e) {
             if (!bid) return; // empty row, let browser default
             e.preventDefault();
             window._deleteTargetRow = tr;
-            document.getElementById('deleteRowItemName').textContent = cells[1].textContent || 'this item';
+            document.getElementById('deleteRowItemName').textContent = cells[2].textContent || 'this item';
             openModal('deleteRowModal');
             return;
         }
@@ -363,29 +430,29 @@ document.addEventListener('keydown', function(e) {
             const navDelta = isDown ? 1 : -1;
             const valDelta = isDown ? -1 : 1; // down = decrease, up = increase
 
-            // Qty column (index 5) → increment/decrement qty
-            if (cellIndex === 5) {
-                const qty = parseFloat(cells[5].textContent) || 0;
+            // Qty column (index 6) → increment/decrement qty
+            if (cellIndex === 6) {
+                const qty = parseFloat(cells[6].textContent) || 0;
                 if (qty === 0) return;
                 const newQty = Math.max(1, qty + valDelta);
                 const bid = tr.getAttribute('data-batch-id');
                 const batch = bid && posBatches.find(b => b.id === bid);
                 const maxQty = batch ? (batch.quantity || batch.remaining_qty || 0) : Infinity;
                 if (newQty > maxQty) return;
-                const price = parseFloat(cells[2].textContent) || 0;
-                cells[5].textContent = newQty.toFixed(2);
-                cells[7].textContent = (newQty * price).toFixed(2);
+                const price = parseFloat(cells[3].textContent) || 0;
+                cells[6].textContent = newQty.toFixed(2);
+                cells[8].textContent = (newQty * price).toFixed(2);
                 const item = cart.find(c => c.batchId === bid);
                 if (item) { item.qty = newQty; }
                 calculateCart();
                 return;
             }
 
-            // Discount column (index 3) → increment/decrement discount
-            if (cellIndex === 3) {
-                const disc = parseFloat(cells[3].textContent) || 0;
+            // Discount column (index 4) → increment/decrement discount
+            if (cellIndex === 4) {
+                const disc = parseFloat(cells[4].textContent) || 0;
                 const newDisc = Math.max(0, disc + valDelta);
-                cells[3].textContent = newDisc.toFixed(2);
+                cells[4].textContent = newDisc.toFixed(2);
                 const bid = tr.getAttribute('data-batch-id');
                 const item = cart.find(c => c.batchId === bid);
                 if (item) { item.discount = newDisc; }
@@ -414,29 +481,29 @@ document.addEventListener('keydown', function(e) {
         const cells = tr.querySelectorAll('td');
         const cellIndex = Array.from(tr.children).indexOf(td);
 
-        if (cellIndex === 2) {
+        if (cellIndex === 3) {
             const newPrice = parseFloat(td.textContent) || 0;
             item.sellingPrice = newPrice;
-            const qty = parseFloat(cells[5].textContent) || 0;
-            cells[7].textContent = (qty * newPrice).toFixed(2);
+            const qty = parseFloat(cells[6].textContent) || 0;
+            cells[8].textContent = (qty * newPrice).toFixed(2);
             calculateCart();
-        } else if (cellIndex === 3) {
+        } else if (cellIndex === 4) {
             const val = parseFloat(td.textContent) || 0;
-            const qty = parseFloat(cells[5].textContent) || 0;
-            const price = parseFloat(cells[2].textContent) || 0;
+            const qty = parseFloat(cells[6].textContent) || 0;
+            const price = parseFloat(cells[3].textContent) || 0;
             const capped = Math.min(val, qty * price);
             item.discount = capped;
             td.textContent = capped.toFixed(2);
             calculateCart();
-        } else if (cellIndex === 5) {
+        } else if (cellIndex === 6) {
             let newQty = parseFloat(td.textContent) || 0;
             if (newQty <= 0) { newQty = 1; td.textContent = '1.00'; }
             const batch = posBatches.find(b => b.id === bid);
             const maxQty = batch ? (batch.quantity || batch.remaining_qty || Infinity) : Infinity;
             if (newQty > maxQty) { newQty = maxQty; td.textContent = maxQty.toFixed(2); }
             item.qty = newQty;
-            const price = parseFloat(cells[2].textContent) || 0;
-            cells[7].textContent = (newQty * price).toFixed(2);
+            const price = parseFloat(cells[3].textContent) || 0;
+            cells[8].textContent = (newQty * price).toFixed(2);
             calculateCart();
         }
     });
@@ -454,22 +521,22 @@ document.addEventListener('keydown', function(e) {
         const cells = tr.querySelectorAll('td');
         const cellIndex = Array.from(tr.children).indexOf(td);
 
-        if (cellIndex === 2) {
+        if (cellIndex === 3) {
             item.sellingPrice = parseFloat(td.textContent) || 0;
             td.textContent = item.sellingPrice.toFixed(2);
-            cells[7].textContent = (item.sellingPrice * item.qty).toFixed(2);
+            cells[8].textContent = (item.sellingPrice * item.qty).toFixed(2);
             calculateCart();
-        } else if (cellIndex === 3) {
+        } else if (cellIndex === 4) {
             const val = parseFloat(td.textContent) || 0;
             item.discount = Math.min(val, item.qty * item.sellingPrice);
             td.textContent = item.discount.toFixed(2);
             calculateCart();
-        } else if (cellIndex === 5) {
+        } else if (cellIndex === 6) {
             let qty = parseFloat(td.textContent) || 1;
             if (qty < 1) qty = 1;
             item.qty = qty;
             td.textContent = qty.toFixed(2);
-            cells[7].textContent = (qty * item.sellingPrice).toFixed(2);
+            cells[8].textContent = (qty * item.sellingPrice).toFixed(2);
             calculateCart();
         }
     });
@@ -641,27 +708,30 @@ function restoreGridFromCart() {
             if (rows[i].getAttribute('data-batch-id')) continue;
             const cells = rows[i].querySelectorAll('td');
             let empty = true;
-            for (let j = 0; j < cells.length; j++) {
+            for (let j = 1; j < cells.length; j++) {
                 if (cells[j].textContent.trim() !== '') { empty = false; break; }
             }
             if (empty) { targetRow = rows[i]; break; }
         }
-        if (!targetRow) return;
+        if (!targetRow) {
+            targetRow = appendGridRow();
+            if (!targetRow) return;
+        }
 
         const cells = targetRow.querySelectorAll('td');
         targetRow.setAttribute('data-batch-id', item.batchId);
-        cells[0].textContent = batch.batch_number || batch.id;
-        cells[1].textContent = product.name;
+        cells[1].textContent = batch.batch_number || batch.id;
+        cells[2].textContent = product.name;
         const retailPrice = parseFloat(batch.retail_price);
         const sellingPrice = parseFloat(batch.selling_price) || 0;
         const currentPrice = priceMode === 'wholesale' ? sellingPrice : (retailPrice || sellingPrice);
         item.sellingPrice = currentPrice;
-        cells[2].textContent = currentPrice.toFixed(2);
-        cells[3].textContent = (item.discount || 0).toFixed(2);
-        cells[4].textContent = product.unit || 'Nos';
-        cells[5].textContent = (item.qty || 1).toFixed(2);
-        cells[6].textContent = (item.gstRate || 0).toFixed(1);
-        cells[7].textContent = ((item.qty || 1) * currentPrice).toFixed(2);
+        cells[3].textContent = currentPrice.toFixed(2);
+        cells[4].textContent = (item.discount || 0).toFixed(2);
+        cells[5].textContent = product.unit || 'Nos';
+        cells[6].textContent = (item.qty || 1).toFixed(2);
+        cells[7].textContent = (item.gstRate || 0).toFixed(1);
+        cells[8].textContent = ((item.qty || 1) * currentPrice).toFixed(2);
 
         cart.push(item);
     });
@@ -681,15 +751,15 @@ function syncGridToCart() {
         const item = cart.find(function(c) { return c.batchId === bid; });
         if (!item) return;
         const cells = tr.querySelectorAll('td');
-        const price = parseFloat(cells[2].textContent) || 0;
-        const disc = parseFloat(cells[3].textContent) || 0;
-        const qty = parseFloat(cells[5].textContent) || 0;
+        const price = parseFloat(cells[3].textContent) || 0;
+        const disc = parseFloat(cells[4].textContent) || 0;
+        const qty = parseFloat(cells[6].textContent) || 0;
         const batch = posBatches.find(function(b) { return b.id === bid; });
         const maxQty = batch ? (batch.quantity || batch.remaining_qty || Infinity) : Infinity;
         item.sellingPrice = price;
         item.qty = Math.min(Math.max(1, qty), maxQty);
         item.discount = Math.min(disc, item.qty * item.sellingPrice);
-        cells[7].textContent = (item.qty * item.sellingPrice).toFixed(2);
+        cells[8].textContent = (item.qty * item.sellingPrice).toFixed(2);
     });
     // Remove ghost items (cart entries whose grid row was deleted or overwritten)
     for (let i = cart.length - 1; i >= 0; i--) {
@@ -891,12 +961,13 @@ async function processCheckout() {
         if (result.success) {
             cart = [];
 
-            // Clear all grid rows
+            // Clear all grid rows (preserve Sl. No at index 0)
             const tbody = document.querySelector('#billingGrid tbody');
             if (tbody) {
                 tbody.querySelectorAll('tr').forEach(function(tr) {
                     tr.removeAttribute('data-batch-id');
-                    tr.querySelectorAll('td').forEach(function(c) { c.textContent = ''; });
+                    const cells = tr.querySelectorAll('td');
+                    for (let i = 1; i < cells.length; i++) { cells[i].textContent = ''; }
                     tr.classList.remove('bg-active');
                 });
             }
@@ -939,16 +1010,33 @@ function confirmDeleteRow() {
     if (!tr) { closeDeleteConfirm(); return; }
 
     const bid = tr.getAttribute('data-batch-id');
-
-    // Clear all cells
-    tr.querySelectorAll('td').forEach(function(c) { c.textContent = ''; });
-    tr.removeAttribute('data-batch-id');
-    tr.classList.remove('bg-active');
+    const tbody = document.querySelector('#billingGrid tbody');
 
     // Remove from cart
     if (bid) {
         const idx = cart.findIndex(function(c) { return c.batchId === bid; });
         if (idx !== -1) cart.splice(idx, 1);
+    }
+
+    if (tbody) {
+        if (tbody.children.length > MIN_GRID_ROWS) {
+            // Remove DOM row if above baseline
+            tr.remove();
+        } else {
+            // Clear cells & move empty row to end of table
+            const cells = tr.querySelectorAll('td');
+            for (let i = 1; i < cells.length; i++) { cells[i].textContent = ''; }
+            tr.removeAttribute('data-batch-id');
+            tr.classList.remove('bg-active');
+            tbody.appendChild(tr);
+        }
+
+        // Maintain minimum baseline of 8 rows
+        while (tbody.children.length < MIN_GRID_ROWS) {
+            tbody.appendChild(createNewGridRow());
+        }
+
+        reindexSlNo();
     }
 
     calculateCart();

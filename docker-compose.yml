@@ -3,12 +3,14 @@ services:
   db:
     image: postgres:15-alpine
     container_name: retail_pos_db
+    mem_limit: 1g
+    cpus: 1.0
     ports:
       - "5433:5432"
     environment:
       POSTGRES_DB: retail_pos
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -16,6 +18,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - internal
     restart: unless-stopped
@@ -26,10 +33,12 @@ services:
       context: .
       dockerfile: Dockerfile.ui
     container_name: retail_pos_ui
+    mem_limit: 256m
+    cpus: 0.5
     ports:
       - "8080:80"
     environment:
-      JWT_SECRET: super_secret_key_of_retail_pos_system_2026_jwt_auth
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - ./public:/var/www/html/public
       - ./views:/var/www/html/views:ro
@@ -52,6 +61,11 @@ services:
     depends_on:
       app-api:
         condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - internal
     restart: unless-stopped
@@ -62,17 +76,19 @@ services:
       context: .
       dockerfile: Dockerfile.api
     container_name: retail_pos_api
+    mem_limit: 768m
+    cpus: 1.5
     ports:
       - "8081:80"
     environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: retail_pos
-      DB_USER: admin
-      DB_PASSWORD: admin123
-      VALKEY_HOST: valkey
-      VALKEY_PORT: 6379
-      JWT_SECRET: super_secret_key_of_retail_pos_system_2026_jwt_auth
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      VALKEY_HOST: ${VALKEY_HOST}
+      VALKEY_PORT: ${VALKEY_PORT}
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - ./src:/var/www/html/src
       - ./Database:/var/www/html/Database
@@ -92,27 +108,39 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - internal
     restart: unless-stopped
 
-  #............................Valkey Cache Server............................
+  # -------------------- Valkey Cache Server --------------------
   valkey:
-      image: valkey/valkey:7-alpine
-      container_name: retail_valkey
-      restart: unless-stopped
-      ports:
-        - "6379:6379"          # optional: expose to host for debugging
-      volumes:
-        - valkey-data:/data    # persist cache across restarts (optional)
-      command: valkey-server --appendonly yes   # enable persistence
-      networks:
-        - internal
-      healthcheck:
-        test: ["CMD", "valkey-cli", "ping"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
+    image: valkey/valkey:7-alpine
+    container_name: retail_valkey
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
+    ports:
+      - "6379:6379"          # optional: expose to host for debugging
+    volumes:
+      - valkey-data:/data    # persist cache across restarts
+    command: valkey-server --appendonly yes   # enable persistence
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - internal
 
   # -------------------- Backup Worker --------------------
   backup-worker:
@@ -120,16 +148,18 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     container_name: retail_backup_worker
+    mem_limit: 256m
+    cpus: 0.5
     environment:
-      TZ: Asia/Kolkata
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: retail_pos
-      DB_USER: admin
-      DB_PASSWORD: admin123
-      VALKEY_HOST: valkey
-      VALKEY_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-super_secret_key_of_retail_pos_system_2026_jwt_auth}
+      TZ: ${TZ}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      VALKEY_HOST: ${VALKEY_HOST}
+      VALKEY_PORT: ${VALKEY_PORT}
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - ./src:/var/www/html/src
       - ./config:/var/www/html/config
@@ -142,6 +172,11 @@ services:
         condition: service_healthy
       valkey:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - internal
     restart: unless-stopped
@@ -152,17 +187,19 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     container_name: retail_backup_scheduler
+    mem_limit: 128m
+    cpus: 0.25
     command: sh -c "while true; do php /var/www/html/scripts/check_schedule.php; sleep 60; done"
     environment:
-      TZ: Asia/Kolkata
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: retail_pos
-      DB_USER: admin
-      DB_PASSWORD: admin123
-      VALKEY_HOST: valkey
-      VALKEY_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-super_secret_key_of_retail_pos_system_2026_jwt_auth}
+      TZ: ${TZ}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      VALKEY_HOST: ${VALKEY_HOST}
+      VALKEY_PORT: ${VALKEY_PORT}
+      JWT_SECRET: ${JWT_SECRET}
     volumes:
       - ./src:/var/www/html/src
       - ./config:/var/www/html/config
@@ -174,6 +211,11 @@ services:
         condition: service_healthy
       valkey:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - internal
     restart: unless-stopped
@@ -186,4 +228,3 @@ volumes:
 networks:
   internal:
     driver: bridge
-

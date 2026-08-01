@@ -422,10 +422,18 @@
 
   <!-- Add Category Modal -->
   <div class="modal-overlay" id="addCategoryModal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <div class="modal-title">Manage Categories & Subcategories</div>
         <button class="close-btn" onclick="closeModal('addCategoryModal')">&times;</button>
+      </div>
+
+      <!-- Existing Categories List -->
+      <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+        <div style="font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; color: var(--accent);">Existing Categories</div>
+        <div id="existingCategoriesList" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; background: var(--bg-100, rgba(255,255,255,0.03));">
+          <!-- Loaded dynamically -->
+        </div>
       </div>
       
       <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
@@ -450,6 +458,24 @@
         <button class="btn btn-primary" onclick="saveSubcategory()">Save Subcategory</button>
       </div>
     </div>
+  </div>
+
+  <!-- Delete Category Confirmation Modal -->
+  <div id="deleteCategoryModal" class="modal-overlay">
+      <div class="modal-content" style="max-width: 420px;">
+          <div class="modal-header">
+              <div class="modal-title">Confirm Delete Category</div>
+              <button class="close-btn" onclick="closeModal('deleteCategoryModal')">&times;</button>
+          </div>
+          <div class="modal-body" id="deleteCategoryModalBody">
+              <p>Are you sure you want to delete the category <strong id="deleteCategoryName"></strong>?</p>
+              <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone.</p>
+          </div>
+          <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
+              <button class="btn btn-outline" onclick="closeModal('deleteCategoryModal')">Cancel</button>
+              <button class="btn btn-danger" id="confirmDeleteCategoryBtn">Delete Category</button>
+          </div>
+      </div>
   </div>
 
   <!-- Bill Receipt Modal -->

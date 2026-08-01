@@ -14,6 +14,7 @@ async function loadCategories() {
         categories = data;
         populateCategoryDropdowns();    // product-add modal
         populateSubcategoryDropdown();  // sub-category section in manage modal
+        renderExistingCategoriesList(); // list in manage category modal
         updateStats();
     }
 }
@@ -367,6 +368,38 @@ function populateSubcategoryDropdown() {
     });
 }
 
+/** Renders the list of existing categories with delete action in the manage category modal */
+function renderExistingCategoriesList() {
+    const container = document.getElementById('existingCategoriesList');
+    if (!container) return;
+
+    if (!categories || categories.length === 0) {
+        container.innerHTML = '<div style="color: var(--muted); font-size: 0.85rem; padding: 6px;">No categories created yet.</div>';
+        return;
+    }
+
+    let html = '<div style="display: flex; flex-direction: column; gap: 6px;">';
+    categories.forEach(cat => {
+        const productCount = parseInt(cat.product_count || 0, 10);
+        html += `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: var(--card, rgba(255,255,255,0.05)); border: 1px solid var(--border); border-radius: var(--radius-sm, 4px);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 500; font-size: 0.9rem;">${escapeHtml(cat.name)}</span>
+                    <span style="font-size: 0.75rem; padding: 2px 6px; border-radius: 10px; background: var(--bg-hover, rgba(255,255,255,0.1)); color: var(--muted);">${productCount} product${productCount !== 1 ? 's' : ''}</span>
+                </div>
+                <button class="btn-icon delete-btn" title="${productCount > 0 ? 'Cannot delete: Products assigned' : 'Delete category'}" onclick="deleteCategory('${cat.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
 /** Loads subcategories for the selected category into the product add modal */
 async function loadSubcategoriesIntoProductModal(categoryId) {
     const subSelect = document.getElementById('pmProductSubcategory');
@@ -517,11 +550,9 @@ window.saveProduct = async function () {
             resetProductModal();
             closeModal('addProductModal');
         } else {
-            closeModal('addProductModal');
             showAlert('Error', data?.error || 'Failed to add product');
         }
     } catch (e) {
-        closeModal('addProductModal');
         showAlert('Error', e.message || 'Failed to add product');
     }
 };
@@ -568,6 +599,54 @@ window.deleteProduct = function (productId) {
     const nameSpan = document.getElementById('deleteProductName');
     if (nameSpan) nameSpan.innerText = product.name;
     openModal('deleteProductModal');
+};
+
+let pendingDeleteCategoryId = null;
+
+window.deleteCategory = function (categoryId) {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    pendingDeleteCategoryId = categoryId;
+    const modalBody = document.getElementById('deleteCategoryModalBody');
+    const confirmBtn = document.getElementById('confirmDeleteCategoryBtn');
+    const productCount = parseInt(category.product_count || 0, 10);
+
+    if (productCount > 0) {
+        if (modalBody) {
+            modalBody.innerHTML = `
+                <div style="color: var(--danger); margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem;">
+                    ⚠️ Category Contains ${productCount} Active Product${productCount !== 1 ? 's' : ''}
+                </div>
+                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">Deleting category <strong id="deleteCategoryName">${escapeHtml(category.name)}</strong> will permanently delete:</p>
+                <ul style="font-size: 0.85rem; padding-left: 1.25rem; margin-bottom: 0.75rem; color: var(--muted, #888);">
+                    <li><strong>${productCount}</strong> Product(s)</li>
+                    <li>Related inventory records</li>
+                    <li>Subcategories & variants</li>
+                </ul>
+                <p style="color: var(--danger); font-size: 0.8rem; font-weight: 600;">⚠️ This action CANNOT be undone.</p>
+            `;
+        }
+        if (confirmBtn) {
+            confirmBtn.style.display = 'inline-block';
+            confirmBtn.innerText = `Delete Everything (${productCount} Products)`;
+            confirmBtn.setAttribute('data-force', 'true');
+        }
+    } else {
+        if (modalBody) {
+            modalBody.innerHTML = `
+                <p>Are you sure you want to delete the category <strong id="deleteCategoryName">${escapeHtml(category.name)}</strong>?</p>
+                <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone.</p>
+            `;
+        }
+        if (confirmBtn) {
+            confirmBtn.style.display = 'inline-block';
+            confirmBtn.innerText = 'Delete Category';
+            confirmBtn.setAttribute('data-force', 'false');
+        }
+    }
+
+    openModal('deleteCategoryModal');
 };
 
 // DOMContentLoaded: ALWAYS pre-load data so categories survive page refresh.
@@ -632,6 +711,49 @@ document.addEventListener('DOMContentLoaded', () => {
                             <button class="btn btn-danger" onclick="deleteProduct('${productId}')">Retry Delete</button>
                         `;
                     }
+                }
+            }
+        });
+    }
+
+    // Handle category delete confirmation
+    const deleteCatModal = document.getElementById('deleteCategoryModal');
+    if (deleteCatModal) {
+        deleteCatModal.addEventListener('click', async (e) => {
+            if (e.target.id === 'confirmDeleteCategoryBtn' && pendingDeleteCategoryId) {
+                const categoryId = pendingDeleteCategoryId;
+                const force = e.target.getAttribute('data-force') === 'true';
+                e.target.disabled = true;
+                
+                try {
+                    const data = await apiRequest(`/api/categories/${categoryId}?force=${force}`, { method: 'DELETE' });
+                    if (data && data.success) {
+                        await loadCategories();
+                        await loadProducts(currentPage);
+                        closeModal('deleteCategoryModal');
+                        pendingDeleteCategoryId = null;
+                    } else {
+                        const errorMsg = data?.message || data?.error || 'Failed to delete category';
+                        const modalBody = document.getElementById('deleteCategoryModalBody');
+                        if (modalBody) {
+                            modalBody.innerHTML = `
+                                <div style="color: var(--danger); margin-bottom: 1rem;">
+                                    <strong>Error:</strong> ${escapeHtml(errorMsg)}
+                                </div>
+                            `;
+                        }
+                    }
+                } catch (err) {
+                    const modalBody = document.getElementById('deleteCategoryModalBody');
+                    if (modalBody) {
+                        modalBody.innerHTML = `
+                            <div style="color: var(--danger); margin-bottom: 1rem;">
+                                <strong>Error:</strong> ${escapeHtml(err.message || 'Failed to delete category')}
+                            </div>
+                        `;
+                    }
+                } finally {
+                    e.target.disabled = false;
                 }
             }
         });
@@ -736,11 +858,9 @@ window.updateProduct = async function () {
             resetProductModal();
             showAlert('Success', 'Product updated successfully');
         } else {
-            closeModal('addProductModal');
             showAlert('Error', data?.error || 'Failed to update product');
         }
     } catch (e) {
-        closeModal('addProductModal');
         showAlert('Error', e.message || 'Failed to update product');
     }
 };
