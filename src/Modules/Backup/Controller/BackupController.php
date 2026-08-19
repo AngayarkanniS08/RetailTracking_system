@@ -126,6 +126,10 @@ class BackupController
             // Run restore synchronously
             $this->service->runRestore($filePath, $dbHost, $dbName, $dbUser, $dbPass);
 
+            // No backup/restore job can be legitimately in-flight after a restore;
+            // fail any stale ones restored from the dump (e.g. interrupted backups).
+            $this->repo->failInFlightJobs('Interrupted: superseded by restore');
+
             // Verify restored data
             $verification = $this->service->verifyRestore();
 

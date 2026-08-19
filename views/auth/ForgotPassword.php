@@ -7,7 +7,7 @@
           <img src="public/assets/images/logo.png" alt="Pudheera Fashions Logo" style="width: 100%; height: auto; border-radius: 12px;">
         </div>
       </div>
-      <h2 style="text-align: center; color: white; margin-bottom: 1.5rem;">Forgot Password</h2>
+      <h2 style="text-align: center; color: var(--card-foreground); margin-bottom: 1.5rem;">Forgot Password</h2>
       <form id="forgotForm">
         <div class="input-group">
           <label class="input-label">Email Id</label>

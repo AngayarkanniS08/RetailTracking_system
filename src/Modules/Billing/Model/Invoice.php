@@ -26,6 +26,7 @@ class Invoice {
         public ?string $updatedAt = null,
         public ?array  $items = null,
         public ?string $customerName = null,
-        public ?string $customerPhone = null
+        public ?string $customerPhone = null,
+        public float   $customerBalance = 0
     ) {}
 }

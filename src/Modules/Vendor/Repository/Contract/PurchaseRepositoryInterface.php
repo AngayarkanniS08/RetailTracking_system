@@ -35,5 +35,5 @@ interface PurchaseRepositoryInterface {
     //vendor history methods
     public function getVendorHistory(string $vendorId): array;
     public function getVendorBalance(string $vendorId): array;
-    public function getGlobalPurchaseStats(): array;
+    public function getGlobalPurchaseStats(array $filters = []): array;
 }

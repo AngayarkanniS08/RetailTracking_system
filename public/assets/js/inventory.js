@@ -589,9 +589,10 @@ function renderInventory(stats = {}) {
         const p = getProduct(b.product_id);
         if (!p) return;
         const rop = p?.rop ?? 0;
+        const totalStock = Number(b.product_total_stock ?? b.quantity);
         const stockBadge = !rop ? `<span class="badge badge-muted">No Alert</span>` :
-            (b.quantity > rop ? `<span class="badge badge-ok">In Stock</span>` :
-            (b.quantity > 0 ? `<span class="badge badge-warn">Low Stock</span>` : `<span class="badge badge-danger">Out of Stock</span>`));
+            (totalStock > rop ? `<span class="badge badge-ok">In Stock</span>` :
+            (totalStock > 0 ? `<span class="badge badge-warn">Low Stock</span>` : `<span class="badge badge-danger">Out of Stock</span>`));
         const gstRate = parseFloat(p.gst_rate || p.gst || 0);
         const gstText = gstRate ? ` <span style="font-size:0.75rem; color:var(--muted)">+${gstRate}% GST</span>` : '';
         let dateStr = '';
@@ -613,7 +614,7 @@ function renderInventory(stats = {}) {
               <div style="font-size:0.8rem; color:var(--warn);">R: ${window.formatCurrency(b.retail_price)}</div>
               ${gstText}
             </td>
-            <td><span style="font-weight:600; color:${rop > 0 && b.quantity <= rop ? 'var(--warn)' : 'inherit'}">${b.quantity}</span></td>
+            <td><span style="font-weight:600; color:${rop > 0 && totalStock <= rop ? 'var(--warn)' : 'inherit'}">${b.quantity}</span></td>
             <td>${stockBadge}</td>
             <td>
               <div style="display:flex; gap:0.5rem;">
@@ -712,6 +713,9 @@ async function initInventory() {
 
     // Load initial batches from the API database
     await loadBatchesFromApi();
+
+    // Refresh topbar alert badge/banner immediately on every visit
+    if (typeof fetchAndRenderDbAlerts === 'function') fetchAndRenderDbAlerts();
 }
 
 // Load subcategories for a given category and populate a dropdown
@@ -924,6 +928,7 @@ async function disableLowStockAlert(productId) {
             }
             alert('Alert disabled successfully');
             await populateAlertProductSelect();
+            if (typeof loadBatchesFromApi === 'function') loadBatchesFromApi(currentInventoryPage);
             if (typeof fetchAndRenderDbAlerts === 'function') {
                 await fetchAndRenderDbAlerts();
             }
@@ -1053,6 +1058,7 @@ async function saveLowStockAlert() {
             }
             alert('Reorder point alert saved successfully');
             closeModal('lowStockAlertModal');
+            if (typeof loadBatchesFromApi === 'function') loadBatchesFromApi(currentInventoryPage);
             if (typeof fetchAndRenderDbAlerts === 'function') {
                 await fetchAndRenderDbAlerts();
             }

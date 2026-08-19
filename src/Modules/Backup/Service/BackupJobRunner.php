@@ -92,6 +92,9 @@ class BackupJobRunner
 
         $this->service->runRestore($filePath, $dbHost, $dbName, $dbUser, $dbPass);
 
+        // No job can be in-flight after a restore; fail stale ones restored from the dump.
+        $this->repo->failInFlightJobs('Interrupted: superseded by restore');
+
         $this->queue->setProgress($jobId, 'Verifying restored data...');
         $verification = $this->service->verifyRestore();
 

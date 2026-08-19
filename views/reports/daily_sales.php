@@ -16,6 +16,7 @@
                     <th>Bills</th>
                     <th>Revenue</th>
                     <th>Avg Bill</th>
+                    <th>Products</th>
                     <th style="text-align:right">Action</th>
                   </tr>
                 </thead>

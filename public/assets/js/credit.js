@@ -194,7 +194,7 @@ async function toggleBills(className, custId) {
             typeLabel = '<span style="color:var(--ok); font-weight:600;">Payment</span>';
             subtitle = '';
         } else if (isReturn) {
-            typeLabel = '<span style="color:#e67e22; font-weight:600;">Item Return</span>';
+            typeLabel = '<span style="color:var(--danger); font-weight:600;">Item Return</span>';
             var reason = entry.notes || '';
             reason = reason.replace(/^Return on invoice\s+\S+:\s*/i, '');
             subtitle = '<div style="font-size:0.7rem;color:var(--muted);margin-top:1px;">' + escHtml(reason) + '</div>';

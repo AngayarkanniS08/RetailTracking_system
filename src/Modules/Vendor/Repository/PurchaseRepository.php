@@ -506,18 +506,33 @@ class PurchaseRepository implements PurchaseRepositoryInterface
         ];
     }
 
-    public function getGlobalPurchaseStats(): array
+    public function getGlobalPurchaseStats(array $filters = []): array
     {
+        $params = [];
+        $whereSql = '';
+
+        if (!empty($filters['search'])) {
+            $whereSql .= " AND v.name ILIKE ?";
+            $params[] = "%{$filters['search']}%";
+        }
+        if (!empty($filters['vendor_id'])) {
+            $whereSql .= " AND v.id = ?";
+            $params[] = $filters['vendor_id'];
+        }
+
         $stmt = $this->db->prepare("
             SELECT
-                COALESCE(COUNT(DISTINCT vendor_id), 0) AS total_vendors,
-                COALESCE(SUM(total_amount), 0) AS total_purchased,
-                COALESCE(SUM(amount_paid), 0) AS total_paid,
-                COALESCE(GREATEST(SUM(total_amount - amount_paid), 0), 0) AS balance_due
-            FROM vendor_purchases p
-            WHERE user_id = current_setting('app.current_user_id')::uuid
+                COALESCE(COUNT(DISTINCT v.id), 0) AS total_vendors,
+                COALESCE(SUM(p.total_amount), 0) AS total_purchased,
+                COALESCE(SUM(p.amount_paid), 0) AS total_paid,
+                COALESCE(GREATEST(SUM(p.total_amount - p.amount_paid), 0), 0) AS balance_due
+            FROM vendors v
+            LEFT JOIN vendor_purchases p ON p.vendor_id = v.id
+                AND p.user_id = current_setting('app.current_user_id')::uuid
+            WHERE v.user_id = current_setting('app.current_user_id')::uuid
+            $whereSql
         ");
-        $stmt->execute();
+        $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return [
             'total_vendors' => (int)$row['total_vendors'],

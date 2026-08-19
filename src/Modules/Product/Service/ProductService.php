@@ -73,8 +73,8 @@ class ProductService
             throw new ValidationException("Category not found");
         }
 
-        if ($this->repo->findByName($dto->name)) {
-            throw new ValidationException("A product with this name already exists");
+        if ($this->repo->findByNameCategorySubcategory($dto->name, $dto->categoryId, $dto->subcategoryId)) {
+            throw new ValidationException("A product with this name already exists in this category and subcategory");
         }
 
         if ($dto->gstRate < 0 || $dto->gstRate > 100) {
@@ -121,9 +121,9 @@ class ProductService
             throw new ValidationException("Product not found");
         }
 
-        $existing = $this->repo->findByName($dto->name);
+        $existing = $this->repo->findByNameCategorySubcategory($dto->name, $dto->categoryId, $dto->subcategoryId);
         if ($existing && $existing['id'] !== $id) {
-            throw new ValidationException("A product with this name already exists");
+            throw new ValidationException("A product with this name already exists in this category and subcategory");
         }
 
         if ($dto->gstRate < 0 || $dto->gstRate > 100) {

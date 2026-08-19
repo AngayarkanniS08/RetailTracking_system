@@ -198,6 +198,11 @@ class ApiRoutes
             (new \Modules\Billing\Controller\InvoiceController())->index();
         });
 
+        $router->add('GET', '/api/invoices/daily-products', function (): void {
+            AuthMiddleware::authenticate();
+            (new \Modules\Billing\Controller\InvoiceController())->dailyProducts();
+        });
+
         $router->add('POST', '/api/invoices', function (): void {
             AuthMiddleware::authenticate(900);
             (new \Modules\Billing\Controller\InvoiceController())->store();

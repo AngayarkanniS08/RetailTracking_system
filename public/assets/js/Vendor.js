@@ -274,16 +274,26 @@ function renderVendorSummaryTable(vendors) {
         balanceCell.innerHTML = `<span style="font-weight:700; color:${balance > 0 ? 'var(--danger)' : 'var(--ok)'};">${formatCurrency(balance)}</span>`;
 
         const actionCell = tr.insertCell();
-        actionCell.innerHTML = `
-            <div style="white-space:nowrap;">
-                <button class="btn btn-sm btn-outline" onclick="switchTab('vendorhistory','${v.vendorId}')" style="padding:2px 10px; font-size:0.75rem;">
-                    View History
-                </button>
-                <button class="btn btn-sm btn-primary" onclick="openQuickPurchaseForVendor('${v.vendorId}','${(v.vendorName || '').replace(/'/g, "\\'")}','${(v.vendorPhone || '').replace(/'/g, "\\'")}')" style="padding:2px 10px; font-size:0.75rem;">
-                    +Add
-                </button>
-            </div>
-        `;
+        actionCell.innerHTML = `<div style="white-space:nowrap;"></div>`;
+        const btnDiv = actionCell.firstChild;
+
+        const historyBtn = document.createElement('button');
+        historyBtn.className = 'btn btn-sm btn-outline';
+        historyBtn.textContent = 'View History';
+        historyBtn.style.cssText = 'padding:2px 10px; font-size:0.75rem;';
+        historyBtn.addEventListener('click', function() {
+            switchTab('vendorhistory', v.vendorId);
+        });
+        btnDiv.appendChild(historyBtn);
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn btn-sm btn-primary';
+        addBtn.textContent = '+Add';
+        addBtn.style.cssText = 'padding:2px 10px; font-size:0.75rem;';
+        addBtn.addEventListener('click', function() {
+            openQuickPurchaseForVendor(v.vendorId, v.vendorName || '', v.vendorPhone || '');
+        });
+        btnDiv.appendChild(addBtn);
     });
 }
 
@@ -321,14 +331,17 @@ function viewVendorHistory(vendorId) {
         alert('No vendor selected');
         return;
     }
-    // Redirect to vendor history page with vendor_id as query parameter
-    window.location.href = `/vendor/history.php?vendor_id=${vendorId}`;
+    switchTab('vendorhistory', vendorId);
 }
 
 // ============================================
 // 6. Record payment
 // ============================================
 async function recordPayment(purchaseId) {
+    if (!purchaseId) {
+        alert('Purchase ID is missing');
+        return;
+    }
     try {
         const data = await window.apiRequest(`/api/purchases/${purchaseId}`);
         if (!data || data.error) {
@@ -337,6 +350,12 @@ async function recordPayment(purchaseId) {
         }
         const totalAmount = data.totalAmount || ((data.baseAmount || 0) + (data.totalGst || 0));
         const balance = totalAmount - (data.amountPaid || 0);
+
+        if (data.status === 'paid' || balance <= 0) {
+            alert('This purchase is already fully paid');
+            return;
+        }
+
         document.getElementById('vpPurchaseId').value = purchaseId;
         document.getElementById('vpVendorId').value = data.vendorId || '';
         document.getElementById('vpVendorName').value = data.vendorName || '';
@@ -344,8 +363,11 @@ async function recordPayment(purchaseId) {
         document.getElementById('vpPaymentDate').value = new Date().toISOString().slice(0, 10);
         const balanceSpan = document.getElementById('slBalanceText');
         balanceSpan.dataset.originalBalance = balance;
+        balanceSpan.dataset.totalAmount = totalAmount;
         balanceSpan.textContent = 'Balance After Payment: ₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        document.getElementById('slAmountPaying').oninput = function() {
+        const amountInput = document.getElementById('slAmountPaying');
+        amountInput.max = balance;
+        amountInput.oninput = function() {
             const entered = parseFloat(this.value) || 0;
             const orig = parseFloat(balanceSpan.dataset.originalBalance) || 0;
             const remaining = Math.max(0, orig - entered);
@@ -354,7 +376,7 @@ async function recordPayment(purchaseId) {
         openModal('vendorPaymentModal');
     } catch (err) {
         console.error(err);
-        alert('Error loading purchase details');
+        alert(err?.message && err.message !== 'Failed to fetch' ? err.message : 'Error loading purchase details');
     }
 }
 
@@ -370,7 +392,20 @@ async function submitVendorPayment() {
         alert('Please enter a valid positive amount');
         return;
     }
-    const paymentDate = document.getElementById('vpPaymentDate').value || new Date().toISOString().split('T')[0];
+    const balance = parseFloat(document.getElementById('slBalanceText')?.dataset.originalBalance) || 0;
+    if (balance <= 0) {
+        alert('This purchase is already fully paid');
+        return;
+    }
+    if (payAmount > balance) {
+        alert('Payment would exceed total amount. Balance remaining: ₹' + balance.toLocaleString('en-IN', { minimumFractionDigits: 2 }));
+        return;
+    }
+    const paymentDate = document.getElementById('vpPaymentDate').value;
+    if (!paymentDate) {
+        alert('Please select a payment date');
+        return;
+    }
     try {
         const response = await window.apiRequest(`/api/purchases/${purchaseId}/pay`, {
             method: 'POST',
@@ -390,7 +425,13 @@ async function submitVendorPayment() {
         }
     } catch (err) {
         console.error(err);
-        alert('Network error');
+        // apiRequest throws Error(data.error) for non-2xx responses, so surface
+        // the server's validation message instead of a generic network error
+        if (err && err.message && err.message !== 'Failed to fetch' && !err.message.includes('NetworkError')) {
+            alert(err.message);
+        } else {
+            alert('Network error. Please check your connection and try again.');
+        }
     }
 }
 
@@ -517,6 +558,10 @@ async function saveEditPurchase() {
         alert('Invalid purchase');
         return;
     }
+    if (!purchaseDate) {
+        alert('Please select a purchase date');
+        return;
+    }
     if (baseAmount < 0 || amountPaid < 0) {
         alert('Amounts cannot be negative');
         return;
@@ -526,6 +571,7 @@ async function saveEditPurchase() {
     const items = [];
     let hasError = false;
     let totalGst = 0;
+    let computedBase = 0;
     itemRows.forEach(row => {
         const productId = row.querySelector('input[name*="product_id"]')?.value || '';
         const quantity = parseFloat(row.querySelector('input[placeholder="Qty"]')?.value) || 0;
@@ -539,6 +585,11 @@ async function saveEditPurchase() {
             hasError = true;
             return;
         }
+        if (unitPrice < 0 || gstRate < 0) {
+            hasError = true;
+            return;
+        }
+        computedBase += quantity * unitPrice;
         totalGst += quantity * unitPrice * (gstRate / 100);
         items.push({
             product_id: productId,
@@ -549,11 +600,18 @@ async function saveEditPurchase() {
     });
 
     if (hasError || items.length === 0) {
-        alert('Please fill all item fields correctly');
+        alert('Please fill all item fields correctly (quantity must be positive, prices/GST cannot be negative)');
         return;
     }
-    if (amountPaid > baseAmount + totalGst) {
-        alert('Amount paid cannot exceed total amount');
+    const totalAmount = computedBase + totalGst;
+
+    // Mirror the backend validation in the frontend so users get immediate feedback
+    if (Math.abs(baseAmount - computedBase) > 0.01) {
+        alert(`Base amount does not match sum of line items. Expected ₹${computedBase.toFixed(2)} but got ₹${baseAmount.toFixed(2)}`);
+        return;
+    }
+    if (amountPaid > totalAmount + 0.01) {
+        alert(`Amount paid cannot exceed total amount (₹${totalAmount.toFixed(2)})`);
         return;
     }
 
@@ -583,7 +641,13 @@ async function saveEditPurchase() {
         }
     } catch (err) {
         console.error('Update error:', err);
-        alert('Network error. Please try again.');
+        // apiRequest throws Error(data.error) for non-2xx responses, so surface
+        // the server's validation message instead of a generic network error
+        if (err && err.message && err.message !== 'Failed to fetch' && !err.message.includes('NetworkError')) {
+            alert(err.message);
+        } else {
+            alert('Network error. Please check your connection and try again.');
+        }
     } finally {
         btn.disabled = false;
         btn.innerText = originalText;
@@ -1033,7 +1097,11 @@ async function saveQuickPurchase() {
         }
     } catch (err) {
         console.error(err);
-        alert('Network error');
+        if (err && err.message && err.message !== 'Failed to fetch' && !err.message.includes('NetworkError')) {
+            alert(err.message);
+        } else {
+            alert('Network error. Please check your connection and try again.');
+        }
     } finally {
         btn.disabled = false;
         btn.innerText = 'Save Purchase';

@@ -28,14 +28,20 @@ class JWTService
     {
         $issuedAt = time();
         $sessionIat = $sessionIat ?? $issuedAt;
+
+        $userId = $user['id'] ?? $user['user_id'] ?? null;
+        if ($userId === null) {
+            throw new \InvalidArgumentException('Cannot generate token: missing user_id');
+        }
+
         $payload = [
             'iss' => 'retail-system',
             'aud' => 'retail-app',
             'iat' => $issuedAt,
             'session_iat' => $sessionIat,
             'data' => [
-                'user_id' => $user['id'],
-                'username' => $user['username'],
+                'user_id' => $userId,
+                'username' => $user['username'] ?? '',
                 'email' => $user['email'] ?? ''
             ]
         ];
@@ -71,10 +77,14 @@ class JWTService
             return null;
         }
 
-        return $this->generateToken(
-            (array)$decoded->data,
-            $sessionIat
-        );
+        try {
+            return $this->generateToken(
+                (array)$decoded->data,
+                $sessionIat
+            );
+        } catch (\InvalidArgumentException $e) {
+            return null;
+        }
     }
 
 }

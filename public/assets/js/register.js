@@ -63,12 +63,6 @@
             const data = await response.json();
 
             if (response.ok && data.success) {
-                if (data.token) {
-                    localStorage.setItem('auth_token', data.token);
-                }
-                if (data.user && data.user.id) {
-                    document.cookie = "auth_uid=" + data.user.id + "; path=/; max-age=86400; SameSite=Lax";
-                }
                 showMessage('success', 'Account created! Redirecting to login...');
                 setTimeout(() => {
                     window.location.href = '/login?registered=1';

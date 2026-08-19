@@ -77,7 +77,7 @@
         <input type="text" id="stockVendor" class="input-field" placeholder="e.g. Metro Wholesale">
       </div><div class="input-group">
         <label class="input-label">Batch ID/Number</label>
-        <input type="text" id="stockBatchId" class="input-field" placeholder="e.g. Metro Wholesale">
+        <input type="text" id="stockBatchId" class="input-field" placeholder="e.g. BAT-ELE-2026-0101">
       </div>
 
       <div class="segment-control" style="margin-bottom: 20px;">
@@ -422,10 +422,18 @@
 
   <!-- Add Category Modal -->
   <div class="modal-overlay" id="addCategoryModal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 600px;">
       <div class="modal-header">
         <div class="modal-title">Manage Categories & Subcategories</div>
         <button class="close-btn" onclick="closeModal('addCategoryModal')">&times;</button>
+      </div>
+
+      <!-- Existing Categories List -->
+      <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+        <div style="font-weight: 600; margin-bottom: 10px; font-size: 0.9rem; color: var(--accent);">Existing Categories</div>
+        <div id="existingCategoriesList" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; background: var(--bg-100, rgba(255,255,255,0.03));">
+          <!-- Loaded dynamically -->
+        </div>
       </div>
       
       <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
@@ -450,6 +458,24 @@
         <button class="btn btn-primary" onclick="saveSubcategory()">Save Subcategory</button>
       </div>
     </div>
+  </div>
+
+  <!-- Delete Category Confirmation Modal -->
+  <div id="deleteCategoryModal" class="modal-overlay">
+      <div class="modal-content" style="max-width: 420px;">
+          <div class="modal-header">
+              <div class="modal-title">Confirm Delete Category</div>
+              <button class="close-btn" onclick="closeModal('deleteCategoryModal')">&times;</button>
+          </div>
+          <div class="modal-body" id="deleteCategoryModalBody">
+              <p>Are you sure you want to delete the category <strong id="deleteCategoryName"></strong>?</p>
+              <p class="text-muted" style="font-size: 0.85rem;">This action cannot be undone.</p>
+          </div>
+          <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem;">
+              <button class="btn btn-outline" onclick="closeModal('deleteCategoryModal')">Cancel</button>
+              <button class="btn btn-danger" id="confirmDeleteCategoryBtn">Delete Category</button>
+          </div>
+      </div>
   </div>
 
   <!-- Bill Receipt Modal -->
@@ -555,6 +581,7 @@
         </div>
       </div>
       <input type="hidden" id="returnInvoiceId">
+      <input type="hidden" id="returnCustomerDue" value="0">
       <div style="overflow-y:auto; flex:1; padding:1rem 2rem;">
         <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
           <thead>
@@ -572,14 +599,27 @@
         </table>
         <div class="input-group" style="margin-top:1rem;">
           <label class="input-label">Reason <span style="color:var(--danger);">*</span></label>
+          <style>
+            #returnReason::placeholder { color: var(--muted); }
+            .return-reason-btn { color: var(--secondary-foreground); }
+            .return-reason-btn:hover,
+            .return-reason-btn:focus,
+            .return-reason-btn:active { color: var(--secondary-foreground); }
+          </style>
           <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;">
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong size'">Wrong size</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Damaged'">Damaged</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Quality issue'">Quality issue</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong item'">Wrong item</button>
-            <button type="button" class="btn btn-sm" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Changed mind'">Changed mind</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong size'">Wrong size</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Damaged'">Damaged</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Quality issue'">Quality issue</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Wrong item'">Wrong item</button>
+            <button type="button" class="btn btn-sm return-reason-btn" style="font-size:0.7rem;padding:2px 8px;" onclick="document.getElementById('returnReason').value='Changed mind'">Changed mind</button>
           </div>
           <input type="text" id="returnReason" class="input-field" placeholder="e.g. Damaged / Wrong size" required>
+        </div>
+      </div>
+      <div id="returnNetSummary" style="display:none; padding:0.75rem 2rem 0 2rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; background:var(--warn-subtle); border:1px solid var(--warn); border-radius:6px; padding:8px 12px; font-size:0.8rem;">
+          <span id="returnDueText" style="color:var(--warn); font-weight:600;">Customer due: ₹0.00</span>
+          <span id="returnNetText" style="color:var(--text-strong); font-weight:600;">Net refund: ₹0.00</span>
         </div>
       </div>
       <div style="padding:1.5rem 2rem; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end;">
@@ -599,7 +639,7 @@
       <div style="display:flex; gap:1rem;">
         <button class="btn btn-outline btn-block" onclick="closeModal('deleteBillModal')">Cancel</button>
         <button class="btn btn-block" id="deleteBillConfirmBtn"
-          style="background:var(--danger); color:white; border:none;" onclick="executeBillDelete()">Yes, Delete</button>
+          style="background:var(--danger); color:var(--destructive-foreground); border:none;" onclick="executeBillDelete()">Yes, Delete</button>
       </div>
     </div>
   </div>

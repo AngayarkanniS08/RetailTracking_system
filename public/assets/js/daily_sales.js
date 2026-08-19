@@ -1,6 +1,7 @@
 // Daily Sales Timeline
 
 var _tlGroups = {};
+var _tlDailyProducts = {};
 var _tlPage = 1;
 var _tlTotalPages = 1;
 var _tlPerPage = 6;
@@ -9,23 +10,35 @@ var _tlSearchTimer = null;
 
 function initDayToDaySelling() {
     _tlGroups = {};
+    _tlDailyProducts = {};
     _tlPage = 1;
     _tlTotalPages = 1;
     var tbody = document.querySelector('#salesTimelineTable tbody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted);">Loading...</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted);">Loading...</td></tr>';
 
     var url = '/api/invoices?limit=5000';
     if (_tlSearchTerm) url += '&search=' + encodeURIComponent(_tlSearchTerm);
+    var productsUrl = '/api/invoices/daily-products';
+    if (_tlSearchTerm) productsUrl += '?search=' + encodeURIComponent(_tlSearchTerm);
 
-    window.apiRequest(url).then(function(data) {
-        var invoices = data.invoices || data.data || data || [];
-        _tlGroups = groupInvoicesByDate(invoices);
+    Promise.all([
+        window.apiRequest(productsUrl).then(function(prodData) {
+            var daily = prodData.data || {};
+            Object.keys(daily).forEach(function(date) {
+                _tlDailyProducts[date] = daily[date] || [];
+            });
+        }),
+        window.apiRequest(url).then(function(data) {
+            var invoices = data.invoices || data.data || data || [];
+            _tlGroups = groupInvoicesByDate(invoices);
+        })
+    ]).then(function() {
         renderSalesTimeline();
         renderPagination();
     }).catch(function(err) {
         console.error('Sales Timeline error:', err);
         var tbody = document.querySelector('#salesTimelineTable tbody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">Failed to load sales data</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:2rem;">Failed to load sales data</td></tr>';
     });
 }
 
@@ -103,7 +116,7 @@ function renderSalesTimeline() {
     _tlTotalPages = Math.max(1, Math.ceil(dates.length / _tlPerPage));
 
     if (dates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:2rem;">No sales found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:2rem;">No sales found</td></tr>';
         return;
     }
 
@@ -123,6 +136,7 @@ function renderSalesTimeline() {
                 + '<td style="font-weight:600">' + g.count + '</td>'
                 + '<td style="font-weight:600;color:var(--ok)">\u20b9' + formatNumber(g.total) + '</td>'
                 + '<td style="color:var(--muted-strong)">\u20b9' + formatNumber(avg) + '</td>'
+                + '<td style="max-width:340px;">' + renderDailyProductBadges(dateStr) + '</td>'
                 + '<td style="text-align:right">-</td>'
             + '</tr>';
 
@@ -134,7 +148,7 @@ function renderSalesTimeline() {
                     + '<td>' + escHtml(inv.customerNameSnapshot || inv.customerName || 'Walk-in') + '</td>'
                     + '<td style="color:var(--ok)">\u20b9' + formatNumber(inv.grandTotal) + '</td>'
                     + '<td style="text-align:right">'
-+ '<button class="btn btn-sm" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')" style="background:var(--primary);color:#fff;border:none;font-size:0.7rem;padding:2px 8px;">View</button>'
++ '<button class="btn btn-sm" onclick="event.stopPropagation();viewInvoiceReceipt(\'' + inv.id + '\')" style="background:var(--primary);color:var(--primary-foreground);border:none;font-size:0.7rem;padding:2px 8px;">View</button>'
 + (isCompletable ? '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();openReturnModal(\'' + inv.id + '\')" style="margin-left:6px;color:var(--accent);border-color:rgba(99,102,241,0.3);font-size:0.7rem;padding:2px 8px;">Return</button>' : '')
 + '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();confirmDeleteInvoice(\'' + inv.id + '\')" style="margin-left:6px;color:var(--danger);border-color:rgba(239,68,68,0.3);font-size:0.7rem;padding:2px 8px;">Delete</button>'
                     + '</td>'
@@ -148,6 +162,15 @@ function toggleSalesBills(cls) {
     rows.forEach(function(row) {
         row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
     });
+}
+
+function renderDailyProductBadges(dateStr) {
+    var products = _tlDailyProducts[dateStr] || [];
+    if (!products.length) return '-';
+    return products.map(function(p) {
+        return '<span class="badge" style="background:var(--accent-subtle);color:var(--accent);margin:2px 4px 2px 0;display:inline-block;">'
+            + escHtml(p.name) + ' <strong>' + formatNumber(p.qty) + '</strong></span>';
+    }).join('');
 }
 
 function viewInvoiceReceipt(invoiceId) {
@@ -202,6 +225,7 @@ function openReturnModal(invoiceId) {
             document.getElementById('returnInvoiceNumber').textContent = inv.invoiceNumber || '-';
             document.getElementById('returnCustomerName').textContent = inv.customerNameSnapshot || inv.customerName || 'Walk-in';
             document.getElementById('returnDate').textContent = inv.billedAt ? new Date(inv.billedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            document.getElementById('returnCustomerDue').value = parseFloat(inv.customerBalance) > 0 ? inv.customerBalance : 0;
 
             var tbody = document.getElementById('returnItemsBody');
             tbody.innerHTML = '';
@@ -236,6 +260,7 @@ function openReturnModal(invoiceId) {
             });
 
             document.getElementById('returnReason').value = '';
+            updateReturnNet();
             openModal('returnItemsModal');
         })
         .catch(function(err) {
@@ -250,6 +275,7 @@ function returnCalcRefund(el) {
     var unitPrice = parseFloat(el.dataset.unitPrice) || 0;
     var refundInput = el.closest('tr').querySelector('.return-refund');
     if (refundInput) refundInput.value = (qty * unitPrice).toFixed(2);
+    updateReturnNet();
 }
 
 function returnCalcQty(el) {
@@ -264,6 +290,32 @@ function returnCalcQty(el) {
         if (qty > maxQty) qty = maxQty;
         qtyInput.value = qty;
     }
+    updateReturnNet();
+}
+
+function getReturnTotalRefund() {
+    var inputs = document.querySelectorAll('#returnItemsBody .return-refund');
+    var total = 0;
+    inputs.forEach(function(inp) { total += (parseFloat(inp.value) || 0); });
+    return total;
+}
+
+function updateReturnNet() {
+    var due = parseFloat(document.getElementById('returnCustomerDue')?.value || 0);
+    if (due < 0) due = 0;
+    var total = getReturnTotalRefund();
+    var net = Math.max(total - due, 0);
+    var summary = document.getElementById('returnNetSummary');
+    var dueText = document.getElementById('returnDueText');
+    var netText = document.getElementById('returnNetText');
+    if (summary && due > 0) {
+        summary.style.display = '';
+        dueText.textContent = 'Customer due: ₹' + due.toFixed(2);
+        netText.textContent = 'Net refund: ₹' + net.toFixed(2);
+    } else if (summary) {
+        summary.style.display = 'none';
+    }
+    window._returnNet = net;
 }
 
 function submitReturn() {
@@ -297,6 +349,15 @@ function submitReturn() {
         return;
     }
 
+    var due = parseFloat(document.getElementById('returnCustomerDue')?.value || 0);
+    if (due < 0) due = 0;
+    var total = getReturnTotalRefund();
+    var net = Math.max(total - due, 0);
+    if (due > 0) {
+        var ok = confirm('Customer has ₹' + due.toFixed(2) + ' outstanding. Deducting this from the ₹' + total.toFixed(2) + ' refund, ₹' + net.toFixed(2) + ' will be returned. Continue?');
+        if (!ok) return;
+    }
+
     var modal = document.getElementById('returnItemsModal');
     var submitBtn = modal ? modal.querySelector('.btn-primary') : null;
     var closeBtn = modal ? modal.querySelector('.close-btn, .btn-close, [data-close]') : null;
@@ -310,9 +371,11 @@ function submitReturn() {
     })
     .then(function(data) {
         closeModal('returnItemsModal');
-        if (data && data.warning) alert(data.warning);
+        if (data && data.message) alert(data.message);
         if (data && data.stock_warning) alert('⚠ Stock note: ' + data.stock_warning + ' — please adjust inventory manually.');
         initDayToDaySelling();
+        if (typeof loadBatchesFromApi === 'function') loadBatchesFromApi(1);
+        if (typeof fetchAndRenderDbAlerts === 'function') fetchAndRenderDbAlerts();
     })
     .catch(function(err) {
         alert('Return failed: ' + err.message);
@@ -331,3 +394,4 @@ window.openReturnModal = openReturnModal;
 window.submitReturn = submitReturn;
 window.returnCalcRefund = returnCalcRefund;
 window.returnCalcQty = returnCalcQty;
+window.updateReturnNet = updateReturnNet;
