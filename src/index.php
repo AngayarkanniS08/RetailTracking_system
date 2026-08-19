@@ -6,13 +6,15 @@ define('APP_START_TIME', time());
 
 // CORS headers for multi-container and cloud browser access
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-header("Access-Control-Allow-Origin: " . (!empty($origin) ? $origin : '*'));
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Origin, Accept");
+if (!headers_sent()) {
+    header("Access-Control-Allow-Origin: " . (!empty($origin) ? $origin : '*'));
+    header("Access-Control-Allow-Credentials: true");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Origin, Accept");
+}
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(204);
     exit;
 }
 

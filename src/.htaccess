@@ -1,4 +1,16 @@
+<IfModule mod_headers.c>
+    SetEnvIf Origin "http(s)?://(.*)$" AccessControlAllowOrigin=$0
+    Header always set Access-Control-Allow-Origin "%{AccessControlAllowOrigin}e" env=AccessControlAllowOrigin
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Origin, Accept, Key"
+</IfModule>
+
 RewriteEngine On
+
+# Intercept and respond to CORS preflight OPTIONS requests directly in Apache
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^ - [R=204,L]
 
 # Route all incoming requests to index.php if physical file or directory does not exist
 RewriteCond %{REQUEST_FILENAME} !-f
