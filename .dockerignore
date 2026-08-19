@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+config/gdrive_tokens.json
+config/google_client.json
+config/credentials.json
+config/token.json
+tmp/
+backup/
+node_modules/
+*.sql
+*.gz

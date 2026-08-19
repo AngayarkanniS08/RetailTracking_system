@@ -1,17 +1,29 @@
-# PHP Session Temp Files
+# PHP Session Temp Files & Local Storage
 tmp/
 tmp/sessions/*
 
-# OS Files
+# OS Files & IDE
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
 
-# Environment Config
+# Environment Configurations & Secrets
 .env
+.env.local
+.env.*
+!.env.example
 
-# Backup files
-backup/
-
-# Google Drive tokens (contains secrets)
+# Google Drive API Credentials & OAuth Tokens
 config/gdrive_tokens.json
+config/google_client.json
+config/credentials.json
+config/token.json
+*.json.secret
+
+# Local Backups & Database Dumps
+backup/
+*.sql
+*.gz
+
 

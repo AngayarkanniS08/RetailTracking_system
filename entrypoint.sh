@@ -8,6 +8,15 @@ chown -R www-data:www-data /var/www/html/tmp 2>/dev/null || true
 # Ensure the sessions directory is writable
 chmod 777 /var/www/html/tmp/sessions 2>/dev/null || true
 
+# Securely decode Google Drive credentials if passed via ENV
+if [ -n "$GOOGLE_CLIENT_BASE64" ]; then
+    echo "$GOOGLE_CLIENT_BASE64" | base64 -d > /var/www/html/config/google_client.json
+fi
+if [ -n "$GDRIVE_TOKENS_BASE64" ]; then
+    echo "$GDRIVE_TOKENS_BASE64" | base64 -d > /var/www/html/config/gdrive_tokens.json
+fi
+
+
 # Run composer install if vendor directory doesn't exist
 if [ ! -d "src/vendor" ]; then
     echo "Vendor directory not found in src. Running composer install..."

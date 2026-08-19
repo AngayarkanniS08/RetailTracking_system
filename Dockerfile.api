@@ -28,10 +28,22 @@ RUN pecl install redis && docker-php-ext-enable redis
 
 WORKDIR /var/www/html
 
+# Copy application files (secrets excluded via .dockerignore)
+COPY src/ /var/www/html/src/
+COPY Database/ /var/www/html/Database/
+COPY config/ /var/www/html/config/
+COPY views/ /var/www/html/views/
+COPY src/index.php /var/www/html/index.php
+COPY src/.htaccess /var/www/html/.htaccess
+
+# Run composer install at build time
+RUN cd /var/www/html/src && composer install --no-interaction --optimize-autoloader --no-dev
+
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+COPY docker/php/php.ini /usr/local/etc/php/php.ini
+
 ENTRYPOINT ["/entrypoint.sh"]
 
-COPY docker/php/php.ini /usr/local/etc/php/php.ini

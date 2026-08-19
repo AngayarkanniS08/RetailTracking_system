@@ -19,4 +19,13 @@ WORKDIR /var/www/html
 # Share the same php.ini as app-api so PHP errors go to /dev/stderr → Docker logs
 COPY docker/php/php.ini /usr/local/etc/php/php.ini
 
+# Copy application files for standalone deployment (ignored secrets filtered by .dockerignore)
+COPY public/ /var/www/html/public/
+COPY views/ /var/www/html/views/
+COPY src/ /var/www/html/src/
+COPY config/ /var/www/html/config/
+COPY index.php /var/www/html/index.php
+COPY .htaccess /var/www/html/.htaccess
+
 EXPOSE 80
+
