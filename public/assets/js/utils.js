@@ -9,6 +9,14 @@
  */
 let _refreshing = null;
 
+function getApiBaseUrl() {
+    if (window.API_BASE_URL) return window.API_BASE_URL;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return `${window.location.protocol}//${window.location.hostname}:8081`;
+    }
+    return 'https://retail-api-production-8692.up.railway.app';
+}
+
 async function refreshToken() {
     if (_refreshing) return _refreshing;
 
@@ -17,7 +25,7 @@ async function refreshToken() {
 
     _refreshing = (async () => {
         try {
-            const apiBase = `${window.location.protocol}//${window.location.hostname}:8081`;
+            const apiBase = getApiBaseUrl();
             const res = await fetch(apiBase + '/api/auth/refresh', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -43,8 +51,9 @@ async function refreshToken() {
 }
 
 async function apiRequest(path, options = {}) {
-    const apiBase = `${window.location.protocol}//${window.location.hostname}:8081`;
+    const apiBase = getApiBaseUrl();
     const fullPath = path.startsWith('http') ? path : apiBase + path;
+
 
     const doFetch = async (retryAllowed) => {
         const token = localStorage.getItem('auth_token');
@@ -187,8 +196,9 @@ async function openSalesSummaryDetail(period) {
         invoices.forEach(function(inv) {
             const dateStr = inv.billedAt ? new Date(inv.billedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '-';
             const customerName = inv.customerNameSnapshot || 'Walk-in';
+            const apiBase = getApiBaseUrl();
             tbody.innerHTML += `
-                <tr style="cursor:pointer;" onclick="window.open('${window.location.protocol}//${window.location.hostname}:8081/api/invoices/${inv.id}/receipt?token=' + encodeURIComponent(localStorage.getItem('auth_token') || ''), '_blank')">
+                <tr style="cursor:pointer;" onclick="window.open('${apiBase}/api/invoices/${inv.id}/receipt?token=' + encodeURIComponent(localStorage.getItem('auth_token') || ''), '_blank')">
                     <td style="font-family:var(--mono); color:var(--accent); font-weight:600;">📄 ${inv.invoiceNumber || inv.id}</td>
                     <td style="color:var(--muted);">${dateStr}</td>
                     <td style="font-weight:500;">${customerName}</td>
